@@ -11,6 +11,16 @@ vi.mock('@entities/product', () => ({
   useCategories: vi.fn(),
 }));
 
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn().mockResolvedValue(() => undefined),
+}));
+
+vi.mock('@features/open-product-peek-window/model/useProductPeekWindow', () => ({
+  ensurePeekWindowShown: vi.fn().mockResolvedValue(undefined),
+  BARCODE_SCANNED_EVENT: 'barcode-scanned',
+  ADD_TO_CART_EVENT: 'add-to-cart',
+}));
+
 vi.mock('@entities/staff/model/store', () => ({
   useStaffStore: vi.fn(),
 }));
