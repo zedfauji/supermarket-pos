@@ -1,4 +1,4 @@
-import { emit } from '@tauri-apps/api/event';
+import { emit, listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { ImageOff, PackageSearch } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -9,10 +9,12 @@ import { useLookupProductByBarcode } from '@features/lookup-product-by-barcode/m
 import {
   ADD_TO_CART_EVENT,
   BARCODE_SCANNED_EVENT,
+  PEEK_WINDOW_REFRESH_EVENT,
 } from '@features/open-product-peek-window/model/useProductPeekWindow';
 import { getProductRiskFlag } from '@entities/product/model/productRiskFlag';
 import { useConfirmRiskyAdd } from '@entities/product/model/useConfirmRiskyAdd';
 import type { Product } from '@shared/lib/domain';
+import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
 import {
   CardSkeleton,
@@ -94,14 +96,17 @@ function PeekProductDetail({
   product,
   onClose,
   confirmRiskyAdd,
+  weightDialogOpen,
+  setWeightDialogOpen,
 }: {
   product: Product;
   onClose: () => void;
   confirmRiskyAdd: ReturnType<typeof useConfirmRiskyAdd>;
+  weightDialogOpen: boolean;
+  setWeightDialogOpen: (open: boolean) => void;
 }) {
   const { t } = useTranslation('wPanels');
   const [qty, setQty] = useState(1);
-  const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const stockTier = productStockTier(product);
 
   const commit = () => {
@@ -215,10 +220,17 @@ export function ProductPeekWindow() {
   const [product, setProduct] = useState<Product | null | undefined>(undefined);
   const [hasError, setHasError] = useState(false);
 
+  const [weightDialogOpen, setWeightDialogOpen] = useState(false);
+
   const loadProduct = useCallback(
     async (code: string) => {
       setHasError(false);
       setProduct(undefined);
+      // A rescan (direct or relayed) always targets the currently-displayed
+      // product's dialog, if any was left open by a prior load — closing it
+      // here is defensive: CR-02's gates below should already prevent a
+      // rescan from reaching this function while the dialog is open.
+      setWeightDialogOpen(false);
       try {
         // Trim first — scanner whitespace/newline artifacts must never cause
         // a false not-found on the exact-match lookup (specless-fallback
@@ -253,12 +265,37 @@ export function ProductPeekWindow() {
   // Own scanner instance — the peek window has OS focus while open (D-01).
   // Rescanning here both re-fetches locally (PEEK-04) and relays the raw
   // code to the main window so its own search box stays in sync (D-02).
+  // Disabled while the weight dialog owns entry (CR-02, mirrors
+  // CheckoutPanel's scannerEnabled): a scan mid-entry would otherwise collide
+  // with the dialog's own global keydown handler and swap out the displayed
+  // product underneath it.
   useBarcodeScanner({
+    enabled: !weightDialogOpen,
     onScan: code => {
       void loadProduct(code);
       void emit(BARCODE_SCANNED_EVENT, { code });
     },
   });
+
+  // ensurePeekWindowShown's reuse path (existing window already open →
+  // show/setFocus/emit instead of a fresh navigation) needs a way to tell
+  // this already-open window to load the newly-scanned product — without
+  // this listener it just refocuses on the stale, first-scanned product
+  // (CR-01). Uses a distinct event from BARCODE_SCANNED_EVENT (this window's
+  // own peek→main relay, below) so this listener can never catch its own
+  // scan's relay if Tauri's global emit() self-delivers to the sender.
+  // Same weightDialogOpen gate as the direct scanner above.
+  useEffect(() => {
+    if (!isTauri() || weightDialogOpen) return undefined;
+    const unlistenRefresh = listen<{ code: string }>(PEEK_WINDOW_REFRESH_EVENT, event => {
+      void loadProduct(event.payload.code);
+    });
+    return () => {
+      void unlistenRefresh.then(unlisten => {
+        unlisten();
+      });
+    };
+  }, [loadProduct, weightDialogOpen]);
 
   const handleClose = () => {
     // Never .close()/.destroy() — the peek window is hidden and reused on
@@ -276,6 +313,8 @@ export function ProductPeekWindow() {
       product={product}
       onClose={handleClose}
       confirmRiskyAdd={confirmRiskyAdd}
+      weightDialogOpen={weightDialogOpen}
+      setWeightDialogOpen={setWeightDialogOpen}
     />
   );
 }

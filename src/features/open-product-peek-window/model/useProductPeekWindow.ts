@@ -7,6 +7,12 @@ import { isTauri } from '@shared/lib/pos-printer';
 export const PEEK_WINDOW_LABEL = 'peek';
 export const BARCODE_SCANNED_EVENT = 'barcode-scanned';
 export const ADD_TO_CART_EVENT = 'add-to-cart';
+// Distinct from BARCODE_SCANNED_EVENT (which the peek window emits TO the
+// main window to sync its search box) — this is the opposite direction, main
+// window telling an already-open peek window to refresh. A single shared
+// event name would make ProductPeekWindow's own listen() catch its own scan
+// relay if Tauri's global emit() self-delivers to the sender (CR-01 fix).
+export const PEEK_WINDOW_REFRESH_EVENT = 'peek-window-refresh';
 
 export interface BarcodeScannedPayload {
   code: string;
@@ -53,5 +59,5 @@ export async function ensurePeekWindowShown(code: string): Promise<void> {
   }
   await existing.show();
   await existing.setFocus();
-  await emit(BARCODE_SCANNED_EVENT, { code });
+  await emit(PEEK_WINDOW_REFRESH_EVENT, { code });
 }

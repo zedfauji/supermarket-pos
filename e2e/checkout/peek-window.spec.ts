@@ -248,6 +248,82 @@ test.describe('Barcode scan product peek window (PEEK-01..04)', () => {
     await expect(page.getByText(/cart is empty/i)).toBeVisible();
   });
 
+  test('a rescan relayed while the peek window is already open refreshes its displayed product (CR-01 regression)', async ({
+    page,
+    context,
+  }) => {
+    const primary = await fetchProduct(PRIMARY_PRODUCT_NAME);
+    const secondary = await fetchProduct(SECONDARY_PRODUCT_NAME);
+
+    const peekPage = await context.newPage();
+    await injectPeekWindowMock(peekPage);
+    await peekPage.goto(`/?window=peek&barcode=${primary.barcode}`);
+    await expect(peekPage.getByRole('heading', { name: primary.name })).toBeVisible();
+
+    // Simulates ensurePeekWindowShown's reuse branch (existing window found ->
+    // show/setFocus/emit(PEEK_WINDOW_REFRESH_EVENT) instead of a fresh
+    // navigation) firing from the main window. The mock's get_all_windows
+    // always resolves [] (window count is driven by context.newPage(), not
+    // the mock — see tauriPeekMock.ts), so ensurePeekWindowShown itself can't
+    // be driven into its reuse branch from this harness; emitting the same
+    // event it would have emitted proves the consuming end of the fix
+    // (ProductPeekWindow's listener) instead.
+    await page.evaluate(code => {
+      const internals = (
+        window as unknown as {
+          __TAURI_INTERNALS__: { invoke: (cmd: string, args: unknown) => Promise<unknown> };
+        }
+      ).__TAURI_INTERNALS__;
+      void internals.invoke('plugin:event|emit', {
+        event: 'peek-window-refresh',
+        payload: { code },
+      });
+    }, secondary.barcode);
+
+    await expect(peekPage.getByRole('heading', { name: secondary.name })).toBeVisible();
+    await expect(peekPage.getByRole('heading', { name: primary.name })).toHaveCount(0);
+  });
+
+  test('scanning while the weight-entry dialog is open does not swap the displayed product (CR-02 regression)', async ({
+    context,
+  }) => {
+    const admin = getServiceClient();
+    const product = await fetchProduct(PRIMARY_PRODUCT_NAME);
+    const other = await fetchProduct(SECONDARY_PRODUCT_NAME);
+    const { error: updateError } = await admin
+      .from('products')
+      .update({ sold_by_weight: true })
+      .eq('id', product.id);
+    if (updateError) throw new Error(updateError.message);
+
+    try {
+      const peekPage = await context.newPage();
+      await injectPeekWindowMock(peekPage);
+      await peekPage.goto(`/?window=peek&barcode=${product.barcode}`);
+      await expect(peekPage.getByRole('heading', { name: product.name })).toBeVisible();
+
+      await peekPage.getByRole('button', { name: /^add to cart$/i }).click();
+      const dialog = peekPage.getByRole('dialog');
+      await expect(dialog.getByRole('heading', { name: /enter weight/i })).toBeVisible();
+
+      await scanBarcode(peekPage, other.barcode!);
+
+      // The scanner is disabled while the dialog owns entry (CR-02) -- the
+      // dialog stays open, unaffected by the scan.
+      await expect(dialog.getByRole('heading', { name: /enter weight/i })).toBeVisible();
+
+      // Cancel rather than assert the underlying product heading while the
+      // dialog is open: Radix Dialog marks background content aria-hidden
+      // while a modal is open, so a role-based query on it would fail
+      // regardless of which product is actually rendered underneath.
+      await peekPage.getByRole('button', { name: /^cancel$/i }).click();
+      await expect(peekPage.getByRole('heading', { name: product.name })).toBeVisible();
+      await expect(peekPage.getByRole('heading', { name: other.name })).toHaveCount(0);
+    } finally {
+      await admin.from('products').update({ sold_by_weight: false }).eq('id', product.id);
+    }
+  });
+
   test('a second window in the same browser context restores the session without a fresh login (closes RESEARCH.md Assumption A1 / Pitfall 6)', async ({
     context,
   }) => {

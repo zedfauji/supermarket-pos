@@ -69,7 +69,7 @@ describe('ensurePeekWindowShown', () => {
       setFocus: vi.fn().mockResolvedValue(undefined),
     };
     mockGetByLabel.mockResolvedValue(existing);
-    const { ensurePeekWindowShown, BARCODE_SCANNED_EVENT } = await import(
+    const { ensurePeekWindowShown, PEEK_WINDOW_REFRESH_EVENT } = await import(
       './useProductPeekWindow'
     );
 
@@ -78,7 +78,7 @@ describe('ensurePeekWindowShown', () => {
     expect(existing.show).toHaveBeenCalledTimes(1);
     expect(existing.setFocus).toHaveBeenCalledTimes(1);
     expect(mockEmit).toHaveBeenCalledTimes(1);
-    expect(mockEmit).toHaveBeenCalledWith(BARCODE_SCANNED_EVENT, { code: 'code2' });
+    expect(mockEmit).toHaveBeenCalledWith(PEEK_WINDOW_REFRESH_EVENT, { code: 'code2' });
     expect(mockWebviewWindowCtor).not.toHaveBeenCalled();
   });
 });
