@@ -6,7 +6,7 @@ import { ReceiptSettingsSchema } from '@shared/lib/domain';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
 import { downloadReceiptPdf } from '@shared/lib/exporters/receipt-pdf.tsx';
 import { getCurrentLocale } from '@shared/lib/i18n';
-import { printReceipt } from '@shared/lib/pos-printer';
+import { printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
 import { buildThermalReceiptText } from '@shared/lib/receipt-format';
 import { POSButton } from '@shared/ui';
 import { EmailReceiptDialog } from './EmailReceiptDialog';
@@ -40,9 +40,19 @@ export function ReceiptPreview({ receipt, onDone }: ReceiptPreviewProps) {
           disabled={printBusy}
           onClick={() => {
             setPrintBusy(true);
-            void printReceipt(receipt, settings).finally(() => {
-              setPrintBusy(false);
-            });
+            void (async () => {
+              try {
+                const result = await printReceipt(receipt, settings);
+                if (!result.ok) {
+                  toast.error(t(printJobErrorCopyKey(result.error.code)));
+                }
+                // No toast on success — a successful durable acceptance stays
+                // silent (status badge only, wired in a later plan); see
+                // UI-SPEC's no-success-toast rule (PRN-04/UX).
+              } finally {
+                setPrintBusy(false);
+              }
+            })();
           }}
         >
           {printBusy ? t('processPayment.printing') : t('processPayment.printReceipt')}

@@ -3,10 +3,11 @@
  * copy (Phase 19: Store-Local Durable Printing Service).
  *
  * Covers: runTestPrint / runOpenDrawer both routing through the shared
- * mapErrorToCopyKey helper — PRINT_BROKER_UNREACHABLE and PRINT_JOB_REJECTED
- * show their locked common:printJobError.* copy, while any other
- * AppErrorCode falls back to the raw result.error.message (today's
- * pre-existing behavior, preserved).
+ * printJobErrorCopyKey() helper (pos-printer.ts, Plan 19-04) — every
+ * AppErrorCode, including ones with no dedicated copy key, resolves to one
+ * of the three locked common:printJobError.* translations (never the raw
+ * result.error.message); a successful durable acceptance shows no toast
+ * (no-success-toast rule, PRN-04/UX).
  */
 
 import { screen } from '@testing-library/react';
@@ -14,6 +15,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as PosPrinter from '@shared/lib/pos-printer';
 import { openCashDrawer, testPrint } from '@shared/lib/pos-printer';
 import { err, ok } from '@shared/lib/result';
 import { renderWithProviders } from '@shared/lib/test-utils';
@@ -28,10 +30,14 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@shared/lib/pos-printer', () => ({
-  testPrint: vi.fn(),
-  openCashDrawer: vi.fn(),
-}));
+vi.mock('@shared/lib/pos-printer', async importOriginal => {
+  const actual = await importOriginal<typeof PosPrinter>();
+  return {
+    ...actual,
+    testPrint: vi.fn(),
+    openCashDrawer: vi.fn(),
+  };
+});
 
 vi.mock('@entities/settings', () => ({
   useReceiptSettings: () => ({ data: undefined }),
@@ -88,13 +94,26 @@ describe('HardwareSettingsTab — printJobError copy mapping', () => {
     );
   });
 
-  it('falls back to the raw message for a non-print AppErrorCode', async () => {
+  it('falls back to the translated failed copy (not the raw message) for a non-print AppErrorCode', async () => {
     const user = userEvent.setup();
     vi.mocked(testPrint).mockResolvedValue(err({ code: 'NETWORK_OFFLINE', message: 'offline raw' }));
     renderWithProviders(<HardwareSettingsTab currentRole="admin" />);
 
     await user.click(screen.getByRole('button', { name: 'Test Print' }));
 
-    expect(toast.error).toHaveBeenCalledWith('offline raw');
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't print after several attempts. Try again or check the printer."
+    );
+  });
+
+  it('does not silently discard a failed print Result and shows no toast on success', async () => {
+    const user = userEvent.setup();
+    vi.mocked(testPrint).mockResolvedValue(ok({ jobId: 'x' }));
+    renderWithProviders(<HardwareSettingsTab currentRole="admin" />);
+
+    await user.click(screen.getByRole('button', { name: 'Test Print' }));
+
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

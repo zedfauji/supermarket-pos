@@ -7,13 +7,15 @@
 
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Tab } from '@entities/tab/model/types';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
+import type * as PosPrinter from '@shared/lib/pos-printer';
 import { openCashDrawer, printReceipt } from '@shared/lib/pos-printer';
-import { ok } from '@shared/lib/result';
+import { err, ok } from '@shared/lib/result';
 import { renderWithProviders } from '@shared/lib/test-utils';
 
 import type { PaymentProcessors } from './PaymentForm';
@@ -27,10 +29,14 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@shared/lib/pos-printer', () => ({
-  printReceipt: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-  openCashDrawer: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-}));
+vi.mock('@shared/lib/pos-printer', async importOriginal => {
+  const actual = await importOriginal<typeof PosPrinter>();
+  return {
+    ...actual,
+    printReceipt: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+    openCashDrawer: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+  };
+});
 
 // taxRatePercent=0 keeps assertions simple — no tax arithmetic needed.
 vi.mock('@entities/settings', () => {
@@ -609,6 +615,39 @@ describe('PaymentForm — split mode', () => {
       expect(openCashDrawer).toHaveBeenCalledTimes(1);
     });
     expect(printReceipt).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the translated brokerUnreachable copy (not the raw message) when the post-payment print fails, and does not silently discard the Result', async () => {
+    const user = userEvent.setup();
+    const processors = makeProcessors();
+    vi.mocked(printReceipt).mockResolvedValueOnce(
+      err({ code: 'PRINT_BROKER_UNREACHABLE', message: 'x' })
+    );
+    renderForm(processors);
+    await selectCardMethod(user);
+
+    await user.click(screen.getByRole('button', { name: /confirm card payment/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Print service unavailable — check that the print broker is running.'
+      );
+    });
+  });
+
+  it('shows no toast when the post-payment print succeeds (no-success-toast rule)', async () => {
+    const user = userEvent.setup();
+    const processors = makeProcessors();
+    renderForm(processors);
+    await selectCardMethod(user);
+
+    await user.click(screen.getByRole('button', { name: /confirm card payment/i }));
+
+    await waitFor(() => {
+      expect(printReceipt).toHaveBeenCalled();
+    });
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('regression: single-method (toggle OFF) cash payment still calls processCashPayment unchanged', async () => {

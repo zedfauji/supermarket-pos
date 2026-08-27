@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { fetchReceiptDataForPayment, paymentReceiptKeys, type Payment } from '@entities/payment';
 import { useReceiptSettings } from '@entities/settings';
 import { ReceiptSettingsSchema } from '@shared/lib/domain';
-import { printReceipt } from '@shared/lib/pos-printer';
+import { printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
 import { POSButton } from '@shared/ui';
 
 export interface ReprintButtonProps {
@@ -35,7 +35,13 @@ export function ReprintButton({ payment }: ReprintButtonProps) {
         queryKey: paymentReceiptKeys.byTab(payment.tabId),
         queryFn: () => fetchReceiptDataForPayment(payment.tabId),
       });
-      await printReceipt(receipt, settings ?? ReceiptSettingsSchema.parse({}));
+      const printed = await printReceipt(receipt, settings ?? ReceiptSettingsSchema.parse({}));
+      if (!printed.ok) {
+        toast.error(t(printJobErrorCopyKey(printed.error.code)));
+      }
+      // No toast on success — a successful durable acceptance stays silent
+      // (status badge only, wired in a later plan); see UI-SPEC's
+      // no-success-toast rule (PRN-04/UX).
     } catch {
       toast.error(t('paymentPane.reprintDataFailed'));
     } finally {

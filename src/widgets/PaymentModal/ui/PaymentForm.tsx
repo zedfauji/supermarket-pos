@@ -28,7 +28,7 @@ import {
   processSplitPayment,
   type SplitPaymentLegInput,
 } from '@shared/lib/payment-processor';
-import { openCashDrawer, printReceipt } from '@shared/lib/pos-printer';
+import { openCashDrawer, printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
 import type { AppErrorCode, Result } from '@shared/lib/result';
 import {
   ConfirmDialog,
@@ -424,19 +424,21 @@ export function PaymentForm({
     onPaymentSuccess();
 
     void (async () => {
-      const logHardwareFail = (event: string, message: string) => {
+      const logHardwareFail = (event: string, code: AppErrorCode, message: string) => {
         logger.warn(event, { tabId: tab.id, message });
-        toast.error(message);
+        toast.error(t(printJobErrorCopyKey(code)));
       };
       try {
         if (method === 'cash') {
           const drawer = await openCashDrawer();
-          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.message);
+          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
           const printed = await printReceipt(receipt, settings);
-          if (!printed.ok) logHardwareFail('printer.receipt.failed', printed.error.message);
+          if (!printed.ok)
+            logHardwareFail('printer.receipt.failed', printed.error.code, printed.error.message);
         } else {
           const printed = await printReceipt(receipt, settings);
-          if (!printed.ok) logHardwareFail('printer.receipt.failed', printed.error.message);
+          if (!printed.ok)
+            logHardwareFail('printer.receipt.failed', printed.error.code, printed.error.message);
         }
       } catch (e) {
         logger.warn('printer.post_payment.exception', { tabId: tab.id, raw: String(e) });
@@ -505,18 +507,19 @@ export function PaymentForm({
     onPaymentSuccess();
 
     void (async () => {
-      const logHardwareFail = (event: string, message: string) => {
+      const logHardwareFail = (event: string, code: AppErrorCode, message: string) => {
         logger.warn(event, { tabId: tab.id, message });
-        toast.error(message);
+        toast.error(t(printJobErrorCopyKey(code)));
       };
       try {
         if (legs.some(l => l.method === 'cash')) {
           const drawer = await openCashDrawer();
-          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.message);
+          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
         }
         for (const receipt of result.data.receipts) {
           const printed = await printReceipt(receipt, settings);
-          if (!printed.ok) logHardwareFail('printer.receipt.failed', printed.error.message);
+          if (!printed.ok)
+            logHardwareFail('printer.receipt.failed', printed.error.code, printed.error.message);
         }
       } catch (e) {
         logger.warn('printer.post_payment.exception', { tabId: tab.id, raw: String(e) });

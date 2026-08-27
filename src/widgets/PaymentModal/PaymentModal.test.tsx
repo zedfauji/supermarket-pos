@@ -6,6 +6,7 @@ import { useStaffStore } from '@entities/staff/model/store';
 import type { Tab } from '@entities/tab/model/types';
 import type { OrderItem, Product } from '@shared/lib/domain';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
+import type * as PosPrinter from '@shared/lib/pos-printer';
 import { printReceipt, openCashDrawer } from '@shared/lib/pos-printer';
 import { err, ok } from '@shared/lib/result';
 import { renderWithProviders } from '@shared/lib/test-utils';
@@ -15,11 +16,15 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@shared/lib/pos-printer', () => ({
-  printReceipt: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-  openCashDrawer: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-  testPrint: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-}));
+vi.mock('@shared/lib/pos-printer', async importOriginal => {
+  const actual = await importOriginal<typeof PosPrinter>();
+  return {
+    ...actual,
+    printReceipt: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+    openCashDrawer: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+    testPrint: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+  };
+});
 
 // Stable settings object — same reference every render so tipPresets dependency
 // in PaymentModal's useEffect does not trigger spurious resets of tenderedAmount.
@@ -528,7 +533,7 @@ describe('PaymentModal', () => {
     expect(screen.getByRole('button', { name: 'Process payment' })).toBeDisabled();
   });
 
-  it('toasts hardware error when cash drawer fails after cash payment', async () => {
+  it('toasts translated hardware-error copy (not the raw message) when cash drawer fails after cash payment', async () => {
     const user = userEvent.setup();
     const receipt = makeReceipt();
     const processors: PaymentProcessors = {
@@ -551,7 +556,9 @@ describe('PaymentModal', () => {
     await user.click(screen.getByRole('button', { name: 'Process payment' }));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Drawer failed');
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't print after several attempts. Try again or check the printer."
+      );
     });
   });
 
