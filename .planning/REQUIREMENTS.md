@@ -168,6 +168,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02 | Phase 17 (v1.3) | Complete |
 | TEST-03 | Phase 17 (v1.3) | Complete |
 | TEST-04 | Phase 17 (v1.3) | Complete |
+| PEEK-01 | Phase 18 (v1.4) | Complete |
+| PEEK-02 | Phase 18 (v1.4) | Complete |
+| PEEK-03 | Phase 18 (v1.4) | Complete |
+| PEEK-04 | Phase 18 (v1.4) | Complete |
 | PRN-01 | Phase 19 (v1.5, proposed) | Pending |
 | PRN-02 | Phase 19 (v1.5, proposed) | Pending |
 | PRN-03 | Phase 19 (v1.5, proposed) | Pending |
@@ -180,6 +184,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 - v1.2 requirements (paused, Phase 11 discussion-only): 8 total, 8/8 mapped
 - v1.3 requirements: 13 total, 13/13 mapped (Phase 14: INVR-01..04, Phase 15: RCPD-01/02, Phase 16: PO-01..03, Phase 17: TEST-01..04)
+- v1.4 requirements: 4 total, 4/4 mapped (Phase 18: PEEK-01..04)
 - v1.5 proposed requirements: 7 total, 7/7 mapped to Phase 19
 
 ---
