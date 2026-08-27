@@ -279,6 +279,15 @@
     "whoAreYou": "Who are you?"
   },
   "productPeekPanel": {
-    "windowTitle": "Product Details"
+    "windowTitle": "Product Details",
+    "addToCart": "Add to Cart",
+    "notFoundBody": "No product matches this barcode. Scan again or check the code.",
+    "loadError": "Couldn't load product details. Close this window and try again.",
+    "noPhoto": "No photo available",
+    "unitWeight": "Sold by weight (kg)",
+    "unitPiece": "Sold by piece",
+    "stockCount": "{{count}} in stock",
+    "skuLabel": "SKU",
+    "barcodeLabel": "Barcode"
   }
 }

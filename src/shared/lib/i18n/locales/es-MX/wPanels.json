@@ -279,6 +279,15 @@
     "whoAreYou": "¿Quién eres?"
   },
   "productPeekPanel": {
-    "windowTitle": "Detalles del producto"
+    "windowTitle": "Detalles del producto",
+    "addToCart": "Agregar al carrito",
+    "notFoundBody": "Ningún producto coincide con este código de barras. Escanea de nuevo o verifica el código.",
+    "loadError": "No se pudieron cargar los detalles del producto. Cierra esta ventana e inténtalo de nuevo.",
+    "noPhoto": "Sin foto disponible",
+    "unitWeight": "Se vende por peso (kg)",
+    "unitPiece": "Se vende por pieza",
+    "stockCount": "{{count}} en existencia",
+    "skuLabel": "SKU",
+    "barcodeLabel": "Código de barras"
   }
 }

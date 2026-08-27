@@ -59,7 +59,7 @@ Milestone goal: scanning a barcode on `/pos` opens a separate detached Tauri win
 
 ### Product Peek Window
 
-- [ ] **PEEK-01**: Scanning a barcode on `/pos` opens a separate Tauri OS window (not a modal/overlay in the main window) showing the matched product's name, size/unit (kg/g/L/piece), photo, price, current inventory, SKU, and barcode.
+- [x] **PEEK-01**: Scanning a barcode on `/pos` opens a separate Tauri OS window (not a modal/overlay in the main window) showing the matched product's name, size/unit (kg/g/L/piece), photo, price, current inventory, SKU, and barcode.
 - [x] **PEEK-02**: The peek window includes a quantity/weight input (matching the product's unit type — piece count or loose-weight amount) that the cashier sets before adding to cart, and reuses the existing out-of-stock and near-expiry checkout guards rather than a duplicate guard implementation.
 - [x] **PEEK-03**: The peek window offers "Add to Cart" (adds the entered qty/weight to the active `/pos` cart and closes the window) and "Close" (dismisses without adding anything).
 - [x] **PEEK-04**: While the peek window is open, scanning a different barcode replaces its content with the newly scanned product (no manual close needed first); the main `/pos` window's existing scan-to-search behavior continues to fire on the same scan independently.
@@ -76,21 +76,27 @@ acceptance, route through one store-local broker, and remain auditable without a
 - [ ] **PRN-01**: Mobile, desktop, and POS clients on the store LAN/VPN submit all receipt, reprint,
   report, test-print, and cash-drawer print commands to one authenticated store-local broker; the
   broker is not exposed to the public internet and has no cloud dependency.
+
 - [ ] **PRN-02**: A print-dependent workflow succeeds only after the broker durably records the job
   and returns its stable job/correlation ID. Unreachable broker, rejected payload, authentication,
   persistence, or routing failures fail immediately with a structured error and never report
   success.
+
 - [ ] **PRN-03**: An accepted job survives client, Tauri application, and broker process restart and
   is delivered asynchronously to its configured named Windows printer queue.
+
 - [ ] **PRN-04**: Every printing boundary propagates and logs normalized structured errors with the
   same job/correlation ID. UI-originated terminal failures show an actionable toast; background and
   non-UI callers explicitly handle and log failed results rather than discarding them.
+
 - [ ] **PRN-05**: The broker retains an auditable command and event history containing origin/actor,
   printer endpoint, payload hash/reference, timestamps, attempts, state transitions, Windows job ID,
   and normalized errors, with queryable command counts and retention controls.
+
 - [ ] **PRN-06**: Delivery uses finite retries only for classified transient failures and reconciles
   ambiguous Windows-spooler handoffs before resubmission. Stable idempotency keys prevent accidental
   duplicate jobs.
+
 - [ ] **PRN-07**: UI and audit states distinguish durable acceptance, submission to Windows,
   OS-reported completion, failure, cancellation, and unknown status; Windows status is never
   presented as proof of physical paper output.
