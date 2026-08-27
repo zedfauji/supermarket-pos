@@ -5,7 +5,9 @@
 //! holds zero receipt-label strings.
 
 use std::fs;
+#[cfg(not(target_os = "windows"))]
 use std::io::Write;
+#[cfg(not(target_os = "windows"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::prelude::*;
@@ -41,6 +43,19 @@ fn lines_to_esc_pos(lines: &[String]) -> Vec<u8> {
         out.push(b'\n');
     }
     out.extend_from_slice(&[GS, b'V', 0x42, 0x03]);
+    out
+}
+
+/// ESC/POS-encodes an already fully-formatted raw text blob (used by
+/// `print_raw_text` — pre-cheques, caja summaries — where the caller has
+/// already built every line, including any trailing cut sequence). Unlike
+/// `lines_to_esc_pos`, this does NOT apply the bold-first-line header
+/// styling: the text arrives pre-formatted and is emitted byte-for-byte
+/// after only an ESC @ (initialize) prefix.
+fn text_to_esc_pos(text: &str) -> Vec<u8> {
+    let mut out = Vec::new();
+    out.extend_from_slice(&[ESC, b'@']);
+    out.extend_from_slice(text.as_bytes());
     out
 }
 
@@ -140,6 +155,9 @@ fn build_print_payload(lines: &[String], logo_data_url: Option<&str>, paper_widt
     out
 }
 
+/// Only reachable from the non-Windows dev fallback (`write_fallback_ack`) —
+/// no broker is ever installed on a non-Windows development machine.
+#[cfg(not(target_os = "windows"))]
 fn write_fallback_bytes(bytes: &[u8]) -> Result<(), String> {
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -155,114 +173,19 @@ fn write_fallback_bytes(bytes: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
-mod win_print {
-    use windows::core::{HSTRING, PWSTR};
-    use windows::Win32::Graphics::Printing::{
-        ClosePrinter, DOC_INFO_1W, EndDocPrinter, GetDefaultPrinterW, OpenPrinterW, PRINTER_HANDLE,
-        StartDocPrinterW, WritePrinter,
-    };
+// The direct-WinSpool `win_print`/`try_send_raw` path (OpenPrinterW/
+// StartDocPrinterW/WritePrinter) that used to live here was removed in Plan
+// 19-03: now that all four commands (print_receipt, print_raw_text,
+// open_cash_drawer, test_print) route through submit_to_broker on Windows,
+// nothing calls it any more. The exact same Win32 sequence is already ported
+// into broker/src/delivery.rs (Plan 19-01), which is the only place that
+// still talks to WinSpool directly.
 
-    pub fn default_printer_name() -> Result<HSTRING, String> {
-        let mut buf = vec![0u16; 512];
-        let mut size = buf.len() as u32;
-        let ok = unsafe { GetDefaultPrinterW(Some(PWSTR(buf.as_mut_ptr())), &mut size) };
-        if ok.0 == 0 {
-            return Err("No default Windows printer is configured.".to_string());
-        }
-        let end = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
-        let s = String::from_utf16_lossy(&buf[..end]);
-        if s.trim().is_empty() {
-            return Err("Default printer name is empty.".to_string());
-        }
-        Ok(HSTRING::from(s))
-    }
-
-    pub fn send_raw(bytes: &[u8]) -> Result<(), String> {
-        let name = default_printer_name()?;
-        let mut handle = PRINTER_HANDLE::default();
-        unsafe {
-            OpenPrinterW(&name, &mut handle, None)
-                .map_err(|e| format!("OpenPrinter failed: {}", e.message()))?;
-        }
-        let mut doc_name: Vec<u16> = "Receipt\0".encode_utf16().collect();
-        let mut datatype: Vec<u16> = "RAW\0".encode_utf16().collect();
-        let doc_info = DOC_INFO_1W {
-            pDocName: PWSTR(doc_name.as_mut_ptr()),
-            pOutputFile: PWSTR::null(),
-            pDatatype: PWSTR(datatype.as_mut_ptr()),
-        };
-        let job = unsafe { StartDocPrinterW(handle, 1, &doc_info) };
-        if job == 0 {
-            let _ = unsafe { ClosePrinter(handle) };
-            return Err("StartDocPrinter failed (returned job id 0).".to_string());
-        }
-        let mut written: u32 = 0;
-        let ok = unsafe {
-            WritePrinter(
-                handle,
-                bytes.as_ptr().cast(),
-                bytes.len() as u32,
-                std::ptr::addr_of_mut!(written),
-            )
-        };
-        unsafe {
-            let _ = EndDocPrinter(handle);
-            let _ = ClosePrinter(handle);
-        }
-        if ok.0 == 0 || written != bytes.len() as u32 {
-            return Err("WritePrinter failed or incomplete write.".to_string());
-        }
-        Ok(())
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn try_send_raw(bytes: &[u8]) -> Result<(), String> {
-    win_print::send_raw(bytes)
-}
-
-#[cfg(not(target_os = "windows"))]
-#[allow(dead_code)]
-fn try_send_raw(_bytes: &[u8]) -> Result<(), String> {
-    Err("Thermal printer is only supported on Windows.".to_string())
-}
-
-#[tauri::command(rename_all = "camelCase")]
-pub fn print_receipt(
-    lines: Vec<String>,
-    logo_data_url: Option<String>,
-    paper_width_chars: u16,
-) -> Result<(), String> {
-    let bytes = build_print_payload(&lines, logo_data_url.as_deref(), paper_width_chars);
-
-    #[cfg(target_os = "windows")]
-    {
-        match try_send_raw(&bytes) {
-            Ok(()) => Ok(()),
-            Err(e) => {
-                eprintln!("[printer] WARNING: {e}");
-                write_fallback_bytes(&bytes)
-            }
-        }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        eprintln!("[printer] WARNING: non-Windows host; writing receipt bytes to temp file");
-        write_fallback_bytes(&bytes)
-    }
-}
-
-#[tauri::command]
-pub fn open_cash_drawer() -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        try_send_raw(&DRAWER_PULSE)
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Thermal printer is only supported on Windows.".to_string())
-    }
+/// Wave-2 (Plan 19-02) placeholder: hardcoded until Settings gains a real
+/// configurable receipt-printer-name field. Out of this plan's scope — see
+/// D-09/Plan 19-06 note in 19-03-PLAN.md.
+fn receipt_printer_name() -> String {
+    "RECEIPT_PRINTER".to_string()
 }
 
 /// Response shape for a durably-accepted broker job (Phase 19: Store-Local
@@ -272,6 +195,19 @@ pub fn open_cash_drawer() -> Result<(), String> {
 pub struct PrintJobAck {
     pub job_id: String,
     pub status: String,
+}
+
+/// Non-Windows dev-only fallback (no broker installed on non-Windows
+/// development machines): writes the ESC/POS bytes to a temp file and wraps
+/// the outcome in a `PrintJobAck` so the command's return type stays uniform
+/// across platforms. `job_id` is intentionally empty — there is no durable
+/// broker job behind a dev fallback.
+#[cfg(not(target_os = "windows"))]
+fn write_fallback_ack(bytes: &[u8]) -> Result<PrintJobAck, String> {
+    write_fallback_bytes(bytes).map(|()| PrintJobAck {
+        job_id: String::new(),
+        status: "dev_fallback".to_string(),
+    })
 }
 
 const BROKER_URL: &str = "http://127.0.0.1:8973";
@@ -307,7 +243,13 @@ fn resolve_broker_secret() -> String {
 /// error, not a silent success (PRN-02). D-12: explicit ~1.5s connect-timeout
 /// and the IPv4 literal `127.0.0.1` (never the hostname `localhost`, which
 /// can add dual-stack DNS resolution delay before a connection attempt).
-async fn submit_to_broker(
+///
+/// `broker_url` is a parameter (not the hardcoded `BROKER_URL` constant
+/// directly) purely so tests can point this at an in-process mock HTTP
+/// listener instead of the real broker — every real caller goes through the
+/// `submit_to_broker` thin wrapper below, which always uses `BROKER_URL`.
+async fn submit_to_broker_to(
+    broker_url: &str,
     payload: &[u8],
     printer_name: &str,
     origin: &str,
@@ -325,7 +267,7 @@ async fn submit_to_broker(
     });
 
     let resp = client
-        .post(format!("{BROKER_URL}/jobs"))
+        .post(format!("{broker_url}/jobs"))
         .bearer_auth(resolve_broker_secret())
         .json(&body)
         .send()
@@ -338,6 +280,58 @@ async fn submit_to_broker(
     resp.json::<PrintJobAck>().await.map_err(|e| e.to_string())
 }
 
+async fn submit_to_broker(
+    payload: &[u8],
+    printer_name: &str,
+    origin: &str,
+) -> Result<PrintJobAck, String> {
+    submit_to_broker_to(BROKER_URL, payload, printer_name, origin).await
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub async fn print_receipt(
+    lines: Vec<String>,
+    logo_data_url: Option<String>,
+    paper_width_chars: u16,
+) -> Result<PrintJobAck, String> {
+    let bytes = build_print_payload(&lines, logo_data_url.as_deref(), paper_width_chars);
+
+    #[cfg(target_os = "windows")]
+    {
+        submit_to_broker(&bytes, &receipt_printer_name(), "receipt").await
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        eprintln!("[printer] WARNING: non-Windows host; writing receipt bytes to temp file");
+        write_fallback_ack(&bytes)
+    }
+}
+
+#[tauri::command]
+pub async fn open_cash_drawer() -> Result<PrintJobAck, String> {
+    #[cfg(target_os = "windows")]
+    {
+        submit_to_broker(&DRAWER_PULSE, &receipt_printer_name(), "cash_drawer").await
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Thermal printer is only supported on Windows.".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn print_raw_text(text: String) -> Result<PrintJobAck, String> {
+    #[cfg(target_os = "windows")]
+    {
+        submit_to_broker(&text_to_esc_pos(&text), &receipt_printer_name(), "caja_summary").await
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        eprintln!("[printer] WARNING: non-Windows host; writing raw text bytes to temp file");
+        write_fallback_ack(&text_to_esc_pos(&text))
+    }
+}
+
 #[tauri::command]
 pub async fn test_print() -> Result<PrintJobAck, String> {
     let lines = vec![
@@ -346,7 +340,7 @@ pub async fn test_print() -> Result<PrintJobAck, String> {
         String::new(),
     ];
     let bytes = lines_to_esc_pos(&lines);
-    submit_to_broker(&bytes, "RECEIPT_PRINTER", "test_print").await
+    submit_to_broker(&bytes, &receipt_printer_name(), "test_print").await
 }
 
 #[cfg(test)]
@@ -416,6 +410,125 @@ mod tests {
     fn decode_data_url_rejects_missing_comma_separator() {
         let malformed = "data:image/png;base64NOCOMMA";
         let result = decode_data_url(malformed);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn text_to_esc_pos_prefixes_init_then_emits_raw_bytes_unchanged() {
+        let out = text_to_esc_pos("hello\nworld");
+        assert_eq!(&out[0..2], &[ESC, b'@']);
+        assert_eq!(&out[2..], b"hello\nworld");
+    }
+
+    /// Binds an ephemeral port, accepts exactly one connection on a background
+    /// thread, drains the request, and replies with a canned 200 JSON
+    /// PrintJobAck body — a minimal in-process stand-in for the real broker
+    /// so `submit_to_broker_to` can be exercised without a live broker
+    /// process (mirrors the raw-TCP-client test pattern already used in
+    /// broker/src/http.rs, just server-side instead of client-side).
+    #[cfg(target_os = "windows")]
+    fn spawn_mock_broker_accepting(job_id: &str) -> String {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind test listener");
+        let addr = listener.local_addr().expect("read local addr");
+        let body = format!(r#"{{"job_id":"{job_id}","status":"accepted"}}"#);
+
+        std::thread::spawn(move || {
+            if let Ok((mut stream, _)) = listener.accept() {
+                let mut buf = [0u8; 4096];
+                let _ = stream.read(&mut buf); // drain the request; body content is not asserted here
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                );
+                let _ = stream.write_all(response.as_bytes());
+            }
+        });
+
+        format!("http://{addr}")
+    }
+
+    /// Reserves an ephemeral port and immediately releases it without ever
+    /// accepting a connection — connecting to it deterministically fails
+    /// with "connection refused", simulating an unreachable broker.
+    #[cfg(target_os = "windows")]
+    fn unreachable_broker_url() -> String {
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind ephemeral port to find a free one");
+        let addr = listener.local_addr().expect("read local addr");
+        drop(listener);
+        format!("http://{addr}")
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn print_receipt_broker_success_returns_ack_with_job_id_never_falls_back() {
+        let broker_url = spawn_mock_broker_accepting("job-abc-123");
+        let bytes = build_print_payload(&["line".to_string()], None, 32);
+
+        let result = tauri::async_runtime::block_on(submit_to_broker_to(
+            &broker_url,
+            &bytes,
+            &receipt_printer_name(),
+            "receipt",
+        ));
+
+        let ack = result.expect("mocked broker success must return Ok(PrintJobAck)");
+        assert_eq!(ack.job_id, "job-abc-123");
+        assert!(!ack.job_id.is_empty());
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn print_receipt_broker_failure_returns_err_never_silent_ok() {
+        let broker_url = unreachable_broker_url();
+        let bytes = build_print_payload(&["line".to_string()], None, 32);
+
+        let result = tauri::async_runtime::block_on(submit_to_broker_to(
+            &broker_url,
+            &bytes,
+            &receipt_printer_name(),
+            "receipt",
+        ));
+
+        assert!(
+            result.is_err(),
+            "an unreachable broker must return Err — never a silent Ok(()) fallback (PRN-02)"
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn open_cash_drawer_broker_success_returns_ack_with_job_id() {
+        let broker_url = spawn_mock_broker_accepting("job-drawer-1");
+
+        let result = tauri::async_runtime::block_on(submit_to_broker_to(
+            &broker_url,
+            &DRAWER_PULSE,
+            &receipt_printer_name(),
+            "cash_drawer",
+        ));
+
+        let ack = result.expect("mocked broker success must return Ok(PrintJobAck)");
+        assert_eq!(ack.job_id, "job-drawer-1");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn open_cash_drawer_broker_failure_returns_err_never_silent_ok() {
+        let broker_url = unreachable_broker_url();
+
+        let result = tauri::async_runtime::block_on(submit_to_broker_to(
+            &broker_url,
+            &DRAWER_PULSE,
+            &receipt_printer_name(),
+            "cash_drawer",
+        ));
+
         assert!(result.is_err());
     }
 }

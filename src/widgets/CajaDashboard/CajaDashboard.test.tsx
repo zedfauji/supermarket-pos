@@ -241,7 +241,7 @@ describe('CajaDashboard', () => {
   it('calls printRawText with cash, card, rappi, net, and pending values on Print Summary click', async () => {
     const printSpy = vi
       .spyOn(posPrinter, 'printRawText')
-      .mockResolvedValue({ ok: true, data: undefined });
+      .mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } });
 
     renderDashboard();
 

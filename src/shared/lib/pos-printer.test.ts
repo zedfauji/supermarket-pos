@@ -82,7 +82,7 @@ describe('printReceipt', () => {
   beforeEach(() => {
     delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
     vi.mocked(invoke).mockReset();
-    vi.mocked(invoke).mockResolvedValue(undefined);
+    vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-receipt-job', status: 'accepted' });
     vi.mocked(toast.loading).mockClear();
     vi.mocked(toast.success).mockClear();
     vi.mocked(toast.error).mockClear();
@@ -114,11 +114,14 @@ describe('printReceipt', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('invokes print_receipt in Tauri and returns ok', async () => {
+  it('invokes print_receipt in Tauri and returns the broker job id (PRN-02)', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.jobId).toBe('mock-receipt-job');
+    }
     expect(invoke).toHaveBeenCalledWith(
       'print_receipt',
       expect.objectContaining({ lines: expect.any(Array) })
@@ -139,15 +142,26 @@ describe('printReceipt', () => {
     );
   });
 
-  it('returns tauriError when invoke throws in Tauri', async () => {
+  it('maps a non-broker invoke failure to PRINT_JOB_REJECTED after retries', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('Printer offline'));
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe('TAURI_ERROR');
+      expect(result.error.code).toBe('PRINT_JOB_REJECTED');
       expect(result.error.message).toContain('Printer offline');
+    }
+  });
+
+  it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE after retries (D-12)', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
+
+    const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PRINT_BROKER_UNREACHABLE');
     }
   });
 
@@ -165,11 +179,16 @@ describe('printReceipt', () => {
 
   it('succeeds after a transient failure on attempt 2', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
-    vi.mocked(invoke).mockRejectedValueOnce(new Error('busy')).mockResolvedValueOnce(undefined);
+    vi.mocked(invoke)
+      .mockRejectedValueOnce(new Error('busy'))
+      .mockResolvedValueOnce({ job_id: 'mock-receipt-job-2', status: 'accepted' });
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
 
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.jobId).toBe('mock-receipt-job-2');
+    }
     expect(invoke).toHaveBeenCalledTimes(2);
     expect(toast.loading).toHaveBeenCalledTimes(1);
     expect(toast.success).toHaveBeenCalledTimes(1);
@@ -193,7 +212,7 @@ describe('openCashDrawer', () => {
   beforeEach(() => {
     delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
     vi.mocked(invoke).mockReset();
-    vi.mocked(invoke).mockResolvedValue(undefined);
+    vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-drawer-job', status: 'accepted' });
     window.alert = vi.fn();
   });
 
@@ -210,21 +229,35 @@ describe('openCashDrawer', () => {
     );
   });
 
-  it('invokes open_cash_drawer in Tauri', async () => {
+  it('invokes open_cash_drawer in Tauri and returns the broker job id (PRN-02)', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
     const result = await openCashDrawer();
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.jobId).toBe('mock-drawer-job');
+    }
     expect(invoke).toHaveBeenCalledWith('open_cash_drawer');
   });
 
-  it('returns err when invoke fails in Tauri', async () => {
+  it('maps a non-broker invoke failure to PRINT_JOB_REJECTED', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('drawer jam'));
 
     const result = await openCashDrawer();
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe('TAURI_ERROR');
+      expect(result.error.code).toBe('PRINT_JOB_REJECTED');
+    }
+  });
+
+  it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
+
+    const result = await openCashDrawer();
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PRINT_BROKER_UNREACHABLE');
     }
   });
 });
@@ -296,7 +329,7 @@ describe('printRawText', () => {
   beforeEach(() => {
     delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
     vi.mocked(invoke).mockReset();
-    vi.mocked(invoke).mockResolvedValue(undefined);
+    vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-raw-text-job', status: 'accepted' });
     // Silence browser fallback popup in non-Tauri path
     window.open = vi.fn().mockReturnValue(null);
   });
@@ -335,7 +368,18 @@ describe('printRawText', () => {
     expect(invoke).toHaveBeenCalledWith('print_raw_text', { text: 'hello' });
   });
 
-  it('returns tauriError when invoke throws', async () => {
+  it('invokes print_raw_text in Tauri and returns the broker job id (PRN-02)', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+
+    const result = await printRawText('hello');
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.jobId).toBe('mock-raw-text-job');
+    }
+  });
+
+  it('maps a non-broker invoke failure to PRINT_JOB_REJECTED', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('Paper jam'));
 
@@ -343,8 +387,20 @@ describe('printRawText', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe('TAURI_ERROR');
+      expect(result.error.code).toBe('PRINT_JOB_REJECTED');
       expect(result.error.message).toContain('Paper jam');
+    }
+  });
+
+  it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
+
+    const result = await printRawText('hello');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PRINT_BROKER_UNREACHABLE');
     }
   });
 });

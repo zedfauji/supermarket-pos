@@ -65,6 +65,11 @@
     "key0": "Key 0",
     "backspace": "Backspace"
   },
+  "printJobError": {
+    "brokerUnreachable": "Print service unavailable — check that the print broker is running.",
+    "rejected": "Printer rejected this job. Check the printer name in Settings and try again.",
+    "failed": "Couldn't print after several attempts. Try again or check the printer."
+  },
   "quantityControl": {
     "group": "Quantity control",
     "decrease": "Decrease quantity",
