@@ -9,13 +9,9 @@ use std::time::Duration;
 
 use rusqlite::{params, Connection};
 
+use crate::config::{self, BrokerConfig};
 use crate::ledger::{now_iso, open_db, record_event};
-
-/// Hardcoded for this plan, matching the spike. Plan 19-05 replaces these
-/// with a config-driven per-failure-class policy (D-10) — do not build that
-/// here.
-pub const MAX_ATTEMPTS: i64 = 5;
-pub const RECONCILE_AFTER_SECS: u64 = 3;
+use crate::retry::{self, RetryDecision};
 
 pub const JOB_STATUS_PRINTED: u32 = 0x0000_0080;
 pub const JOB_STATUS_ERROR: u32 = 0x0000_0002;
@@ -104,7 +100,17 @@ pub mod win_print {
     }
 }
 
+/// Loads the current `BrokerConfig` (data-driven retry policy + retention
+/// window, D-10/D-14) once for this tick and delegates. Kept separate from
+/// `worker_tick_with_config` so tests can inject a fixture config directly
+/// instead of racing against the real `%ProgramData%\PrintBroker\`
+/// filesystem path.
 pub fn worker_tick(conn: &Connection) {
+    let cfg = config::load_or_init();
+    worker_tick_with_config(conn, &cfg);
+}
+
+pub fn worker_tick_with_config(conn: &Connection, cfg: &BrokerConfig) {
     // Delivery pass: everything status='accepted'.
     let mut stmt = conn
         .prepare("SELECT id, printer_name, payload, attempts FROM jobs WHERE status = 'accepted'")
@@ -183,26 +189,34 @@ pub fn worker_tick(conn: &Connection) {
                 let _ = caught;
             }
             Err(e) => {
-                let new_attempts = attempts + 1;
-                if new_attempts >= MAX_ATTEMPTS {
-                    conn.execute(
-                        "UPDATE jobs SET status='failed', attempts=?1, updated_at=?2, last_error=?3 WHERE id=?4",
-                        params![new_attempts, ts, e, id],
-                    )
-                    .ok();
-                    record_event(conn, &id, "retry_exhausted", &e);
-                } else {
-                    conn.execute(
-                        "UPDATE jobs SET attempts=?1, updated_at=?2, last_error=?3 WHERE id=?4",
-                        params![new_attempts, ts, e, id],
-                    )
-                    .ok();
-                    record_event(
-                        conn,
-                        &id,
-                        "submit_failed_will_retry",
-                        &format!("attempt {new_attempts}/{MAX_ATTEMPTS}: {e}"),
-                    );
+                // D-10: classify then apply the config-driven per-failure-
+                // class policy instead of the removed hardcoded MAX_ATTEMPTS.
+                let decision = retry::decide(retry::classify_failure(&e), attempts, &cfg.retry);
+                match decision {
+                    RetryDecision::MarkFailed { attempts: final_attempts, event_category } => {
+                        conn.execute(
+                            "UPDATE jobs SET status='failed', attempts=?1, updated_at=?2, last_error=?3 WHERE id=?4",
+                            params![final_attempts, ts, e, id],
+                        )
+                        .ok();
+                        record_event(conn, &id, event_category, &e);
+                    }
+                    RetryDecision::WillRetry { attempts: new_attempts } => {
+                        conn.execute(
+                            "UPDATE jobs SET attempts=?1, updated_at=?2, last_error=?3 WHERE id=?4",
+                            params![new_attempts, ts, e, id],
+                        )
+                        .ok();
+                        record_event(
+                            conn,
+                            &id,
+                            "submit_failed_will_retry",
+                            &format!(
+                                "attempt {new_attempts}/{}: {e}",
+                                cfg.retry.max_attempts_transient
+                            ),
+                        );
+                    }
                 }
             }
         }
@@ -219,7 +233,7 @@ pub fn worker_tick(conn: &Connection) {
         )
         .unwrap();
     let now_ms: i64 = now_iso().parse().unwrap_or(0);
-    let threshold_ms = (RECONCILE_AFTER_SECS * 1000) as i64;
+    let threshold_ms = (cfg.retry.reconcile_after_secs * 1000) as i64;
     let recon_rows: Vec<(String, String, i64)> = stmt2
         .query_map(params![now_ms, threshold_ms], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
         .unwrap()
@@ -305,12 +319,14 @@ mod tests {
         ))
     }
 
-    // Test 7: a job whose printer_name does not exist on this host retries it
-    // up to MAX_ATTEMPTS (5) times, then marks it 'failed' with a non-null
-    // last_error. Deterministic — never depends on real print hardware being
-    // attached (per this plan's own verification note).
+    // Formerly "retries up to MAX_ATTEMPTS then marks failed" — under D-10's
+    // per-failure-class classification (this plan), a nonexistent printer
+    // name is the canonical Terminal case (classify_failure matches
+    // "invalid" in the real OpenPrinterW error text), so it now fails after
+    // exactly 1 attempt instead of retrying 5x. Deterministic — never
+    // depends on real print hardware being attached.
     #[test]
-    fn nonexistent_printer_retries_then_marks_failed_after_max_attempts() {
+    fn nonexistent_printer_is_terminal_and_marks_failed_after_one_attempt() {
         let path = temp_db_path("retry-then-fail");
         let _ = std::fs::remove_file(&path);
         let conn = open_db(&path);
@@ -321,9 +337,7 @@ mod tests {
         )
         .unwrap();
 
-        for _ in 0..MAX_ATTEMPTS {
-            worker_tick(&conn);
-        }
+        worker_tick(&conn);
 
         let (status, attempts, last_error): (String, i64, Option<String>) = conn
             .query_row(
@@ -333,22 +347,22 @@ mod tests {
             )
             .unwrap();
         assert_eq!(status, "failed");
-        assert_eq!(attempts, MAX_ATTEMPTS);
+        assert_eq!(attempts, 1, "Terminal failures must not retry");
         assert!(last_error.is_some());
         let _ = std::fs::remove_file(&path);
     }
 
     // Test 5: restart-mid-flight recovery. A job durably accepted but never
-    // delivered (attempts pre-seeded at MAX_ATTEMPTS-1, mirroring "the broker
-    // process was killed right after a durable accept, N-1 prior delivery
-    // attempts already recorded in the ledger, before the worker tick could
-    // finish delivering it") survives a fresh Connection against the same
-    // path (simulating a process/service restart — the ledger, not any
-    // in-memory state, is what survives per PRN-03), and a single
-    // worker_tick call after that "restart" transitions it away from
-    // 'accepted' with zero new rows for its idempotency_key (zero client
-    // resubmission). Uses the same deterministic nonexistent-printer target
-    // as Test 7 so this test does not depend on real print hardware.
+    // delivered (attempts pre-seeded at 1, mirroring "the broker process was
+    // killed right after a durable accept, a prior delivery attempt already
+    // recorded in the ledger, before the worker tick could finish delivering
+    // it") survives a fresh Connection against the same path (simulating a
+    // process/service restart — the ledger, not any in-memory state, is
+    // what survives per PRN-03), and a single worker_tick call after that
+    // "restart" transitions it away from 'accepted' with zero new rows for
+    // its idempotency_key (zero client resubmission). Uses the same
+    // deterministic nonexistent-printer target as the test above so this
+    // test does not depend on real print hardware.
     #[test]
     fn accepted_job_survives_restart_and_worker_tick_transitions_it_with_zero_new_rows() {
         let path = temp_db_path("restart-recovery");
@@ -357,8 +371,8 @@ mod tests {
             let conn = open_db(&path);
             conn.execute(
                 "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
-                 VALUES ('job-restart', 'idem-restart', 'NONEXISTENT_TEST_PRINTER_19', 'test', X'00', 'accepted', ?1, '1', '1')",
-                params![MAX_ATTEMPTS - 1],
+                 VALUES ('job-restart', 'idem-restart', 'NONEXISTENT_TEST_PRINTER_19', 'test', X'00', 'accepted', 1, '1', '1')",
+                [],
             )
             .unwrap();
             // conn dropped here — simulates the broker process being killed

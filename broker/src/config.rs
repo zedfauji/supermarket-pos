@@ -10,28 +10,14 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::ledger::data_dir;
-
-/// Placeholder retry policy — Plan 19-05's checkpoint confirms/finalizes the
-/// real per-failure-class policy (D-10, RESEARCH.md). Mirrors the spike's/
-/// `delivery.rs`'s `MAX_ATTEMPTS=5` constant for now; do not build the real
-/// per-failure-class logic here.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RetryPolicyStub {
-    pub max_attempts: u32,
-}
-
-impl Default for RetryPolicyStub {
-    fn default() -> Self {
-        RetryPolicyStub { max_attempts: 5 }
-    }
-}
+use crate::retry::RetryPolicy;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrokerConfig {
     pub port: u16,
     pub bearer_secret: String,
     pub retention_days: u32,
-    pub retry: RetryPolicyStub,
+    pub retry: RetryPolicy,
 }
 
 fn config_path() -> PathBuf {
@@ -74,7 +60,7 @@ pub fn load_or_init_at(config_file: &Path, secret_file: &Path) -> BrokerConfig {
         port: crate::http::PORT,
         bearer_secret: generate_secret(),
         retention_days: 14,
-        retry: RetryPolicyStub::default(),
+        retry: RetryPolicy::default(),
     };
 
     if let Ok(json) = serde_json::to_string_pretty(&cfg) {
