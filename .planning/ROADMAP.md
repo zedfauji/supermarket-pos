@@ -242,20 +242,20 @@ Plans:
   3. "Add to Cart" adds the entered amount to the active `/pos` cart and closes the window; "Close" dismisses without any cart change.
   4. Scanning a second barcode while the window is open replaces its content with the new product, and the main `/pos` window's own scan-to-search listener still fires on that same scan.
 
-**Plans**: 3 plans
+**Plans**: 3/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 18-01-PLAN.md — Tracer: WeightEntryDialog onConfirm override (TDD) + ensurePeekWindowShown race-free open/reuse (TDD) + capability grant + CheckoutPanel scan/relay/add-to-cart wiring
+- [x] 18-01-PLAN.md — Tracer: WeightEntryDialog onConfirm override (TDD) + ensurePeekWindowShown race-free open/reuse (TDD) + capability grant + CheckoutPanel scan/relay/add-to-cart wiring
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 18-02-PLAN.md — Peek window's own React tree: main.tsx ?window=peek branch, PeekApp.tsx shell, ProductPeekWindow.tsx widget (full UI-SPEC layout, guard reuse, piece/weight commit paths)
+- [x] 18-02-PLAN.md — Peek window's own React tree: main.tsx ?window=peek branch, PeekApp.tsx shell, ProductPeekWindow.tsx widget (full UI-SPEC layout, guard reuse, piece/weight commit paths)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 18-03-PLAN.md — E2E proof: BroadcastChannel-backed multi-window Tauri IPC mock + peek-window.spec.ts covering PEEK-01..04 and cross-window session restore
+- [x] 18-03-PLAN.md — E2E proof: BroadcastChannel-backed multi-window Tauri IPC mock + peek-window.spec.ts covering PEEK-01..04 and cross-window session restore
 
 **UI hint**: yes
 
@@ -272,12 +272,16 @@ installation and real printer/spooler boundary before implementation planning)
   1. An authenticated mobile or desktop client on LAN/VPN receives success only after the broker
      durably commits the command; unavailable or rejected submissions return a structured correlated
      error and produce an actionable toast in UI callers.
+
   2. An accepted command survives client exit and broker restart, then reaches the configured named
      Windows printer queue without requiring the Tauri POS process to remain open.
+
   3. Receipt, reprint, caja summary, test-print, and cash-drawer callers all use one submission
      contract; automated tests prove no failed `Result` is silently discarded.
+
   4. Audit queries return command counts and append-only attempts/transitions/errors by time range,
      origin, printer, and job ID while applying payload retention and access controls.
+
   5. Automated fault tests cover broker unavailable, authentication failure, invalid payload,
      persistence failure, stopped spooler, offline printer, retry exhaustion, duplicate idempotency
      key, ambiguous handoff, and restart recovery.
@@ -308,7 +312,7 @@ v1.2 (paused) resumes at Phase 11 → 12 → 13 if picked back up; v1.3 (active)
 | 15. Receipt Designer (Layout, Branding & Logo Printing) | v1.3 | 4/4 | Complete    | 2026-08-23 |
 | 16. Purchase Orders & Reordering | v1.3 | 4/4 | Complete    | 2026-08-24 |
 | 17. E2E Suite Overhaul | v1.3 | 17/17 | In Progress|  |
-| 18. Barcode Scan Product Peek Window | v1.4 | 0/3 | Planned | - |
+| 18. Barcode Scan Product Peek Window | v1.4 | 3/3 | In Progress|  |
 | 19. Store-Local Durable Printing Service | v1.5 | 0/TBD | Proposed | - |
 
 ### Phase 17: E2E Suite Overhaul
