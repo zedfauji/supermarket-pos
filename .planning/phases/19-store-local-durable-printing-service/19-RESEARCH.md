@@ -512,22 +512,25 @@ conn.pragma_update(None, "synchronous", "FULL").ok();
 
 **If this table is empty:** N/A — see rows above; all are flagged for confirmation during planning/execution, not blocking research from proceeding.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What VPN mechanism, if any, does the target store network actually use?**
    - What we know: The requirement says "LAN/VPN clients"; the spike bound `0.0.0.0` but only tested loopback.
    - What's unclear: Whether "VPN" here means a router-level site-to-site VPN (same physical LAN subnet, no extra firewall work needed) or a client-side overlay VPN with its own virtual adapter/subnet (needs its own firewall rule/interface binding).
    - Recommendation: Confirm with the store owner/operator before finalizing the firewall rule scope in the planning phase; do not assume `LocalSubnet` covers every case.
+   - **RESOLVED:** Plan 19-02 scopes the Windows Firewall rule to the `private`/LocalSubnet profile, not `public`/`any` (19-02-PLAN.md lines 31, 181-183).
 
 2. **Exact new `AppErrorCode` values for the broker submission contract.**
    - What we know: The current union has no print-broker-specific codes [VERIFIED: `src/shared/lib/result.ts:165-205`]; the broker's own error taxonomy (`unauthorized`, `invalid_payload`, `persistence_failed`, `not_found`, plus terminal job states `failed`/`unknown`) is already defined in the spike.
    - What's unclear: Whether to add 3-5 new specific codes or fold some into existing generic codes (e.g., reuse `VALIDATION_ERROR` for `invalid_payload`).
    - Recommendation: Decide once during planning (a locked list), then apply consistently across all 6 migrated callers — this is exactly the kind of decision D-11's "no silent discard" testing will catch if left inconsistent.
+   - **RESOLVED:** Plan 19-01 locks the list: `PRINT_BROKER_UNREACHABLE`, `PRINT_JOB_REJECTED`, `PRINT_JOB_UNKNOWN` (19-01-PLAN.md lines 102, 188-194).
 
 3. **Where does the `broker/` crate live relative to the existing `src-tauri` workspace, and how is it built/bundled into CI?**
    - What we know: No workspace `Cargo.toml` exists today — `src-tauri/Cargo.toml` is the only Rust crate in the repo [VERIFIED: `find . -maxdepth 2 -iname "Cargo.toml"` returned only `./src-tauri/Cargo.toml`]. The E2E suite's CI (`tauri-build` job per CLAUDE.md) currently only builds `src-tauri`.
    - What's unclear: Whether the broker becomes a Cargo workspace member (shared `target/`, single `cargo build`) or a fully separate build step wired into the release pipeline as a second artifact.
    - Recommendation: Treat this as a planning-time build-pipeline decision, not an implementation detail to improvise per-task — it affects `bundle.resources` paths in `tauri.conf.json` and the release script.
+   - **RESOLVED:** Plan 19-02 gives `broker/` its own `Cargo.toml` manifest, built via `--manifest-path broker/Cargo.toml` and wired into `tauri.conf.json`'s `bundle.resources` (19-02-PLAN.md lines 41, 107, 201).
 
 ## Environment Availability
 
