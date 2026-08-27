@@ -293,3 +293,97 @@ pub fn run_worker(shutdown: std::sync::Arc<std::sync::atomic::AtomicBool>, db_pa
     crate::ledger::log("worker loop stopped");
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn temp_db_path(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "print-broker-test-delivery-{name}-{}.db",
+            std::process::id()
+        ))
+    }
+
+    // Test 7: a job whose printer_name does not exist on this host retries it
+    // up to MAX_ATTEMPTS (5) times, then marks it 'failed' with a non-null
+    // last_error. Deterministic — never depends on real print hardware being
+    // attached (per this plan's own verification note).
+    #[test]
+    fn nonexistent_printer_retries_then_marks_failed_after_max_attempts() {
+        let path = temp_db_path("retry-then-fail");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES ('job-retry', 'idem-retry', 'NONEXISTENT_TEST_PRINTER_19', 'test', X'00', 'accepted', 0, '1', '1')",
+            [],
+        )
+        .unwrap();
+
+        for _ in 0..MAX_ATTEMPTS {
+            worker_tick(&conn);
+        }
+
+        let (status, attempts, last_error): (String, i64, Option<String>) = conn
+            .query_row(
+                "SELECT status, attempts, last_error FROM jobs WHERE id='job-retry'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(status, "failed");
+        assert_eq!(attempts, MAX_ATTEMPTS);
+        assert!(last_error.is_some());
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 5: restart-mid-flight recovery. A job durably accepted but never
+    // delivered (attempts pre-seeded at MAX_ATTEMPTS-1, mirroring "the broker
+    // process was killed right after a durable accept, N-1 prior delivery
+    // attempts already recorded in the ledger, before the worker tick could
+    // finish delivering it") survives a fresh Connection against the same
+    // path (simulating a process/service restart — the ledger, not any
+    // in-memory state, is what survives per PRN-03), and a single
+    // worker_tick call after that "restart" transitions it away from
+    // 'accepted' with zero new rows for its idempotency_key (zero client
+    // resubmission). Uses the same deterministic nonexistent-printer target
+    // as Test 7 so this test does not depend on real print hardware.
+    #[test]
+    fn accepted_job_survives_restart_and_worker_tick_transitions_it_with_zero_new_rows() {
+        let path = temp_db_path("restart-recovery");
+        let _ = std::fs::remove_file(&path);
+        {
+            let conn = open_db(&path);
+            conn.execute(
+                "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+                 VALUES ('job-restart', 'idem-restart', 'NONEXISTENT_TEST_PRINTER_19', 'test', X'00', 'accepted', ?1, '1', '1')",
+                params![MAX_ATTEMPTS - 1],
+            )
+            .unwrap();
+            // conn dropped here — simulates the broker process being killed
+            // after durable accept but before the worker tick could deliver it.
+        }
+
+        let conn2 = open_db(&path); // simulates relaunching the broker against the same ledger file.
+        worker_tick(&conn2);
+
+        let (status, count): (String, i64) = conn2
+            .query_row(
+                "SELECT status, (SELECT COUNT(*) FROM jobs WHERE idempotency_key='idem-restart') FROM jobs WHERE id='job-restart'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_ne!(
+            status, "accepted",
+            "status must transition away from 'accepted' after the ledger-recovered worker tick"
+        );
+        assert_eq!(
+            count, 1,
+            "zero new rows for the same idempotency_key across the simulated restart — no client resubmission"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+}
+

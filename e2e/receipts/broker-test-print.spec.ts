@@ -4,6 +4,10 @@
  * Test 4: invoke('test_print') mocked to resolve {job_id, status:'accepted'} —
  * clicking "Test Print" on /settings' Hardware tab shows the existing success
  * toast and does not throw.
+ * Test 8: invoke('test_print') mocked to reject with a "broker unreachable"
+ * error — HardwareSettingsTab shows a toast.error. The exact AppErrorCode
+ * mapping ('PRINT_BROKER_UNREACHABLE') is unit-tested directly in
+ * pos-printer.test.ts; this spec proves the UI-visible consequence.
  *
  * Mirrors print-retry-resilience.spec.ts's dual-global Tauri IPC mock
  * (`window.__TAURI__` + `window.__TAURI_INTERNALS__.invoke`) — the broker
@@ -17,8 +21,10 @@ import { loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { openCaja, resetTestState } from '../helpers/supabase';
 
-async function injectTestPrintSuccessMock(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+type TestPrintMockMode = 'success' | 'broker_unreachable';
+
+async function injectTestPrintMock(page: Page, mode: TestPrintMockMode): Promise<void> {
+  await page.addInitScript(m => {
     (window as unknown as Record<string, unknown>)['__TAURI__'] = {};
 
     const callbacks = new Map<number, (arg: unknown) => void>();
@@ -26,7 +32,10 @@ async function injectTestPrintSuccessMock(page: Page): Promise<void> {
     (window as unknown as Record<string, unknown>)['__TAURI_INTERNALS__'] = {
       invoke(cmd: string): Promise<unknown> {
         if (cmd === 'test_print') {
-          return Promise.resolve({ job_id: 'mock-job-1', status: 'accepted' });
+          if (m === 'success') {
+            return Promise.resolve({ job_id: 'mock-job-1', status: 'accepted' });
+          }
+          return Promise.reject(new Error('broker unreachable: connection refused (mock)'));
         }
         return Promise.resolve(null);
       },
@@ -39,7 +48,7 @@ async function injectTestPrintSuccessMock(page: Page): Promise<void> {
         callbacks.delete(id);
       },
     };
-  });
+  }, mode);
 }
 
 async function gotoHardwareSettings(page: Page): Promise<void> {
@@ -59,13 +68,25 @@ test.describe('Broker-backed test_print (Phase 19 Plan 01 tracer)', () => {
   test('Test Print round-trips through the broker and shows the existing success toast (Test 4)', async ({
     page,
   }) => {
-    await injectTestPrintSuccessMock(page);
+    await injectTestPrintMock(page, 'success');
     await page.goto('/');
     await gotoHardwareSettings(page);
 
     await page.getByRole('button', { name: /test print/i }).click();
 
     await expect(page.getByText(/test print sent/i)).toBeVisible({ timeout: 10_000 });
+
+    await logout(page);
+  });
+
+  test('An unreachable broker shows a toast.error mentioning the broker (Test 8)', async ({ page }) => {
+    await injectTestPrintMock(page, 'broker_unreachable');
+    await page.goto('/');
+    await gotoHardwareSettings(page);
+
+    await page.getByRole('button', { name: /test print/i }).click();
+
+    await expect(page.getByText(/broker unreachable/i)).toBeVisible({ timeout: 10_000 });
 
     await logout(page);
   });
