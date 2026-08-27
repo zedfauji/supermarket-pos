@@ -73,16 +73,16 @@ acceptance, route through one store-local broker, and remain auditable without a
 
 ### Printing Broker
 
-- [ ] **PRN-01**: Mobile, desktop, and POS clients on the store LAN/VPN submit all receipt, reprint,
+- [x] **PRN-01**: Mobile, desktop, and POS clients on the store LAN/VPN submit all receipt, reprint,
   report, test-print, and cash-drawer print commands to one authenticated store-local broker; the
   broker is not exposed to the public internet and has no cloud dependency.
 
-- [ ] **PRN-02**: A print-dependent workflow succeeds only after the broker durably records the job
+- [x] **PRN-02**: A print-dependent workflow succeeds only after the broker durably records the job
   and returns its stable job/correlation ID. Unreachable broker, rejected payload, authentication,
   persistence, or routing failures fail immediately with a structured error and never report
   success.
 
-- [ ] **PRN-03**: An accepted job survives client, Tauri application, and broker process restart and
+- [x] **PRN-03**: An accepted job survives client, Tauri application, and broker process restart and
   is delivered asynchronously to its configured named Windows printer queue.
 
 - [ ] **PRN-04**: Every printing boundary propagates and logs normalized structured errors with the
@@ -93,11 +93,11 @@ acceptance, route through one store-local broker, and remain auditable without a
   printer endpoint, payload hash/reference, timestamps, attempts, state transitions, Windows job ID,
   and normalized errors, with queryable command counts and retention controls.
 
-- [ ] **PRN-06**: Delivery uses finite retries only for classified transient failures and reconciles
+- [x] **PRN-06**: Delivery uses finite retries only for classified transient failures and reconciles
   ambiguous Windows-spooler handoffs before resubmission. Stable idempotency keys prevent accidental
   duplicate jobs.
 
-- [ ] **PRN-07**: UI and audit states distinguish durable acceptance, submission to Windows,
+- [x] **PRN-07**: UI and audit states distinguish durable acceptance, submission to Windows,
   OS-reported completion, failure, cancellation, and unknown status; Windows status is never
   presented as proof of physical paper output.
 
@@ -172,13 +172,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PEEK-02 | Phase 18 (v1.4) | Complete |
 | PEEK-03 | Phase 18 (v1.4) | Complete |
 | PEEK-04 | Phase 18 (v1.4) | Complete |
-| PRN-01 | Phase 19 (v1.5, proposed) | Pending |
-| PRN-02 | Phase 19 (v1.5, proposed) | Pending |
-| PRN-03 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-01 | Phase 19 (v1.5, proposed) | Complete |
+| PRN-02 | Phase 19 (v1.5, proposed) | Complete |
+| PRN-03 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-04 | Phase 19 (v1.5, proposed) | Pending |
 | PRN-05 | Phase 19 (v1.5, proposed) | Pending |
-| PRN-06 | Phase 19 (v1.5, proposed) | Pending |
-| PRN-07 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-06 | Phase 19 (v1.5, proposed) | Complete |
+| PRN-07 | Phase 19 (v1.5, proposed) | Complete |
 
 **Coverage:**
 
