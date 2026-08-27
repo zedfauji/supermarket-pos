@@ -19,6 +19,7 @@ import { useStaffStore } from '@entities/staff';
 import { useCartStore } from '@entities/tab/model/cartStore';
 import { CartItem } from '@entities/tab/ui/CartItem';
 import { formatMoney } from '@shared/lib/format';
+import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
 import { MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';
 
@@ -65,6 +66,12 @@ export function CheckoutPanel() {
   // window's "Add to Cart" commit to the real cart — the peek window has no
   // direct cartStore access of its own (D-04, separate JS/webview context).
   useEffect(() => {
+    // No-op outside a real Tauri runtime — `listen()` throws when
+    // `window.__TAURI_INTERNALS__` is absent (plain browser tab, e.g. this
+    // project's Playwright suite driving `npm run dev`). The peek-window E2E
+    // spec explicitly injects the same `window.__TAURI__` global this checks
+    // for, so real cross-window coverage is unaffected.
+    if (!isTauri()) return undefined;
     const unlistenScanned = listen<{ code: string }>(BARCODE_SCANNED_EVENT, event => {
       setSearch(event.payload.code);
     });

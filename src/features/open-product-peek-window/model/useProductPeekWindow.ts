@@ -2,6 +2,7 @@ import { emit } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import type { Product } from '@shared/lib/domain';
 import i18n from '@shared/lib/i18n';
+import { isTauri } from '@shared/lib/pos-printer';
 
 export const PEEK_WINDOW_LABEL = 'peek';
 export const BARCODE_SCANNED_EVENT = 'barcode-scanned';
@@ -29,6 +30,13 @@ export interface AddToCartPayload {
  * (RESEARCH.md Pattern 1 / Pitfall 1).
  */
 export async function ensurePeekWindowShown(code: string): Promise<void> {
+  // No-op outside a real Tauri runtime (e.g. this project's Playwright suite
+  // drives `npm run dev`, a plain browser tab with no `WebviewWindow`/IPC
+  // bridge) — calling any of these APIs there throws (`window.__TAURI_INTERNALS__`
+  // is undefined), which every barcode-scan E2E test would otherwise hit on
+  // every scan/mount. The peek-window E2E spec explicitly injects the same
+  // `window.__TAURI__` global this checks for, so real coverage is unaffected.
+  if (!isTauri()) return;
   const existing = await WebviewWindow.getByLabel(PEEK_WINDOW_LABEL);
   if (existing === null) {
     new WebviewWindow(PEEK_WINDOW_LABEL, {
