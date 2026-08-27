@@ -10,28 +10,21 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::ledger::data_dir;
+use crate::retry::RetryPolicy;
 
-/// Placeholder retry policy — Plan 19-05's checkpoint confirms/finalizes the
-/// real per-failure-class policy (D-10, RESEARCH.md). Mirrors the spike's/
-/// `delivery.rs`'s `MAX_ATTEMPTS=5` constant for now; do not build the real
-/// per-failure-class logic here.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RetryPolicyStub {
-    pub max_attempts: u32,
-}
-
-impl Default for RetryPolicyStub {
-    fn default() -> Self {
-        RetryPolicyStub { max_attempts: 5 }
-    }
-}
+/// Payload-BLOB retention window in days (D-14), confirmed by this plan's
+/// `checkpoint:decision` — the human explicitly chose 7 days (not the
+/// RESEARCH.md provisional default of 14). Metadata rows (job_id, status,
+/// timestamps, attempts, last_error) are never purged regardless of this
+/// value — see `ledger::purge_expired_payloads`.
+pub const DEFAULT_RETENTION_DAYS: u32 = 7;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrokerConfig {
     pub port: u16,
     pub bearer_secret: String,
     pub retention_days: u32,
-    pub retry: RetryPolicyStub,
+    pub retry: RetryPolicy,
 }
 
 fn config_path() -> PathBuf {
@@ -73,8 +66,8 @@ pub fn load_or_init_at(config_file: &Path, secret_file: &Path) -> BrokerConfig {
     let cfg = BrokerConfig {
         port: crate::http::PORT,
         bearer_secret: generate_secret(),
-        retention_days: 14,
-        retry: RetryPolicyStub::default(),
+        retention_days: DEFAULT_RETENTION_DAYS,
+        retry: RetryPolicy::default(),
     };
 
     if let Ok(json) = serde_json::to_string_pretty(&cfg) {

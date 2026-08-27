@@ -14,6 +14,7 @@ mod config;
 mod delivery;
 mod http;
 mod ledger;
+mod retry;
 
 // `install/` is a sibling of `src/`, not nested inside it — see
 // broker/install/mod.rs's own doc comment and 19-RESEARCH.md's Recommended
