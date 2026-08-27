@@ -41,14 +41,15 @@
     },
     "windows": {
       "nsis": {
-        "installerHooks": "../windows/hooks.nsh"
+        "installerHooks": "../windows/hooks.nsh",
+        "installMode": "perMachine"
       }
     }
   },
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQwOEVGOTAxRTk4MDkwNwpSV1FIQ1pnZWtPOElEZGptSmNUczZ0ZGFOSzBpanplYnNlYTFFbk9POHdoblZBUWZFSGNZaURNSAo=",
-      "endpoints": ["https://github.com/zedfauji/bola8pos/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/zedfauji/supermarket-pos/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "passive"
       }
