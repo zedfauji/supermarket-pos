@@ -18,6 +18,12 @@ pub const JOB_STATUS_ERROR: u32 = 0x0000_0002;
 pub const JOB_STATUS_DELETED: u32 = 0x0000_0100;
 pub const JOB_STATUS_PRINTING: u32 = 0x0000_0010;
 
+/// Queue-health stuck-job threshold (D-15): a job left in 'submitted_to_os'
+/// with no status change for longer than this gets exactly one
+/// 'queue_health_alert' event — alert-only, never a status transition, never
+/// a purge/resubmit. See `worker_tick_with_config`'s stuck-queue pass.
+pub const STUCK_QUEUE_THRESHOLD_MS: i64 = 60_000;
+
 #[cfg(target_os = "windows")]
 pub mod win_print {
     use windows::core::{HSTRING, PWSTR};
@@ -97,6 +103,70 @@ pub mod win_print {
             let _ = ClosePrinter(handle);
         }
         Ok(None)
+    }
+}
+
+/// Classifies a WinSpool `JOB_INFO_1W::Status` bitfield into a ledger status
+/// transition. Pure and platform-independent (factored out of the
+/// reconciliation pass below) so it is unit-testable without real WinSpool
+/// hardware — a `JOB_STATUS_DELETED` bit now maps to `Cancelled`, a distinct
+/// outcome from `Failed`, completing PRN-07's 6-way status vocabulary.
+enum StatusBitsOutcome {
+    Failed,
+    Printed,
+    Cancelled,
+    StillPrinting,
+    StillPending,
+}
+
+fn classify_status_bits(bits: u32) -> StatusBitsOutcome {
+    if bits & JOB_STATUS_ERROR != 0 {
+        StatusBitsOutcome::Failed
+    } else if bits & JOB_STATUS_PRINTED != 0 {
+        StatusBitsOutcome::Printed
+    } else if bits & JOB_STATUS_DELETED != 0 {
+        StatusBitsOutcome::Cancelled
+    } else if bits & JOB_STATUS_PRINTING != 0 {
+        StatusBitsOutcome::StillPrinting
+    } else {
+        StatusBitsOutcome::StillPending
+    }
+}
+
+/// Applies a reconciliation-pass status-bits outcome to the ledger — the
+/// pure-classification half (`classify_status_bits`) plus the ledger
+/// mutation, factored apart so the classification can be unit-tested without
+/// real WinSpool hardware.
+fn apply_status_bits_outcome(conn: &Connection, id: &str, ts: &str, outcome: StatusBitsOutcome, bits: u32) {
+    match outcome {
+        StatusBitsOutcome::Failed => {
+            conn.execute("UPDATE jobs SET status='failed', updated_at=?1, last_checked_at=?1, last_error='spooler reported JOB_STATUS_ERROR' WHERE id=?2", params![ts, id]).ok();
+            record_event(conn, id, "os_reported_failed", "JOB_STATUS_ERROR");
+        }
+        StatusBitsOutcome::Printed => {
+            conn.execute("UPDATE jobs SET status='os_reported_printed', updated_at=?1, last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
+            record_event(
+                conn,
+                id,
+                "os_reported_printed",
+                "JOB_STATUS_PRINTED (submission acknowledgement only, not physical-output proof)",
+            );
+        }
+        StatusBitsOutcome::Cancelled => {
+            // Distinct from Failed (PRN-07's 6-way status vocabulary) — a
+            // spooler-cancelled job is not the same outcome as a genuine
+            // delivery failure.
+            conn.execute("UPDATE jobs SET status='cancelled', updated_at=?1, last_checked_at=?1, last_error='spooler job was deleted/cancelled' WHERE id=?2", params![ts, id]).ok();
+            record_event(conn, id, "os_reported_cancelled", "JOB_STATUS_DELETED");
+        }
+        StatusBitsOutcome::StillPrinting => {
+            conn.execute("UPDATE jobs SET last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
+            record_event(conn, id, "still_printing", &format!("status_bits={bits:#x}"));
+        }
+        StatusBitsOutcome::StillPending => {
+            conn.execute("UPDATE jobs SET last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
+            record_event(conn, id, "still_pending", &format!("status_bits={bits:#x}"));
+        }
     }
 }
 
@@ -249,27 +319,7 @@ pub fn worker_tick_with_config(conn: &Connection, cfg: &BrokerConfig) {
 
         match status {
             Ok(Some(bits)) => {
-                if bits & JOB_STATUS_ERROR != 0 {
-                    conn.execute("UPDATE jobs SET status='failed', updated_at=?1, last_checked_at=?1, last_error='spooler reported JOB_STATUS_ERROR' WHERE id=?2", params![ts, id]).ok();
-                    record_event(conn, &id, "os_reported_failed", "JOB_STATUS_ERROR");
-                } else if bits & JOB_STATUS_PRINTED != 0 {
-                    conn.execute("UPDATE jobs SET status='os_reported_printed', updated_at=?1, last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
-                    record_event(
-                        conn,
-                        &id,
-                        "os_reported_printed",
-                        "JOB_STATUS_PRINTED (submission acknowledgement only, not physical-output proof)",
-                    );
-                } else if bits & JOB_STATUS_DELETED != 0 {
-                    conn.execute("UPDATE jobs SET status='failed', updated_at=?1, last_checked_at=?1, last_error='spooler job was deleted/cancelled' WHERE id=?2", params![ts, id]).ok();
-                    record_event(conn, &id, "os_reported_deleted", "JOB_STATUS_DELETED");
-                } else if bits & JOB_STATUS_PRINTING != 0 {
-                    conn.execute("UPDATE jobs SET last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
-                    record_event(conn, &id, "still_printing", &format!("status_bits={bits:#x}"));
-                } else {
-                    conn.execute("UPDATE jobs SET last_checked_at=?1 WHERE id=?2", params![ts, id]).ok();
-                    record_event(conn, &id, "still_pending", &format!("status_bits={bits:#x}"));
-                }
+                apply_status_bits_outcome(conn, &id, &ts, classify_status_bits(bits), bits);
             }
             Ok(None) => {
                 // Ambiguous handoff: spooler no longer has this job id. Do
@@ -294,6 +344,41 @@ pub fn worker_tick_with_config(conn: &Connection, cfg: &BrokerConfig) {
                 record_event(conn, &id, "reconcile_query_failed", &e);
             }
         }
+    }
+
+    // Stuck-queue detection pass (D-15, spike finding #2): a job left in
+    // 'submitted_to_os' for over STUCK_QUEUE_THRESHOLD_MS with no status
+    // change may be blocked behind a stuck head-of-queue job on that
+    // printer. Alert-only — this ONLY appends a 'queue_health_alert' event;
+    // it never updates the job's status and never touches the Windows print
+    // queue. The `NOT IN (...)` clause against the events table is the sole
+    // dedup mechanism (do not add a second one) — it is what makes this fire
+    // exactly once per stuck job across repeated ticks.
+    let now_ms_stuck: i64 = now_iso().parse().unwrap_or(0);
+    let mut stmt3 = conn
+        .prepare(
+            "SELECT id, printer_name FROM jobs
+             WHERE status = 'submitted_to_os'
+               AND CAST(? AS INTEGER) - CAST(last_checked_at AS INTEGER) > ?
+               AND id NOT IN (SELECT job_id FROM events WHERE category = 'queue_health_alert')",
+        )
+        .unwrap();
+    let stuck_rows: Vec<(String, String)> = stmt3
+        .query_map(params![now_ms_stuck, STUCK_QUEUE_THRESHOLD_MS], |r| Ok((r.get(0)?, r.get(1)?)))
+        .unwrap()
+        .filter_map(|r| r.ok())
+        .collect();
+    for (id, printer_name) in stuck_rows {
+        record_event(
+            conn,
+            &id,
+            "queue_health_alert",
+            &format!(
+                "job has been submitted_to_os for over {STUCK_QUEUE_THRESHOLD_MS}ms with no status \
+                 change on printer '{printer_name}' — a stuck head-of-queue job may be blocking this \
+                 printer; clear it manually via Windows Print Management"
+            ),
+        );
     }
 
     // Payload-retention purge pass (D-14, confirmed 7-day window): clears
@@ -401,6 +486,96 @@ mod tests {
             count, 1,
             "zero new rows for the same idempotency_key across the simulated restart — no client resubmission"
         );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 4: a job whose WinSpool status query returns JOB_STATUS_DELETED
+    // is recorded with status='cancelled' (not 'failed'), with an
+    // 'os_reported_cancelled' event category — distinct from a genuine
+    // JOB_STATUS_ERROR failure.
+    #[test]
+    fn job_status_deleted_marks_cancelled_not_failed_with_os_reported_cancelled_event() {
+        assert!(matches!(classify_status_bits(JOB_STATUS_DELETED), StatusBitsOutcome::Cancelled));
+
+        let path = temp_db_path("cancelled-split");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES ('job-del', 'idem-del', 'P', 'test', X'00', 'submitted_to_os', 1, '1', '1')",
+            [],
+        )
+        .unwrap();
+
+        apply_status_bits_outcome(&conn, "job-del", "2", classify_status_bits(JOB_STATUS_DELETED), JOB_STATUS_DELETED);
+
+        let status: String = conn
+            .query_row("SELECT status FROM jobs WHERE id='job-del'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(status, "cancelled", "must be its own status, not folded into 'failed'");
+
+        let category: String = conn
+            .query_row(
+                "SELECT category FROM events WHERE job_id='job-del' ORDER BY id DESC LIMIT 1",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(category, "os_reported_cancelled");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 5: a job with status='submitted_to_os' whose last_checked_at is
+    // older than STUCK_QUEUE_THRESHOLD_MS gets exactly one
+    // 'queue_health_alert' event on the tick that first detects it; a second
+    // worker_tick call against the same still-stuck job appends no
+    // additional event; the job's status itself is left unchanged
+    // (alert-only, D-15).
+    #[test]
+    fn stuck_submitted_to_os_job_gets_exactly_one_queue_health_alert_event() {
+        let path = temp_db_path("stuck-queue");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+
+        let now_ms: i64 = now_iso().parse().unwrap();
+        let stale_ms = (now_ms - STUCK_QUEUE_THRESHOLD_MS - 10_000).to_string();
+
+        // win32_job_id left NULL so the reconciliation pass (which requires
+        // win32_job_id IS NOT NULL) does not also touch this row — isolates
+        // the stuck-queue pass under test.
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at, last_checked_at)
+             VALUES ('job-stuck', 'idem-stuck', 'P', 'test', X'00', 'submitted_to_os', 1, ?1, ?1, ?1)",
+            params![stale_ms],
+        )
+        .unwrap();
+
+        worker_tick(&conn);
+
+        let alert_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM events WHERE job_id='job-stuck' AND category='queue_health_alert'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(alert_count, 1, "exactly one alert on first detection");
+
+        let status: String = conn
+            .query_row("SELECT status FROM jobs WHERE id='job-stuck'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(status, "submitted_to_os", "alert-only — status must never change (D-15)");
+
+        worker_tick(&conn);
+        let alert_count2: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM events WHERE job_id='job-stuck' AND category='queue_health_alert'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(alert_count2, 1, "no duplicate alert on a second tick for the same still-stuck job");
+
         let _ = std::fs::remove_file(&path);
     }
 }
