@@ -4,12 +4,12 @@ milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 19
 current_phase_name: Store-Local Durable Printing Service
-status: completed
+status: executing
 stopped_at: Phase 18 complete — all phases complete
-last_updated: "2026-08-27T04:32:23.480Z"
-last_activity: 2026-08-26
-last_activity_desc: Phase 18 complete
-state_head: 614f395eb0633fbfc415a7d22b3c434e315f4e07
+last_updated: "2026-08-27T16:13:54.198Z"
+last_activity: 2026-08-27
+last_activity_desc: Phase 19 execution started
+state_head: 5455776069c90283b2308de663b24bfca62a377e
 progress:
   total_phases: 3
   completed_phases: 3
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 18 — Barcode Scan Product Peek Window
+**Current focus:** Phase 19 — Store-Local Durable Printing Service
 
 ## Current Position
 
-Phase: 19 (Store-Local Durable Printing Service)
-Plan: 0 of 8 in current phase
-Status: Ready to execute
-Last activity: 2026-08-26 — Phase 19 planned (8 plans, 6 waves)
+Phase: 19 (Store-Local Durable Printing Service) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 19
+Last activity: 2026-08-27 — Phase 19 execution started
 
 ## Performance Metrics
 
@@ -111,6 +111,11 @@ Last activity: 2026-08-26 — Phase 19 planned (8 plans, 6 waves)
 - Phase 19 added: Store-Local Durable Printing Service — LAN/VPN-only Windows broker, durable
   acceptance before workflow success, restart-surviving queue, named-printer routing, correlated
   error propagation, and auditable command/event history.
+- Phase 20 added: Store Deployment: Signed Elevated Installer — self-signed cert generation +
+  Trusted-Root import wired into the NSIS pipeline, installer integrity-check script, real
+  `tauri build` + install verification. Remote Supabase bootstrap (180 migrations, real admin
+  seed) and the `installMode`/updater-endpoint config fixes were done directly via `/gsd-explore`
+  2026-08-27, ahead of this phase's planning.
 
 - Phase 17 added: E2E Suite Overhaul — audit and rewrite `e2e/*.spec.ts` to remove residual bar-pos-domain assertions (pool_tables, rappi, KDS, waitlist, combos, ingredients/recipes, promotions — confirmed still present in 10 files including `e2e/helpers/supabase.ts`), add comprehensive coverage of every current supermarket-pos feature/flow/integration/DB transaction with Indian grocery product fixtures, and switch the browser target from `channel: 'chrome'` to agent-browser's bundled Chrome-for-Testing binary (keeping `@playwright/test` as the runner) with an opt-in Playwright UI-mode dashboard.
 

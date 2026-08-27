@@ -8,6 +8,7 @@
 - 🚧 **v1.3 Receipt Designer + Inventory Management Expansion** — Phases 14-17 (in progress)
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
 - 🔜 **v1.5 Store-Local Durable Printing** — Phase 19 (planned, 8 plans across 6 waves; Spike 001 validated)
+- 🔜 **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (proposed, not started — captured via `/gsd-explore`)
 
 ## Phases
 
@@ -75,6 +76,23 @@ architecture against real hardware 2026-08-26. Phase 19 planned 2026-08-27 (8 pl
 
 - [ ] **Phase 19: Store-Local Durable Printing Service** - Harden every existing caller and add a
   durable, auditable Windows print broker with fail-fast acceptance and named-printer routing
+
+### 🔜 v1.6 Store Deployment: Signed Elevated Installer (Proposed)
+
+**Milestone Goal:** Ship a seamless, elevated, self-signed installer for the store machine, wired to
+the remote Supabase project.
+
+**Status:** Remote DB bootstrapped (180 migrations applied), real admin account seeded, NSIS
+`installMode: perMachine` and updater endpoint already fixed via `/gsd-explore` 2026-08-27 — see
+`.planning/notes/store-deployment-installer-decisions.md`. Not yet planned — run
+`/gsd-plan-phase 20` when ready.
+
+- [ ] **Phase 20: Store Deployment: Signed Elevated Installer** - Wire self-signed cert generation +
+  Trusted-Root import into the NSIS build pipeline (`windows/hooks.nsh`, `tauri.conf.json` signing
+  config), write an installer integrity-check script (verifies broker.exe, cert, correct baked
+  Supabase URL, printer hooks are all present in the built artifact), and run a real
+  `npm run tauri build` + full install test confirming a single UAC prompt and no permission
+  failures end-to-end. Depends on Phase 19 (broker sidecar + hooks.nsh).
 
 ## Phase Details
 
