@@ -99,22 +99,24 @@ export function CheckoutPanel() {
 
   if (paymentOpen) {
     return (
-      <PaymentForm
-        tab={syntheticTab}
-        staffId={staffId}
-        processors={processors}
-        onPaymentSuccess={() => undefined}
-        onClose={() => {
-          resetIdempotencyKey();
-          setPaymentOpen(false);
-        }}
-        onDone={() => {
-          toast.success(t('checkoutPanel.saleComplete', { amount: formatMoney(total) }));
-          resetIdempotencyKey();
-          clearCart();
-          setPaymentOpen(false);
-        }}
-      />
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <PaymentForm
+          tab={syntheticTab}
+          staffId={staffId}
+          processors={processors}
+          onPaymentSuccess={() => undefined}
+          onClose={() => {
+            resetIdempotencyKey();
+            setPaymentOpen(false);
+          }}
+          onDone={() => {
+            toast.success(t('checkoutPanel.saleComplete', { amount: formatMoney(total) }));
+            resetIdempotencyKey();
+            clearCart();
+            setPaymentOpen(false);
+          }}
+        />
+      </div>
     );
   }
 
