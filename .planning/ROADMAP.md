@@ -7,6 +7,7 @@
 - ⏸️ **v1.2 Verification & Hardware Hardening** — Phases 11-13 (paused after Phase 11 discussion; requirements/roadmap remain valid for resumption)
 - 🚧 **v1.3 Receipt Designer + Inventory Management Expansion** — Phases 14-17 (in progress)
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
+- 🔜 **v1.5 Store-Local Durable Printing** — Phase 19 (proposed, spike pending)
 
 ## Phases
 
@@ -61,6 +62,18 @@ Full phase details: `.planning/milestones/v1.1-ROADMAP.md` · Phase artifacts: `
 **Status:** Requirements captured via `/gsd-explore` 2026-08-26. Not yet discussed/planned — run `/gsd-discuss-phase 18` when ready to pick this up.
 
 - [ ] **Phase 18: Barcode Scan Product Peek Window** - Separate Tauri window triggered by `/pos` barcode scan, qty/weight entry, existing stock/expiry guards, replace-on-rescan behavior
+
+### 🔜 v1.5 Store-Local Durable Printing (Proposed)
+
+**Milestone Goal:** Route every print command from mobile, desktop, and POS clients through one
+authenticated LAN/VPN-only broker that durably accepts, audits, retries, and delivers work to named
+Windows printers after the originating application closes.
+
+**Status:** Requirements and architecture captured via `/gsd-explore` 2026-08-26. Windows service and
+real-printer feasibility spike is pending at `.planning/spikes/001-windows-print-broker/`.
+
+- [ ] **Phase 19: Store-Local Durable Printing Service** - Harden every existing caller and add a
+  durable, auditable Windows print broker with fail-fast acceptance and named-printer routing
 
 ## Phase Details
 
@@ -246,6 +259,31 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 19: Store-Local Durable Printing Service
+
+**Goal:** Every print command from a LAN/VPN client is either durably accepted by one store-local
+broker with a stable job ID or fails immediately and loudly; accepted work survives application and
+service restarts, routes to its named Windows printer, and remains auditable end to end.
+**Depends on:** Nothing (independent hardware/service hardening; Spike 001 must validate the service
+installation and real printer/spooler boundary before implementation planning)
+**Requirements:** PRN-01, PRN-02, PRN-03, PRN-04, PRN-05, PRN-06, PRN-07
+**Success Criteria** (draft; firm up after Spike 001):
+
+  1. An authenticated mobile or desktop client on LAN/VPN receives success only after the broker
+     durably commits the command; unavailable or rejected submissions return a structured correlated
+     error and produce an actionable toast in UI callers.
+  2. An accepted command survives client exit and broker restart, then reaches the configured named
+     Windows printer queue without requiring the Tauri POS process to remain open.
+  3. Receipt, reprint, caja summary, test-print, and cash-drawer callers all use one submission
+     contract; automated tests prove no failed `Result` is silently discarded.
+  4. Audit queries return command counts and append-only attempts/transitions/errors by time range,
+     origin, printer, and job ID while applying payload retention and access controls.
+  5. Automated fault tests cover broker unavailable, authentication failure, invalid payload,
+     persistence failure, stopped spooler, offline printer, retry exhaustion, duplicate idempotency
+     key, ambiguous handoff, and restart recovery.
+
+**Plans:** TBD
+
 ## Progress
 
 **Execution Order:**
@@ -271,6 +309,7 @@ v1.2 (paused) resumes at Phase 11 → 12 → 13 if picked back up; v1.3 (active)
 | 16. Purchase Orders & Reordering | v1.3 | 4/4 | Complete    | 2026-08-24 |
 | 17. E2E Suite Overhaul | v1.3 | 17/17 | In Progress|  |
 | 18. Barcode Scan Product Peek Window | v1.4 | 0/3 | Planned | - |
+| 19. Store-Local Durable Printing Service | v1.5 | 0/TBD | Proposed | - |
 
 ### Phase 17: E2E Suite Overhaul
 

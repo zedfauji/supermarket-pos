@@ -107,6 +107,9 @@ Last activity: 2026-08-26 — Phase 18 execution started
 
 ### Roadmap Evolution
 
+- Phase 19 added: Store-Local Durable Printing Service — LAN/VPN-only Windows broker, durable
+  acceptance before workflow success, restart-surviving queue, named-printer routing, correlated
+  error propagation, and auditable command/event history.
 - Phase 17 added: E2E Suite Overhaul — audit and rewrite `e2e/*.spec.ts` to remove residual bar-pos-domain assertions (pool_tables, rappi, KDS, waitlist, combos, ingredients/recipes, promotions — confirmed still present in 10 files including `e2e/helpers/supabase.ts`), add comprehensive coverage of every current supermarket-pos feature/flow/integration/DB transaction with Indian grocery product fixtures, and switch the browser target from `channel: 'chrome'` to agent-browser's bundled Chrome-for-Testing binary (keeping `@playwright/test` as the runner) with an opt-in Playwright UI-mode dashboard.
 
 ### Decisions

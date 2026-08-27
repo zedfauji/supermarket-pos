@@ -66,6 +66,35 @@ Milestone goal: scanning a barcode on `/pos` opens a separate detached Tauri win
 
 Scope note: v1 is `/pos`-only. Rollout to other screens (global scan trigger) is deferred — see seed `barcode-peek-global-rollout`.
 
+## v1.5 Requirements — Store-Local Durable Printing (proposed)
+
+Milestone goal: make every print command fail fast at acceptance, survive application restarts after
+acceptance, route through one store-local broker, and remain auditable without any internet service.
+
+### Printing Broker
+
+- [ ] **PRN-01**: Mobile, desktop, and POS clients on the store LAN/VPN submit all receipt, reprint,
+  report, test-print, and cash-drawer print commands to one authenticated store-local broker; the
+  broker is not exposed to the public internet and has no cloud dependency.
+- [ ] **PRN-02**: A print-dependent workflow succeeds only after the broker durably records the job
+  and returns its stable job/correlation ID. Unreachable broker, rejected payload, authentication,
+  persistence, or routing failures fail immediately with a structured error and never report
+  success.
+- [ ] **PRN-03**: An accepted job survives client, Tauri application, and broker process restart and
+  is delivered asynchronously to its configured named Windows printer queue.
+- [ ] **PRN-04**: Every printing boundary propagates and logs normalized structured errors with the
+  same job/correlation ID. UI-originated terminal failures show an actionable toast; background and
+  non-UI callers explicitly handle and log failed results rather than discarding them.
+- [ ] **PRN-05**: The broker retains an auditable command and event history containing origin/actor,
+  printer endpoint, payload hash/reference, timestamps, attempts, state transitions, Windows job ID,
+  and normalized errors, with queryable command counts and retention controls.
+- [ ] **PRN-06**: Delivery uses finite retries only for classified transient failures and reconciles
+  ambiguous Windows-spooler handoffs before resubmission. Stable idempotency keys prevent accidental
+  duplicate jobs.
+- [ ] **PRN-07**: UI and audit states distinguish durable acceptance, submission to Windows,
+  OS-reported completion, failure, cancellation, and unknown status; Windows status is never
+  presented as proof of physical paper output.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -133,11 +162,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02 | Phase 17 (v1.3) | Complete |
 | TEST-03 | Phase 17 (v1.3) | Complete |
 | TEST-04 | Phase 17 (v1.3) | Complete |
+| PRN-01 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-02 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-03 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-04 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-05 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-06 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-07 | Phase 19 (v1.5, proposed) | Pending |
 
 **Coverage:**
 
 - v1.2 requirements (paused, Phase 11 discussion-only): 8 total, 8/8 mapped
 - v1.3 requirements: 13 total, 13/13 mapped (Phase 14: INVR-01..04, Phase 15: RCPD-01/02, Phase 16: PO-01..03, Phase 17: TEST-01..04)
+- v1.5 proposed requirements: 7 total, 7/7 mapped to Phase 19
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*
