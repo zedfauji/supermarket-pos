@@ -235,7 +235,7 @@ describe('testPrint', () => {
   beforeEach(() => {
     delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
     vi.mocked(invoke).mockReset();
-    vi.mocked(invoke).mockResolvedValue(undefined);
+    vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-job-1', status: 'accepted' });
     window.alert = vi.fn();
   });
 
@@ -253,11 +253,36 @@ describe('testPrint', () => {
     expect(window.alert).toHaveBeenCalled();
   });
 
-  it('invokes test_print in Tauri', async () => {
+  it('invokes test_print in Tauri and returns the broker job id (PRN-02)', async () => {
     (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
     const result = await testPrint();
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.jobId).toBe('mock-job-1');
+    }
     expect(invoke).toHaveBeenCalledWith('test_print');
+  });
+
+  it('maps a "broker unreachable" failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
+
+    const result = await testPrint();
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PRINT_BROKER_UNREACHABLE');
+    }
+  });
+
+  it('maps any other submission failure to PRINT_JOB_REJECTED', async () => {
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    vi.mocked(invoke).mockRejectedValue(new Error('broker rejected job: HTTP 400'));
+
+    const result = await testPrint();
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PRINT_JOB_REJECTED');
+    }
   });
 });
 

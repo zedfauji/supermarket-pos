@@ -9,7 +9,7 @@ import i18n from '@shared/lib/i18n';
 import { getCurrentLocale } from '@shared/lib/i18n';
 import { logger } from '@shared/lib/logger-instance';
 import { buildThermalReceiptText } from '@shared/lib/receipt-format';
-import type { Result } from '@shared/lib/result';
+import type { AppErrorCode, Result } from '@shared/lib/result';
 import { ok, err, tauriError } from '@shared/lib/result';
 
 /** Also used by open-product-peek-window/CheckoutPanel to no-op Tauri-only
@@ -169,14 +169,27 @@ export async function printRawText(
   return ok(undefined);
 }
 
-export async function testPrint(): Promise<Result<void>> {
+/**
+ * Broker-backed test print (Phase 19: Store-Local Durable Printing Service).
+ * Returns the broker's durable job id on acceptance — not proof of physical
+ * output (PRN-07). On failure, maps the Rust command's error string onto a
+ * broker-specific AppErrorCode: `PRINT_BROKER_UNREACHABLE` when the broker
+ * itself couldn't be reached within the connect-timeout window (D-12),
+ * `PRINT_JOB_REJECTED` for any other submission failure (auth/payload/
+ * persistence).
+ */
+export async function testPrint(): Promise<Result<{ jobId: string }>> {
   if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('test_print');
-      return ok(undefined);
+      const ack = await invoke<{ job_id: string; status: string }>('test_print');
+      return ok({ jobId: ack.job_id });
     } catch (e) {
-      return err(tauriError(e instanceof Error ? e.message : 'Test print failed', e));
+      const message = e instanceof Error ? e.message : 'Test print failed';
+      const code: AppErrorCode = message.includes('broker unreachable')
+        ? 'PRINT_BROKER_UNREACHABLE'
+        : 'PRINT_JOB_REJECTED';
+      return err({ code, message, raw: e });
     }
   }
   window.alert('Test print is only available in the desktop app (Tauri).');

@@ -265,23 +265,88 @@ pub fn open_cash_drawer() -> Result<(), String> {
     }
 }
 
+/// Response shape for a durably-accepted broker job (Phase 19: Store-Local
+/// Durable Printing Service). `job_id` is the broker's stable UUID for this
+/// print job — never a Windows spooler job id.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct PrintJobAck {
+    pub job_id: String,
+    pub status: String,
+}
+
+const BROKER_URL: &str = "http://127.0.0.1:8973";
+const BROKER_CONNECT_TIMEOUT_MS: u64 = 1500;
+
+/// Wave-2 (Plan 19-02) placeholder: reads the per-store secret from
+/// `%ProgramData%\PrintBroker\client-secret.txt` (first line, trimmed) when
+/// present; falls back to a hardcoded dev-only secret otherwise. This
+/// function's signature does not change in 19-02 — only what the file
+/// contains (a real per-store install-time-generated secret) changes. This is
+/// a second, independent implementation of the same logic as
+/// `broker/src/http.rs`'s `resolve_broker_secret()` — no shared crate needed
+/// for one function.
+fn resolve_broker_secret() -> String {
+    let base = std::env::var("ProgramData").unwrap_or_else(|_| "C:\\ProgramData".to_string());
+    let path = std::path::PathBuf::from(base)
+        .join("PrintBroker")
+        .join("client-secret.txt");
+    if let Ok(content) = fs::read_to_string(&path) {
+        if let Some(first_line) = content.lines().next() {
+            let trimmed = first_line.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
+        }
+    }
+    "dev-only-insecure-secret-CHANGE-AT-INSTALL".to_string()
+}
+
+/// Submits a print job to the store-local broker over authenticated HTTP.
+/// Never falls back to a direct-WinSpool path on failure — an unreachable
+/// broker, a rejected job, or a persistence failure must surface as a real
+/// error, not a silent success (PRN-02). D-12: explicit ~1.5s connect-timeout
+/// and the IPv4 literal `127.0.0.1` (never the hostname `localhost`, which
+/// can add dual-stack DNS resolution delay before a connection attempt).
+async fn submit_to_broker(
+    payload: &[u8],
+    printer_name: &str,
+    origin: &str,
+) -> Result<PrintJobAck, String> {
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_millis(BROKER_CONNECT_TIMEOUT_MS))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let body = serde_json::json!({
+        "idempotency_key": uuid::Uuid::new_v4().to_string(),
+        "printer_name": printer_name,
+        "payload_b64": BASE64_STANDARD.encode(payload),
+        "origin": origin,
+    });
+
+    let resp = client
+        .post(format!("{BROKER_URL}/jobs"))
+        .bearer_auth(resolve_broker_secret())
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("broker unreachable: {e}"))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("broker rejected job: HTTP {}", resp.status()));
+    }
+    resp.json::<PrintJobAck>().await.map_err(|e| e.to_string())
+}
+
 #[tauri::command]
-pub fn test_print() -> Result<(), String> {
+pub async fn test_print() -> Result<PrintJobAck, String> {
     let lines = vec![
         "Bar POS".to_string(),
         "TEST PRINT".to_string(),
         String::new(),
     ];
-    #[cfg_attr(not(target_os = "windows"), allow(unused_variables))]
     let bytes = lines_to_esc_pos(&lines);
-    #[cfg(target_os = "windows")]
-    {
-        try_send_raw(&bytes)
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Thermal printer is only supported on Windows.".to_string())
-    }
+    submit_to_broker(&bytes, "RECEIPT_PRINTER", "test_print").await
 }
 
 #[cfg(test)]
