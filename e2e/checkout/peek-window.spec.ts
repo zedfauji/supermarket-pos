@@ -154,6 +154,50 @@ test.describe('Barcode scan product peek window (PEEK-01..04)', () => {
     }
   });
 
+  test('a low-stock product still gates through the risky-add confirm toast (prohibition: no guard bypass)', async ({
+    page,
+    context,
+  }) => {
+    const admin = getServiceClient();
+    const product = await fetchProduct(CATEGORY_PRODUCT_NAME);
+    const { data: inv, error: invError } = await admin
+      .from('inventory')
+      .select('id, quantity_on_hand, low_stock_threshold')
+      .eq('product_id', product.id)
+      .single();
+    if (invError || !inv) throw new Error(invError?.message ?? 'Seeded inventory row not found');
+    const originalQuantityOnHand = inv.quantity_on_hand;
+    const originalLowStockThreshold = inv.low_stock_threshold;
+    const { error: invUpdateError } = await admin
+      .from('inventory')
+      .update({ quantity_on_hand: 2, low_stock_threshold: 5 })
+      .eq('id', inv.id);
+    if (invUpdateError) throw new Error(invUpdateError.message);
+
+    try {
+      const peekPage = await context.newPage();
+      await injectPeekWindowMock(peekPage);
+      await peekPage.goto(`/?window=peek&barcode=${product.barcode}`);
+      await expect(peekPage.getByRole('heading', { name: product.name })).toBeVisible();
+
+      await peekPage.getByRole('button', { name: /^add to cart$/i }).click();
+
+      await expect(peekPage.getByText(new RegExp(`only 2 left of ${product.name}`, 'i'))).toBeVisible();
+      await expect(page.locator('aside').getByText(product.name, { exact: true })).not.toBeVisible();
+
+      await peekPage.getByRole('button', { name: /^add anyway$/i }).click();
+      await expect(page.locator('aside').getByText(product.name, { exact: true })).toBeVisible();
+    } finally {
+      await admin
+        .from('inventory')
+        .update({
+          quantity_on_hand: originalQuantityOnHand,
+          low_stock_threshold: originalLowStockThreshold,
+        })
+        .eq('id', inv.id);
+    }
+  });
+
   test('a sold-by-weight product opens WeightEntryDialog and relays a weighted line (PEEK-02 weight path)', async ({
     page,
     context,
@@ -189,12 +233,13 @@ test.describe('Barcode scan product peek window (PEEK-01..04)', () => {
     }
   });
 
-  test('an unmatched barcode shows Product not found, no Add to Cart rendered', async ({
+  test('an unmatched barcode shows Product not found, no Add to Cart rendered, and is audited', async ({
     context,
   }) => {
+    const barcode = '9999999999999';
     const peekPage = await context.newPage();
     await injectPeekWindowMock(peekPage);
-    await peekPage.goto('/?window=peek&barcode=9999999999999');
+    await peekPage.goto(`/?window=peek&barcode=${barcode}`);
 
     await expect(peekPage.getByText(/product not found/i)).toBeVisible();
     await expect(
@@ -202,6 +247,24 @@ test.describe('Barcode scan product peek window (PEEK-01..04)', () => {
     ).toBeVisible();
     await expect(peekPage.getByRole('button', { name: /^add to cart$/i })).toHaveCount(0);
     await expect(peekPage.getByRole('button', { name: /^close$/i })).toBeVisible();
+
+    // useLookupProductByBarcode audits a genuine miss (ported from the
+    // now-removed useScanBarcodeToCart.ts, which used to be the only path
+    // that logged this — restored here so the peek window's lookup keeps
+    // the same loss-prevention/traceability trail).
+    await expect
+      .poll(async () => {
+        const { data, error } = await getServiceClient()
+          .from('audit_logs')
+          .select('before')
+          .eq('action', 'barcode.scan_failed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        return (data?.before as { barcode?: string } | null)?.barcode === barcode;
+      })
+      .toBe(true);
   });
 
   test("rescanning a different barcode replaces peek content and relays to main, while main's own independent scan still fires (PEEK-04)", async ({

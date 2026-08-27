@@ -5,9 +5,9 @@ import type { ProductRiskFlag } from './productRiskFlag';
 
 /**
  * Shared confirm-toast gate for a flagged product (zero-price or low-stock,
- * Phase 12 D-04/D-05). Lives in `entities/product/model/` so both a feature
- * (`useScanBarcodeToCart`) and a widget (`CheckoutPanel`) can import it —
- * `features` cannot import a sibling `features` folder (FSD boundary).
+ * Phase 12 D-04/D-05). Lives in `entities/product/model/` so multiple widgets
+ * (`ProductGrid`, `ProductPeekWindow`) can import the same guard rather than
+ * each reimplementing it.
  */
 export function useConfirmRiskyAdd() {
   const { t } = useTranslation('entities');

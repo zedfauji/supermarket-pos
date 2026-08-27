@@ -5,6 +5,29 @@ import type { Product } from '@shared/lib/domain';
 import { logger } from '@shared/lib/logger-instance';
 import { supabase } from '@shared/lib/supabase';
 
+const TERMINAL_ID = (import.meta.env.VITE_TERMINAL_ID as string | undefined) ?? 'POS-1';
+
+// Ported from the now-removed useScanBarcodeToCart.ts (Phase 18 rewired
+// CheckoutPanel to open the peek window instead of that hook) — a genuinely
+// unmatched barcode is still a loss-prevention/traceability event worth
+// auditing, regardless of which UI surfaced the lookup.
+async function auditScanFailed(code: string): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('record_audit', {
+      p_action: 'barcode.scan_failed',
+      p_entity_type: 'product',
+      p_entity_id: null,
+      p_before: { barcode: code },
+      p_after: null,
+      p_terminal_id: TERMINAL_ID,
+      p_user_id: null,
+    } as never);
+    if (error) logger.warn('barcode_scan.audit_failed', { barcode: code, message: error.message });
+  } catch (auditError) {
+    logger.warn('barcode_scan.audit_threw', { barcode: code, error: auditError });
+  }
+}
+
 export function useLookupProductByBarcode() {
   const queryClient = useQueryClient();
 
@@ -51,7 +74,10 @@ export function useLookupProductByBarcode() {
         logger.error('barcode_lookup.failed', { code: error.code, message: error.message });
         return null;
       }
-      if (!data) return null;
+      if (!data) {
+        void auditScanFailed(code);
+        return null;
+      }
       const mapped = mapProductRow(data as unknown as ProductRow);
       if (!mapped.ok) {
         logger.error('barcode_lookup.map_failed', { message: mapped.error.message });
