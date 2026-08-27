@@ -489,6 +489,88 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    // Gap-audit (19-08-PLAN.md Task 3): the "unknown" reconciliation branch
+    // (Ok(None) => mark 'unknown', never resubmit — the single most
+    // safety-critical line in this module, PRN-06/PRN-07) had NO independent
+    // automated test anywhere in this crate's suite — Plan 19-01's own
+    // SUMMARY documented this as a known gap ("reproducing it deterministically
+    // ... requires a live Windows printer object where OpenPrinterW succeeds
+    // but GetJobW returns no data for a submitted job id"). This test closes
+    // that gap using a real, always-present Windows printer object
+    // ("Microsoft Print to PDF") purely for a READ-ONLY GetJobW query against
+    // a win32_job_id that was never actually submitted to it — OpenPrinterW
+    // succeeds (real printer, no hang/interactive-prompt risk since no
+    // StartDocPrinterW call is ever made), GetJobW reports no data for the
+    // bogus job id, exercising the exact Ok(None) branch deterministically.
+    // Skips gracefully (does not fail) if this host has no "Microsoft Print
+    // to PDF" printer object — same documented-platform-gap convention as
+    // read_only_ledger_file_returns_persistence_failed_without_writing_rows
+    // in ledger.rs.
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn ambiguous_handoff_marks_unknown_and_never_resubmits_when_spooler_no_longer_reports_job_id() {
+        const PROBE_PRINTER: &str = "Microsoft Print to PDF";
+        const BOGUS_WIN32_JOB_ID: u32 = 999_999_999;
+
+        // Probe first: skip cleanly if this host lacks the printer object,
+        // rather than failing a test on an environment-dependent precondition.
+        if win_print::query_job_status(PROBE_PRINTER, BOGUS_WIN32_JOB_ID).is_err() {
+            eprintln!(
+                "SKIPPED ambiguous_handoff test: '{PROBE_PRINTER}' printer object not present on \
+                 this host — platform-dependent, see .planning/spikes/CONVENTIONS.md"
+            );
+            return;
+        }
+
+        let path = temp_db_path("ambiguous-handoff");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at, win32_job_id, last_checked_at)
+             VALUES ('job-ambig', 'idem-ambig', ?1, 'test', X'00', 'submitted_to_os', 1, '1', '1', ?2, '1')",
+            params![PROBE_PRINTER, BOGUS_WIN32_JOB_ID],
+        )
+        .unwrap();
+
+        worker_tick(&conn);
+
+        let (status, last_error): (String, Option<String>) = conn
+            .query_row(
+                "SELECT status, last_error FROM jobs WHERE id='job-ambig'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(status, "unknown", "an ambiguous handoff must mark 'unknown', never 'failed'/resubmit");
+        assert!(last_error.unwrap().contains("no longer reports"));
+
+        let category: String = conn
+            .query_row(
+                "SELECT category FROM events WHERE job_id='job-ambig' ORDER BY id DESC LIMIT 1",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(category, "ambiguous_handoff");
+
+        // The single most safety-critical guarantee: a second worker_tick
+        // must NEVER pick this job back up for delivery or reconciliation —
+        // 'unknown' is structurally excluded from both passes' SQL WHERE
+        // clauses (never status='accepted'/'submitted_to_os').
+        worker_tick(&conn);
+        let (status2, attempts2): (String, i64) = conn
+            .query_row(
+                "SELECT status, attempts FROM jobs WHERE id='job-ambig'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(status2, "unknown", "must never auto-resubmit a job once marked unknown");
+        assert_eq!(attempts2, 1, "attempts must not change from a second tick on an unknown job");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     // Test 4: a job whose WinSpool status query returns JOB_STATUS_DELETED
     // is recorded with status='cancelled' (not 'failed'), with an
     // 'os_reported_cancelled' event category — distinct from a genuine
