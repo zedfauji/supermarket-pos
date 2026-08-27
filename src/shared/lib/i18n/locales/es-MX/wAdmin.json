@@ -27,6 +27,23 @@
     "winSpoolJobId": "Trabajo de Windows #{{id}}",
     "noEvents": "Aún no hay eventos registrados para este trabajo."
   },
+  "printJobsTable": {
+    "columnJobId": "ID de trabajo",
+    "columnOrigin": "Origen",
+    "columnPrinter": "Impresora",
+    "columnStatus": "Estado",
+    "columnAttempts": "Intentos",
+    "columnCreatedAt": "Creado el",
+    "viewJobAriaLabel": "Ver trabajo de impresión {{jobId}} del {{createdAt}}",
+    "viewJob": "Ver trabajo de impresión",
+    "loadMoreEntries": "Cargar más registros",
+    "emptyTitle": "Aún no hay trabajos de impresión",
+    "emptyBody": "Los recibos, reimpresiones y reportes enviados a la impresora aparecerán aquí.",
+    "noMatchesTitle": "Ningún trabajo de impresión coincide con estos filtros",
+    "noMatchesBody": "Intenta un rango de fechas, origen o impresora diferente.",
+    "loadErrorTitle": "No se pudieron cargar los trabajos de impresión",
+    "loadErrorDescription": "Verifica que el servicio de impresión (broker) esté en ejecución e intenta de nuevo."
+  },
   "auditLogTable": {
     "columnAction": "Acción",
     "viewDiffAriaLabel": "Ver diferencias de {{action}} el {{date}}",

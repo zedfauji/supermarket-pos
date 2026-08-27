@@ -27,6 +27,23 @@
     "winSpoolJobId": "Windows job #{{id}}",
     "noEvents": "No events recorded for this job yet."
   },
+  "printJobsTable": {
+    "columnJobId": "Job ID",
+    "columnOrigin": "Origin",
+    "columnPrinter": "Printer",
+    "columnStatus": "Status",
+    "columnAttempts": "Attempts",
+    "columnCreatedAt": "Created at",
+    "viewJobAriaLabel": "View print job {{jobId}} from {{createdAt}}",
+    "viewJob": "View print job",
+    "loadMoreEntries": "Load more entries",
+    "emptyTitle": "No print jobs yet",
+    "emptyBody": "Receipts, reprints, and reports sent to the printer will appear here.",
+    "noMatchesTitle": "No print jobs match these filters",
+    "noMatchesBody": "Try a different date range, origin, or printer.",
+    "loadErrorTitle": "Couldn't load print jobs",
+    "loadErrorDescription": "Check that the print broker service is running, then try again."
+  },
   "auditLogTable": {
     "columnAction": "Action",
     "viewDiffAriaLabel": "View diff for {{action}} on {{date}}",
