@@ -23,12 +23,17 @@ use crate::ledger::{now_iso, open_db, record_event};
 /// Production port. LAN/VPN firewall scoping is Plan 19-02's job, not this plan's.
 pub const PORT: u16 = 8973;
 
-/// Wave-2 (Plan 19-02) placeholder: reads the per-store secret from
-/// `%ProgramData%\PrintBroker\client-secret.txt` (first line, trimmed) when
-/// present; falls back to a hardcoded dev-only secret otherwise. This
-/// function's signature does not change in 19-02 — only what the file
-/// contains (a real per-store install-time-generated secret) changes.
+/// Resolves the broker's bearer secret. Prefers the loaded `BrokerConfig`
+/// (Plan 19-02, `config::load_or_init()` — generates a real per-store secret
+/// on first run if none exists yet, otherwise reads the existing one back
+/// unchanged) and falls back to the pre-19-02 direct file-read shape (kept
+/// for any dev instance still pointed at an old config file layout, and as a
+/// defense-in-depth path if `load_or_init()`'s write ever fails).
 pub fn resolve_broker_secret() -> String {
+    let cfg = crate::config::load_or_init();
+    if !cfg.bearer_secret.trim().is_empty() {
+        return cfg.bearer_secret;
+    }
     let path = crate::ledger::data_dir().join("client-secret.txt");
     if let Ok(content) = std::fs::read_to_string(&path) {
         if let Some(first_line) = content.lines().next() {
