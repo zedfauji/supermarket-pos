@@ -3,7 +3,11 @@
     "logoAlt": "Logo de Supermarket POS"
   },
   "audit": {
-    "title": "Registro de auditoría"
+    "title": "Registro de auditoría",
+    "tabs": {
+      "auditLog": "Registro de Auditoría",
+      "printJobs": "Trabajos de Impresión"
+    }
   },
   "editHistory": {
     "title": "Historial de ediciones"
