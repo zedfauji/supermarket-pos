@@ -150,16 +150,29 @@ pub fn handle_submit(conn: &Connection, req: SubmitReq) -> HttpResult {
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn handle_get_job(conn: &Connection, job_id: &str) -> HttpResult {
-    let job: Option<(String, i64, Option<i64>, Option<String>)> = conn
+    let job: Option<(String, String, String, i64, Option<i64>, Option<String>, String, String)> = conn
         .query_row(
-            "SELECT status, attempts, win32_job_id, last_error FROM jobs WHERE id = ?1",
+            "SELECT status, origin, printer_name, attempts, win32_job_id, last_error, created_at, updated_at FROM jobs WHERE id = ?1",
             params![job_id],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            },
         )
         .optional()
         .unwrap_or(None);
-    let Some((status, attempts, win32_job_id, last_error)) = job else {
+    let Some((status, origin, printer_name, attempts, win32_job_id, last_error, created_at, updated_at)) = job
+    else {
         return err_json(404, "not_found", "no job with that id", None);
     };
     let mut stmt = conn
@@ -179,9 +192,13 @@ pub fn handle_get_job(conn: &Connection, job_id: &str) -> HttpResult {
     ok_json(&serde_json::json!({
         "job_id": job_id,
         "status": status,
+        "origin": origin,
+        "printer_name": printer_name,
         "attempts": attempts,
         "win32_job_id": win32_job_id,
         "last_error": last_error,
+        "created_at": created_at,
+        "updated_at": updated_at,
         "events": events,
     }))
 }

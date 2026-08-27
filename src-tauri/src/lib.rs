@@ -1,6 +1,7 @@
 mod commands;
 
 use commands::agent::agent_index_status;
+use commands::print_audit::{get_print_job, get_print_jobs};
 use commands::printer::{open_cash_drawer, print_raw_text, print_receipt, test_print};
 use tauri::Manager;
 
@@ -65,6 +66,8 @@ pub fn run() {
             print_raw_text,
             open_cash_drawer,
             test_print,
+            get_print_jobs,
+            get_print_job,
             get_runtime_config,
             agent_index_status
         ])

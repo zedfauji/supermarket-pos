@@ -1532,6 +1532,55 @@ export const AuditLogFiltersSchema = z.object({
 export type AuditLogFilters = z.infer<typeof AuditLogFiltersSchema>;
 
 // ============================================================================
+// PRINT JOB (Phase 19 — Store-Local Durable Printing Service)
+// ============================================================================
+
+/** 6-way status vocabulary (PRN-07) reported by the store-local print broker. */
+export const PrintJobStatusSchema = z.enum([
+  'accepted',
+  'submitted_to_os',
+  'os_reported_printed',
+  'failed',
+  'cancelled',
+  'unknown',
+]);
+export type PrintJobStatus = z.infer<typeof PrintJobStatusSchema>;
+
+export const PrintJobSchema = z.object({
+  jobId: z.string(),
+  status: PrintJobStatusSchema,
+  origin: z.string(),
+  printerName: z.string(),
+  attempts: z.number(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+});
+export type PrintJob = z.infer<typeof PrintJobSchema>;
+
+export const PrintJobEventSchema = z.object({
+  ts: TimestampSchema,
+  category: z.string(),
+  detail: z.string().nullable(),
+});
+export type PrintJobEvent = z.infer<typeof PrintJobEventSchema>;
+
+export const PrintJobDetailSchema = PrintJobSchema.extend({
+  winSpoolJobId: z.number().nullable(),
+  lastError: z.string().nullable(),
+  events: z.array(PrintJobEventSchema),
+});
+export type PrintJobDetail = z.infer<typeof PrintJobDetailSchema>;
+
+export const PrintJobFiltersSchema = z.object({
+  origin: z.string().optional(),
+  printerName: z.string().optional(),
+  status: PrintJobStatusSchema.optional(),
+  dateFrom: TimestampSchema.optional(),
+  dateTo: TimestampSchema.optional(),
+});
+export type PrintJobFilters = z.infer<typeof PrintJobFiltersSchema>;
+
+// ============================================================================
 // OFFLINE ACTION QUEUE — Phase 15 Plan 04
 // Locked enum: 4 literals only. Pre-Phase-15 queues may contain other types
 // (e.g. 'close-tab') — store rehydration filters those out.
