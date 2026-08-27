@@ -19,6 +19,6 @@
 ;     code, not a failure.
 !macro NSIS_HOOK_POSTINSTALL
   ExecWait '"$INSTDIR\broker\broker.exe" install'
-  ExecWait 'netsh advfirewall firewall add rule name="Store Print Broker" dir=in action=allow program="$INSTDIR\broker\broker.exe" protocol=TCP localport=8973 profile=private'
+  ExecWait 'netsh advfirewall firewall add rule name="Store Print Broker" dir=in action=allow program="$INSTDIR\broker\broker.exe" protocol=TCP localport=8973 profile=private remoteip=LocalSubnet'
   ExecWait 'sc.exe start PrintBrokerService'
 !macroend

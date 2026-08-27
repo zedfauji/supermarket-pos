@@ -25,8 +25,10 @@
          always runs in Session 0), not a stray manually-started process
          (.planning/spikes/CONVENTIONS.md's SessionId/ParentProcessId
          pattern).
-      3. Get-NetFirewallRule -DisplayName "Store Print Broker" exists and its
-         associated port filter shows LocalPort=8973/Protocol=TCP.
+      3. Get-NetFirewallRule -DisplayName "Store Print Broker" exists, its
+         associated port filter shows LocalPort=8973/Protocol=TCP, and its
+         associated address filter shows RemoteAddress=LocalSubnet (scoped
+         by remote IP range, not by network profile alone).
       4. $env:ProgramData\PrintBroker\client-secret.txt exists and is
          non-empty.
       5. An HTTP GET to http://127.0.0.1:8973/health returns {"ok":true}.
@@ -86,7 +88,15 @@ if ($portFilter.Protocol -ne 'TCP') {
 if ($portFilter.LocalPort -ne '8973') {
     Fail "'Store Print Broker' firewall rule LocalPort is '$($portFilter.LocalPort)', expected '8973'."
 }
-Write-Host "OK: 'Store Print Broker' firewall rule exists (TCP/8973)." -ForegroundColor Green
+
+$addressFilter = $rule | Get-NetFirewallAddressFilter
+if (-not $addressFilter) {
+    Fail "'Store Print Broker' firewall rule has no associated address filter."
+}
+if ($addressFilter.RemoteAddress -ne 'LocalSubnet') {
+    Fail "'Store Print Broker' firewall rule RemoteAddress is '$($addressFilter.RemoteAddress)', expected 'LocalSubnet' — the rule is scoped by network profile only, not by remote IP range, which is broader than PRN-01 requires."
+}
+Write-Host "OK: 'Store Print Broker' firewall rule exists (TCP/8973, RemoteAddress=LocalSubnet)." -ForegroundColor Green
 
 # --- Check 4: per-store secret file exists and is non-empty -----------------
 $secretPath = Join-Path $env:ProgramData 'PrintBroker\client-secret.txt'
