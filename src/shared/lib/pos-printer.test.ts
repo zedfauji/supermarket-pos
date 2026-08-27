@@ -5,6 +5,7 @@ import { ReceiptSettingsSchema, type ReceiptSettings } from './domain';
 import type { ReceiptData } from './edge-function-contracts';
 import {
   openCashDrawer,
+  printJobErrorCopyKey,
   printRawText,
   printReceipt,
   receiptDataToPrinterLines,
@@ -41,6 +42,23 @@ function sampleReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     ...overrides,
   };
 }
+
+describe('printJobErrorCopyKey', () => {
+  it('maps PRINT_BROKER_UNREACHABLE to the brokerUnreachable copy key', () => {
+    expect(printJobErrorCopyKey('PRINT_BROKER_UNREACHABLE')).toBe(
+      'common:printJobError.brokerUnreachable'
+    );
+  });
+
+  it('maps PRINT_JOB_REJECTED to the rejected copy key', () => {
+    expect(printJobErrorCopyKey('PRINT_JOB_REJECTED')).toBe('common:printJobError.rejected');
+  });
+
+  it('maps PRINT_JOB_UNKNOWN and any other unmapped code to the failed fallback copy key', () => {
+    expect(printJobErrorCopyKey('PRINT_JOB_UNKNOWN')).toBe('common:printJobError.failed');
+    expect(printJobErrorCopyKey('NETWORK_OFFLINE')).toBe('common:printJobError.failed');
+  });
+});
 
 describe('receiptDataToPrinterLines', () => {
   it('builds fully-translated lines (locale-resolved) for Rust print_receipt', () => {

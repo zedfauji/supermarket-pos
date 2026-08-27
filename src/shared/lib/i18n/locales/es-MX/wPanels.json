@@ -133,8 +133,6 @@
     "printRappi": "Rappi:       {{amount}}",
     "printNetTotal": "Total neto:  {{amount}}",
     "printOpenTabs": "Cuentas abiertas: {{amount}}",
-    "summaryPrinted": "Resumen impreso.",
-    "printFailed": "Error al imprimir: {{message}}",
     "title": "Caja",
     "description": "Sesión diaria del negocio. Todas las cuentas requieren una caja abierta.",
     "statusLabel": "Estado:",

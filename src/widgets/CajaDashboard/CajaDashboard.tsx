@@ -18,7 +18,7 @@ import { useStaffStore } from '@entities/staff/model/store';
 import { useOpenTabsPendingTotal } from '@entities/tab';
 
 import { formatMoney } from '@shared/lib/format';
-import { printRawText } from '@shared/lib/pos-printer';
+import { printJobErrorCopyKey, printRawText } from '@shared/lib/pos-printer';
 import { LoadingSpinner, MoneyDisplay } from '@shared/ui';
 import { MoneyInput } from '@shared/ui/MoneyInput';
 import { POSButton } from '@shared/ui/POSButton';
@@ -189,10 +189,11 @@ export function CajaDashboard() {
     const result = await printRawText(lines, { autoCut: receiptSettings.data?.autoCut });
     setIsPrinting(false);
 
-    if (result.ok) {
-      toast.success(t('cajaDashboard.summaryPrinted'));
-    } else {
-      toast.error(t('cajaDashboard.printFailed', { message: result.error.message }));
+    // No toast on success — a successful durable acceptance stays silent
+    // (status badge only, wired in a later plan); see UI-SPEC's
+    // no-success-toast rule (PRN-04/UX).
+    if (!result.ok) {
+      toast.error(t(printJobErrorCopyKey(result.error.code)));
     }
   }
 

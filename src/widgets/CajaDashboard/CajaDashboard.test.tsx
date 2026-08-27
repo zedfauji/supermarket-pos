@@ -5,6 +5,7 @@
 
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { toast } from 'sonner';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type * as EntityCaja from '@entities/caja';
 import { useCajaStore } from '@entities/caja/model/store';
@@ -85,9 +86,13 @@ vi.mock('@features/register-caja-entry', () => ({
 // Mock printRawText (Tauri IPC)
 // ---------------------------------------------------------------------------
 
-vi.mock('@shared/lib/pos-printer', () => ({
-  printRawText: vi.fn().mockResolvedValue({ ok: true }),
-}));
+vi.mock('@shared/lib/pos-printer', async importOriginal => {
+  const actual = await importOriginal<typeof posPrinter>();
+  return {
+    ...actual,
+    printRawText: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Mock sonner
@@ -260,6 +265,42 @@ describe('CajaDashboard', () => {
     expect(printArg).toContain('$100.00'); // rappi
     expect(printArg).toContain('$900.00'); // net = 500+300+100
     expect(printArg).toContain('$150.00'); // open tabs pending
+  });
+
+  it('shows the translated rejected copy (not the raw message) on Print Summary failure, and does not silently discard the Result', async () => {
+    vi.spyOn(posPrinter, 'printRawText').mockResolvedValue({
+      ok: false,
+      error: { code: 'PRINT_JOB_REJECTED', message: 'y' },
+    });
+
+    renderDashboard();
+
+    const printBtn = screen.getByRole('button', { name: /print summary/i });
+    fireEvent.click(printBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Printer rejected this job. Check the printer name in Settings and try again.'
+      );
+    });
+  });
+
+  it('shows no toast on a successful Print Summary (no-success-toast rule)', async () => {
+    vi.spyOn(posPrinter, 'printRawText').mockResolvedValue({
+      ok: true,
+      data: { jobId: 'mock-job' },
+    });
+
+    renderDashboard();
+
+    const printBtn = screen.getByRole('button', { name: /print summary/i });
+    fireEvent.click(printBtn);
+
+    await waitFor(() => {
+      expect(posPrinter.printRawText).toHaveBeenCalled();
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('shows net revenue of $170.00 when cash=$100, card=$50, rappi=$20', () => {

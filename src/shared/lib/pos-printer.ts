@@ -47,6 +47,25 @@ function mapPrintInvokeError(e: unknown, fallbackMessage: string): AppError {
 }
 
 /**
+ * Single shared source of truth (Plan 19-04, D-11) for selecting a print
+ * job's failure-class toast copy key — every UI-originated caller
+ * (PaymentForm, CajaDashboard, ReceiptPreview, ReprintButton,
+ * HardwareSettingsTab) uses this instead of five independent ad-hoc
+ * mappings. Returns an i18n key (not translated text); callers pass it
+ * through their own `t()`.
+ */
+export function printJobErrorCopyKey(code: AppErrorCode): string {
+  switch (code) {
+    case 'PRINT_BROKER_UNREACHABLE':
+      return 'common:printJobError.brokerUnreachable';
+    case 'PRINT_JOB_REJECTED':
+      return 'common:printJobError.rejected';
+    default:
+      return 'common:printJobError.failed';
+  }
+}
+
+/**
  * Builds fully-translated (acting staff's locale) receipt lines for Rust
  * `print_receipt`, which only ESC/POS-encodes them (no label strings in Rust).
  */

@@ -133,8 +133,6 @@
     "printRappi": "Rappi:       {{amount}}",
     "printNetTotal": "Net Total:   {{amount}}",
     "printOpenTabs": "Open Tabs:   {{amount}}",
-    "summaryPrinted": "Summary printed.",
-    "printFailed": "Print failed: {{message}}",
     "title": "Caja",
     "description": "Daily business session. All tabs require an open caja.",
     "statusLabel": "Status:",
