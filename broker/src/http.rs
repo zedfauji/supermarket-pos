@@ -14,7 +14,7 @@ use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::sync::Arc;
 
 use base64::Engine;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection, OptionalExtension, ToSql};
 use serde::{Deserialize, Serialize};
 use tiny_http::{Header, Method, Response, Server};
 
@@ -150,16 +150,29 @@ pub fn handle_submit(conn: &Connection, req: SubmitReq) -> HttpResult {
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn handle_get_job(conn: &Connection, job_id: &str) -> HttpResult {
-    let job: Option<(String, i64, Option<i64>, Option<String>)> = conn
+    let job: Option<(String, String, String, i64, Option<i64>, Option<String>, String, String)> = conn
         .query_row(
-            "SELECT status, attempts, win32_job_id, last_error FROM jobs WHERE id = ?1",
+            "SELECT status, origin, printer_name, attempts, win32_job_id, last_error, created_at, updated_at FROM jobs WHERE id = ?1",
             params![job_id],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            },
         )
         .optional()
         .unwrap_or(None);
-    let Some((status, attempts, win32_job_id, last_error)) = job else {
+    let Some((status, origin, printer_name, attempts, win32_job_id, last_error, created_at, updated_at)) = job
+    else {
         return err_json(404, "not_found", "no job with that id", None);
     };
     let mut stmt = conn
@@ -179,11 +192,122 @@ pub fn handle_get_job(conn: &Connection, job_id: &str) -> HttpResult {
     ok_json(&serde_json::json!({
         "job_id": job_id,
         "status": status,
+        "origin": origin,
+        "printer_name": printer_name,
         "attempts": attempts,
         "win32_job_id": win32_job_id,
         "last_error": last_error,
+        "created_at": created_at,
+        "updated_at": updated_at,
         "events": events,
     }))
+}
+
+/// Hand-rolled query-string filters for `GET /jobs` — no URL-parsing crate
+/// added, matching this module's existing style (tiny_http exposes the raw
+/// URL including its query string via `request.url()`; we split on `?` and
+/// `&`/`=` ourselves).
+#[derive(Default)]
+struct JobListFilters {
+    origin: Option<String>,
+    printer_name: Option<String>,
+    status: Option<String>,
+    from_ms: Option<i64>,
+    to_ms: Option<i64>,
+    limit: Option<i64>,
+    offset: Option<i64>,
+}
+
+fn parse_job_list_query(query_string: &str) -> JobListFilters {
+    let mut f = JobListFilters::default();
+    for pair in query_string.split('&') {
+        if pair.is_empty() {
+            continue;
+        }
+        let mut parts = pair.splitn(2, '=');
+        let key = parts.next().unwrap_or("");
+        let value = parts.next().unwrap_or("");
+        match key {
+            "origin" if !value.is_empty() => f.origin = Some(value.to_string()),
+            "printer_name" if !value.is_empty() => f.printer_name = Some(value.to_string()),
+            "status" if !value.is_empty() => f.status = Some(value.to_string()),
+            "from_ms" => f.from_ms = value.parse().ok(),
+            "to_ms" => f.to_ms = value.parse().ok(),
+            "limit" => f.limit = value.parse().ok(),
+            "offset" => f.offset = value.parse().ok(),
+            _ => {}
+        }
+    }
+    f
+}
+
+/// `GET /jobs` — filterable, paginated job list (PRN-05). Returns summary
+/// fields only (no payload, no event history — those stay `GET /jobs/{id}`-
+/// only). Checked before the single-job `/jobs/{id}` route in
+/// `run_http_server` so a bare `/jobs` or `/jobs?...` never falls into that
+/// path.
+pub fn handle_list_jobs(conn: &Connection, query_string: &str) -> HttpResult {
+    let f = parse_job_list_query(query_string);
+    let limit: i64 = f.limit.unwrap_or(50).clamp(1, 500);
+    let offset: i64 = f.offset.unwrap_or(0).max(0);
+
+    let mut where_clauses: Vec<&str> = vec!["1=1"];
+    let mut bind: Vec<Box<dyn ToSql>> = Vec::new();
+
+    if let Some(origin) = &f.origin {
+        where_clauses.push("AND origin = ?");
+        bind.push(Box::new(origin.clone()));
+    }
+    if let Some(printer_name) = &f.printer_name {
+        where_clauses.push("AND printer_name = ?");
+        bind.push(Box::new(printer_name.clone()));
+    }
+    if let Some(status) = &f.status {
+        where_clauses.push("AND status = ?");
+        bind.push(Box::new(status.clone()));
+    }
+    if let Some(from_ms) = f.from_ms {
+        where_clauses.push("AND CAST(created_at AS INTEGER) >= ?");
+        bind.push(Box::new(from_ms));
+    }
+    if let Some(to_ms) = f.to_ms {
+        where_clauses.push("AND CAST(created_at AS INTEGER) <= ?");
+        bind.push(Box::new(to_ms));
+    }
+    let where_sql = where_clauses.join(" ");
+
+    let list_sql = format!(
+        "SELECT id, status, origin, printer_name, attempts, created_at, updated_at FROM jobs WHERE {where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    );
+    let count_sql = format!("SELECT COUNT(*) FROM jobs WHERE {where_sql}");
+
+    let mut list_bind: Vec<&dyn ToSql> = bind.iter().map(|b| b.as_ref()).collect();
+    list_bind.push(&limit);
+    list_bind.push(&offset);
+
+    let mut stmt = conn.prepare(&list_sql).unwrap();
+    let jobs: Vec<serde_json::Value> = stmt
+        .query_map(list_bind.as_slice(), |r| {
+            Ok(serde_json::json!({
+                "job_id": r.get::<_, String>(0)?,
+                "status": r.get::<_, String>(1)?,
+                "origin": r.get::<_, String>(2)?,
+                "printer_name": r.get::<_, String>(3)?,
+                "attempts": r.get::<_, i64>(4)?,
+                "created_at": r.get::<_, String>(5)?,
+                "updated_at": r.get::<_, String>(6)?,
+            }))
+        })
+        .unwrap()
+        .filter_map(|r| r.ok())
+        .collect();
+
+    let count_bind: Vec<&dyn ToSql> = bind.iter().map(|b| b.as_ref()).collect();
+    let total: i64 = conn
+        .query_row(&count_sql, count_bind.as_slice(), |r| r.get(0))
+        .unwrap_or(0);
+
+    ok_json(&serde_json::json!({ "jobs": jobs, "total": total }))
 }
 
 pub fn handle_audit(conn: &Connection) -> HttpResult {
@@ -265,6 +389,11 @@ pub fn run_http_server(shutdown: Arc<AtomicBool>, db_path: &Path, bind_addr: &st
                     )));
                 }
             }
+        } else if method == Method::Get && (url == "/jobs" || url.starts_with("/jobs?")) {
+            // Checked BEFORE the /jobs/{id} branch below so a bare /jobs or
+            // /jobs?... never falls into the single-job-lookup path.
+            let query_string = url.splitn(2, '?').nth(1).unwrap_or("");
+            let _ = request.respond(to_tiny_http_response(handle_list_jobs(&conn, query_string)));
         } else if method == Method::Get && url.starts_with("/jobs/") {
             let id = url.trim_start_matches("/jobs/");
             let _ = request.respond(to_tiny_http_response(handle_get_job(&conn, id)));
@@ -370,6 +499,79 @@ mod tests {
             )
             .unwrap();
         assert_eq!(count, 1);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    fn insert_job(conn: &Connection, id: &str, origin: &str, status: &str, created_at: &str) {
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES (?1, ?1, 'P', ?2, X'00', ?3, 0, ?4, ?4)",
+            params![id, origin, status, created_at],
+        )
+        .unwrap();
+    }
+
+    // Test 1: GET /jobs with no query params returns jobs ordered by
+    // created_at DESC (most recent first), as {jobs, total}, with summary
+    // fields only (no payload/events).
+    #[test]
+    fn list_jobs_no_filters_returns_jobs_ordered_desc_by_created_at() {
+        let path = temp_db_path("list-no-filters");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        insert_job(&conn, "job-a", "receipt", "accepted", "100");
+        insert_job(&conn, "job-b", "receipt", "accepted", "300");
+        insert_job(&conn, "job-c", "receipt", "accepted", "200");
+
+        let resp = handle_list_jobs(&conn, "");
+        assert_eq!(resp.status, 200);
+        let body: serde_json::Value = serde_json::from_slice(&resp.body).unwrap();
+        assert_eq!(body["total"], 3);
+        let jobs = body["jobs"].as_array().unwrap();
+        assert_eq!(jobs.len(), 3);
+        assert_eq!(jobs[0]["job_id"], "job-b");
+        assert_eq!(jobs[1]["job_id"], "job-c");
+        assert_eq!(jobs[2]["job_id"], "job-a");
+        assert!(jobs[0].get("payload").is_none());
+        assert!(jobs[0].get("events").is_none());
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 2: GET /jobs?origin=receipt&status=failed returns only jobs
+    // matching both filters.
+    #[test]
+    fn list_jobs_filters_by_origin_and_status() {
+        let path = temp_db_path("list-origin-status");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        insert_job(&conn, "job-match", "receipt", "failed", "100");
+        insert_job(&conn, "job-wrong-status", "receipt", "accepted", "100");
+        insert_job(&conn, "job-wrong-origin", "test_print", "failed", "100");
+
+        let resp = handle_list_jobs(&conn, "origin=receipt&status=failed");
+        let body: serde_json::Value = serde_json::from_slice(&resp.body).unwrap();
+        let jobs = body["jobs"].as_array().unwrap();
+        assert_eq!(jobs.len(), 1);
+        assert_eq!(jobs[0]["job_id"], "job-match");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 3: GET /jobs?from_ms=X&to_ms=Y returns only jobs with created_at
+    // in that range.
+    #[test]
+    fn list_jobs_filters_by_date_range() {
+        let path = temp_db_path("list-date-range");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+        insert_job(&conn, "job-too-early", "receipt", "accepted", "100");
+        insert_job(&conn, "job-in-range", "receipt", "accepted", "200");
+        insert_job(&conn, "job-too-late", "receipt", "accepted", "300");
+
+        let resp = handle_list_jobs(&conn, "from_ms=150&to_ms=250");
+        let body: serde_json::Value = serde_json::from_slice(&resp.body).unwrap();
+        let jobs = body["jobs"].as_array().unwrap();
+        assert_eq!(jobs.len(), 1);
+        assert_eq!(jobs[0]["job_id"], "job-in-range");
         let _ = std::fs::remove_file(&path);
     }
 

@@ -65,10 +65,24 @@
     "key0": "Tecla 0",
     "backspace": "Borrar"
   },
+  "printJobConfirm": {
+    "title": "¿Esto se imprimió?",
+    "description": "No pudimos confirmar que este trabajo llegó a la impresora. Revisa el recibo físico o el papel antes de responder.",
+    "yes": "Sí, se imprimió",
+    "no": "No, imprimir de nuevo"
+  },
   "printJobError": {
     "brokerUnreachable": "Servicio de impresión no disponible — verifica que el broker de impresión esté ejecutándose.",
     "rejected": "La impresora rechazó este trabajo. Verifica el nombre de la impresora en Configuración e intenta de nuevo.",
     "failed": "No se pudo imprimir después de varios intentos. Intenta de nuevo o revisa la impresora."
+  },
+  "printJobStatus": {
+    "accepted": "En cola",
+    "submittedToOs": "Enviado a la impresora",
+    "completed": "Impreso",
+    "failed": "Fallido",
+    "unknown": "Necesita confirmación",
+    "cancelled": "Cancelado"
   },
   "quantityControl": {
     "group": "Control de cantidad",

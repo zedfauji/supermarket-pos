@@ -65,10 +65,24 @@
     "key0": "Key 0",
     "backspace": "Backspace"
   },
+  "printJobConfirm": {
+    "title": "Did this print?",
+    "description": "We couldn't confirm this job reached the printer. Check the physical receipt or paper before answering.",
+    "yes": "Yes, it printed",
+    "no": "No, print again"
+  },
   "printJobError": {
     "brokerUnreachable": "Print service unavailable — check that the print broker is running.",
     "rejected": "Printer rejected this job. Check the printer name in Settings and try again.",
     "failed": "Couldn't print after several attempts. Try again or check the printer."
+  },
+  "printJobStatus": {
+    "accepted": "Queued",
+    "submittedToOs": "Sent to printer",
+    "completed": "Printed",
+    "failed": "Failed",
+    "unknown": "Needs confirmation",
+    "cancelled": "Cancelled"
   },
   "quantityControl": {
     "group": "Quantity control",

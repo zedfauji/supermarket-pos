@@ -13,10 +13,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { fetchReceiptDataForPayment, paymentReceiptKeys, type Payment } from '@entities/payment';
+import { usePrintJob } from '@entities/print-job';
 import { useReceiptSettings } from '@entities/settings';
 import { ReceiptSettingsSchema } from '@shared/lib/domain';
-import { printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
-import { POSButton } from '@shared/ui';
+import { isTauri, printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
+import { POSButton, PrintJobStatusBadge } from '@shared/ui';
 
 export interface ReprintButtonProps {
   payment: Payment;
@@ -25,8 +26,15 @@ export interface ReprintButtonProps {
 export function ReprintButton({ payment }: ReprintButtonProps) {
   const { t } = useTranslation('wPanels');
   const [busy, setBusy] = useState(false);
+  // Tracks the most recent printReceipt() call's job id from this specific
+  // button — undefined until the first print attempt resolves, so no badge
+  // renders before that (D-05, augments the existing button, doesn't
+  // replace it). Non-Tauri (web fallback) prints have no durable broker job
+  // behind them, so they never set this either.
+  const [jobId, setJobId] = useState<string | undefined>(undefined);
   const { data: settings } = useReceiptSettings();
   const queryClient = useQueryClient();
+  const { data: job } = usePrintJob(jobId ?? '');
 
   async function handleClick() {
     setBusy(true);
@@ -38,10 +46,12 @@ export function ReprintButton({ payment }: ReprintButtonProps) {
       const printed = await printReceipt(receipt, settings ?? ReceiptSettingsSchema.parse({}));
       if (!printed.ok) {
         toast.error(t(printJobErrorCopyKey(printed.error.code)));
+      } else if (isTauri()) {
+        setJobId(printed.data.jobId);
       }
-      // No toast on success — a successful durable acceptance stays silent
-      // (status badge only, wired in a later plan); see UI-SPEC's
-      // no-success-toast rule (PRN-04/UX).
+      // No toast on success — a successful durable acceptance stays silent;
+      // the status badge is the only signal of eventual outcome, per
+      // UI-SPEC's no-success-toast rule (PRN-04/UX).
     } catch {
       toast.error(t('paymentPane.reprintDataFailed'));
     } finally {
@@ -50,15 +60,25 @@ export function ReprintButton({ payment }: ReprintButtonProps) {
   }
 
   return (
-    <POSButton
-      variant="outline"
-      size="sm"
-      disabled={busy}
-      onClick={() => {
-        void handleClick();
-      }}
-    >
-      {busy ? t('paymentPane.reprinting') : t('paymentPane.reprint')}
-    </POSButton>
+    <div className="flex items-center gap-2">
+      <POSButton
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={() => {
+          void handleClick();
+        }}
+      >
+        {busy ? t('paymentPane.reprinting') : t('paymentPane.reprint')}
+      </POSButton>
+      {job && (
+        <PrintJobStatusBadge
+          status={job.status}
+          onReprint={() => {
+            void handleClick();
+          }}
+        />
+      )}
+    </div>
   );
 }

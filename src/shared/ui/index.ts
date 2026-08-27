@@ -22,6 +22,8 @@ export type {
   TabOpenDurationBadgeStatus,
   InventoryStockBadgeStatus,
 } from './StatusBadge';
+export { PrintJobStatusBadge } from './PrintJobStatusBadge';
+export type { PrintJobStatusBadgeProps } from './PrintJobStatusBadge';
 export { ProtectedAction } from './ProtectedAction';
 export type { ProtectedActionProps } from './ProtectedAction';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';

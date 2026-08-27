@@ -87,9 +87,24 @@ export function ConfirmDialog({
   confirmClassName,
 }: ConfirmDialogProps) {
   const { t } = useTranslation('common');
+  // Radix's AlertDialogAction/AlertDialogCancel are both internally a
+  // DialogPrimitive.Close — clicking EITHER one closes the dialog and fires
+  // onOpenChange(false), which would otherwise also invoke onCancel below
+  // (double-firing onCancel on a Cancel click, and incorrectly firing
+  // onCancel after a Confirm click). This ref tracks "already handled by an
+  // explicit button click" so onOpenChange only calls onCancel for a true
+  // dismiss (Escape / outside click / no button pressed).
+  const handledRef = React.useRef(false);
+
   const handleConfirm = React.useCallback(async () => {
+    handledRef.current = true;
     await onConfirm();
   }, [onConfirm]);
+
+  const handleCancel = React.useCallback(() => {
+    handledRef.current = true;
+    onCancel();
+  }, [onCancel]);
 
   // Keyboard support
   React.useEffect(() => {
@@ -101,7 +116,7 @@ export function ConfirmDialog({
         void handleConfirm();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        onCancel();
+        handleCancel();
       }
     };
 
@@ -109,13 +124,18 @@ export function ConfirmDialog({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, isLoading, handleConfirm, onCancel]);
+  }, [open, isLoading, handleConfirm, handleCancel]);
 
   return (
     <AlertDialog
       open={open}
       onOpenChange={isOpen => {
-        if (!isOpen) onCancel();
+        if (!isOpen) {
+          if (!handledRef.current) {
+            onCancel();
+          }
+          handledRef.current = false;
+        }
       }}
     >
       <AlertDialogContent>
@@ -125,12 +145,7 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
-          <AlertDialogCancel
-            disabled={isLoading}
-            onClick={() => {
-              onCancel();
-            }}
-          >
+          <AlertDialogCancel disabled={isLoading} onClick={handleCancel}>
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
