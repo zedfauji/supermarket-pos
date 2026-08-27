@@ -66,17 +66,25 @@ Exceptions: none. The confirm dialog's body and the Print Jobs detail Sheet's ev
 
 ## Typography
 
+**Carried-forward chrome (pre-existing, not authored by this phase — informational only, excluded
+from this phase's weight budget):**
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Page title (h2, "Audit") | 24px (`text-2xl`, `font-heading`) | 600 — sanctioned pre-existing exception (unchanged `PageContainer`/`SectionHeader` chrome, this phase does not touch it) | 1.2 |
+| Page title (h2, "Audit") | 24px (`text-2xl`, `font-heading`) | 600 (unchanged `PageContainer`/`SectionHeader` chrome — this phase does not touch it, add it, or style anything to match it) | 1.2 |
+
+**This phase's own type scale (every element this phase authors or restyles):**
+
+| Role | Size | Weight | Line Height |
+|------|------|--------|-------------|
 | Tab trigger label ("Audit Log" / "Print Jobs") | 14px (`text-sm`) | 500 (medium, shadcn `TabsTrigger` default) | 1.2 |
 | Body / table cells / dialog description | 14px (`text-sm`) | 400 (regular) | 1.5 |
-| Status badge text | 12px (`text-xs`, shadcn `Badge` default) | 600 (semibold, shadcn `Badge` default — pre-existing, matches every other `StatusBadge` tier already shipped) | 1.5 |
+| Status badge text (`PrintJobStatusBadge`) | 12px (`text-xs`) | 500 (medium — explicit `font-medium` override on the new `PrintJobStatusBadge`; deliberately does **not** use shadcn `Badge`'s default `font-semibold`/600, to stay inside this phase's own weight budget) | 1.5 |
 
-**Weight budget: exactly 2 active weights — {400, 500}**, plus the one sanctioned pre-existing
-exception (600, page-title chrome + badge text, both unchanged shadcn/`PageContainer` defaults this
-phase does not introduce or alter). This mirrors Phase 16's exact precedent for carrying forward a
-single legacy exception rather than re-litigating shared chrome.
+**Weight budget: exactly 2 active weights — {400, 500}** across every element this phase authors
+(tab triggers, table/dialog body text, and the new status badge). The pre-existing page-title h2 above
+is unowned `PageContainer` chrome this phase never renders, edits, or extends — it is listed only for
+completeness and is not part of this phase's typography contract or weight count.
 
 ---
 
@@ -193,6 +201,11 @@ convention).
 
 ## Print Jobs Tab Contract (`PrintJobsTable`)
 
+- **Primary visual anchor:** the color-coded Status column (`PrintJobStatusBadge`) is the tab's primary
+  visual anchor — it is the one column a cashier/manager scans first to triage the table (amber
+  `unknown` rows demand attention, `pos-danger` red `failed` rows are the next priority), consistent
+  with the color contract declared above (accent reserved for tab-trigger/focus state only, never for
+  status badges themselves).
 - **Component:** `DataTable` (existing, TanStack-Table-backed) — same choice `AuditLogTable` already
   made, for the same reason (multiple sortable/filterable columns: origin, printer, status, time).
 - **Columns:** Job ID (`EntityIdCell`-style short/copyable cell, matches `AuditLogTable`'s
