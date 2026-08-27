@@ -1,7 +1,7 @@
 mod commands;
 
 use commands::agent::agent_index_status;
-use commands::printer::{open_cash_drawer, print_receipt, test_print};
+use commands::printer::{open_cash_drawer, print_raw_text, print_receipt, test_print};
 use tauri::Manager;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -62,6 +62,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             print_receipt,
+            print_raw_text,
             open_cash_drawer,
             test_print,
             get_runtime_config,

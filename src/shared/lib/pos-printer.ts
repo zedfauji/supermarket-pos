@@ -9,7 +9,7 @@ import i18n from '@shared/lib/i18n';
 import { getCurrentLocale } from '@shared/lib/i18n';
 import { logger } from '@shared/lib/logger-instance';
 import { buildThermalReceiptText } from '@shared/lib/receipt-format';
-import type { AppErrorCode, Result } from '@shared/lib/result';
+import type { AppError, AppErrorCode, Result } from '@shared/lib/result';
 import { ok, err, tauriError } from '@shared/lib/result';
 
 /** Also used by open-product-peek-window/CheckoutPanel to no-op Tauri-only
@@ -24,8 +24,26 @@ export function isTauri(): boolean {
 const MAX_PRINT_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 700;
 
+// Placeholder job id for the non-Tauri (browser) fallback paths — there is
+// no durable broker job behind a `window.print()` popup.
+const WEB_FALLBACK_JOB_ID = 'web-fallback';
+
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Maps a broker-submission `invoke()` rejection onto the same
+ * PRINT_BROKER_UNREACHABLE / PRINT_JOB_REJECTED split `testPrint()`
+ * established in Plan 19-01 (D-12): unreachable-within-connect-timeout vs.
+ * any other submission failure (auth/payload/persistence).
+ */
+function mapPrintInvokeError(e: unknown, fallbackMessage: string): AppError {
+  const message = e instanceof Error ? e.message : fallbackMessage;
+  const code: AppErrorCode = message.includes('broker unreachable')
+    ? 'PRINT_BROKER_UNREACHABLE'
+    : 'PRINT_JOB_REJECTED';
+  return { code, message, raw: e };
 }
 
 /**
@@ -61,10 +79,19 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/**
+ * Broker-backed receipt print (Phase 19: Store-Local Durable Printing
+ * Service). Returns the broker's durable job id on acceptance, mapped the
+ * same way {@link testPrint} maps its error classes. The retry loop below
+ * only ever covers the local `invoke()` IPC call to the Rust command layer —
+ * broker-side retry (per failure class) happens after durable acceptance,
+ * inside the broker itself (Plan 19-05); stacking a second network-level
+ * retry here would risk duplicate physical print jobs.
+ */
 export async function printReceipt(
   data: ReceiptData,
   settings: ReceiptSettings
-): Promise<Result<void>> {
+): Promise<Result<{ jobId: string }>> {
   if (isTauri()) {
     const { invoke } = await import('@tauri-apps/api/core');
     const toastId = `print-${data.receiptNumber}`;
@@ -72,7 +99,7 @@ export async function printReceipt(
 
     for (let attempt = 1; attempt <= MAX_PRINT_ATTEMPTS; attempt++) {
       try {
-        await invoke('print_receipt', {
+        const ack = await invoke<{ job_id: string; status: string }>('print_receipt', {
           lines: receiptDataToPrinterLines(data, settings),
           logoDataUrl: settings.logoDataUrl,
           paperWidthChars: settings.paperWidthChars,
@@ -80,7 +107,7 @@ export async function printReceipt(
         if (attempt > 1) {
           toast.success(i18n.t('featOrders:printer.printSucceededAfterRetry'), { id: toastId });
         }
-        return ok(undefined);
+        return ok({ jobId: ack.job_id });
       } catch (e) {
         lastError = e;
         logger.warn('printer.receipt.attempt_failed', { attempt, raw: String(e) });
@@ -97,27 +124,30 @@ export async function printReceipt(
     toast.error(i18n.t('featOrders:printer.printFailedAfterRetries', { max: MAX_PRINT_ATTEMPTS }), {
       id: toastId,
     });
-    return err(
-      tauriError(lastError instanceof Error ? lastError.message : 'Print failed', lastError)
-    );
+    return err(mapPrintInvokeError(lastError, 'Print failed'));
   }
   logger.info('printer.receipt.web_fallback', { receiptNumber: data.receiptNumber });
   printReceiptWebFallback(data, settings);
-  return ok(undefined);
+  return ok({ jobId: WEB_FALLBACK_JOB_ID });
 }
 
-export async function openCashDrawer(): Promise<Result<void>> {
+/**
+ * Broker-backed cash-drawer kick (Phase 19). Single attempt, no retry loop —
+ * matches the pre-migration shape. See {@link printReceipt} for the
+ * error-class mapping this mirrors.
+ */
+export async function openCashDrawer(): Promise<Result<{ jobId: string }>> {
   if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('open_cash_drawer');
-      return ok(undefined);
+      const ack = await invoke<{ job_id: string; status: string }>('open_cash_drawer');
+      return ok({ jobId: ack.job_id });
     } catch (e) {
-      return err(tauriError(e instanceof Error ? e.message : 'Could not open cash drawer', e));
+      return err(mapPrintInvokeError(e, 'Could not open cash drawer'));
     }
   }
   window.alert('Cash drawer is only available when the POS runs in the desktop app (Tauri).');
-  return ok(undefined);
+  return ok({ jobId: WEB_FALLBACK_JOB_ID });
 }
 
 /** Options for {@link printRawText}. */
@@ -132,32 +162,35 @@ const ESC_POS_FULL_CUT = '\x1d\x56\x41\x00';
 /**
  * Prints arbitrary pre-formatted plain text on the thermal printer.
  * Used for pre-cheques, shift summaries, etc. where no ReceiptData is built.
- * In Tauri: invokes `print_raw_text` Rust command.
- * Browser fallback: opens a popup with the text for window.print().
+ * In Tauri: invokes `print_raw_text` Rust command, broker-backed as of
+ * Phase 19 (single attempt, no retry loop — same shape as before). Browser
+ * fallback: opens a popup with the text for window.print().
  *
  * @param options.autoCut - When true, appends ESC/POS full-cut bytes after the text.
  */
 export async function printRawText(
   text: string,
   options?: PrintRawTextOptions
-): Promise<Result<void>> {
+): Promise<Result<{ jobId: string }>> {
   const payload = options?.autoCut === true ? text + ESC_POS_FULL_CUT : text;
 
   if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('print_raw_text', { text: payload });
-      return ok(undefined);
+      const ack = await invoke<{ job_id: string; status: string }>('print_raw_text', {
+        text: payload,
+      });
+      return ok({ jobId: ack.job_id });
     } catch (e) {
       logger.warn('printer.raw_text.failed', { raw: String(e) });
-      return err(tauriError(e instanceof Error ? e.message : 'Print failed', e));
+      return err(mapPrintInvokeError(e, 'Print failed'));
     }
   }
   // Browser fallback: open popup with pre-formatted text
   const w = window.open('', '_blank', 'noopener,noreferrer,width=400,height=600');
   if (!w) {
     logger.warn('printer.raw_text.popup_blocked');
-    return ok(undefined);
+    return ok({ jobId: WEB_FALLBACK_JOB_ID });
   }
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- minimal print fallback when not in Tauri
   w.document.write(
@@ -166,7 +199,7 @@ export async function printRawText(
     )}</pre><script>window.onload=function(){window.print();}</` + `script></body></html>`
   );
   w.document.close();
-  return ok(undefined);
+  return ok({ jobId: WEB_FALLBACK_JOB_ID });
 }
 
 /**

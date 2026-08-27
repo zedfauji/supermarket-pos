@@ -7,7 +7,7 @@ import { renderWithProviders } from '@shared/lib/test-utils';
 import { ReceiptPreview } from './ReceiptPreview';
 
 vi.mock('@shared/lib/pos-printer', () => ({
-  printReceipt: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
+  printReceipt: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
 }));
 
 vi.mock('@entities/settings', () => ({
@@ -40,7 +40,7 @@ const receipt: ReceiptData = {
 describe('ReceiptPreview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(printReceipt).mockResolvedValue({ ok: true, data: undefined });
+    vi.mocked(printReceipt).mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } });
   });
 
   it('renders thermal receipt text', () => {
@@ -52,8 +52,8 @@ describe('ReceiptPreview', () => {
 
   it('shows Printing while printReceipt pending then idle', async () => {
     const user = userEvent.setup();
-    let resolvePrint: (v: { ok: true; data: undefined }) => void = () => {};
-    const printPromise = new Promise<{ ok: true; data: undefined }>(res => {
+    let resolvePrint: (v: { ok: true; data: { jobId: string } }) => void = () => {};
+    const printPromise = new Promise<{ ok: true; data: { jobId: string } }>(res => {
       resolvePrint = res;
     });
     vi.mocked(printReceipt).mockReturnValue(printPromise);
@@ -63,7 +63,7 @@ describe('ReceiptPreview', () => {
     await user.click(screen.getByRole('button', { name: 'Print receipt' }));
     expect(screen.getByRole('button', { name: 'Printing…' })).toBeDisabled();
 
-    resolvePrint({ ok: true, data: undefined });
+    resolvePrint({ ok: true, data: { jobId: 'mock-job' } });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Print receipt' })).toBeInTheDocument();
     });
