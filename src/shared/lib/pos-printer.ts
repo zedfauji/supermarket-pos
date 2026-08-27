@@ -12,7 +12,10 @@ import { buildThermalReceiptText } from '@shared/lib/receipt-format';
 import type { Result } from '@shared/lib/result';
 import { ok, err, tauriError } from '@shared/lib/result';
 
-function isTauri(): boolean {
+/** Also used by open-product-peek-window/CheckoutPanel to no-op Tauri-only
+ * window/event IPC calls when running outside a Tauri runtime (e.g. this
+ * project's Playwright suite drives `npm run dev`, a plain browser tab). */
+export function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI__' in window;
 }
 

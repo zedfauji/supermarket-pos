@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
-import { readdirSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { existsSync, readdirSync } from 'node:fs';
+import { homedir, platform } from 'node:os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,6 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
+// Binary is named `chrome` on Linux/macOS but `chrome.exe` on Windows; and the
+// CLAUDE.md-documented fallback to Playwright's bundled Chromium only actually
+// falls back if we confirm the binary exists on disk (a stale/incomplete
+// `~/.agent-browser/browsers/chrome-*` directory entry must not be trusted blindly).
 function findAgentBrowserChrome(): string | undefined {
   const browsersDir = path.join(homedir(), '.agent-browser', 'browsers');
   try {
@@ -16,7 +20,10 @@ function findAgentBrowserChrome(): string | undefined {
       .filter(entry => entry.startsWith('chrome-'))
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
       .at(-1);
-    return highest ? path.join(browsersDir, highest, 'chrome') : undefined;
+    if (!highest) return undefined;
+    const binaryName = platform() === 'win32' ? 'chrome.exe' : 'chrome';
+    const candidate = path.join(browsersDir, highest, binaryName);
+    return existsSync(candidate) ? candidate : undefined;
   } catch {
     return undefined;
   }
