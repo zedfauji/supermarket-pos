@@ -60,9 +60,9 @@ Milestone goal: scanning a barcode on `/pos` opens a separate detached Tauri win
 ### Product Peek Window
 
 - [ ] **PEEK-01**: Scanning a barcode on `/pos` opens a separate Tauri OS window (not a modal/overlay in the main window) showing the matched product's name, size/unit (kg/g/L/piece), photo, price, current inventory, SKU, and barcode.
-- [ ] **PEEK-02**: The peek window includes a quantity/weight input (matching the product's unit type — piece count or loose-weight amount) that the cashier sets before adding to cart, and reuses the existing out-of-stock and near-expiry checkout guards rather than a duplicate guard implementation.
-- [ ] **PEEK-03**: The peek window offers "Add to Cart" (adds the entered qty/weight to the active `/pos` cart and closes the window) and "Close" (dismisses without adding anything).
-- [ ] **PEEK-04**: While the peek window is open, scanning a different barcode replaces its content with the newly scanned product (no manual close needed first); the main `/pos` window's existing scan-to-search behavior continues to fire on the same scan independently.
+- [x] **PEEK-02**: The peek window includes a quantity/weight input (matching the product's unit type — piece count or loose-weight amount) that the cashier sets before adding to cart, and reuses the existing out-of-stock and near-expiry checkout guards rather than a duplicate guard implementation.
+- [x] **PEEK-03**: The peek window offers "Add to Cart" (adds the entered qty/weight to the active `/pos` cart and closes the window) and "Close" (dismisses without adding anything).
+- [x] **PEEK-04**: While the peek window is open, scanning a different barcode replaces its content with the newly scanned product (no manual close needed first); the main `/pos` window's existing scan-to-search behavior continues to fire on the same scan independently.
 
 Scope note: v1 is `/pos`-only. Rollout to other screens (global scan trigger) is deferred — see seed `barcode-peek-global-rollout`.
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { listen } from '@tauri-apps/api/event';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PaymentForm } from '@widgets/PaymentModal/ui/PaymentForm';
@@ -7,6 +8,12 @@ import { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/use
 import { WeightEntryDialog } from '@features/add-loose-weight-item/ui/WeightEntryDialog';
 import { useCheckoutSale } from '@features/checkout-sale/model/useCheckoutSale';
 import { HoldSaleBanner } from '@features/hold-sale/ui/HoldSaleBanner';
+import {
+  ADD_TO_CART_EVENT,
+  BARCODE_SCANNED_EVENT,
+  ensurePeekWindowShown,
+} from '@features/open-product-peek-window/model/useProductPeekWindow';
+import type { AddToCartPayload } from '@features/open-product-peek-window/model/useProductPeekWindow';
 import { useCategories, useProducts } from '@entities/product';
 import { useStaffStore } from '@entities/staff';
 import { useCartStore } from '@entities/tab/model/cartStore';
@@ -34,6 +41,7 @@ export function CheckoutPanel() {
     enabled: scannerEnabled,
     onScan: code => {
       setSearch(code);
+      void ensurePeekWindowShown(code);
     },
   });
   useProducts();
@@ -41,6 +49,7 @@ export function CheckoutPanel() {
   const items = useCartStore(state => state.items);
   const total = useCartStore(state => state.totalAmount());
   const addItem = useCartStore(state => state.addItem);
+  const addWeightedItem = useCartStore(state => state.addWeightedItem);
   const removeItem = useCartStore(state => state.removeItem);
   const setLineQuantity = useCartStore(state => state.setLineQuantity);
   const setItemNotes = useCartStore(state => state.setItemNotes);
@@ -50,6 +59,36 @@ export function CheckoutPanel() {
   const staffId = useStaffStore(state => state.currentStaff?.id ?? '');
   const { syntheticTab, processors, resetIdempotencyKey } = useCheckoutSale();
   const editingWeightItem = items.find(item => item.tempId === editingWeightItemId);
+
+  // Relays a rescan captured by the peek window (which has OS focus while
+  // open) back into this window's own search box, and applies the peek
+  // window's "Add to Cart" commit to the real cart — the peek window has no
+  // direct cartStore access of its own (D-04, separate JS/webview context).
+  useEffect(() => {
+    const unlistenScanned = listen<{ code: string }>(BARCODE_SCANNED_EVENT, event => {
+      setSearch(event.payload.code);
+    });
+    const unlistenAddToCart = listen<AddToCartPayload>(ADD_TO_CART_EVENT, event => {
+      const { product, qty, weightGrams } = event.payload;
+      if (weightGrams != null) {
+        addWeightedItem(product, weightGrams);
+      } else {
+        const times = qty ?? 1;
+        for (let i = 0; i < times; i += 1) {
+          addItem(product, []);
+        }
+      }
+    });
+    return () => {
+      void unlistenScanned.then(unlisten => {
+        unlisten();
+      });
+      void unlistenAddToCart.then(unlisten => {
+        unlisten();
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- addItem/addWeightedItem are stable Zustand action references (never change identity)
+  }, []);
 
   if (paymentOpen) {
     return (
