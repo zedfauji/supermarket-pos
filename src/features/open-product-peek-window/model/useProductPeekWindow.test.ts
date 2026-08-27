@@ -24,11 +24,11 @@ describe('ensurePeekWindowShown', () => {
     // ensurePeekWindowShown no-ops outside a real Tauri runtime (isTauri()
     // checks this global) — real Tauri injects it, and so does the peek-window
     // E2E mock; set it here too so these unit tests exercise the real call path.
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
   });
 
   afterEach(() => {
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
   });
 
   it('constructs exactly one WebviewWindow when none exists yet, and never emits', async () => {
