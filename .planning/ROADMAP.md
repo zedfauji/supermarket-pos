@@ -7,7 +7,7 @@
 - ⏸️ **v1.2 Verification & Hardware Hardening** — Phases 11-13 (paused after Phase 11 discussion; requirements/roadmap remain valid for resumption)
 - 🚧 **v1.3 Receipt Designer + Inventory Management Expansion** — Phases 14-17 (in progress)
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
-- 🔜 **v1.5 Store-Local Durable Printing** — Phase 19 (proposed, spike pending)
+- 🔜 **v1.5 Store-Local Durable Printing** — Phase 19 (planned, 8 plans across 6 waves; Spike 001 validated)
 
 ## Phases
 
@@ -69,8 +69,9 @@ Full phase details: `.planning/milestones/v1.1-ROADMAP.md` · Phase artifacts: `
 authenticated LAN/VPN-only broker that durably accepts, audits, retries, and delivers work to named
 Windows printers after the originating application closes.
 
-**Status:** Requirements and architecture captured via `/gsd-explore` 2026-08-26. Windows service and
-real-printer feasibility spike is pending at `.planning/spikes/001-windows-print-broker/`.
+**Status:** Requirements and architecture captured via `/gsd-explore` 2026-08-26. Spike 001
+(`.planning/spikes/001-windows-print-broker/`) VALIDATED the Windows Service + SQLite ledger + WinSpool
+architecture against real hardware 2026-08-26. Phase 19 planned 2026-08-27 (8 plans across 6 waves).
 
 - [ ] **Phase 19: Store-Local Durable Printing Service** - Harden every existing caller and add a
   durable, auditable Windows print broker with fail-fast acceptance and named-printer routing
@@ -264,10 +265,11 @@ Plans:
 **Goal:** Every print command from a LAN/VPN client is either durably accepted by one store-local
 broker with a stable job ID or fails immediately and loudly; accepted work survives application and
 service restarts, routes to its named Windows printer, and remains auditable end to end.
-**Depends on:** Nothing (independent hardware/service hardening; Spike 001 must validate the service
-installation and real printer/spooler boundary before implementation planning)
+**Depends on:** Nothing (independent hardware/service hardening; Spike 001 VALIDATED the service
+installation and real printer/spooler boundary on real Windows Service infrastructure and real thermal-
+printer hardware — see `.planning/spikes/001-windows-print-broker/README.md`)
 **Requirements:** PRN-01, PRN-02, PRN-03, PRN-04, PRN-05, PRN-06, PRN-07
-**Success Criteria** (draft; firm up after Spike 001):
+**Success Criteria:**
 
   1. An authenticated mobile or desktop client on LAN/VPN receives success only after the broker
      durably commits the command; unavailable or rejected submissions return a structured correlated
@@ -286,7 +288,36 @@ installation and real printer/spooler boundary before implementation planning)
      persistence failure, stopped spooler, offline printer, retry exhaustion, duplicate idempotency
      key, ambiguous handoff, and restart recovery.
 
-**Plans:** TBD
+**Plans:** 8 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 19-01-PLAN.md — Tracer: durable test_print end-to-end (broker crate skeleton — ledger/http/delivery — through the real WinSpool call sequence), fault-hardened (restart recovery, ambiguous handoff, connect-timeout)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 19-02-PLAN.md — Windows Service SCM registration, NSIS post-install hook, LAN firewall rule, per-store secret generation (D-01..D-04)
+- [ ] 19-03-PLAN.md — Expand the broker contract to print_receipt/print_raw_text (new)/open_cash_drawer, remove the silent-fallback-success anti-pattern (D-09)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 19-04-PLAN.md — Harden all five print-call-site files onto one shared error-copy-key contract; close the one confirmed silent-Result-discard violation (D-11)
+- [ ] 19-05-PLAN.md — Per-failure-class retry/backoff config + payload retention purge, gated by a checkpoint:decision confirming the retention window (D-10, D-14 one-way)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 19-06-PLAN.md — entities/print-job + broker GET /jobs list endpoint + PrintJobStatusBadge + "Did this print?" confirm on ReprintButton + stuck-queue alert (D-05..D-08, D-15)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 19-07-PLAN.md — PrintJobsTable/PrintJobFilterBar/PrintJobDetailSheet + /audit Tabs wrapper (D-13, D-16)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 19-08-PLAN.md — Full E2E fault-test matrix, correlation-ID/unknown-confirm/audit-tab specs, broker fault-matrix gap audit, cross-machine LAN reachability script
+
+**UI hint**: yes
 
 ## Progress
 
@@ -313,7 +344,7 @@ v1.2 (paused) resumes at Phase 11 → 12 → 13 if picked back up; v1.3 (active)
 | 16. Purchase Orders & Reordering | v1.3 | 4/4 | Complete    | 2026-08-24 |
 | 17. E2E Suite Overhaul | v1.3 | 17/17 | In Progress|  |
 | 18. Barcode Scan Product Peek Window | v1.4 | 3/3 | In Progress|  |
-| 19. Store-Local Durable Printing Service | v1.5 | 0/TBD | Proposed | - |
+| 19. Store-Local Durable Printing Service | v1.5 | 0/8 | Planned | - |
 
 ### Phase 17: E2E Suite Overhaul
 
