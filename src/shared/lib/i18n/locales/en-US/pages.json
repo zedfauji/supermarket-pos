@@ -3,7 +3,11 @@
     "logoAlt": "Supermarket POS logo"
   },
   "audit": {
-    "title": "Audit Log"
+    "title": "Audit Log",
+    "tabs": {
+      "auditLog": "Audit Log",
+      "printJobs": "Print Jobs"
+    }
   },
   "editHistory": {
     "title": "Edit History"
