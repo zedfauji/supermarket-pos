@@ -94,10 +94,16 @@ const POLLING_STATUSES = new Set<PrintJobStatus>(['accepted', 'submitted_to_os']
  * auto-resolves — resolution is the user's explicit "Did this print?"
  * confirm only). Reads through the broker-backed `get_print_job` Tauri
  * command — never Supabase.
+ *
+ * Disabled (no fetch, no polling) when `jobId` is empty — callers like
+ * ReprintButton track jobId in local state, undefined until their first
+ * successful print attempt, and render `usePrintJob(jobId ?? '')` so no
+ * badge/query exists before that first attempt (D-05).
  */
 export function usePrintJob(jobId: string) {
   return useQuery({
     queryKey: printJobKeys.detail(jobId),
+    enabled: jobId.length > 0,
     queryFn: async (): Promise<PrintJobDetail> => {
       const detail = await invoke<Record<string, unknown>>('get_print_job', { jobId });
       return mapPrintJobDetail(detail);
