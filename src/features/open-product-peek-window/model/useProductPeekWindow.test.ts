@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetByLabel = vi.fn();
 const mockWebviewWindowCtor = vi.fn();
@@ -21,6 +21,14 @@ describe('ensurePeekWindowShown', () => {
     mockGetByLabel.mockReset();
     mockWebviewWindowCtor.mockReset();
     mockEmit.mockReset().mockResolvedValue(undefined);
+    // ensurePeekWindowShown no-ops outside a real Tauri runtime (isTauri()
+    // checks this global) — real Tauri injects it, and so does the peek-window
+    // E2E mock; set it here too so these unit tests exercise the real call path.
+    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+  });
+
+  afterEach(() => {
+    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
   });
 
   it('constructs exactly one WebviewWindow when none exists yet, and never emits', async () => {
