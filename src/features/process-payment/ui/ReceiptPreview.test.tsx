@@ -1,14 +1,25 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
+import type * as PosPrinter from '@shared/lib/pos-printer';
 import { printReceipt } from '@shared/lib/pos-printer';
+import { err } from '@shared/lib/result';
 import { renderWithProviders } from '@shared/lib/test-utils';
 import { ReceiptPreview } from './ReceiptPreview';
 
-vi.mock('@shared/lib/pos-printer', () => ({
-  printReceipt: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
+
+vi.mock('@shared/lib/pos-printer', async importOriginal => {
+  const actual = await importOriginal<typeof PosPrinter>();
+  return {
+    ...actual,
+    printReceipt: vi.fn().mockResolvedValue({ ok: true, data: { jobId: 'mock-job' } }),
+  };
+});
 
 vi.mock('@entities/settings', () => ({
   useReceiptSettings: () => ({ data: undefined }),
@@ -67,6 +78,36 @@ describe('ReceiptPreview', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Print receipt' })).toBeInTheDocument();
     });
+  });
+
+  it('shows the translated rejected copy on print failure (not a silent discard); printBusy still resets to false', async () => {
+    const user = userEvent.setup();
+    vi.mocked(printReceipt).mockResolvedValueOnce(err({ code: 'PRINT_JOB_REJECTED', message: 'z' }));
+
+    renderWithProviders(<ReceiptPreview receipt={receipt} onDone={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Print receipt' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Printer rejected this job. Check the printer name in Settings and try again.'
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Print receipt' })).toBeInTheDocument();
+    });
+  });
+
+  it('shows no toast when the print succeeds (no-success-toast rule)', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ReceiptPreview receipt={receipt} onDone={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Print receipt' }));
+
+    await waitFor(() => {
+      expect(printReceipt).toHaveBeenCalled();
+    });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('opens email dialog when Email receipt clicked', async () => {
