@@ -277,5 +277,8 @@
     "unknownError": "Unknown error",
     "failedToLoadStaff": "Failed to load staff.",
     "whoAreYou": "Who are you?"
+  },
+  "productPeekPanel": {
+    "windowTitle": "Product Details"
   }
 }

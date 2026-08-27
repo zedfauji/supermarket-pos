@@ -277,5 +277,8 @@
     "unknownError": "Error desconocido",
     "failedToLoadStaff": "No se pudo cargar el personal.",
     "whoAreYou": "¿Quién eres?"
+  },
+  "productPeekPanel": {
+    "windowTitle": "Detalles del producto"
   }
 }
