@@ -7,7 +7,7 @@
 - ⏸️ **v1.2 Verification & Hardware Hardening** — Phases 11-13 (paused after Phase 11 discussion; requirements/roadmap remain valid for resumption)
 - 🚧 **v1.3 Receipt Designer + Inventory Management Expansion** — Phases 14-17 (in progress)
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
-- 🔜 **v1.5 Store-Local Durable Printing** — Phase 19 (planned, 8 plans across 6 waves; Spike 001 validated)
+- ✅ **v1.5 Store-Local Durable Printing** — Phase 19 (8/8 plans complete 2026-08-27; Spike 001 validated)
 - 🔜 **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (proposed, not started — captured via `/gsd-explore`)
 
 ## Phases
@@ -72,10 +72,15 @@ Windows printers after the originating application closes.
 
 **Status:** Requirements and architecture captured via `/gsd-explore` 2026-08-26. Spike 001
 (`.planning/spikes/001-windows-print-broker/`) VALIDATED the Windows Service + SQLite ledger + WinSpool
-architecture against real hardware 2026-08-26. Phase 19 planned 2026-08-27 (8 plans across 6 waves).
+architecture against real hardware 2026-08-26. Phase 19 planned 2026-08-27 (8 plans across 6 waves) and
+completed 2026-08-27 (8/8 plans; goal-backward verification passed with one gap closed post-verification
+— firewall rule remoteip scoping, see 19-VERIFICATION.md). Cross-machine LAN/VPN reachability remains an
+explicit backstop: `scripts/verify-lan-broker-reachability.ps1` exists but has not been run against real
+second-machine hardware (no such hardware available in the planning/execution environment).
 
-- [ ] **Phase 19: Store-Local Durable Printing Service** - Harden every existing caller and add a
-  durable, auditable Windows print broker with fail-fast acceptance and named-printer routing
+- [x] **Phase 19: Store-Local Durable Printing Service** (8/8 plans) - Harden every existing caller and
+  add a durable, auditable Windows print broker with fail-fast acceptance and named-printer routing —
+  completed 2026-08-27
 
 ### 🔜 v1.6 Store Deployment: Signed Elevated Installer (Proposed)
 

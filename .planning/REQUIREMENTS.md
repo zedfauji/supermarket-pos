@@ -85,11 +85,11 @@ acceptance, route through one store-local broker, and remain auditable without a
 - [x] **PRN-03**: An accepted job survives client, Tauri application, and broker process restart and
   is delivered asynchronously to its configured named Windows printer queue.
 
-- [ ] **PRN-04**: Every printing boundary propagates and logs normalized structured errors with the
+- [x] **PRN-04**: Every printing boundary propagates and logs normalized structured errors with the
   same job/correlation ID. UI-originated terminal failures show an actionable toast; background and
   non-UI callers explicitly handle and log failed results rather than discarding them.
 
-- [ ] **PRN-05**: The broker retains an auditable command and event history containing origin/actor,
+- [x] **PRN-05**: The broker retains an auditable command and event history containing origin/actor,
   printer endpoint, payload hash/reference, timestamps, attempts, state transitions, Windows job ID,
   and normalized errors, with queryable command counts and retention controls.
 
@@ -175,8 +175,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRN-01 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-02 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-03 | Phase 19 (v1.5, proposed) | Complete |
-| PRN-04 | Phase 19 (v1.5, proposed) | Pending |
-| PRN-05 | Phase 19 (v1.5, proposed) | Pending |
+| PRN-04 | Phase 19 (v1.5, proposed) | Complete |
+| PRN-05 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-06 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-07 | Phase 19 (v1.5, proposed) | Complete |
 
