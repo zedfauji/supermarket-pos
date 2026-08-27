@@ -56,7 +56,7 @@ const SCHEMA_SQL: &str = "CREATE TABLE IF NOT EXISTS jobs (
     idempotency_key TEXT UNIQUE NOT NULL,
     printer_name TEXT NOT NULL,
     origin TEXT NOT NULL,
-    payload BLOB NOT NULL,
+    payload BLOB,
     status TEXT NOT NULL,
     win32_job_id INTEGER,
     attempts INTEGER NOT NULL DEFAULT 0,
@@ -90,6 +90,29 @@ pub fn record_event(conn: &Connection, job_id: &str, category: &str, detail: &st
     conn.execute(
         "INSERT INTO events (job_id, ts, category, detail) VALUES (?1, ?2, ?3, ?4)",
         rusqlite::params![job_id, now_iso(), category, detail],
+    )
+    .ok();
+}
+
+/// Purges payload BLOB bytes for jobs older than `retention_days` (D-14,
+/// confirmed 7-day window). NEVER touches status/attempts/created_at/
+/// updated_at or any events row — only the payload column is ever cleared,
+/// per D-14's "metadata retained indefinitely" split.
+///
+/// Excludes `status='accepted'` jobs: those are still awaiting delivery and
+/// need their payload bytes intact for `delivery.rs`'s next worker tick —
+/// a job stuck in 'accepted' for longer than the retention window (e.g. the
+/// broker was down) must not have its payload silently nulled out from
+/// under it before it can ever be delivered.
+pub fn purge_expired_payloads(conn: &Connection, retention_days: u32) {
+    let now_ms: i64 = now_iso().parse().unwrap_or(0);
+    let retention_ms = retention_days as i64 * 86_400_000;
+    conn.execute(
+        "UPDATE jobs SET payload = NULL
+         WHERE payload IS NOT NULL
+           AND status != 'accepted'
+           AND (CAST(?1 AS INTEGER) - CAST(created_at AS INTEGER)) > ?2",
+        rusqlite::params![now_ms, retention_ms],
     )
     .ok();
 }
@@ -188,6 +211,103 @@ mod tests {
             )
             .unwrap();
         assert_eq!(count, 0);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 5: purge_expired_payloads nulls payload for jobs older than the
+    // retention window while status/attempts/created_at/updated_at stay
+    // byte-identical.
+    #[test]
+    fn purge_expired_payloads_nulls_payload_for_old_jobs_leaves_metadata_untouched() {
+        let path = temp_db_path("purge-old");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+
+        let now_ms: i64 = now_iso().parse().unwrap();
+        let eight_days_ago_ms = (now_ms - 8 * 86_400_000).to_string();
+
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES ('job-old', 'idem-old', 'P', 'test', X'0011', 'failed', 1, ?1, ?1)",
+            rusqlite::params![eight_days_ago_ms],
+        )
+        .unwrap();
+
+        purge_expired_payloads(&conn, 7);
+
+        let (payload, status, attempts, created_at, updated_at): (
+            Option<Vec<u8>>,
+            String,
+            i64,
+            String,
+            String,
+        ) = conn
+            .query_row(
+                "SELECT payload, status, attempts, created_at, updated_at FROM jobs WHERE id='job-old'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+            )
+            .unwrap();
+        assert_eq!(payload, None, "payload must be purged");
+        assert_eq!(status, "failed");
+        assert_eq!(attempts, 1);
+        assert_eq!(created_at, eight_days_ago_ms);
+        assert_eq!(updated_at, eight_days_ago_ms);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 6: a job within the retention window is untouched.
+    #[test]
+    fn purge_expired_payloads_leaves_jobs_within_window_untouched() {
+        let path = temp_db_path("purge-recent");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+
+        let now_ms: i64 = now_iso().parse().unwrap();
+        let one_day_ago_ms = (now_ms - 1 * 86_400_000).to_string();
+
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES ('job-recent', 'idem-recent', 'P', 'test', X'0011', 'failed', 1, ?1, ?1)",
+            rusqlite::params![one_day_ago_ms],
+        )
+        .unwrap();
+
+        purge_expired_payloads(&conn, 7);
+
+        let payload: Option<Vec<u8>> = conn
+            .query_row("SELECT payload FROM jobs WHERE id='job-recent'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(payload, Some(vec![0x00, 0x11]), "job within retention window must be untouched");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // Test 7: GET /jobs/{id} for a job whose payload was already purged
+    // still returns 200 with status/events — handle_get_job never selects
+    // the payload column at all, so a NULL payload can never surface as an
+    // error here (degrades gracefully per UI-SPEC).
+    #[test]
+    fn get_job_returns_200_with_events_when_payload_already_purged() {
+        let path = temp_db_path("purge-get-job");
+        let _ = std::fs::remove_file(&path);
+        let conn = open_db(&path);
+
+        let now_ms: i64 = now_iso().parse().unwrap();
+        let eight_days_ago_ms = (now_ms - 8 * 86_400_000).to_string();
+        conn.execute(
+            "INSERT INTO jobs (id, idempotency_key, printer_name, origin, payload, status, attempts, created_at, updated_at)
+             VALUES ('job-purged', 'idem-purged', 'P', 'test', X'0011', 'failed', 1, ?1, ?1)",
+            rusqlite::params![eight_days_ago_ms],
+        )
+        .unwrap();
+        record_event(&conn, "job-purged", "accepted", "origin=test printer=P");
+        purge_expired_payloads(&conn, 7);
+
+        let resp = crate::http::handle_get_job(&conn, "job-purged");
+        assert_eq!(resp.status, 200);
+        let body: serde_json::Value = serde_json::from_slice(&resp.body).unwrap();
+        assert_eq!(body["status"], "failed");
+        assert!(!body["events"].as_array().unwrap().is_empty());
         let _ = std::fs::remove_file(&path);
     }
 

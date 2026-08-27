@@ -10,7 +10,7 @@ use std::time::Duration;
 use rusqlite::{params, Connection};
 
 use crate::config::{self, BrokerConfig};
-use crate::ledger::{now_iso, open_db, record_event};
+use crate::ledger::{now_iso, open_db, purge_expired_payloads, record_event};
 use crate::retry::{self, RetryDecision};
 
 pub const JOB_STATUS_PRINTED: u32 = 0x0000_0080;
@@ -295,6 +295,10 @@ pub fn worker_tick_with_config(conn: &Connection, cfg: &BrokerConfig) {
             }
         }
     }
+
+    // Payload-retention purge pass (D-14, confirmed 7-day window): clears
+    // only the payload BLOB on old jobs, never jobs/events metadata rows.
+    purge_expired_payloads(conn, cfg.retention_days);
 }
 
 pub fn run_worker(shutdown: std::sync::Arc<std::sync::atomic::AtomicBool>, db_path: &Path) {

@@ -12,6 +12,13 @@ use serde::{Deserialize, Serialize};
 use crate::ledger::data_dir;
 use crate::retry::RetryPolicy;
 
+/// Payload-BLOB retention window in days (D-14), confirmed by this plan's
+/// `checkpoint:decision` — the human explicitly chose 7 days (not the
+/// RESEARCH.md provisional default of 14). Metadata rows (job_id, status,
+/// timestamps, attempts, last_error) are never purged regardless of this
+/// value — see `ledger::purge_expired_payloads`.
+pub const DEFAULT_RETENTION_DAYS: u32 = 7;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrokerConfig {
     pub port: u16,
@@ -59,7 +66,7 @@ pub fn load_or_init_at(config_file: &Path, secret_file: &Path) -> BrokerConfig {
     let cfg = BrokerConfig {
         port: crate::http::PORT,
         bearer_secret: generate_secret(),
-        retention_days: 14,
+        retention_days: DEFAULT_RETENTION_DAYS,
         retry: RetryPolicy::default(),
     };
 
