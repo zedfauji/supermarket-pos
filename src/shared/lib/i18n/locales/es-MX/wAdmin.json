@@ -15,6 +15,18 @@
     "searchHint": "Algunos caracteres no son buscables y serán ignorados",
     "applyFilters": "Aplicar filtros"
   },
+  "printJobFilterBar": {
+    "allOrigins": "Todos los orígenes",
+    "printerNamePlaceholder": "Nombre de la impresora",
+    "allStatuses": "Todos los estados",
+    "dateFrom": "Fecha desde",
+    "dateTo": "Fecha hasta",
+    "applyFilters": "Aplicar filtros"
+  },
+  "printJobDetailSheet": {
+    "winSpoolJobId": "Trabajo de Windows #{{id}}",
+    "noEvents": "Aún no hay eventos registrados para este trabajo."
+  },
   "auditLogTable": {
     "columnAction": "Acción",
     "viewDiffAriaLabel": "Ver diferencias de {{action}} el {{date}}",

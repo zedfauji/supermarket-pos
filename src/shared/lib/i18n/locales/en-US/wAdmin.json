@@ -15,6 +15,18 @@
     "searchHint": "Some characters aren't searchable and will be ignored",
     "applyFilters": "Apply filters"
   },
+  "printJobFilterBar": {
+    "allOrigins": "All origins",
+    "printerNamePlaceholder": "Printer name",
+    "allStatuses": "All statuses",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "applyFilters": "Apply filters"
+  },
+  "printJobDetailSheet": {
+    "winSpoolJobId": "Windows job #{{id}}",
+    "noEvents": "No events recorded for this job yet."
+  },
   "auditLogTable": {
     "columnAction": "Action",
     "viewDiffAriaLabel": "View diff for {{action}} on {{date}}",
