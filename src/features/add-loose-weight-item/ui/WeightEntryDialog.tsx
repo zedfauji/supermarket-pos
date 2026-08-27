@@ -15,6 +15,9 @@ export interface WeightEntryDialogProps {
   mode: 'add' | 'edit';
   initialWeightGrams?: number;
   tempId?: string;
+  /** Overrides the default cartStore.addWeightedItem/updateWeightedItem call.
+   *  Used by the peek window (D-04: no direct cart-store access there). */
+  onConfirm?: (weightGrams: number) => void;
 }
 
 const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
@@ -31,6 +34,7 @@ export function WeightEntryDialog({
   mode,
   initialWeightGrams,
   tempId,
+  onConfirm,
 }: WeightEntryDialogProps) {
   const { t } = useTranslation('featOrders');
   const addWeightedItem = useCartStore(state => state.addWeightedItem);
@@ -68,7 +72,8 @@ export function WeightEntryDialog({
 
   const confirm = () => {
     if (!isValid) return;
-    if (mode === 'edit' && tempId) updateWeightedItem(tempId, weightGrams);
+    if (onConfirm) onConfirm(weightGrams);
+    else if (mode === 'edit' && tempId) updateWeightedItem(tempId, weightGrams);
     else addWeightedItem(product, weightGrams);
     onOpenChange(false);
   };
