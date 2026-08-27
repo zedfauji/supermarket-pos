@@ -65,6 +65,11 @@
     "key0": "Tecla 0",
     "backspace": "Borrar"
   },
+  "printJobError": {
+    "brokerUnreachable": "Servicio de impresión no disponible — verifica que el broker de impresión esté ejecutándose.",
+    "rejected": "La impresora rechazó este trabajo. Verifica el nombre de la impresora en Configuración e intenta de nuevo.",
+    "failed": "No se pudo imprimir después de varios intentos. Intenta de nuevo o revisa la impresora."
+  },
   "quantityControl": {
     "group": "Control de cantidad",
     "decrease": "Disminuir cantidad",

@@ -9,6 +9,7 @@ import type { ReceiptData } from '@shared/lib/edge-function-contracts';
 import { getCurrentLocale } from '@shared/lib/i18n';
 import { openCashDrawer, testPrint } from '@shared/lib/pos-printer';
 import { buildThermalReceiptText } from '@shared/lib/receipt-format';
+import type { AppError } from '@shared/lib/result';
 import { POSButton, ProtectedAction } from '@shared/ui';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Input } from '@shared/ui/input';
@@ -95,12 +96,26 @@ export function HardwareSettingsTab({ currentRole }: Props) {
     setLocalReceipt({ ...receipt, ...patch });
   }
 
+  // Maps the three broker-submission failure classes (Phase 19) onto their
+  // locked toast copy; any other AppErrorCode falls back to the raw message,
+  // preserving today's behavior for non-print errors.
+  function mapErrorToCopyKey(error: AppError): string {
+    switch (error.code) {
+      case 'PRINT_BROKER_UNREACHABLE':
+        return t('common:printJobError.brokerUnreachable');
+      case 'PRINT_JOB_REJECTED':
+        return t('common:printJobError.rejected');
+      default:
+        return error.message;
+    }
+  }
+
   const runTestPrint = async () => {
     setPrinting(true);
     const result = await testPrint();
     setPrinting(false);
     if (!result.ok) {
-      toast.error(result.error.message);
+      toast.error(mapErrorToCopyKey(result.error));
       return;
     }
     toast.success(t('hardwareSettingsTab.testPrintSent'));
@@ -111,7 +126,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
     const result = await openCashDrawer();
     setOpeningDrawer(false);
     if (!result.ok) {
-      toast.error(result.error.message);
+      toast.error(mapErrorToCopyKey(result.error));
       return;
     }
     toast.success(t('hardwareSettingsTab.cashDrawerSent'));
