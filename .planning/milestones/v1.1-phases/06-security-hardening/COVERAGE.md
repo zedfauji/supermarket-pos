@@ -1,0 +1,1 @@
+No external API integration: this phase relocates an already-fully-integrated Anthropic Messages API call (chat + tool loop in `brain.ts`, vision/invoice extraction in `vision.ts`) from client-side to a server-side Supabase Edge Function proxy — it does not add, drop, or change which Anthropic capabilities the app uses, only where the API call executes and how it's authenticated.

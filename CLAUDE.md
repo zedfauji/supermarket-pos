@@ -1,0 +1,437 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## UAT / Verification: automate it, never ask the user to click through
+
+**Never ask the user to manually click through the app and report back what happened.** This includes `/gsd-verify-work` UAT checkpoints, "please verify X", or any other request for the user to be the test harness. The user has explicitly and repeatedly stated this is unacceptable.
+
+Instead, when a feature needs to be verified in the running app:
+- Drive it yourself with the Playwright MCP tools (`mcp__playwright__browser_navigate`, `browser_click`, `browser_snapshot`, `browser_network_requests`/`browser_network_request`, `browser_console_messages`, etc.) against the dev server (`npm run dev`, port 1520).
+- Read the actual network responses / console errors to find root causes — don't guess and don't narrate a hypothetical click-through.
+- If something can be verified with `npx playwright test` against an existing or new spec file, do that instead of ad-hoc browser driving.
+- Only report back to the user once you have concrete, reproduced evidence (pass, or a specific failure with request/response/error detail).
+- If a check is genuinely impossible to automate (e.g. requires physical hardware), say so explicitly and explain why — don't default to "please check for me."
+
+## Codebase Knowledge Graph (query before you grep)
+
+A knowledge graph of this codebase already exists at `graphify-out/graph.json` (built via the `graphify` skill — 5309 nodes, 13496 edges, 394 communities). **Before using Glob/Grep/Read to explore unfamiliar code** ("where is X defined", "what calls Y", "how does Z connect to W", "what depends on this table/RPC"), check the graph first:
+
+- `graphify query "<question>"` — BFS/DFS traversal, returns relevant nodes/edges with `source_location` citations
+- `graphify path "<A>" "<B>"` — shortest relationship path between two named things
+- `graphify explain "<name>"` — plain-language summary of one node
+
+Only fall back to raw file traversal (Glob/Grep/Read) when the graph doesn't have an answer (e.g. brand-new files not yet extracted) or when you need to actually edit the file — the graph is for **locating and understanding**, not for reading full file contents. After editing files, or when the graph looks stale, run `/graphify . --update` to re-extract only changed files (cheap — incremental, code-only changes skip the LLM step entirely).
+
+## Session Memory (claude-mem — check before re-deriving)
+
+`claude-mem` is installed and auto-active (hooks fire on SessionStart/UserPromptSubmit/PostToolUse — it already captures observations and injects prior context automatically, no manual save step needed). **Prefer it over rebuilding context from scratch:**
+
+- At session start, read the injected `<claude-mem-context>` block before asking the user "what were we doing" or re-reading multiple planning docs to reconstruct state.
+- Before investigating "why was X built this way" / "what did we decide about Y" / "have we hit this bug before", use the `mem-search` skill (or the `mcp-search` MCP tools directly) to query prior sessions instead of grepping through `.planning/` or old commit messages.
+- Use `smart-explore` / `knowledge-agent` skills for "how does this codebase work" questions that are really about accumulated project understanding, not live code structure (for live code structure, use the graphify graph above instead — they're complementary: graphify answers "what connects to what in the code right now", claude-mem answers "what did we learn/decide across sessions").
+- Only fall back to manually reading historical files/docs when claude-mem has no relevant memory (e.g. very first session, or memory was cleared).
+
+## GSD Workflow State (don't re-scan `.planning/` by hand)
+
+This project uses GSD for phase planning — `.planning/STATE.md`, `ROADMAP.md`, `PROJECT.md`, `REQUIREMENTS.md` are already the source of truth for "what phase are we on / what's next / what's been decided". **Enter through the GSD situational commands instead of manually reading and cross-referencing those files:**
+
+- `/gsd-progress` — the unified entry point: reports current state and can dispatch the right next action (discuss/plan/execute/verify) in one call.
+- `/gsd-resume-work` — resume mid-phase work with full context restoration after a break, instead of re-reading the last few phase docs to reconstruct where things left off.
+- Only open `.planning/phases/**` files directly when actively planning/executing a specific phase (i.e. when a GSD skill would open them anyway) — not as a first move to "catch up."
+
+Do not enable GSD's MemPalace integration (`gsd-mempalace-*`) on top of this — it would run a third overlapping memory system alongside claude-mem and GSD's own `.planning/STATE.md`. claude-mem covers cross-session recall; `.planning/` covers phase/roadmap state. That's sufficient.
+
+## Specialist Agent Routing (agency-agents)
+
+`agency-agents` (300+ domain-specialist subagents) is installed globally at `~/.claude/agents/`. gsd-core's `/gsd-execute-phase` supports routing a plan's executor to a named specialist instead of the generic `gsd-executor`, via `agent_hint: <Name>` in that plan's `PLAN.md` frontmatter (`workflow.agent_hint_routing`, on by default for this project — verify with `gsd config-get workflow.agent_hint_routing`; it fails closed to `gsd-executor` if the name doesn't resolve, so a wrong/missing hint never blocks execution).
+
+When planning a phase (`/gsd-plan-phase` or a manual `PLAN.md` edit), set `agent_hint` on a plan whose work sits clearly in one of these lanes:
+
+| Plan's main work | `agent_hint` |
+|---|---|
+| Supabase RPC/schema/backend business logic | `Backend Architect` |
+| React component work in `features/`/`widgets/`/`pages/` | `Frontend Developer` |
+| Visual design / implementing a UI-SPEC, empty states, polish | `UI Designer` |
+| Query/index/schema performance tuning | `Database Optimizer` |
+| Backup/HA/migration-reliability concerns | `Database Reliability Engineer` |
+| Tauri shell/native/IPC work | `Desktop App Engineer` |
+| Rust-side code (`src-tauri/`) | `Rust Refactoring Specialist` |
+| i18n namespace/catalog work | `Internationalization Engineer` |
+| Payments/caja/refund logic | `Payments & Billing Engineer` |
+| Supabase Realtime subscription work | `Realtime Collaboration Engineer` |
+| Auth/RBAC/session work | `Identity & Access Engineer` |
+| Security-sensitive changes (RLS, secrets, injection surfaces) | `Application Security Engineer` |
+| Playwright/Vitest test-suite work | `Test Automation Engineer` |
+| a11y/touch-target/focus-visible work | `Accessibility Auditor` |
+
+Leave `agent_hint` unset (default `gsd-executor`) for mixed or general plans — whichever executor runs, it still owns atomic commits, the checkpoint protocol, and deviation handling; only the domain expertise changes.
+
+There is no equivalent hook for `gsd-ui-phase` or the `gsd-*-researcher` agents — those always dispatch as `gsd-ui-researcher`/`gsd-phase-researcher`/`gsd-project-researcher`, `agent_hint` cannot swap them. For extra UI-design or research depth, explicitly spawn the matching agency-agents specialist (`UI Designer`, `UX Architect`, `UX Researcher`, `Product Trend Researcher`, etc.) as a supplementary agent alongside GSD's native flow, not as a replacement for it.
+
+## Testing & Verification Policy — NON-NEGOTIABLE
+
+**Every test, verification, and UAT scenario in this project MUST be automated Playwright E2E, run headless by default.** This overrides GSD's default behavior and applies to every phase, plan, and skill invocation from this point forward.
+
+- **No `<human-check>` sub-blocks, no `checkpoint:human-verify` tasks, no `*-UAT.md` scenario marked for manual/human execution.** If a planner (`gsd-planner`, `gsd-ui-phase`, etc.) is about to emit one, it must instead write the equivalent as a Playwright assertion — visual-regression screenshot diff, computed-style/DOM assertion, `getByRole`/ARIA check, network-request assertion — and put it in `e2e/`. There is no case in this project where "have a human click it" is an acceptable substitute for "assert it in Playwright."
+- **Verification status of `human_needed` is not a valid terminal state for a phase in this project.** A phase is not `complete` until its verification is `passed` via automated E2E, or has an explicit, reasoned override per `verification-overrides.md` (and "requires visual/human judgment" is not a valid override reason here — write the visual-regression assertion instead).
+- **Headless is the default run mode.** `playwright.config.ts` auto-detects the highest installed agent-browser Chrome-for-Testing binary (`launchOptions.executablePath`), falling back to Playwright's bundled Chromium when none is found, always with `headless: true` — only deviate with a real browser window when explicitly asked for a specific debugging session (there is no headed env toggle; edit the config locally and revert it). Watch execution via the HTML report dashboard instead: `npm run test:e2e:report` (or open `playwright-report/index.html` after a run), or via `npm run test:e2e:ui` for a live pass/fail/timeline dashboard during the run itself.
+- **`checkpoint:human-action`** (an auth step or credential only a human can perform) and **`checkpoint:decision`** (a choice the executor needs from the user) are a different category — those aren't post-hoc verification of finished work, so this policy doesn't touch them. Only human *verification/testing* of already-built work is banned.
+- This policy is retroactive in intent: existing phases carrying `human_needed`/`gaps_found`/pending manual UAT scenarios (see `.planning/STATE.md` Deferred Items and `.planning/audits/2026-08-07-cross-phase-todos-and-gaps.md`) are backlog to close via Playwright, not accepted end states — do not treat their current `human_needed` status as precedent for new phases.
+- Full rationale and scope: `.planning/decisions/2026-08-07-mandatory-automated-testing-no-manual-verification.md`.
+
+## Project Overview
+
+A single-store supermarket POS built as a Tauri 2 desktop app shipping to Windows/WebView2 end users. Ubuntu is an officially supported development OS, running the same native shell through webkit2gtk instead of WebView2. Frontend is React 19 + TypeScript + Vite. Backend is Supabase (PostgreSQL + Auth + Realtime + RLS).
+
+This repo started as a bar/pool-parlour POS (`bar-pos`) and pivoted in-place (2026-08-10) into a standalone supermarket product for a single grocery store selling goods imported from India (packaged spices/masalas, atta/rice/dals, snacks, pickles/papads, ghee/oil, tea/coffee, frozen items, sweets — mostly barcoded packaged goods, some sold loose by weight). The bar-pos codebase's generic retail infrastructure (auth, RBAC, caja/register sessions, payments, barcode scanning, receipt printing, AI vision) was kept and its bar/pool-specific domain layers (tabs-based POS, pool tables/sessions, KDS/kitchen-prep, waitlist, Rappi delivery, combos/recipes/ingredients, promotions engine, tip-distribution) were stripped end-to-end from both code and DB schema. `bar-pos` itself is maintained separately elsewhere — this is not a shared codebase. Inventory management (supplier receiving, expiry tracking, and eventually AI-assisted invoice intake) is the core strength of this product. See `.planning/PROJECT.md` for full business context and `.planning/ROADMAP.md`/`.planning/REQUIREMENTS.md` for current milestone status.
+
+All source code lives in `supermarket-pos/`. Run all commands from `supermarket-pos/`.
+
+## Commands
+
+```bash
+# First-time setup (Ubuntu only)
+bash scripts/setup-ubuntu.sh   # Installs native Tauri deps + Rust toolchain
+
+# Development
+npm run dev          # Vite dev server (port 1520, Tauri mode)
+npm run tauri dev    # Full Tauri desktop app
+
+# Build
+npm run build        # TypeScript check + Vite production build
+
+# Code quality (run before committing)
+npm run typecheck    # Strict TS check (no emit)
+npm run lint         # ESLint (max-warnings: 0)
+npm run lint:fix     # Auto-fix lint issues
+npm run format       # Prettier on src/
+
+# Testing — unit
+npm run test                           # Vitest unit tests (run once)
+npm run test:watch                     # Vitest unit tests (watch mode)
+npm run test:ui                        # Vitest with browser UI
+npm run test:coverage                  # Coverage report
+npx vitest run src/path/to.test.ts     # Single test file
+
+# Testing — E2E (Playwright)
+npm run test:e2e                       # Full Playwright suite (requires dev server)
+npm run test:e2e:report                # Open HTML report after a run
+npx playwright test e2e/caja/session-management.spec.ts   # Single spec file
+npx playwright test --headed           # Non-headless (watch browser)
+npx playwright show-report             # Open last HTML report
+
+# Component development
+npm run storybook    # Storybook on port 6006
+
+# Setup
+npm run setup:dev    # Create dev users + seed data
+```
+
+### Ubuntu dev notes
+
+- `node_modules` is platform-specific. A checkout carried over from Windows has `@esbuild/win32-x64`, `@rollup/rollup-win32-x64-*` and `@tauri-apps/cli-win32-x64-msvc` and nothing Linux; fix with `rm -rf node_modules && npm ci`, not by deleting `package-lock.json`.
+- Native prerequisites and the Rust toolchain are installed by `scripts/setup-ubuntu.sh`; `npx @tauri-apps/cli info` is the one-command sanity check.
+- Git hooks are inert in this repo: `.husky/` is gitignored (absent on a fresh clone), and husky cannot self-install from `supermarket-pos/` because the git root is one level above.
+- Playwright E2E prefers agent-browser's bundled Chrome-for-Testing binary (auto-detected at config load time, `playwright.config.ts`), falling back to Playwright's own bundled Chromium (`npx playwright install`) when agent-browser isn't present — no separate Chrome install is required either way. E2E is out of scope for the CI `tauri-build` job.
+- `npm run test:storybook` uses `@vitest/browser-playwright` with Playwright's own bundled Chromium, so it needs a one-time `npx playwright install` (optionally `--with-deps`); this is deliberately not in `scripts/setup-ubuntu.sh`, which is scoped to native Tauri prerequisites and the Rust toolchain.
+- Release builds and code signing stay on Windows.
+
+## Architecture: Feature-Sliced Design (FSD)
+
+The codebase follows strict FSD with enforced import boundaries. ESLint (`eslint-plugin-boundaries`) will fail if you violate the layer hierarchy.
+
+**Import direction — each layer may only import from layers below it:**
+
+```
+app → pages → widgets → features → entities → shared
+```
+
+**Layer responsibilities:**
+
+- `app/` — Providers, router, Tauri initialization, global CSS
+- `pages/` — Thin route containers only; no logic, just layout + widgets
+- `widgets/` — Composite UI panels composing features + entities (e.g., `OrderPanel`, `ProductGrid`)
+- `features/` — One user action per folder (e.g., `add-item-to-tab/`, `process-payment/`); contains 1 mutation hook + 1 UI component
+- `entities/` — Business domain models; each has `model/types.ts`, `model/store.ts`, `model/queries.ts`, `ui/`
+- `shared/` — Zero business logic; UI primitives (`shared/ui/`), utilities (`shared/lib/`), constants
+
+## Key Conventions
+
+**Types:** Single source of truth is `src/shared/lib/domain.ts` (Zod schemas). Never manually write entity types — infer from Zod: `type Tab = z.infer<typeof TabSchema>`.
+
+**Generated files — never edit manually:**
+
+- `src/shared/lib/supabase.types.ts` — regenerate with `npx supabase gen types typescript`
+- `src/shared/ui/` — shadcn components, add new ones via `npx shadcn@latest add <component>`
+
+**Error handling:** All async operations return `Result<T>` from `src/shared/lib/result.ts` (`Ok(value)` / `Err(error)`). Use the logger from `src/shared/lib/logger.ts` for structured logging.
+
+**State:**
+
+- Zustand stores (`entities/*/model/store.ts`) — UI/local state and Supabase Realtime subscriptions
+- TanStack Query hooks (`entities/*/model/queries.ts`) — all server state, use optimistic updates for mutations
+
+**TypeScript:** Strict mode enforced. No `any`. Zod for all external data validation (API responses, user input).
+
+**Styling:** Tailwind CSS with CSS variables for theming. Dark mode is default. Use shadcn/ui components from `shared/ui/` before building custom ones.
+
+**Testing:**
+
+- Unit: Vitest + React Testing Library. Co-locate `.test.ts` files with source. Property-based tests via `fast-check` for pure utilities.
+- E2E: Playwright (`e2e/` directory). Config at `supermarket-pos/playwright.config.ts`. Videos + traces always recorded to `e2e-results/`. Tests require `.env.local` E2E credentials — see `CURSOR_VERIFICATION_PROMPT.md`.
+- Storybook: Required for every new `shared/ui/` component.
+- CI gate: `npm run test` (unit) must pass before any PR. `npm run test:e2e` is run manually before releases.
+
+## Adding a New Feature
+
+Follow the pattern in existing features (e.g., `src/features/add-item-to-tab/`):
+
+1. Define/extend Zod types in `src/shared/lib/domain.ts`
+2. Add entity model in `src/entities/<entity>/model/`
+3. Create feature folder in `src/features/<action-name>/` with mutation hook + UI
+4. Compose into a widget or page
+
+Refer to `supermarket-pos/FSD-STRUCTURE.md` and `supermarket-pos/DOMAIN-CONTRACTS.md` for detailed patterns.
+
+## Routes
+
+All routes are registered in `src/app/router.tsx`. Protected by `<ProtectedRoute>`.
+
+| Path            | Page            | Notes                                                                   |
+| ---------------- | --------------- | ------------------------------------------------------------------------ |
+| `/home`          | HomePage        | Big-box nav dashboard                                                   |
+| `/pos`            | PosPage         | Direct-sale checkout (scan/search → cart → pay); no "tab" concept       |
+| `/inventory`      | InventoryPage   | Stock management (admin/manager)                                       |
+| `/staff`          | StaffPage       | Staff management                                                        |
+| `/suppliers`      | SuppliersPage   | Supplier records + shipment receiving                                   |
+| `/reports`        | ReportsPage     | Reports, trimmed to supermarket-relevant tabs (gated by `ReportsRoute`) |
+| `/settings`       | SettingsPage    | Hardware + receipt settings (admin only)                                |
+| `/payments`       | PaymentsPage    | Payments history, refund/reopen a completed sale                        |
+| `/login`          | LoginPage       | PIN login                                                                |
+| `/rbac`           | RbacPage        | Role & permission management (admin only)                               |
+| `/audit`          | AuditPage       | Audit log (gated by `AuditRoute`)                                       |
+| `/edit-history`   | EditHistoryPage | History of edits to already-paid sales (gated by `EditHistoryRoute`)    |
+
+Bar/pool-parlour-era routes (`/pool-tables`, `/pool-tables/:tableId`, `/rappi`, `/waitlist`, `/kds`, `/kds-bar`, `/kitchen-prep`) were removed in Phase 1 (Strip & Rebrand, 2026-08-10) — do not re-add them or plan around them existing.
+
+## Implemented Features (as of 2026-08-16)
+
+Bar/pool-parlour-era features (pool sessions, KDS/kitchen-prep, waitlist, Rappi delivery, split-tab/transfer-tab, combos/recipes/ingredients, promotions, tip-distribution) were removed end-to-end in Phase 1 — do not assume any of them exist; the removal touched code, routes, and DB schema (RLS/RPCs/triggers/Realtime) together.
+
+- **Direct-sale checkout** (`checkout-sale`, `scan-barcode-to-cart`, `lookup-product-by-barcode`, `add-loose-weight-item`, `hold-sale`) — scan or search a product → cart → pay (cash/card/split, atomic via `process_direct_sale_atomic`) → receipt; replaced the old bar's tab-based POS page. Handles multi-unit items: loose-weight (kg/g) and case→piece breakdown via `open-unit`/`correct-open-unit`/`void-open-unit`.
+- **Supplier & receiving** (`manage-suppliers`, `receive-shipment`) — supplier CRUD plus one-step atomic goods receiving (`receive_shipment` RPC): line items (product, qty, cost price, expiry date) update stock, cost, and expiry together, no PO approval workflow.
+- **Expiry tracking** — one active expiry date per product, captured at receiving time; near-expiry alert (14-day default, admin-configurable) surfaces on Home dashboard, Inventory page, and checkout, not only in Reports.
+- **Inventory** (`adjust-inventory`, `physical-count`, `override-negative-stock`) — manual stock adjustment with required reason (audit-logged), physical count/stocktake reconciliation, low-stock list driven by per-product reorder point.
+- **Payments/completed-sale management** (`process-payment`, `process-refund`, `reopen-tab`, `edit-paid-tab`, `remove-tab-item`, `remove-item-from-tab`, `close-tab`) — a completed sale still uses the `tabs`/`orders`/`order_items` tables under the hood even though the checkout UI is sale-focused; refund (manager PIN gate + optional inventory reversal), reopen a paid sale, and edit a paid sale's line items are reachable from `PaymentPane` on `/payments`.
+- **Staff & RBAC** (`clock-in-staff`, `clock-out-staff`, `manager-pin-gate`, `force-pin-change`, `edit-staff-role`, `edit-staff-locale`, `toggle-permission`) — PIN login, shift clock-in/out, role/permission management on `/rbac` and `/staff`.
+- **Caja (register) sessions** — daily cash session open/close/reconcile (`register-caja-entry`, `close_caja_session`).
+- **Reports** (`export-report`) — trimmed to supermarket-relevant tabs: Caja, Product Sales (with historical-cost-snapshot margin), Hourly Breakdown, Payment Methods, Deletions Pre/Post, Audit-adjacent report views. `rowsToCsv` CSV serializer (`shared/lib/exporters/csv.ts`) neutralizes CSV formula injection (CWE-1236) by prefixing risky leading characters with `'`.
+- **Product/category catalog** (`manage-products`, `manage-categories`, `manage-modifier-groups`) — CRUD, barcode lookup.
+- **AI vision pipeline** (`agent-chat` feature, `src/shared/lib/agent/{brain,vision}.ts`) — image/PDF/CSV → Anthropic extraction → confirm → bulk product import. Currently name+price extraction only; extending to full invoice line items (qty/cost/supplier/expiry) is v2/Beta scope (`AI-01..05` in `.planning/REQUIREMENTS.md`), which also covers moving the Anthropic call server-side into an edge function instead of the current client-side key.
+- i18n / multi-language (es-MX default, en-US) — `react-i18next` across every FSD layer, self-service Language tab in Settings (all roles), admin per-staff locale field on `/staff`, locale-aware receipts/PDFs, `i18next/no-literal-string` lint gate — see "i18n / Multi-Language" section below.
+- Touch-target & focus-visible sweep — `focusEmphasis` CVA variant on `Button`/`POSButton`, `touchSize` (44/56/72px) rollout, `ConfirmDialog`'s `confirmClassName` passthrough for destructive confirms.
+
+## Key DB Tables (Remote Supabase)
+
+| Table                                       | Description                                             |
+| -------------------------------------------- | --------------------------------------------------------- |
+| `profiles`                                   | Staff accounts + roles                                    |
+| `shifts`                                     | Clock-in/out records                                       |
+| `products` / `categories`                    | Product catalog                                             |
+| `tabs` / `orders` / `order_items`            | Sales (a completed sale is still modeled as a "tab")      |
+| `payments`                                   | Payment records                                             |
+| `inventory` / `inventory_log`                | Stock levels + movement log (linked to `products`)         |
+| `caja_sessions` / `caja_entries`             | Daily cash register sessions                                |
+| `suppliers` / `supplier_products` / `shipments` | Supplier records + shipment receiving (Phase 3)          |
+| `receipt_settings`                           | Per-terminal receipt config                                 |
+| `open_units`                                 | Case→piece unit-breakdown tracking                          |
+| `audit_logs`                                 | Audit trail                                                 |
+| `role_permissions`                           | RBAC permission overrides                                    |
+
+Bar/pool-parlour-era tables (`pool_sessions`, `pool_tables`/`resources`, `rappi_orders`, `waitlist_entries`/`waitlist_notifications`, `prep_productions`, `combo_*`/`recipes`/`ingredients`/`modifier_inventory_rules`, `promotions`/`promotion_availability`/`applied_promotions`, `tab_transfers`, `tip_distribution_entries`) were dropped in Phase 1 — do not reference them.
+
+## RBAC Actions
+
+Defined in `src/shared/lib/rbac.ts`. Roles: `cashier < manager < admin`, plus a non-hierarchical `kitchen` role. (The role set was `bartender < manager < admin` in the original bar-pos codebase; renamed to `cashier` end-to-end — DB enum, RLS, TS types — as part of Phase 1's rebrand, D-16.)
+
+Actions: `create_order`, `view_own_tabs`, `view_all_tabs`, `clock_in`, `clock_out`, `close_tab`, `view_reports`, `adjust_inventory`, `manage_products`, `manage_staff`, `manage_settings`, `delete_tab`, `view_all_shifts`, `manage_caja`, `process_refund`, `view_audit_log`, `edit_paid_tab`, `reopen_tab`. There is no `transfer_tab` action — tab transfer was a bar-pos-only concept removed in Phase 1; do not plan around it existing. There is no `void_order` action either — the void-order feature was removed end-to-end in Phase 5 (v1.1); `process_refund` is the sole staff-facing reversal path for a completed sale.
+
+Settings page requires `manage_settings` (admin only). Inventory page requires `adjust_inventory` (manager+).
+
+## Offline Queue
+
+Offline mutation queue is in `tabsStore.offlineQueue` (Zustand). `OfflineQueueProcessor` component replays queued actions on reconnect. Guard mutations with `isOnline()` from `@shared/lib/network`. `OfflineBanner` in `@shared/ui` surfaces connection state.
+
+## Supabase
+
+Realtime subscriptions are initialized in Zustand stores, not React components. Edge function contracts are defined in `src/shared/lib/edge-function-contracts.ts`. See `supermarket-pos/SUPABASE-CONTRACTS.md` for the full API contract.
+
+**Missing generated types workaround:** When a new table or RPC exists in the DB but `supabase.types.ts` has not been regenerated yet, use `const db = supabase as any` at the file level with a file-level `/* eslint-disable */` comment. Regenerate types ASAP with `npx supabase gen types typescript --local > src/shared/lib/supabase.types.ts` and remove the cast.
+
+**Migration DOWN scripts:** most migrations (including all post-Phase-1 pivot migrations) lack DOWN scripts — retroactive addition is out of scope as Supabase Cloud has no automated rollback mechanism.
+
+## E2E Test Suite (`supermarket-pos/e2e/`)
+
+The suite was fully rewritten in Phase 17 (E2E Suite Overhaul) from a flat 50-file layout into domain folders under `e2e/`, one folder per subsystem, each grouped by Playwright's `global-teardown.ts` report classification (folder path, not filename prefix). 51 spec files across 20 folders — all must pass before release (`npm run test:e2e`), aside from the intentional carve-out documented below.
+
+| Folder | Covers |
+|--------|--------|
+| `e2e/a11y/` | Keyboard focus/Tab-order regression coverage (ManagerPinDialog, inventory filter row, Batch Adjustment dialog) |
+| `e2e/ai/` | AI vision pipeline (agent-chat): file-drop → extraction preview → confirm → bulk product import, Anthropic call mocked via `page.route()` |
+| `e2e/audit/` | Audit log table/diff viewer, cross-entity ID linking from Audit Log to Payments/Staff |
+| `e2e/caja/` | Caja (register) session open/close, cash-entry registration |
+| `e2e/checkout/` | Direct-sale checkout happy paths, atomic RPC/idempotency guards, barcode/search product discovery, per-item cart notes |
+| `e2e/errors/` | Cross-cutting error/validation scenarios (closed-caja guard, out-of-stock confirm gate, field-length validation) |
+| `e2e/home/` | Home dashboard navigation, RBAC-gated route redirects, removed-route catch-all behavior |
+| `e2e/infra/` | CI smoke checks, general infra checks, Tauri build sanity, updater, offline mutation queue |
+| `e2e/inventory/` | Manual adjustment, low-stock/near-expiry alerts, physical count, open-unit (case→piece) breakdown, loose-weight sale/hold |
+| `e2e/payments/` | Core payment completion, PaymentPane navigation, edge cases (tip/discount/underpayment), refund (with stock-movement assertions), tab split-payment |
+| `e2e/products/` | Product CRUD/visibility in the checkout grid, category tree + modifier-groups RLS |
+| `e2e/purchase-orders/` | PO creation, reorder-suggestion draft, receive-and-close, cashier RBAC/RLS denial |
+| `e2e/rbac/` | Role/permission matrix, staff management (clock-in/out, role/locale edits), RLS-boundary denial (cashier vs. manager) |
+| `e2e/receipts/` | Hardware/receipt settings, category+modifier grouping on the printed receipt, print-retry resilience, reprint, PDF/email delivery |
+| `e2e/reports/` | Report tabs (caja/product-sales/hourly/payment-methods/margin/turnover), product-sales report, CSV export, discount-and-revenue |
+| `e2e/settings/` | Self-service locale switch, settings backup/restore |
+| `e2e/soak/` | Full-day multi-role soak test exercising checkout, caja, and staff flows together |
+| `e2e/suppliers/` | Supplier CRUD, shipment receiving (including forced-failure atomicity), loading/error states |
+| `e2e/tabs/` | Edit a paid sale's line items, reopen a closed ticket, optimistic-concurrency conflict handling on a version-guarded save |
+| `e2e/visual/` | Visual-regression baseline across the full route × role matrix |
+
+**One documented manual-verification exception:** the native Tauri window shell, the physical USB-HID PIN keypad, and Supabase's local `devtools` UI cannot be driven by a Playwright browser session — there is no way to intercept OS-level window chrome or real hardware input from a headless Chrome-for-Testing process. This is the sole carve-out from this repo's "no `human_needed`/manual-UAT" testing policy (see `## Testing & Verification Policy` above); every other scenario formerly gated behind `test.skip` in the old `14-manual-stubs.spec.ts` (CI/build/Tauri sanity) was closed with real automated coverage in `e2e/infra/` instead, and that placeholder file was deleted, not left as a stub.
+
+Auth helpers are in `e2e/helpers/auth.ts`. Use `loginAs(page, 'admin')` — admin PIN is `0000`.
+
+## i18n / Multi-Language
+
+Stack: `react-i18next` + `i18next`, singleton at `src/shared/lib/i18n/index.ts` (lives in the `shared` FSD layer — every layer imports it, no layer above `shared` may be a dependency). No `i18next-http-backend`/`i18next-browser-languagedetector` — this is an offline, statically-bundled Tauri app; all catalogs ship in the signed binary and locale is staff-driven (`profiles.locale`), not browser/OS-driven.
+
+**Namespace scheme** (10 namespaces, one JSON file per locale under `src/shared/lib/i18n/locales/{es-MX,en-US}/`), one per FSD layer/concern:
+
+| Namespace | Layer / concern |
+|-----------|------------------|
+| `common` | `shared/ui` — cross-cutting buttons, loading states, shared component copy |
+| `featOrders` | `features/` — order/pool-timer/payment/refund/split/void/caja-entry actions |
+| `featMgmt` | `features/` — management-action features (products, staff, RBAC-adjacent) |
+| `wPanels` | `widgets/` — operational panels (POS/checkout, payments, suppliers, caja, inventory, home) |
+| `wAdmin` | `widgets/` — report/analytics/audit/RBAC/inventory/settings-tab admin widgets |
+| `entities` | `entities/` — domain model hooks + `ui/` cards/rows |
+| `pages` | `pages/` — route container titles/labels |
+| `settings` | Settings tabs (incl. the Language tab itself) |
+| `staff` | Staff management page |
+| `receipt` | Printed receipts / PDF exports |
+
+**Locale is a per-staff preference** (`profiles.locale`, `LocaleSchema` = `'es-MX' | 'en-US'`, default `es-MX`), not a terminal/browser setting — it persists across devices/logins. Two write paths: (1) self-service via Settings → Language, open to every authenticated role including cashier (`LanguageSettingsTab`, role-agnostic, always the first/default Settings tab); (2) admin override of another staff member's locale on `/staff`, gated by the existing `manage_staff` RBAC action. Switching your own locale calls `i18n.changeLanguage()` on save, re-rendering the whole app immediately with no page reload.
+
+**Catalog rule for this phase:** es-MX values are byte-identical to the pre-migration hardcoded literal (the migration only changed the *source* of each string, not its content); en-US values are genuine English translations. Full Spanish-content translation (i.e., changing the es-MX values themselves) is out of scope / future work.
+
+**Enforcement (D-05):** `i18next/no-literal-string: error` is committed in `eslint.config.js`, scoped to `shared/ui`, `entities`, `features`, `widgets`, and `pages`, `mode: 'all'`, no grandfather/ignore list — any new hardcoded UI string in those layers fails `npm run lint`.
+
+## TypeScript Gotchas
+
+**`exactOptionalPropertyTypes` is enabled.** Never write `prop?: string` for mutation inputs — write `prop: string | undefined` instead. Optional chaining and default values still work normally.
+
+**AppErrorCode** — the full union is in `src/shared/lib/result.ts`. When adding a new error code, add it to that union first, then use `const appErr: AppError = { code: 'YOUR_CODE' as AppErrorCode, ... }`.
+
+Current codes: `NETWORK_OFFLINE | AUTH_REQUIRED | AUTH_FORBIDDEN | NOT_FOUND | VALIDATION_ERROR | DUPLICATE_ENTRY | TAB_ALREADY_CLOSED | SESSION_STILL_RUNNING | PAYMENT_DECLINED | PAYMENT_ALREADY_PROCESSED | INVENTORY_NEGATIVE | CAJA_CLOSED | OPEN_TABS_EXIST | POOL_TABLE_OCCUPIED | SUPABASE_ERROR | TAURI_ERROR | UNKNOWN_ERROR`
+
+---
+
+## Paperclip Sprint Team Standards
+
+> This section was appended by the Paperclip company setup generator (2026-04-21).
+> It records the authoritative project standards for all Paperclip agents.
+> Do not edit this section manually — update it by revising `.paperclip/skills/dev-standards/SKILL.md`.
+
+### Actual Stack (from package.json / tsconfig.json)
+
+| Technology      | Version                                        | Notes                                                                 |
+| --------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
+| React           | 19.1.0                                         | Function components only; hooks-only                                  |
+| TypeScript      | 5.8.3                                          | strict mode; `exactOptionalPropertyTypes: true`                       |
+| Desktop runtime | Tauri 2 (`@tauri-apps/api ^2`)                 | **NOT Electron** — IPC via `invoke()` from `@tauri-apps/api/core`     |
+| Build tool      | Vite 7                                         |                                                                       |
+| Server state    | TanStack Query v5 (`@tanstack/react-query ^5`) | All server state via TanStack Query                                   |
+| Local/UI state  | Zustand v5                                     | Realtime subscriptions initialized in stores                          |
+| Validation      | Zod v4                                         | Single source of truth for domain types in `src/shared/lib/domain.ts` |
+| Styling         | Tailwind CSS v3 + shadcn/ui                    | Do not introduce new CSS systems                                      |
+| Unit tests      | Vitest v4 + React Testing Library v16          | `npm run test`                                                        |
+| Property-based  | fast-check v4                                  | Use for billing math, boundary conditions                             |
+| E2E             | Playwright v1.59                               | `npm run test:e2e`; specs in `supermarket-pos/e2e/`                           |
+| Storybook       | v10                                            | Required for new `shared/ui/` components                              |
+
+### Architecture
+
+Feature-Sliced Design (FSD). Import direction: `app → pages → widgets → features → entities → shared`. Enforced by `eslint-plugin-boundaries`. A boundary violation is a blocking lint error.
+
+### TypeScript Gotchas (Critical)
+
+- **`exactOptionalPropertyTypes: true`** — Never write `prop?: string` for mutation inputs. Write `prop: string | undefined`.
+- **`noUncheckedIndexedAccess: true`** — Array access returns `T | undefined`. Always check before use.
+- **No `any`** without a justification comment on the same line.
+
+### Forbidden Patterns
+
+```typescript
+// ❌ Manual type interfaces for domain entities
+interface Tab { id: string }  // use Zod schema in domain.ts instead
+
+// ❌ Ignored Supabase error
+const { data } = await supabase.from('tabs').select();  // error must be handled
+
+// ❌ console.log
+console.log('debug');  // use src/shared/lib/logger.ts
+
+// ❌ Hardcoded secrets
+const key = 'eyJ...';
+
+// ❌ Electron IPC patterns (this is Tauri 2)
+ipcRenderer.send('event');
+contextBridge.exposeInMainWorld(...);
+
+// ❌ Service-role key in renderer
+createClient(url, SUPABASE_SERVICE_ROLE_KEY);
+
+// ❌ any without justification
+const x: any = response;
+```
+
+### Commit Convention
+
+Conventional Commits: `<type>(<ticket-id>): <description>`
+Types: `feat` | `fix` | `refactor` | `test` | `chore`
+No `--no-verify`. Pre-commit hooks (husky + lint-staged) must pass.
+
+### Test Commands
+
+```bash
+cd supermarket-pos
+npm run typecheck          # tsc --noEmit — must pass before every commit
+npm run lint               # ESLint max-warnings: 0
+npm run test               # Vitest unit (run once)
+npm run test:e2e           # Playwright — requires .env.local E2E credentials
+npx vitest run src/path/to/file.test.ts   # single test file
+npx playwright test e2e/caja/session-management.spec.ts   # single E2E spec
+```
+
+### Paperclip Agent Files
+
+```
+.paperclip/
+  company.yaml              # Import into Paperclip UI
+  AGENTS.md                 # Shared behavioral contract (all agents read this)
+  agents/
+    pm.md                   # PM system prompt
+    fullstack-engineer.md   # Dev system prompt
+    test-engineer.md        # QA system prompt
+  skills/
+    sprint-decomposition/   # PM: brief → tickets
+    ticket-format/          # All: canonical ticket schema
+    dev-standards/          # Dev: React/TS/Tauri/Supabase rules
+    qa-playbook/            # QA: test pyramid, integration, E2E
+    failure-report/         # QA: exact failure report format
+  templates/
+    ticket.template.md
+    sprint-brief.template.md
+    dod-checklist.template.md
+```

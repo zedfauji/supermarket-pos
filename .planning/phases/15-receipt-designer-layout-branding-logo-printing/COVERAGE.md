@@ -1,0 +1,1 @@
+No external API integration: this phase adds local receipt-formatting UI and local ESC/POS raster image encoding for an existing on-premises thermal printer command — no third-party network API or SDK is called.

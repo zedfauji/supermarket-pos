@@ -1,0 +1,100 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { useReceiptSettings } from '@entities/settings';
+import { ReceiptSettingsSchema } from '@shared/lib/domain';
+import type { ReceiptData } from '@shared/lib/edge-function-contracts';
+import { downloadReceiptPdf } from '@shared/lib/exporters/receipt-pdf.tsx';
+import { getCurrentLocale } from '@shared/lib/i18n';
+import { printReceipt } from '@shared/lib/pos-printer';
+import { buildThermalReceiptText } from '@shared/lib/receipt-format';
+import { POSButton } from '@shared/ui';
+import { EmailReceiptDialog } from './EmailReceiptDialog';
+
+export interface ReceiptPreviewProps {
+  receipt: ReceiptData;
+  onDone: () => void;
+}
+
+export function ReceiptPreview({ receipt, onDone }: ReceiptPreviewProps) {
+  const { t } = useTranslation('featOrders');
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [printBusy, setPrintBusy] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const { data: receiptSettings } = useReceiptSettings();
+  const settings = receiptSettings ?? ReceiptSettingsSchema.parse({});
+  const text = buildThermalReceiptText(receipt, getCurrentLocale(), settings);
+
+  return (
+    <div className="space-y-4">
+      <h2 className="font-heading text-lg font-semibold">{t('processPayment.receiptTitle')}</h2>
+      {/* text-[11px] mirrors the 58mm thermal printer's fixed character width (buildThermalReceiptText) — off the UI type ramp deliberately, so the preview's line-wrap matches the physical receipt. */}
+      <pre className="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-[11px] leading-tight whitespace-pre">
+        {text}
+      </pre>
+      <div className="flex flex-col flex-wrap gap-2 sm:flex-row">
+        <POSButton
+          type="button"
+          touchSize="large"
+          className="flex-1"
+          disabled={printBusy}
+          onClick={() => {
+            setPrintBusy(true);
+            void printReceipt(receipt, settings).finally(() => {
+              setPrintBusy(false);
+            });
+          }}
+        >
+          {printBusy ? t('processPayment.printing') : t('processPayment.printReceipt')}
+        </POSButton>
+        <POSButton
+          type="button"
+          variant="outline"
+          touchSize="large"
+          className="flex-1"
+          onClick={() => {
+            setEmailOpen(true);
+          }}
+        >
+          {t('processPayment.emailReceiptButton')}
+        </POSButton>
+        <POSButton
+          type="button"
+          variant="outline"
+          touchSize="large"
+          className="flex-1"
+          disabled={pdfBusy}
+          onClick={() => {
+            setPdfBusy(true);
+            void downloadReceiptPdf(receipt, settings)
+              .then(result => {
+                if (!result.ok && result.error.code !== 'EXPORT_CANCELLED') {
+                  toast.error(t('processPayment.pdfGenerationFailed'));
+                }
+              })
+              .finally(() => {
+                setPdfBusy(false);
+              });
+          }}
+        >
+          {pdfBusy ? t('processPayment.generatingPdf') : t('processPayment.downloadPdfButton')}
+        </POSButton>
+        <POSButton
+          type="button"
+          variant="secondary"
+          touchSize="large"
+          className="flex-1"
+          onClick={onDone}
+        >
+          {t('processPayment.done')}
+        </POSButton>
+      </div>
+      <EmailReceiptDialog
+        receipt={receipt}
+        settings={settings}
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,67 @@
+{
+  "skill_name": "prompt-improver",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Improve this prompt: 'Help me write better code'",
+      "expected_output": "The skill should ask context-gathering questions before producing any improved prompt, since the input is extremely vague.",
+      "expectations": [
+        "The skill asks at least 3 clarifying questions before improving",
+        "The skill identifies that no programming language is specified",
+        "The skill identifies that 'better' is undefined and needs criteria",
+        "The skill does NOT produce an improved prompt without gathering context first"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Improve this prompt: 'You are a helpful assistant. Please analyze the following code and suggest improvements. Don't be too verbose. Make sure to check for bugs.'",
+      "expected_output": "An improved prompt with role assignment, XML structure, explicit output format, guardrails, and removal of hedging language. Should score the original low on authority and guardrails.",
+      "expectations": [
+        "The improved prompt removes 'please' and uses imperative verbs",
+        "The improved prompt includes XML tags for structure",
+        "The improved prompt defines an explicit output format",
+        "The improved prompt includes guardrails against hallucination",
+        "The analysis scores authority below 7/10 for the original",
+        "The improved prompt replaces 'helpful assistant' with a specific role"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Generate a system prompt for a Kubernetes troubleshooting agent that has access to kubectl, helm, and ArgoCD tools. Target model is Claude.",
+      "expected_output": "A complete system prompt with role, prime directives, instructions, tool descriptions, guardrails, self-learning, and Claude-specific optimizations.",
+      "expectations": [
+        "The output contains a <role> section with Kubernetes expertise",
+        "The output contains <prime_directives> with anti-hallucination rules",
+        "The output references kubectl, helm, and ArgoCD as available tools",
+        "The output includes guardrails about not running destructive commands without confirmation",
+        "The output includes a self-learning section",
+        "The output uses XML tags (Claude optimization)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Analyze this prompt: '<role>You are a senior security analyst specializing in cloud infrastructure.</role><task>Review the provided Terraform configuration for security vulnerabilities. For each finding, cite the specific resource block and line, classify severity as Critical/High/Medium/Low, and recommend a fix with a code example.</task><guardrails>- Do not fabricate vulnerabilities. Only report issues you can verify in the configuration.- If uncertain about severity, classify as Medium and note your uncertainty.- Limit findings to the top 10 most impactful issues.</guardrails>'",
+      "expected_output": "High scores across most dimensions (7+/10). The prompt is well-structured with role, task, output format, and guardrails. May note minor improvements possible.",
+      "expectations": [
+        "Clarity score is 7 or higher",
+        "Authority score is 7 or higher",
+        "Guardrails score is 7 or higher",
+        "Overall score is 6 or higher",
+        "The analysis acknowledges the prompt is well-structured",
+        "Recommendations are minor refinements, not major restructuring"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Apply chain-of-thought technique to this prompt: 'Calculate the total cost of running 3 t3.large EC2 instances for 30 days in us-east-1 with 100GB EBS each.'",
+      "expected_output": "The prompt restructured with step-by-step reasoning protocol, separated reasoning/answer sections, and verification step.",
+      "expectations": [
+        "The output includes a step-by-step reasoning protocol",
+        "The output separates reasoning from the final answer using tags",
+        "The output includes a verification or confidence step",
+        "The output preserves the original task content",
+        "The output includes guardrails about showing intermediate steps"
+      ]
+    }
+  ]
+}

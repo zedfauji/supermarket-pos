@@ -1,0 +1,41 @@
+{
+  "table": {
+    "name": "Name",
+    "role": "Role",
+    "locale": "Language",
+    "clockIn": "Clock in",
+    "duration": "Shift duration"
+  },
+  "actions": {
+    "clockIn": "Clock In",
+    "clockOut": "Clock Out",
+    "forcePinChange": "Force PIN Change"
+  },
+  "section": {
+    "title": "Staff",
+    "description": "Active team members and open shifts."
+  },
+  "search": {
+    "placeholder": "Search staff…"
+  },
+  "locale": {
+    "editTrigger": "Change language",
+    "updateSuccess": "{{name}}'s language updated to {{locale}}.",
+    "updateError": "Couldn't update {{name}}'s language."
+  },
+  "addStaff": {
+    "trigger": "Add Staff",
+    "dialogTitle": "Add Staff",
+    "dialogDescription": "Create a new staff account with a temporary PIN.",
+    "nameLabel": "Name",
+    "pinLabel": "PIN",
+    "confirmPinLabel": "Confirm PIN",
+    "roleLabel": "Role",
+    "localeLabel": "Language",
+    "pinMismatch": "PINs do not match",
+    "create": "Create Staff",
+    "creating": "Creating…",
+    "successToast": "{{name}} added — they'll be asked to set a new PIN on first login",
+    "genericFailure": "Something went wrong. Please try again or ask a manager for help."
+  }
+}

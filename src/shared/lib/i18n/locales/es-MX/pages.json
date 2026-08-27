@@ -1,0 +1,63 @@
+{
+  "common": {
+    "logoAlt": "Logo de Supermarket POS"
+  },
+  "audit": {
+    "title": "Registro de auditoría"
+  },
+  "editHistory": {
+    "title": "Historial de ediciones"
+  },
+  "home": {},
+  "pos": {
+    "title": "Cobro"
+  },
+  "inventory": {
+    "title": "Inventario",
+    "physicalCount": "Conteo físico",
+    "lowStockToast": "Existencia baja: {{productName}} — quedan {{currentStock}} (umbral: {{threshold}})",
+    "nearExpiryToast": "Próxima caducidad: {{productName}} — quedan {{days}} días"
+  },
+  "payments": {
+    "title": "Pagos",
+    "tabs": {
+      "payments": "Pagos",
+      "refunds": "Reembolsos"
+    }
+  },
+  "rbac": {
+    "title": "Roles y permisos"
+  },
+  "reports": {
+    "title": "Reportes",
+    "groups": {
+      "sales": "Ventas",
+      "inventoryAnalytics": "Análisis de inventario",
+      "staffTips": "Personal",
+      "operations": "Operaciones"
+    },
+    "tabs": {
+      "session": "Vista de sesión",
+      "products": "Ventas de productos",
+      "hourly": "Desglose por hora",
+      "inventoryAnalytics": "Análisis de inventario",
+      "voids": "Anulaciones y reembolsos",
+      "deletionsPre": "Eliminaciones",
+      "deletionsPost": "Correcciones",
+      "categories": "Ingresos por categoría",
+      "staff": "Desempeño del personal",
+      "paymentMethods": "Métodos de pago",
+      "refundsReg": "Registro de reembolsos"
+    }
+  },
+  "settings": {
+    "title": "Configuración"
+  },
+  "suppliers": { "title": "Proveedores", "receive": "Recibir envío" },
+  "staff": {
+    "title": "Personal"
+  },
+  "purchaseOrders": {
+    "title": "Órdenes de compra"
+  }
+}

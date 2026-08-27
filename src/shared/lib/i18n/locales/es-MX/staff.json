@@ -1,0 +1,41 @@
+{
+  "table": {
+    "name": "Nombre",
+    "role": "Rol",
+    "locale": "Idioma",
+    "clockIn": "Entrada",
+    "duration": "Duración del turno"
+  },
+  "actions": {
+    "clockIn": "Marcar entrada",
+    "clockOut": "Marcar salida",
+    "forcePinChange": "Forzar cambio de PIN"
+  },
+  "section": {
+    "title": "Personal",
+    "description": "Miembros activos del equipo y turnos abiertos."
+  },
+  "search": {
+    "placeholder": "Buscar personal…"
+  },
+  "locale": {
+    "editTrigger": "Cambiar idioma",
+    "updateSuccess": "Idioma de {{name}} actualizado a {{locale}}.",
+    "updateError": "No se pudo actualizar el idioma de {{name}}."
+  },
+  "addStaff": {
+    "trigger": "Agregar personal",
+    "dialogTitle": "Agregar personal",
+    "dialogDescription": "Crea una cuenta de personal nueva con un PIN temporal.",
+    "nameLabel": "Nombre",
+    "pinLabel": "PIN",
+    "confirmPinLabel": "Confirmar PIN",
+    "roleLabel": "Rol",
+    "localeLabel": "Idioma",
+    "pinMismatch": "Los PIN no coinciden",
+    "create": "Crear personal",
+    "creating": "Creando…",
+    "successToast": "{{name}} agregado — se le pedirá establecer un PIN nuevo en su primer inicio de sesión",
+    "genericFailure": "Algo salió mal. Inténtalo de nuevo o pide ayuda a un gerente."
+  }
+}

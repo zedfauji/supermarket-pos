@@ -1,0 +1,63 @@
+{
+  "common": {
+    "logoAlt": "Supermarket POS logo"
+  },
+  "audit": {
+    "title": "Audit Log"
+  },
+  "editHistory": {
+    "title": "Edit History"
+  },
+  "home": {},
+  "pos": {
+    "title": "Checkout"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "physicalCount": "Physical Count",
+    "lowStockToast": "Low stock: {{productName}} — {{currentStock}} remaining (threshold: {{threshold}})",
+    "nearExpiryToast": "Expiring soon: {{productName}} — {{days}} days remaining"
+  },
+  "payments": {
+    "title": "Payments",
+    "tabs": {
+      "payments": "Payments",
+      "refunds": "Refunds"
+    }
+  },
+  "rbac": {
+    "title": "Roles & Permissions"
+  },
+  "reports": {
+    "title": "Reports",
+    "groups": {
+      "sales": "Sales",
+      "inventoryAnalytics": "Inventory Analytics",
+      "staffTips": "Staff",
+      "operations": "Operations"
+    },
+    "tabs": {
+      "session": "Session View",
+      "products": "Product Sales",
+      "hourly": "Hourly Breakdown",
+      "inventoryAnalytics": "Inventory Analytics",
+      "voids": "Voids & Refunds",
+      "deletionsPre": "Deletions",
+      "deletionsPost": "Corrections",
+      "categories": "Revenue by Category",
+      "staff": "Staff Performance",
+      "paymentMethods": "Payment Methods",
+      "refundsReg": "Refunds Register"
+    }
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "suppliers": { "title": "Suppliers", "receive": "Receive Shipment" },
+  "staff": {
+    "title": "Staff"
+  },
+  "purchaseOrders": {
+    "title": "Purchase Orders"
+  }
+}

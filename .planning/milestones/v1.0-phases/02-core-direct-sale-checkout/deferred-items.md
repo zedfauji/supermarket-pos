@@ -1,0 +1,7 @@
+# Deferred Items
+
+- `npm run lint` remains blocked by 12 pre-existing errors in the Plan 02-01 checkout files `src/features/checkout-sale/model/useCheckoutSale.ts` and `src/widgets/PaymentModal/ui/PaymentForm.tsx`. Plan 02-02's touched files pass targeted ESLint and `npm run typecheck`; this plan does not alter the existing payment implementation.
+- Targeted ESLint still reports three pre-existing `i18next/no-literal-string` errors for the `generateIdempotencyKey(...)` namespace literals in `src/widgets/PaymentModal/ui/PaymentForm.tsx` (lines 338, 353, and 445). Plan 02-04 changed only its payment amounts; the lint failures are unchanged and out of scope.
+- The live `e2e/51-barcode-scan-search.spec.ts` run times out in its shared `beforeEach` while `resetTestState()` / `openCaja()` waits on the local Supabase stack, before either barcode or category assertion executes. This matches the Phase 01 documented local edge-function/Supabase environment concern.
+- `npx tsc --noEmit -p e2e/tsconfig.json` is already red in unrelated legacy E2E specs and `e2e/helpers/supabase.ts`; the new spec is covered by the passing application `npm run typecheck` and its Playwright discovery run.
+- The combined Phase-02 Playwright run intermittently loses its Vite web server during later `e2e/52` UI cases (`ERR_CONNECTION_REFUSED`). Focused new cancellation, barcode-weight-entry, and held-cart-swap browser tests pass in fresh runs; investigate Playwright web-server lifecycle before relying on one combined suite as the only phase gate.

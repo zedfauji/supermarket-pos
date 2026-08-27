@@ -1,0 +1,26 @@
+{
+  "tabs": {
+    "language": "Idioma",
+    "general": "General",
+    "hardware": "Hardware",
+    "email": "Recibos por correo",
+    "backup": "Respaldo",
+    "products": "Productos",
+    "billing": "Facturación",
+    "nearExpiry": "Próxima caducidad"
+  },
+  "noPermission": "No tienes permiso para ver la configuración.",
+  "language": {
+    "heading": "Idioma",
+    "fieldLabel": "Idioma de la interfaz",
+    "option": {
+      "esMX": "Español (México)",
+      "enUS": "Inglés (EE. UU.)"
+    },
+    "helper": "Aplica solo a tu cuenta y persiste entre dispositivos.",
+    "save": "Guardar idioma",
+    "saving": "Guardando…",
+    "saveSuccess": "Idioma actualizado.",
+    "saveError": "No se pudo actualizar el idioma. Intenta de nuevo."
+  }
+}

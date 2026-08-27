@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "run-tests-on-feature-save",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/features/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": " Run Vitest for the saved file's test file. \n  If test file does not exist at <same-path>.test.ts, remind the developer to write tests.\n  Show test results in the terminal panel."
+  },
+  "workspaceFolderName": "bola8pos-kiro",
+  "shortName": "test-on-save-yaml"
+}

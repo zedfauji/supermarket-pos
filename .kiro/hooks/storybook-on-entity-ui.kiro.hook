@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "storybook-on-entity-ui",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "src/entities/**/ui/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": " A new entity UI component was created. Check if a corresponding .stories.tsx file exists \n  in the same directory. If it does not exist, create a Storybook story file with:\n  - 3 stories using realistic mock data\n  - autodocs tag\n  - All required props typed correctly from the entity's types.ts"
+  }
+}

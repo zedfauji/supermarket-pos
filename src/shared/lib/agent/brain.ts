@@ -1,0 +1,243 @@
+import { callAgentProxy } from '@shared/lib/edge-function-contracts';
+import { logger } from '@shared/lib/logger';
+import type {
+  AnthropicMessageParam,
+  AnthropicTextBlock,
+  AnthropicToolResultBlockParam,
+  AnthropicToolUseBlock,
+} from './anthropic-types';
+import { retrieveContext } from './rag';
+import { allToolDefinitions, executeTool } from './tools/index';
+
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface PendingConfirmation {
+  token: string;
+  toolName: string;
+  preview: unknown;
+}
+
+export interface AgentResult {
+  text: string;
+  toolsExecuted: string[];
+  usedFallback: boolean;
+  awaitingConfirmation: boolean;
+  pendingConfirmation: PendingConfirmation | null;
+}
+
+// ─── Config (lazy reads — vi.stubEnv works in tests) ─────────────────────────
+
+function getModel(): string {
+  return (import.meta.env['VITE_AGENT_MODEL'] as string | undefined) ?? 'claude-sonnet-4-6';
+}
+
+function getOllamaUrl(): string {
+  return (import.meta.env['VITE_OLLAMA_URL'] as string | undefined) ?? 'http://localhost:11434';
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const MAX_TOOL_LOOPS = 8;
+
+function detectLanguage(text: string): 'es' | 'en' {
+  const spanishPattern =
+    /\b(el|la|los|las|un|una|de|en|que|es|por|con|para|como|del|al|se|no|si|ya|su|le|más|pero|este|esta|hay|cómo|cuánto|cuántos|qué|tienes|tiene)\b/i;
+  const matches = text.match(spanishPattern);
+  return matches && matches.length >= 2 ? 'es' : 'en';
+}
+
+
+function buildSystemPrompt(userRole: string, ragContext: string, lang: 'es' | 'en'): string {
+  const now = new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' });
+  const langLine =
+    lang === 'es'
+      ? 'Respond in Spanish. Be concise and professional.'
+      : 'Respond in English. Be concise and professional.';
+
+  const parts = [
+    'You are the AI assistant for Bola 8 POS, a bar and restaurant point-of-sale system.',
+    `Current date/time: ${now}`,
+    `User role: ${userRole}`,
+    langLine,
+    '',
+    'You have tools to manage tabs, the menu, reports, diagnostics, and system status.',
+    '',
+    'TOOL RULES — follow strictly:',
+    '1. NEVER invent UUIDs. Use find_product / find_tab to resolve real IDs before any write.',
+    '2. For add_items_to_tab: call find_product first to get real product_id. Price is set by DB — do not pass unit_price.',
+    '3. Destructive tools (close_tab, deactivate_product, bulk_import_products) return { pending: true, confirm_token, preview }.',
+    '   Show the preview to the user and ask for confirmation. When user confirms, call confirm_action({ token }) — do NOT re-call the original tool.',
+    '   To cancel, call cancel_action({ token }).',
+    '4. If a tool returns an error, report the exact error message. Do not retry silently.',
+    '5. Never call write tools more than 10 times per minute — the system will block excess calls.',
+  ];
+
+  if (ragContext) parts.push('', ragContext);
+
+  return parts.join('\n');
+}
+
+// ─── Ollama fallback ──────────────────────────────────────────────────────────
+
+async function runOllamaFallback(
+  userMessage: string,
+  history: Message[],
+  userRole: string
+): Promise<string> {
+  const system = [
+    'You are the AI assistant for Bola 8 POS.',
+    `User role: ${userRole}`,
+    'You are in offline mode. Answer questions concisely. You cannot execute tools.',
+    'If the user asks you to perform an action, inform them you are in offline mode.',
+  ].join('\n');
+
+  const messages = [
+    { role: 'system', content: system },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user', content: userMessage },
+  ];
+
+  const resp = await fetch(`${getOllamaUrl()}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'llama3.2:3b-instruct-q4_K_M', messages, stream: false }),
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!resp.ok) throw new Error(`Ollama HTTP ${String(resp.status)}`);
+
+  const json = (await resp.json()) as { message?: { content?: string } };
+  return json.message?.content ?? '(no response from fallback model)';
+}
+
+// ─── Main entry point ─────────────────────────────────────────────────────────
+
+export async function runAgent(
+  userMessage: string,
+  userRole: string,
+  conversationHistory: Message[],
+  userId?: string
+): Promise<AgentResult> {
+  const lang = detectLanguage(userMessage);
+  const toolsExecuted: string[] = [];
+
+  let ragContext = '';
+  try {
+    ragContext = await retrieveContext(userMessage);
+  } catch {
+    // RAG is best-effort — continue without it
+  }
+
+  const systemPrompt = buildSystemPrompt(userRole, ragContext, lang);
+
+  const messages: AnthropicMessageParam[] = [
+    ...conversationHistory.map((m) => ({
+      role: m.role,
+      content: m.content,
+    })),
+    { role: 'user', content: userMessage },
+  ];
+
+  let attempt = 0;
+  while (attempt < 2) {
+    try {
+      const firstResult = await callAgentProxy({
+        model: getModel(),
+        max_tokens: 1024,
+        system: systemPrompt,
+        tools: allToolDefinitions,
+        messages,
+      });
+      if (!firstResult.ok) throw new Error(firstResult.error.message);
+      let response = firstResult.data;
+
+      let loopCount = 0;
+      let capturedPending: PendingConfirmation | null = null;
+
+      while (response.stop_reason === 'tool_use' && loopCount < MAX_TOOL_LOOPS) {
+        loopCount++;
+
+        const toolBlocks = response.content.filter(
+          (b): b is AnthropicToolUseBlock => b.type === 'tool_use'
+        );
+
+        // Append assistant turn before processing tools
+        messages.push({ role: 'assistant', content: response.content });
+
+        const toolResults: AnthropicToolResultBlockParam[] = [];
+
+        for (const block of toolBlocks) {
+          const ctx = { userId, userRole, durationMs: undefined };
+          const result = await executeTool(
+            block.name,
+            block.input as Record<string, unknown>,
+            ctx
+          );
+          toolsExecuted.push(block.name);
+
+          // Capture the first pending destructive action for UI confirmation dialog
+          if (result.ok && capturedPending === null) {
+            const d = result.data as Record<string, unknown> | null;
+            if (d?.['pending'] === true) {
+              capturedPending = {
+                token: d['confirm_token'] as string,
+                toolName: block.name,
+                preview: d['preview'],
+              };
+            }
+          }
+
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: JSON.stringify(result.ok ? result.data : result.error),
+          });
+        }
+
+        messages.push({ role: 'user', content: toolResults });
+
+        const loopResult = await callAgentProxy({
+          model: getModel(),
+          max_tokens: 1024,
+          system: systemPrompt,
+          tools: allToolDefinitions,
+          messages,
+        });
+        if (!loopResult.ok) throw new Error(loopResult.error.message);
+        response = loopResult.data;
+      }
+
+      const textBlock = response.content.find((b): b is AnthropicTextBlock => b.type === 'text');
+      return {
+        text: textBlock?.text ?? '',
+        toolsExecuted,
+        usedFallback: false,
+        awaitingConfirmation: capturedPending !== null,
+        pendingConfirmation: capturedPending,
+      };
+    } catch (e) {
+      attempt++;
+      logger.warn('brain.runAgent.claude_error', { attempt, detail: String(e) });
+      if (attempt < 2) continue;
+    }
+  }
+
+  // Ollama fallback after 2 Claude failures
+  logger.warn('brain.runAgent.ollama_fallback', { userRole });
+  try {
+    const text = await runOllamaFallback(userMessage, conversationHistory, userRole);
+    return { text, toolsExecuted, usedFallback: true, awaitingConfirmation: false, pendingConfirmation: null };
+  } catch (fallbackErr) {
+    logger.warn('brain.runAgent.fallback_failed', { detail: String(fallbackErr) });
+    const text =
+      lang === 'es'
+        ? 'El asistente no está disponible en este momento. Intenta de nuevo más tarde.'
+        : 'The assistant is currently unavailable. Please try again later.';
+    return { text, toolsExecuted, usedFallback: true, awaitingConfirmation: false, pendingConfirmation: null };
+  }
+}

@@ -1,0 +1,15 @@
+{
+  // supermarket-pos/.env.local is gitignored — it is NOT copied from your machine automatically.
+  // To get the same values in Cloud Runner: (a) Add VITE_* / other keys under
+  // cursor.com/dashboard/cloud-agents → Secrets (often no file needed), or (b) add secret
+  // BAR_POS_ENV_LOCAL_B64 = base64 of your local .env.local so `install` materializes the file.
+  "name": "Bola8 POS (Vite / supermarket-pos)",
+  "install": "cd supermarket-pos && HUSKY=0 npm ci && node scripts/write-env-local-from-cloud-secret.mjs",
+  "start": "cd supermarket-pos && npm run dev -- --host 0.0.0.0",
+  "ports": [
+    {
+      "name": "Vite dev server",
+      "port": 1520
+    }
+  ]
+}

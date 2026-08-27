@@ -1,0 +1,109 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import i18n from '@shared/lib/i18n';
+import { supabase } from '@shared/lib/supabase';
+
+import { useReopenTab, type ReopenTabInput } from './useReopenTab';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const baseInput: ReopenTabInput = {
+  tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  expectedVersion: 1,
+  reason: 'Customer requested correction',
+};
+
+function makeWrapper(queryClient: QueryClient) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  };
+}
+
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const mockedRpc = vi.mocked(supabase.rpc);
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('useReopenTab', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = makeQueryClient();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    queryClient.clear();
+  });
+
+  it('returns a translated generic message when the RPC call itself throws an unmapped Postgres exception', async () => {
+    mockedRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'db exploded', code: '55555', details: '', hint: '' },
+    } as never);
+
+    const wrapper = makeWrapper(queryClient);
+    const { result } = renderHook(() => useReopenTab(), { wrapper });
+
+    const res = await result.current.mutateAsync(baseInput);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe('SUPABASE_ERROR');
+      expect(res.error.message).not.toBe('db exploded');
+      expect(res.error.message).toBe(i18n.t('featOrders:reopenTab.genericError'));
+    }
+  });
+
+  it('returns a translated generic message when the RPC payload reports an unrecognized code', async () => {
+    mockedRpc.mockResolvedValue({
+      data: { ok: false, code: 'SOME_UNKNOWN_CODE', message: 'raw payload text' },
+      error: null,
+    } as never);
+
+    const wrapper = makeWrapper(queryClient);
+    const { result } = renderHook(() => useReopenTab(), { wrapper });
+
+    const res = await result.current.mutateAsync(baseInput);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe('SUPABASE_ERROR');
+      expect(res.error.message).not.toBe('raw payload text');
+      expect(res.error.message).toBe(i18n.t('featOrders:reopenTab.genericError'));
+    }
+  });
+
+  it('leaves the already-mapped REOPEN_CAP_EXCEEDED message unchanged', async () => {
+    mockedRpc.mockResolvedValue({
+      data: { ok: false, code: 'REOPEN_CAP_EXCEEDED' },
+      error: null,
+    } as never);
+
+    const wrapper = makeWrapper(queryClient);
+    const { result } = renderHook(() => useReopenTab(), { wrapper });
+
+    const res = await result.current.mutateAsync(baseInput);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.message).toBe(i18n.t('featOrders:reopenTab.capExceeded'));
+    }
+  });
+});

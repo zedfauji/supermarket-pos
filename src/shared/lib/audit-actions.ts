@@ -1,0 +1,68 @@
+/**
+ * audit-actions.ts
+ *
+ * Master enum of all valid audit log action labels.
+ * Format: <entity>.<verb> (lowercase, dot-separated).
+ *
+ * CI enforcement: src/shared/lib/__tests__/audit-actions.test.ts
+ * greps all migration files to assert every record_audit() call uses
+ * an action present in AuditActionSchema.options.
+ *
+ * Phase 14 — SINGLE SOURCE OF TRUTH. Add new actions here before
+ * adding record_audit() calls to RPCs.
+ */
+
+import { z } from 'zod';
+
+export const AuditActionSchema = z.enum([
+  // Payments
+  'payment.process',
+  'payment.process_split',
+  'payment.refund',
+  // Tabs
+  'tab.close',
+  'tab.transfer',
+  'tab.void',
+  'tab.split',
+  'tab.edit_paid',
+  'tab.reopen',
+  // Order items
+  'order_item.remove',
+  // Caja
+  'caja.open',
+  'caja.close',
+  'caja.entry',
+  // Orders
+  'order.create',
+  'order.void',
+  // Combos
+  'combo.add_to_tab',
+  // Inventory
+  'inventory.deplete',
+  'inventory.manual_adjust',
+  'inventory.physical_count',
+  // Shipments
+  'shipment.receive',
+  // Prep
+  'prep.produce',
+  // Permissions
+  'permission.toggle',
+  'permission.force_pin_change',
+  // Staff
+  'staff.role_change',
+  'staff.create',
+  'staff.locale_change',
+  // Settings
+  'settings.update',
+  // Tip distribution
+  'tip_distribution.compute',
+  // Promotions
+  'promotion.apply',
+  // Open units
+  'open_unit.open',
+  'open_unit.deplete',
+  'open_unit.exhaust',
+  'open_unit.void',
+  'open_unit.correct',
+  'open_unit.override',
+]);

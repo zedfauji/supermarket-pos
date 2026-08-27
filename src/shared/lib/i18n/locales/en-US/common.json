@@ -1,0 +1,124 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "confirm": "Confirm",
+    "close": "Close",
+    "tryAgain": "Try Again"
+  },
+  "loading": {
+    "generic": "Loading...",
+    "simple": "Loading",
+    "products": "Loading products...",
+    "poolTables": "Loading pool tables...",
+    "tabs": "Loading tabs...",
+    "tabDetails": "Loading tab details...",
+    "downloading": "Downloading {{percent}}%"
+  },
+  "chefHatBadge": {
+    "label": "Prep"
+  },
+  "clockDriftBanner": {
+    "message": "Clock out of sync — check your PC date/time settings"
+  },
+  "copyId": "Copy ID",
+  "copyIdFailed": "Could not copy ID",
+  "dataTable": {
+    "noDataTitle": "No data",
+    "noDataDescription": "No records found.",
+    "noResultsTitle": "No results",
+    "noResultsDescription": "No records match your search."
+  },
+  "dateRangePicker": {
+    "from": "From:",
+    "to": "To:"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong"
+  },
+  "idCopied": "ID copied to clipboard",
+  "jsonDiffViewer": {
+    "noPayload": "No payload recorded for this entry.",
+    "truncated": "Payload truncated at 64 KB. Full snapshot not available.",
+    "before": "Before",
+    "after": "After",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "noChanges": "No changes detected."
+  },
+  "moneyDisplay": {
+    "negativePrefix": "Negative "
+  },
+  "moneyInput": {
+    "amountAria": "Money amount"
+  },
+  "offlineBanner": {
+    "offline": "Offline — running on cached data",
+    "done": "All actions synced"
+  },
+  "pinKeypad": {
+    "display": "PIN display",
+    "keypad": "Numeric keypad",
+    "key0": "Key 0",
+    "backspace": "Backspace"
+  },
+  "quantityControl": {
+    "group": "Quantity control",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity"
+  },
+  "routingBadge": {
+    "kitchen": "Kitchen",
+    "bar": "Bar"
+  },
+  "searchInput": {
+    "search": "Search",
+    "clear": "Clear search"
+  },
+  "sectionHeader": {
+    "backHome": "Home"
+  },
+  "splitLayout": {
+    "products": "Products",
+    "currentTab": "Current Tab"
+  },
+  "statusBadge": {
+    "open": "Open",
+    "closed": "Closed",
+    "paid": "Paid",
+    "voided": "Voided",
+    "available": "Available",
+    "occupied": "Occupied",
+    "reserved": "Reserved",
+    "maintenance": "Maintenance",
+    "pending": "Pending",
+    "served": "Served",
+    "tabOpenWarn": "2h+",
+    "tabOpenCritical": "4h+",
+    "inStock": "In stock",
+    "lowStock": "Low stock",
+    "outOfStock": "Out of stock",
+    "poDraft": "Draft",
+    "poReceived": "Received"
+  },
+  "updateAvailableDialog": {
+    "titleAvailable": "Update Available",
+    "titleDownloading": "Downloading Update",
+    "titleRestartReady": "Ready to Restart",
+    "titleError": "Update Failed",
+    "descAvailableVersion": "Version {{version}} is ready to install.",
+    "descAvailableGeneric": "A new version is ready.",
+    "descDownloading": "Please wait — do not close the app.",
+    "descRestartReady": "Update installed. Restart now to apply changes.",
+    "descError": "Could not download the update. Try again later.",
+    "whatsNew": "What's new",
+    "remindLater": "Remind Later",
+    "installNow": "Install Now",
+    "installing": "Installing...",
+    "later": "Later",
+    "restartNow": "Restart Now"
+  }
+}

@@ -1,0 +1,138 @@
+import { Delete } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCartStore, calcWeightedLineTotal } from '@entities/tab/model/cartStore';
+import type { Product } from '@shared/lib/domain';
+import { formatMoney } from '@shared/lib/format';
+import { POSButton } from '@shared/ui/POSButton';
+import { Button } from '@shared/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
+
+export interface WeightEntryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  product: Product;
+  mode: 'add' | 'edit';
+  initialWeightGrams?: number;
+  tempId?: string;
+}
+
+const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
+
+function gramsFromKg(value: string): number {
+  const kilograms = Number(value);
+  return Number.isFinite(kilograms) ? Math.round(kilograms * 1000) : 0;
+}
+
+export function WeightEntryDialog({
+  open,
+  onOpenChange,
+  product,
+  mode,
+  initialWeightGrams,
+  tempId,
+}: WeightEntryDialogProps) {
+  const { t } = useTranslation('featOrders');
+  const addWeightedItem = useCartStore(state => state.addWeightedItem);
+  const updateWeightedItem = useCartStore(state => state.updateWeightedItem);
+  const [value, setValue] = useState(() =>
+    initialWeightGrams == null ? '' : String(initialWeightGrams / 1000)
+  );
+  const weightGrams = gramsFromKg(value);
+  const isValid = weightGrams > 0 && weightGrams <= 50_000;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!open) return;
+      if (/^[0-9]$/.test(event.key)) {
+        setValue(current => current + event.key);
+      }
+      if (event.key === '.' && !value.includes('.')) {
+        setValue(current => current + '.');
+      }
+      if (event.key === 'Backspace') {
+        setValue(current => current.slice(0, -1));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, value]);
+
+  const append = (key: string) => {
+    if (key !== '.' || !value.includes('.')) {
+      setValue(current => current + key);
+    }
+  };
+
+  const confirm = () => {
+    if (!isValid) return;
+    if (mode === 'edit' && tempId) updateWeightedItem(tempId, weightGrams);
+    else addWeightedItem(product, weightGrams);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('weightEntry.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-md border bg-muted/40 p-3 text-center">
+            <p className="text-sm text-muted-foreground">{t('weightEntry.fieldLabel')}</p>
+            <p aria-live="polite" className="text-3xl font-semibold tabular-nums">
+              {value || '0'} {t('weightEntry.kilograms')}
+            </p>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            {t('weightEntry.helperText', {
+              total: formatMoney(calcWeightedLineTotal(product.basePrice, weightGrams)),
+            })}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {keypad.map(key => (
+              <Button
+                key={key}
+                type="button"
+                className="h-14 text-xl"
+                onClick={() => {
+                  append(key);
+                }}
+              >
+                {key}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-14"
+              onClick={() => {
+                setValue(current => current.slice(0, -1));
+              }}
+              aria-label={t('common:actions.back')}
+            >
+              <Delete className="size-5" />
+            </Button>
+          </div>
+        </div>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <POSButton
+            type="button"
+            variant="outline"
+            touchSize="large"
+            onClick={() => {
+              onOpenChange(false);
+            }}
+          >
+            {t('common:actions.cancel')}
+          </POSButton>
+          <POSButton type="button" touchSize="xl" disabled={!isValid} onClick={confirm}>
+            {mode === 'edit' ? t('weightEntry.edit') : t('weightEntry.confirm')}
+          </POSButton>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

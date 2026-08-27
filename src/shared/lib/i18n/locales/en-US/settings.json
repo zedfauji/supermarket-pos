@@ -1,0 +1,26 @@
+{
+  "tabs": {
+    "language": "Language",
+    "general": "General",
+    "hardware": "Hardware",
+    "email": "Email Receipts",
+    "backup": "Backup",
+    "products": "Products",
+    "billing": "Billing",
+    "nearExpiry": "Near Expiry"
+  },
+  "noPermission": "You do not have permission to view settings.",
+  "language": {
+    "heading": "Language",
+    "fieldLabel": "Interface language",
+    "option": {
+      "esMX": "Español (México)",
+      "enUS": "English (US)"
+    },
+    "helper": "Applies only to your account and persists across devices.",
+    "save": "Save Language",
+    "saving": "Saving…",
+    "saveSuccess": "Language updated.",
+    "saveError": "Couldn't update language. Try again."
+  }
+}

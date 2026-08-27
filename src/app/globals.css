@@ -1,0 +1,238 @@
+@import 'tw-animate-css';
+@import '@fontsource-variable/geist' layer(base);
+@import '@fontsource/playfair-display/600.css' layer(base);
+@import '@fontsource/playfair-display/700.css' layer(base);
+@import 'tailwindcss';
+
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme {
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-pos-accent: var(--pos-accent);
+  --color-pos-danger: var(--pos-danger);
+  --color-pos-warning: var(--pos-warning);
+  --color-pos-highlight: var(--pos-highlight);
+  --color-overlay-shadow: var(--overlay-shadow);
+
+  --font-sans: 'Geist Variable', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  :root {
+    /* Light Mode ("day service" / back-office) — parchment ground, deep
+       espresso ink, bronzed brass structure. All vars are complete
+       oklch() color values. */
+    --background: oklch(0.98 0.008 85);
+    --foreground: oklch(0.22 0.02 55);
+    --card: oklch(1 0.005 85);
+    --card-foreground: oklch(0.22 0.02 55);
+    --popover: oklch(1 0.005 85);
+    --popover-foreground: oklch(0.22 0.02 55);
+    --primary: oklch(0.5 0.1 75);
+    --primary-foreground: oklch(0.98 0.01 85);
+    --secondary: oklch(0.95 0.01 80);
+    --secondary-foreground: oklch(0.3 0.02 55);
+    --muted: oklch(0.95 0.01 80);
+    --muted-foreground: oklch(0.5 0.02 60);
+    --accent: oklch(0.95 0.01 80);
+    --accent-foreground: oklch(0.3 0.02 55);
+    --destructive: oklch(0.55 0.21 25);
+    --destructive-foreground: oklch(0.98 0.01 85);
+    --border: oklch(0.85 0.02 75);
+    --input: oklch(0.85 0.02 75);
+    --ring: oklch(0.6 0.03 75);
+    --overlay-shadow: oklch(0 0 0 / 0.6); /* contrast shadow for light text over illustration artwork, not a themed surface */
+    --radius: 0.625rem;
+    --chart-1: oklch(0.5 0.1 75);
+    --chart-2: oklch(0.55 0.13 155);
+    --chart-3: oklch(0.55 0.21 25);
+    --chart-4: oklch(0.62 0.17 55);
+    --chart-5: oklch(0.58 0.14 170);
+    --sidebar: oklch(1 0.005 85);
+    --sidebar-foreground: oklch(0.22 0.02 55);
+    --sidebar-primary: oklch(0.5 0.1 75);
+    --sidebar-primary-foreground: oklch(0.98 0.01 85);
+    --sidebar-accent: oklch(0.95 0.01 80);
+    --sidebar-accent-foreground: oklch(0.3 0.02 55);
+    --sidebar-border: oklch(0.85 0.02 75);
+    --sidebar-ring: oklch(0.6 0.03 75);
+
+    /* POS-specific tokens — signal meaning unchanged, retuned to the brass/glass world */
+    --pos-accent: oklch(0.55 0.13 155); /* jade — table available */
+    --pos-danger: oklch(0.55 0.21 25); /* garnet — table occupied / danger */
+    --pos-warning: oklch(0.62 0.17 55); /* amber — needs-attention threshold (low stock, happy hour, tip-split warning) */
+    --pos-highlight: oklch(0.58 0.14 170); /* emerald — "best/top" row emphasis in reports */
+  }
+
+  /* Dark Mode ("night service" / bar counter) — espresso-black ground,
+     warm ivory ink, brass foil, frosted-glass surfaces. Activated by
+     system preference (prefers-color-scheme: dark). */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: oklch(0.16 0.012 55);
+      --foreground: oklch(0.96 0.01 85);
+      --card: oklch(0.21 0.014 55);
+      --card-foreground: oklch(0.96 0.01 85);
+      --popover: oklch(0.19 0.014 55);
+      --popover-foreground: oklch(0.96 0.01 85);
+      --primary: oklch(0.74 0.11 82);
+      --primary-foreground: oklch(0.18 0.02 60);
+      --secondary: oklch(0.27 0.015 55);
+      --secondary-foreground: oklch(0.96 0.01 85);
+      --muted: oklch(0.25 0.013 55);
+      --muted-foreground: oklch(0.68 0.02 70);
+      --accent: oklch(0.27 0.015 55);
+      --accent-foreground: oklch(0.96 0.01 85);
+      --destructive: oklch(0.62 0.19 25);
+      --destructive-foreground: oklch(0.97 0.01 85);
+      --border: oklch(1 0.01 70 / 10%);
+      --input: oklch(1 0.01 70 / 14%);
+      --ring: oklch(0.8 0.03 80);
+      --chart-1: oklch(0.74 0.11 82);
+      --chart-2: oklch(0.68 0.14 155);
+      --chart-3: oklch(0.62 0.19 25);
+      --chart-4: oklch(0.76 0.17 55);
+      --chart-5: oklch(0.74 0.15 170);
+      --sidebar: oklch(0.19 0.014 55);
+      --sidebar-foreground: oklch(0.96 0.01 85);
+      --sidebar-primary: oklch(0.74 0.11 82);
+      --sidebar-primary-foreground: oklch(0.18 0.02 60);
+      --sidebar-accent: oklch(0.27 0.015 55);
+      --sidebar-accent-foreground: oklch(0.96 0.01 85);
+      --sidebar-border: oklch(1 0.01 70 / 10%);
+      --sidebar-ring: oklch(0.8 0.03 80);
+
+      /* POS-specific tokens (dark mode variants) */
+      --pos-accent: oklch(0.68 0.14 155);
+      --pos-danger: oklch(0.62 0.19 25);
+      --pos-warning: oklch(0.76 0.17 55);
+      --pos-highlight: oklch(0.74 0.15 170);
+    }
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    @apply font-sans;
+  }
+}
+
+/*
+ * Reduced motion: defeats the decorative press-scale feedback
+ * (POSButton's active:scale-95) and the movement/scale/rotate/blur portion
+ * of every tw-animate-css entrance/exit (dialog, alert-dialog, popover,
+ * dropdown-menu, sheet) by resetting the --tw-enter-* and --tw-exit-*
+ * custom properties those utilities set back to their identity values —
+ * opacity fades still play (reduced motion means fewer/gentler, not
+ * zero). Loading spinners (animate-spin) are left untouched — they convey
+ * real async state, not decoration, per DESIGN.md's Overlay-Only Elevation /
+ * functional-motion stance.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .active\:scale-95:active {
+    /* !important: must always beat the Tailwind utility of equal specificity
+       regardless of build-tool concatenation order. */
+    transform: none !important;
+  }
+
+  * {
+    --tw-enter-scale: 1;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-enter-rotate: 0;
+    --tw-enter-blur: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+    --tw-exit-rotate: 0;
+    --tw-exit-blur: 0;
+  }
+}
+
+/*
+ * Happy-hour banner entrance: fade + settle on mount instead of popping in.
+ * Raw CSS (not a Tailwind utility) — @starting-style predates this
+ * project's `starting:` variant support (added when Tailwind was upgraded
+ * to v4), and there was no reason to convert it afterward since raw CSS
+ * here is equally correct and version-independent either way.
+ */
+.happy-hour-banner {
+  transition:
+    opacity 250ms ease-out,
+    transform 250ms ease-out;
+}
+@starting-style {
+  .happy-hour-banner {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

@@ -1,0 +1,179 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// ─── Hoisted mocks ────────────────────────────────────────────────────────────
+
+const { mockCallAgentProxy, mockRetrieveContext, mockExecuteTool } = vi.hoisted(() => ({
+  mockCallAgentProxy: vi.fn(),
+  mockRetrieveContext: vi.fn().mockResolvedValue(''),
+  mockExecuteTool: vi.fn().mockResolvedValue({ ok: true, data: { result: 'ok' } }),
+}));
+
+vi.mock('@shared/lib/edge-function-contracts', () => ({
+  callAgentProxy: mockCallAgentProxy,
+}));
+
+vi.mock('./rag', () => ({ retrieveContext: mockRetrieveContext }));
+
+vi.mock('./tools/index', () => ({
+  allToolDefinitions: [
+    {
+      name: 'get_menu',
+      description: 'Get menu',
+      input_schema: { type: 'object', properties: {}, required: [] },
+    },
+    {
+      name: 'deactivate_product',
+      description: 'Deactivate product',
+      input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+    },
+  ],
+  executeTool: mockExecuteTool,
+  DESTRUCTIVE_TOOLS: new Set(['deactivate_product', 'bulk_import_products']),
+}));
+
+vi.mock('@shared/lib/logger', () => ({
+  logger: { warn: vi.fn() },
+}));
+
+import { runAgent } from './brain';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function textResponse(text: string): ReturnType<typeof mockCallAgentProxy> {
+  return Promise.resolve({
+    ok: true,
+    data: {
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text }],
+    },
+  });
+}
+
+function toolUseResponse(name: string, id: string, input: Record<string, unknown>) {
+  return Promise.resolve({
+    ok: true,
+    data: {
+      stop_reason: 'tool_use',
+      content: [{ type: 'tool_use', id, name, input }],
+    },
+  });
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe('runAgent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('VITE_AGENT_MODEL', 'claude-sonnet-4-6');
+    mockRetrieveContext.mockResolvedValue('');
+  });
+
+  it('returns text response when Claude responds with end_turn', async () => {
+    mockCallAgentProxy.mockImplementation(() => textResponse('Menu has 10 items.'));
+    const result = await runAgent('how many items?', 'manager', []);
+    expect(result.text).toBe('Menu has 10 items.');
+    expect(result.usedFallback).toBe(false);
+    expect(result.awaitingConfirmation).toBe(false);
+  });
+
+  it('executes tool and returns final text', async () => {
+    mockCallAgentProxy
+      .mockImplementationOnce(() => toolUseResponse('get_menu', 'tu-1', {}))
+      .mockImplementationOnce(() => textResponse('Hay 5 productos en el menú.'));
+
+    mockExecuteTool.mockResolvedValue({ ok: true, data: [{ name: 'Beer', price: 50 }] });
+
+    const result = await runAgent('¿cuántos productos hay en el menú?', 'manager', []);
+    expect(result.toolsExecuted).toContain('get_menu');
+    expect(result.text).toBe('Hay 5 productos en el menú.');
+    expect(result.usedFallback).toBe(false);
+  });
+
+  it('returns awaitingConfirmation=true for destructive tool without confirm', async () => {
+    mockCallAgentProxy
+      .mockImplementationOnce(() => toolUseResponse('deactivate_product', 'tu-2', { id: 'abc' }))
+      .mockImplementationOnce(() => textResponse('Voy a desactivar. Confirma para continuar.'));
+
+    // Return pending action shape — matches real deactivateProduct behavior in menuTools.ts
+    mockExecuteTool.mockResolvedValueOnce({
+      ok: true,
+      data: { pending: true, confirm_token: 'tok-abc', preview: { action: 'deactivate_product', id: 'abc' } },
+    });
+
+    const result = await runAgent('deactivate product abc', 'admin', []);
+    expect(result.awaitingConfirmation).toBe(true);
+    expect(result.pendingConfirmation?.token).toBe('tok-abc');
+    expect(result.pendingConfirmation?.preview).toEqual({ action: 'deactivate_product', id: 'abc' });
+    // executeTool IS called — it returns the pending shape, not executes the DB write
+    expect(mockExecuteTool).toHaveBeenCalledWith('deactivate_product', { id: 'abc' }, expect.any(Object));
+  });
+
+  it('executes destructive tool when user message is "confirmar"', async () => {
+    mockCallAgentProxy
+      .mockImplementationOnce(() => toolUseResponse('deactivate_product', 'tu-3', { id: 'abc' }))
+      .mockImplementationOnce(() => textResponse('Producto desactivado.'));
+
+    mockExecuteTool.mockResolvedValue({ ok: true, data: { id: 'abc' } });
+
+    const result = await runAgent('confirmar', 'admin', [
+      { role: 'user', content: 'deactivate product abc' },
+      { role: 'assistant', content: 'Voy a desactivar el producto. Responde confirmar.' },
+    ]);
+
+    expect(result.awaitingConfirmation).toBe(false);
+    expect(result.toolsExecuted).toContain('deactivate_product');
+    expect(mockExecuteTool).toHaveBeenCalledWith('deactivate_product', { id: 'abc' }, expect.any(Object));
+  });
+
+  it('detects Spanish and includes lang instruction in system prompt', async () => {
+    let capturedSystem = '';
+    mockCallAgentProxy.mockImplementation((params: { system?: string }) => {
+      capturedSystem = params.system ?? '';
+      return textResponse('Respuesta en español.');
+    });
+
+    await runAgent('¿cuántos productos hay en el menú?', 'bartender', []);
+    expect(capturedSystem).toContain('Spanish');
+  });
+
+  it('injects RAG context into system prompt when available', async () => {
+    mockRetrieveContext.mockResolvedValue('## Relevant codebase context\n\n### [1] src/foo.ts');
+    let capturedSystem = '';
+    mockCallAgentProxy.mockImplementation((params: { system?: string }) => {
+      capturedSystem = params.system ?? '';
+      return textResponse('ok');
+    });
+
+    await runAgent('how does the menu work?', 'admin', []);
+    expect(capturedSystem).toContain('Relevant codebase context');
+  });
+
+  it('falls back to Ollama after 2 Claude failures', async () => {
+    mockCallAgentProxy.mockRejectedValue(new Error('network error'));
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ message: { content: 'Ollama fallback response' } }),
+    } as Response);
+
+    const result = await runAgent('test', 'bartender', []);
+    expect(result.usedFallback).toBe(true);
+    expect(result.text).toBe('Ollama fallback response');
+    fetchSpy.mockRestore();
+  });
+
+  it('returns error message when both Claude and Ollama fail', async () => {
+    mockCallAgentProxy.mockRejectedValue(new Error('network error'));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Ollama not running'));
+
+    const result = await runAgent('test', 'bartender', []);
+    expect(result.usedFallback).toBe(true);
+    expect(result.text).toMatch(/unavailable|disponible/i);
+  });
+
+  it('passes topK-retrieved context to system prompt via retrieveContext', async () => {
+    mockCallAgentProxy.mockImplementation(() => textResponse('done'));
+    await runAgent('cash drawer status', 'admin', []);
+    expect(mockRetrieveContext).toHaveBeenCalledWith('cash drawer status');
+  });
+});
