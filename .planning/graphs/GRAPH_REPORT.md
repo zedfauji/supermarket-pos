@@ -1,16 +1,16 @@
 # Graph Report - supermarket-pos  (2026-08-26)
 
 ## Corpus Check
-- 1229 files · ~2,144,053 words
+- 1251 files · ~2,222,642 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 8174 nodes · 14132 edges · 633 communities (465 shown, 168 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 60 edges (avg confidence: 0.65)
+- 8501 nodes · 14570 edges · 643 communities (475 shown, 168 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 61 edges (avg confidence: 0.64)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `00a04b66`
+- Built from commit: `524e26aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -524,7 +524,6 @@
 - 13-03-PLAN.md
 - card.tsx
 - autoprefixer
-- class-variance-authority
 - loose-weight-hold-sale.spec.ts
 - e2e/tsconfig.json
 - Phase 17 Plan 14: Cross-Cutting Bucket-B Skip Resolution Summary
@@ -532,7 +531,6 @@
 - UpdateAvailableDialog.stories.tsx
 - usePhysicalCount.ts
 - full-day-soak.spec.ts
-- FileDropZone.tsx
 - 12-01-PLAN.md
 - 12-02-PLAN.md
 - pos-printer.ts
@@ -542,7 +540,6 @@
 - open-units.spec.ts
 - Common Pitfalls
 - tab/model/queries.ts
-- CheckoutPanel.test.tsx
 - eslint-plugin-boundaries
 - Architecture Patterns
 - Goal Achievement
@@ -562,7 +559,6 @@
 - @tauri-apps/plugin-process
 - 17-01-PLAN.md
 - Phase 17 — Validation Strategy
-- buildStartTicketText.ts
 - ConfirmDialog.stories.tsx
 - 17-02-PLAN.md
 - Phase 18 — Validation Strategy
@@ -587,14 +583,12 @@
 - atomic-rpc-guards.spec.ts
 - @fontsource-variable/geist
 - Phase 17 — Deferred Items
-- EmptyState.stories.tsx
 - PaymentModal.stories.tsx
 - ci.spec.ts
 - tsx
 - Staff
 - eslint
 - eslint-config-prettier
-- drizzle-orm
 - auth.ts
 - @fontsource/playfair-display
 - @radix-ui/react-alert-dialog
@@ -613,7 +607,6 @@
 - discount-and-revenue.spec.ts
 - 18-02-PLAN.md
 - 18-03-PLAN.md
-- ClockOutDialog.test.tsx
 - Barcode Scan Product Peek — key decisions
 - eslint-plugin-import
 - input-otp
@@ -622,26 +615,42 @@
 - zod
 - barcode-peek-global-rollout.md
 - scratchpad-smoke.mjs
+- useProductPeekWindow.test.ts
+- discount-and-revenue.spec.ts
+- Deferred Items — Phase 18
+- Standard Stack
+- Code Examples
+- User Constraints (from CONTEXT.md)
+- Sources
+- Security Domain
+- @chromatic-com/storybook
+- drizzle-orm
+- CartItem.stories.tsx
+- JsonDiffViewer.stories.tsx
+- queries.staff-report.test.ts
+- types.ts
+- offline-summary.test.ts
+- eslint-config-prettier
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (610 total, 165 thin omitted)` - 419 edges
+1. `Communities (664 total, 168 thin omitted)` - 470 edges
 2. `ok()` - 206 edges
 3. `err()` - 170 edges
 4. `cn()` - 140 edges
-5. `getServiceClient()` - 79 edges
+5. `getServiceClient()` - 81 edges
 6. `unknownError()` - 72 edges
 7. `supabase` - 72 edges
 8. `useStaffStore` - 70 edges
-9. `POSButton` - 62 edges
-10. `test` - 52 edges
+9. `POSButton` - 63 edges
+10. `test` - 53 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `createWrapper()` --references--> `react`  [EXTRACTED]
+  src/entities/rbac/model/queries.test.ts → package.json
 - `createWrapper()` --references--> `react`  [EXTRACTED]
   src/features/toggle-permission/useMutationTogglePermission.test.ts → package.json
 - `CategoryTabs()` --references--> `react`  [EXTRACTED]
   src/entities/product/ui/CategoryTabs.tsx → package.json
-- `createWrapper()` --references--> `react`  [EXTRACTED]
-  src/entities/rbac/model/queries.test.ts → package.json
 - `ReceiptDoc()` --references--> `react`  [EXTRACTED]
   src/shared/lib/exporters/receipt-pdf.tsx → package.json
 - `receiptToPdfBytes()` --references--> `react`  [EXTRACTED]
@@ -650,19 +659,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (633 total, 168 thin omitted)
+## Communities (643 total, 168 thin omitted)
 
 ### Community 0 - "domain.ts"
 Cohesion: 0.02
-Nodes (125): AuditLogFiltersSchema, AuditSource, AuditSourceSchema, BillingPaymentMethodsSchema, CajaEntryCreateSchema, CajaEntryTypeSchema, CajaReportStaff, CajaReportStaffSchema (+117 more)
+Nodes (124): AuditLogFiltersSchema, AuditSource, AuditSourceSchema, BillingPaymentMethodsSchema, CajaEntryCreateSchema, CajaEntryType, CajaEntryTypeSchema, CajaReportStaff (+116 more)
 
 ### Community 1 - "Phase 10: Quality debt & ops documentation - Research"
 Cohesion: 0.04
 Nodes (48): Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Responsibility Map, Architecture Patterns, Assumptions Log, Claude's Discretion, Code Examples, Common Pitfalls (+40 more)
 
 ### Community 2 - "useStaffStore"
-Cohesion: 0.36
-Nodes (6): ProtectedRoute(), ProtectedRouteProps, testShift, mockStaff, isSupabaseSessionReady(), waitForSupabaseSessionReady()
+Cohesion: 0.21
+Nodes (11): ProtectedRoute(), ProtectedRouteProps, testShift, useStaffStore, ClockInModal(), ClockInModalProps, Phase, mutateAsync (+3 more)
 
 ### Community 3 - "Phase 5: Delete void-order feature - Research"
 Cohesion: 0.04
@@ -670,7 +679,7 @@ Nodes (45): Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Re
 
 ### Community 4 - "err"
 Cohesion: 0.10
-Nodes (66): parseBackup(), useMutationSetOwnLocale(), map(), mapRpcOrderPayload(), useRefundsRegister(), useReportRpc(), ModifierGroupEditor(), useMutationCreateGroup() (+58 more)
+Nodes (67): computeInventoryValueAsOf(), fetchDeltaMovementsAfter(), fetchDeltaMovementsTwoCutoffs(), fetchShrinkageMovements(), useInventoryValuationReport(), useTurnoverReport(), parseBackup(), useSettingsBackups() (+59 more)
 
 ### Community 5 - "Phase 8: Sale/payment workflow wiring + cleanup - Research"
 Cohesion: 0.05
@@ -678,15 +687,15 @@ Nodes (42): Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Re
 
 ### Community 6 - "edge-function-contracts.ts"
 Cohesion: 0.05
-Nodes (59): DiscountScopeSchema, DiscountTypeSchema, MoneySchema, PaymentMethodSchema, TimestampSchema, UuidSchema, AgentProxyRequest, callCreateSettingsBackup() (+51 more)
+Nodes (61): DiscountScopeSchema, DiscountTypeSchema, MoneySchema, PaymentMethodSchema, TimestampSchema, UuidSchema, AgentProxyRequest, callCreateSettingsBackup() (+53 more)
 
 ### Community 7 - "Phase 13: Receipt Delivery & Resilience (Print, Reprint, Retry, PDF) - Research"
 Cohesion: 0.04
 Nodes (48): 1. Retry loop shape for `printReceipt` (RCP-04), 2. Vitest retry-count assertion (RCP-04's actual "automated test asserting retry count"), 3. Playwright E2E for RCP-02 (sale survives print failure — needs real UI assertion, not just a function return value), 4. Resend attachment payload shape (RCP-03 email path), Alternatives Considered, Anti-Patterns to Avoid, Applicable ASVS Categories (Level 1, per `.planning/config.json` `security_asvs_level: 1`), Architectural Responsibility Map (+40 more)
 
 ### Community 8 - "unknownError"
-Cohesion: 0.07
-Nodes (42): CajaListener(), cajaEntryKeys, cajaKeys, CajaPaymentSummary, CloseCajaInput, CloseCajaRpcResult, db, mapCajaRow() (+34 more)
+Cohesion: 0.06
+Nodes (65): cajaEntryKeys, cajaKeys, CajaPaymentSummary, CloseCajaInput, CloseCajaRpcResult, db, mapCajaRow(), mapEntryRow() (+57 more)
 
 ### Community 9 - "Phase 12: Checkout Verification (Scan & Search Confirmation) - Research"
 Cohesion: 0.05
@@ -701,8 +710,8 @@ Cohesion: 0.06
 Nodes (37): ABC, create_connection(), MCPConnection, MCPConnectionHTTP, MCPConnectionSSE, MCPConnectionStdio, Any, Lightweight connection handling for MCP servers. (+29 more)
 
 ### Community 12 - "result.ts"
-Cohesion: 0.12
-Nodes (27): callCloseTabUpdate(), callProcessPaymentRpc(), OutcomePair, pgErr(), PgErrorShape, Row, tabs, AppError (+19 more)
+Cohesion: 0.06
+Nodes (33): db, mapOpenUnitRow(), useOpenUnits(), createWrapper(), FromMock, EditPaidTabInput, EditPaidTabPatch, EditPaidTabPatchOp (+25 more)
 
 ### Community 13 - "Phase 9: Reopen-and-edit a completed sale - Research"
 Cohesion: 0.05
@@ -710,7 +719,7 @@ Nodes (41): Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Re
 
 ### Community 14 - "helpers/supabase.ts"
 Cohesion: 0.14
-Nodes (15): seedPaidTabForAudit(), logout(), bumpVersionedRows(), clearStockThreshold(), findRoleStaffId(), forceCloseAllOpenTabs(), getInventoryQty(), getLatestInventoryLog() (+7 more)
+Nodes (19): clearStockThreshold(), __dirname, findRoleStaffId(), getInventoryQty(), getLatestInventoryLog(), getMigrationList(), getOpenTabIdByCustomerName(), getServiceKey() (+11 more)
 
 ### Community 15 - "CategoryTreePicker.stories.tsx"
 Cohesion: 0.07
@@ -721,8 +730,8 @@ Cohesion: 0.04
 Nodes (48): Alternatives Considered, Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Responsibility Map, Architecture Patterns, Assumptions Log, Claude's Discretion, Code Examples (+40 more)
 
 ### Community 17 - "inventory/model/queries.ts"
-Cohesion: 0.08
-Nodes (28): AdjustInventoryContext, inventoryKeys, InventoryRow, mapInventoryRow(), ProductJoined, useInventory(), useInventoryAlerts(), useInventoryLog() (+20 more)
+Cohesion: 0.10
+Nodes (23): CATEGORY_QUERY_KEY, invalidateCategoryQueries(), mapCategoryRow(), useCategories(), useMutationCreateCategory(), useMutationUpdateCategory(), CategoryTreeEditor(), CatalogCategoriesTab() (+15 more)
 
 ### Community 18 - "Phase 1: Strip & Rebrand - Research"
 Cohesion: 0.04
@@ -734,7 +743,7 @@ Nodes (24): Canonical References, Claude's Discretion, create-staff edge functio
 
 ### Community 20 - "ui/index.ts"
 Cohesion: 0.04
-Nodes (92): VarianceReport(), diffJson(), DiffNode, DiffStatus, UpdaterState, cn(), Alert(), AlertAction() (+84 more)
+Nodes (95): inventoryStore, formatTimeOpen(), UpdaterState, cn(), Alert(), AlertAction(), AlertDescription(), AlertTitle() (+87 more)
 
 ### Community 21 - "Pattern Assignments"
 Cohesion: 0.08
@@ -758,11 +767,11 @@ Nodes (40): Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Re
 
 ### Community 26 - "settings/model/queries.ts"
 Cohesion: 0.09
-Nodes (35): DEFAULT_BILLING, DEFAULT_EMAIL_RECEIPTS, DEFAULT_GENERAL, DEFAULT_NEAR_EXPIRY, DEFAULT_PAYMENT_LABELS, DEFAULT_RECEIPT, DEFAULT_TIP_DISTRIBUTION, mapReceiptRow() (+27 more)
+Nodes (36): DEFAULT_BILLING, DEFAULT_EMAIL_RECEIPTS, DEFAULT_GENERAL, DEFAULT_NEAR_EXPIRY, DEFAULT_PAYMENT_LABELS, DEFAULT_RECEIPT, DEFAULT_TIP_DISTRIBUTION, mapReceiptRow() (+28 more)
 
 ### Community 27 - "useExportReport.ts"
 Cohesion: 0.05
-Nodes (48): CAJA_SUMMARY_CSV_COLUMNS, CajaSummaryCsvRow, CATEGORIES_CSV_COLUMNS, CategoriesContext, DELETIONS_POST_CSV_COLUMNS, DELETIONS_PRE_CSV_COLUMNS, DeletionsPostContext, DeletionsPostCsvRow (+40 more)
+Nodes (51): CAJA_SUMMARY_CSV_COLUMNS, CajaSummaryCsvRow, CATEGORIES_CSV_COLUMNS, CategoriesContext, DELETIONS_POST_CSV_COLUMNS, DELETIONS_PRE_CSV_COLUMNS, DeletionsPostContext, DeletionsPostCsvRow (+43 more)
 
 ### Community 28 - "compilerOptions"
 Cohesion: 0.05
@@ -774,19 +783,19 @@ Nodes (18): `e2e/56-purchase-orders.spec.ts` (test, request-response), File Clas
 
 ### Community 30 - "queries-reports.ts"
 Cohesion: 0.10
-Nodes (31): aggregateCategoryRevenue(), aggregateHourlyRevenue(), assertDateRangeValid(), CategoryRevenueAggregate, computePctTotals(), db, fillMissingCategories(), fillMissingHours() (+23 more)
+Nodes (30): aggregateCategoryRevenue(), aggregateHourlyRevenue(), assertDateRangeValid(), CategoryRevenueAggregate, computePctTotals(), db, fillMissingCategories(), fillMissingHours() (+22 more)
 
 ### Community 31 - "Canonical References"
 Cohesion: 0.09
 Nodes (21): Add-item (new wiring, SC-2), Canonical References, Claude's Discretion, Deferred Ideas, edit_paid_tab guard (must stay unchanged, SC-5), Edit surface (where reopen→edit lives), Established Patterns, Existing Code Insights (+13 more)
 
 ### Community 32 - "formatMoney"
-Cohesion: 0.22
-Nodes (7): baseProduct, Default, limeModifier, MaxQuantity, shotModifier, Story, WithModifiers
+Cohesion: 0.18
+Nodes (31): Arc, AtomicBool, Connection, Cursor, data_dir(), db_path(), err_json(), ErrorResp (+23 more)
 
 ### Community 33 - "csv.test.ts"
-Cohesion: 0.25
-Nodes (8): CsvColumn, csvToBytes(), rowsToCsv(), sanitizeCsvCell(), COLUMNS, Row, RFC-4180, RFC-4180
+Cohesion: 0.09
+Nodes (28): CartItem(), ImportPreviewTable(), ImportPreviewTableProps, buildStartTicketText(), centerLine(), divider(), lineLeftRight(), StartTicketOpts (+20 more)
 
 ### Community 34 - "StaffDashboard.tsx"
 Cohesion: 0.31
@@ -797,12 +806,12 @@ Cohesion: 0.10
 Nodes (20): File Classification (files touched this phase), "Historical value, no future writer" — must NOT be touched, Metadata, No Analog Found, Pattern Assignments, Phase 5: Delete void-order feature - Pattern Map, Phase Type Note, RBAC removal must move in lockstep (DB + type + test) (+12 more)
 
 ### Community 36 - "ExportButtons.tsx"
-Cohesion: 0.08
-Nodes (24): CajaProps, CategoriesProps, DeletionsPostProps, DeletionsPreProps, ExpiryLossProps, HourlyProps, PaymentMethodsProps, ProductsProps (+16 more)
+Cohesion: 0.04
+Nodes (48): TipSplitRow, CajaProps, CategoriesProps, DeletionsPostProps, DeletionsPreProps, ExpiryLossProps, HourlyProps, PaymentMethodsProps (+40 more)
 
 ### Community 37 - "queries-analytics.ts"
-Cohesion: 0.11
-Nodes (27): bucketsToRows(), computeInventoryValueAsOf(), CurrentStock, db, fetchDeltaMovementsAfter(), fetchDeltaMovementsTwoCutoffs(), fetchShrinkageMovements(), groupShrinkageByReason() (+19 more)
+Cohesion: 0.07
+Nodes (44): bucketsToRows(), combineTurnoverRows(), CurrentStock, db, groupShrinkageByReason(), InventoryValuationRawRow, LOSS_REASONS, MovementForReconstruction (+36 more)
 
 ### Community 38 - "tauri.conf.json"
 Cohesion: 0.06
@@ -818,11 +827,11 @@ Nodes (48): Anti-Patterns to Avoid, Applicable ASVS Categories (Level 1), Archit
 
 ### Community 41 - "Communities (618 total, 165 thin omitted)"
 Cohesion: 0.00
-Nodes (419): Communities (610 total, 165 thin omitted), Community 0 - "domain.ts", Community 100 - "Phase 2 Plan 07: Authorized Sale-Level Receipt for Direct and Split-Tender Sales Summary", Community 101 - "Phase 10 Plan 01: Suppliers loading + error states Summary", Community 102 - "scaffold.sh", Community 103 - "devDependencies", Community 104 - "global-teardown.ts", Community 105 - "Phase 1 Plan 1: Self-Hosted Supabase Provisioning Summary" (+411 more)
+Nodes (470): Communities (664 total, 168 thin omitted), Community 0 - "domain.ts", Community 100 - "Phase 2 Plan 07: Authorized Sale-Level Receipt for Direct and Split-Tender Sales Summary", Community 101 - "Phase 10 Plan 01: Suppliers loading + error states Summary", Community 102 - "scaffold.sh", Community 103 - "devDependencies", Community 104 - "global-teardown.ts", Community 105 - "Phase 1 Plan 1: Self-Hosted Supabase Provisioning Summary" (+462 more)
 
 ### Community 42 - "PINLoginForm.tsx"
 Cohesion: 0.05
-Nodes (45): LoginUiState, useLoginUiStore, useStaffList(), StaffActions, StaffState, StaffStore, useStaffStore, ClockInModal() (+37 more)
+Nodes (41): ch, inventoryRowColumns(), InventoryRowProps, isLowStock(), LowBadgeCell(), QuantityAdjustCell(), StatusCell(), stockTier() (+33 more)
 
 ### Community 43 - "Pattern Assignments"
 Cohesion: 0.10
@@ -833,20 +842,20 @@ Cohesion: 0.10
 Nodes (20): Abuse / cost controls, Anthropic edge function architecture, Canonical References, Claude's Discretion, Client-side Anthropic call sites to replace, Deferred Ideas, Established Patterns, Existing Bearer-auth edge function pattern to follow (+12 more)
 
 ### Community 45 - "open-unit/model/queries.ts"
-Cohesion: 0.21
-Nodes (13): db, invalidateOpenUnits(), mapOpenUnitRow(), mapRpcError(), openUnitKeys, useMutationCorrectOpenUnit(), useMutationOpenOpenUnit(), useMutationVoidOpenUnit() (+5 more)
+Cohesion: 0.07
+Nodes (31): invalidateOpenUnits(), mapRpcError(), openUnitKeys, useMutationCorrectOpenUnit(), useMutationOpenOpenUnit(), useMutationVoidOpenUnit(), CorrectOpenUnitArgs, useCorrectOpenUnit() (+23 more)
 
 ### Community 46 - "receipt-format.ts"
-Cohesion: 0.22
-Nodes (21): formatMoneyIn(), CategorizedRow, CategoryGroup, formatModifierLines(), groupByCategory(), sanitize(), arbCategoryName, arbRow (+13 more)
+Cohesion: 0.17
+Nodes (23): formatMoneyIn(), CategorizedRow, CategoryGroup, formatModifierLines(), groupByCategory(), sanitize(), arbCategoryName, arbRow (+15 more)
 
 ### Community 47 - "dependencies"
 Cohesion: 0.07
-Nodes (27): cmdk, drizzle-orm, @fontsource/playfair-display, dependencies, cmdk, drizzle-orm, @fontsource/playfair-display, @radix-ui/react-label (+19 more)
+Nodes (27): class-variance-authority, cmdk, @fontsource/playfair-display, dependencies, class-variance-authority, cmdk, @fontsource/playfair-display, @radix-ui/react-label (+19 more)
 
 ### Community 48 - "pdf.tsx"
-Cohesion: 0.19
-Nodes (26): react, react, createWrapper(), CajaReportDoc(), cajaReportToPdfBytes(), CategoryRevenueDoc(), categoryRevenueToPdfBytes(), docToBytes() (+18 more)
+Cohesion: 0.20
+Nodes (25): react, react, CajaReportDoc(), cajaReportToPdfBytes(), CategoryRevenueDoc(), categoryRevenueToPdfBytes(), docToBytes(), fmt() (+17 more)
 
 ### Community 49 - "scripts"
 Cohesion: 0.07
@@ -861,16 +870,16 @@ Cohesion: 0.10
 Nodes (20): Canonical References, Claude's Discretion, DATA-03 scope (pulled forward), DATA-03 (types regen), Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions (+12 more)
 
 ### Community 52 - "useReceiveShipment.ts"
-Cohesion: 0.13
-Nodes (21): CartState, CartItemProps, CartItem, DiscountScope, DiscountType, calculateDiscountAmount(), calculateOrderItemLineTotal(), calculateTabSubtotal() (+13 more)
+Cohesion: 0.19
+Nodes (14): CartState, CartItemProps, CartItem, calculateDiscountAmount(), calculateOrderItemLineTotal(), calculateTabSubtotal(), calculateTipAmount(), calculateTipSuggestions() (+6 more)
 
 ### Community 53 - "Phase 15: Receipt Designer (Layout, Branding & Logo Printing) - Research"
 Cohesion: 0.05
 Nodes (41): Alternatives Considered, Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Responsibility Map, Architecture Patterns, Assumptions Log, Code Examples, Common Pitfalls (+33 more)
 
 ### Community 54 - "renderWithProviders"
-Cohesion: 0.05
-Nodes (37): LowStockBadge(), AlertHookResult, renderBadge(), stubAlerts(), mockCashier, mockManager, renderDialog(), renderDialog() (+29 more)
+Cohesion: 0.08
+Nodes (25): LowStockBadge(), AlertHookResult, renderBadge(), stubAlerts(), mockAddWeightedItem, mockProduct, mockUpdateWeightedItem, pressKey() (+17 more)
 
 ### Community 55 - "Pattern Assignments"
 Cohesion: 0.11
@@ -878,7 +887,7 @@ Nodes (18): Bearer-JWT auth in edge functions, Client-side authenticated fetch t
 
 ### Community 56 - "email-receipt.ts"
 Cohesion: 0.09
-Nodes (26): EmailReceiptDialog(), EmailReceiptDialogProps, receipt, ReceiptSettings, ReceiptSettingsSchema, callSendReceiptEmail(), SendReceiptEmailEnvelopeSchema, SendReceiptEmailRequestSchema (+18 more)
+Nodes (30): EmailReceiptDialog(), EmailReceiptDialogProps, receipt, ReceiptPreview(), ReceiptPreviewProps, base, baseItems, Card (+22 more)
 
 ### Community 57 - "Implementation Decisions"
 Cohesion: 0.08
@@ -913,12 +922,12 @@ Cohesion: 0.11
 Nodes (17): Console/pageerror tailing wrapper, `e2e/<domain>/*.spec.ts` — moved/rewritten spec files (D-06/D-07/D-08/D-10/D-11), `e2e/global-teardown.ts` — `SUITE_MAP`/`classify()` rewrite (Pitfall 1), `e2e/helpers/db-assertions.ts` (new, D-12), Env-gated integration tests, File Classification, Idempotent upsert-by-natural-key seeding, Locale-agnostic UI matching (+9 more)
 
 ### Community 65 - "mocks.ts"
-Cohesion: 0.13
-Nodes (16): mockCategories, scrollIntoViewMock, Default, defaultCategory, defaultProduct, HappyHour, OutOfStock, Story (+8 more)
+Cohesion: 0.05
+Nodes (57): CategoryTabs(), pillClass(), AllSelected, BeerSelected, CocktailsSelected, EmptyCategories, ManyCategories, mockCategories (+49 more)
 
 ### Community 66 - "printer.rs"
 Cohesion: 0.14
-Nodes (30): HSTRING, Option, agent_index_status(), String, build_print_payload(), decode_data_url(), decode_data_url_rejects_missing_comma_separator(), decode_data_url_rejects_oversized_payload_before_image_decode() (+22 more)
+Nodes (30): HSTRING, agent_index_status(), String, build_print_payload(), decode_data_url(), decode_data_url_rejects_missing_comma_separator(), decode_data_url_rejects_oversized_payload_before_image_decode(), default_printer_name() (+22 more)
 
 ### Community 67 - "Phase 10: Quality debt & ops documentation - Context"
 Cohesion: 0.11
@@ -933,12 +942,12 @@ Cohesion: 0.12
 Nodes (16): Canonical References, Claude's Discretion, Deferred Ideas, Edge function, Existing Code Insights, Implementation Decisions, Integration points, Must NOT be touched — confirmed untouched (+8 more)
 
 ### Community 70 - "useCheckoutSale.test.ts"
-Cohesion: 0.20
-Nodes (8): caja, cajaState, cartState, mockCallProcessDirectSale, mockIsOnline, shift, staff, staffState
+Cohesion: 0.07
+Nodes (29): StaffActions, StaffState, StaffStore, caja, cajaState, cartState, mockCallProcessDirectSale, mockIsOnline (+21 more)
 
 ### Community 71 - "Product"
-Cohesion: 0.19
-Nodes (11): getProductRiskFlag(), ProductRiskFlag, useConfirmRiskyAdd(), useAddLooseWeightItem(), useLookupProductByBarcode(), useScanBarcodeToCart(), DEFAULTS, Options (+3 more)
+Cohesion: 0.09
+Nodes (32): useEmailSettingsStatus(), useMutationCreateSettingsBackup(), useMutationRestoreSettingsBackup(), useMutationSendSettingsTestEmail(), useMutationUpdateSetting(), useSettings(), PaymentMethodLabels, SettingsBackupSummary (+24 more)
 
 ### Community 72 - "Phase 2: Core Direct-Sale Checkout - Context"
 Cohesion: 0.10
@@ -981,20 +990,20 @@ Cohesion: 0.12
 Nodes (15): Accomplishments, Actuals (#2632), Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered (+7 more)
 
 ### Community 82 - "CorrectOpenUnitDialog.tsx"
-Cohesion: 0.24
-Nodes (8): CorrectOpenUnitArgs, useCorrectOpenUnit(), UseCorrectOpenUnitReturn, CorrectOpenUnitDialog(), CorrectOpenUnitDialogProps, mockMutateAsync, renderDialog(), OpenUnitCorrection
+Cohesion: 0.08
+Nodes (20): EditRoleDialog(), EditRoleDialogProps, CajaEntry, mockUseAuditLogs, mockUseStaffList, ROW_A, ROW_B, STAFF (+12 more)
 
 ### Community 83 - "Phase Details"
-Cohesion: 0.12
-Nodes (16): Milestones, Phase 11: Security Hardening (Server-Side Secrets & Cost Guardrails), Phase 12: Checkout Verification (Scan & Search Confirmation), Phase 13: Receipt Delivery & Resilience (Print, Reprint, Retry, PDF), Phase 14: Inventory Analytics Reports (Valuation, Shrinkage/Waste, Expiry-Loss, Turnover), Phase 15: Receipt Designer (Layout, Branding & Logo Printing), Phase 16: Purchase Orders & Reordering, Phase 17: E2E Suite Overhaul (+8 more)
+Cohesion: 0.11
+Nodes (18): Milestones, Phase 11: Security Hardening (Server-Side Secrets & Cost Guardrails), Phase 12: Checkout Verification (Scan & Search Confirmation), Phase 13: Receipt Delivery & Resilience (Print, Reprint, Retry, PDF), Phase 14: Inventory Analytics Reports (Valuation, Shrinkage/Waste, Expiry-Loss, Turnover), Phase 15: Receipt Designer (Layout, Branding & Logo Printing), Phase 16: Purchase Orders & Reordering, Phase 17: E2E Suite Overhaul (+10 more)
 
 ### Community 84 - "Phase 16 Plan 04: Receive-from-PO Wiring + Phase-Closing E2E Suite Summary"
 Cohesion: 0.15
 Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 85 - "useProcessRefund.ts"
-Cohesion: 0.13
-Nodes (19): mapRefundRow(), refundKeys, useRefunds(), useRefundsByPayment(), baseInput, mockedRpc, useProcessRefund(), RefundSheet() (+11 more)
+Cohesion: 0.24
+Nodes (12): mapRefundRow(), refundKeys, useRefunds(), useRefundsByPayment(), Refund, RefundItem, RefundReason, RefundButton() (+4 more)
 
 ### Community 86 - "Phase 17 Plan 10: Receipts E2E Move Summary"
 Cohesion: 0.15
@@ -1033,8 +1042,8 @@ Cohesion: 0.12
 Nodes (16): Codebase Strategy, Context, Feature Classification, Goals, Hardware, Inventory Management — Full Feature List, Net-new, Non-goals (+8 more)
 
 ### Community 95 - "logger.ts"
-Cohesion: 0.14
-Nodes (11): BannedKeys, createLogger(), LOG_LEVEL_PRIORITY, logBatch, LogContext, LogEntry, LoggerConfig, LogLevel (+3 more)
+Cohesion: 0.10
+Nodes (18): ACCEPTED_TYPES, FileDropZone(), FileDropZoneProps, getSpeechRecognition(), SpeechRecognitionEvent, SpeechRecognitionInstance, BannedKeys, createLogger() (+10 more)
 
 ### Community 96 - "Phase 1 Plan 3: RBAC Role Rename (bartender -> cashier) Summary"
 Cohesion: 0.12
@@ -1066,7 +1075,7 @@ Nodes (14): check_prerequisites(), create_configs(), create_readme(), create_sec
 
 ### Community 103 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): @chromatic-com/storybook, eslint-plugin-react-hooks, openai, devDependencies, @chromatic-com/storybook, eslint-plugin-react-hooks, knip, openai (+7 more)
+Nodes (15): dotenv, eslint-plugin-react-hooks, openai, devDependencies, dotenv, eslint-plugin-react-hooks, knip, openai (+7 more)
 
 ### Community 104 - "global-teardown.ts"
 Cohesion: 0.18
@@ -1141,8 +1150,8 @@ Cohesion: 0.13
 Nodes (14): Add After Validation (v1.x), Anti-Features (Commonly Requested, Often Problematic), Competitor Feature Analysis, Dependency Notes, Differentiators (Competitive Advantage), Feature Dependencies, Feature Landscape, Feature Prioritization Matrix (+6 more)
 
 ### Community 122 - "permissions"
-Cohesion: 0.14
-Nodes (13): core:default, dialog:allow-save, fs:allow-write-file, main, notification:default, opener:default, process:allow-restart, updater:default (+5 more)
+Cohesion: 0.10
+Nodes (19): core:default, core:webview:allow-create-webview-window, core:window:allow-close, core:window:allow-hide, core:window:allow-set-focus, core:window:allow-show, dialog:allow-save, fs:allow-write-file (+11 more)
 
 ### Community 123 - "Phase 17 Plan 15: Settings/Infra/Soak E2E Rewrite + Offline-Queue Restoration Summary"
 Cohesion: 0.12
@@ -1209,8 +1218,8 @@ Cohesion: 0.13
 Nodes (14): Accomplishments, Actuals (#2632), Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness (+6 more)
 
 ### Community 139 - "App.tsx"
-Cohesion: 0.15
-Nodes (17): ManagerPinDialogProps, TogglePermissionInput, useMutationTogglePermission(), ADMIN_ACTIONS, ADMIN_EXTRA, CASHIER_ACTIONS, isStaffAction(), KITCHEN_ACTIONS (+9 more)
+Cohesion: 0.11
+Nodes (23): rbacKeys, useRolePermissions(), ManagerPinDialogProps, db, createWrapper(), InsertChain, TogglePermissionInput, useMutationTogglePermission() (+15 more)
 
 ### Community 140 - "Phase 13: Receipt Delivery & Resilience (Print, Reprint, Retry, PDF) - Context"
 Cohesion: 0.11
@@ -1310,7 +1319,7 @@ Nodes (8): COPY, meta, NotFoundVersioned, StaleVersion, Story, VersionConflictTo
 
 ### Community 164 - "logger.rs"
 Cohesion: 0.58
-Nodes (7): AppHandle, PathBuf, get_current_log_file(), get_log_dir(), rotate_logs(), String, write_log()
+Nodes (7): AppHandle, get_current_log_file(), get_log_dir(), rotate_logs(), PathBuf, String, write_log()
 
 ### Community 165 - "ignore"
 Cohesion: 0.22
@@ -1433,8 +1442,8 @@ Cohesion: 0.15
 Nodes (12): CR-01: `receipt_settings` singleton has no DB-level enforcement — any extra row breaks every read, Critical Issues, IN-01: `receipt_settings_insert_admin` policy name doesn't match what it grants, IN-02: `vision.ts`'s `findTextBlock` type guard doesn't verify the `text` field actually exists, IN-03: `brain.ts`'s system prompt and tool framing still describe the old bar-pos product, not supermarket-pos, Info, Phase 06: Code Review Report, Summary (+4 more)
 
 ### Community 195 - "BillingSettingsTab.tsx"
-Cohesion: 0.12
-Nodes (22): SettingsSnapshot, useEmailSettingsStatus(), useMutationCreateSettingsBackup(), useMutationRestoreSettingsBackup(), useMutationSendSettingsTestEmail(), useMutationUpdateSetting(), useSettings(), useSettingsBackups() (+14 more)
+Cohesion: 0.24
+Nodes (13): PaymentActions, PaymentState, PaymentStore, selectPaymentByTabId(), selectPaymentsByDateRange(), selectPaymentsByMethod(), selectPaymentsByStaffId(), selectTotalRevenue() (+5 more)
 
 ### Community 196 - "Phase 08 — UI Design Contract"
 Cohesion: 0.15
@@ -1481,8 +1490,8 @@ Cohesion: 0.62
 Nodes (5): ALL_UOMS, BASE_UOMS, fromBase(), roundTrip(), toBase()
 
 ### Community 207 - "payment/model/queries.ts"
-Cohesion: 0.07
-Nodes (40): db, fetchReceiptDataForPayment(), mapPaymentRow(), OrderItemForRefund, paymentItemKeys, paymentKeys, paymentReceiptKeys, NOTE: the order_items table column is `quantity`, not `qty` — mapped to the (+32 more)
+Cohesion: 0.17
+Nodes (16): db, fetchReceiptDataForPayment(), OrderItemForRefund, paymentItemKeys, paymentKeys, paymentReceiptKeys, NOTE: the order_items table column is `quantity`, not `qty` — mapped to the, ReceiptOrderRow (+8 more)
 
 ### Community 208 - "Phase 10 Plan 06: Entity-ID Cross-Link Read Side Summary"
 Cohesion: 0.15
@@ -1513,8 +1522,8 @@ Cohesion: 0.15
 Nodes (12): CR-01: `backups/` (created by the new backup script) is not gitignored — real path to committing full DB dumps, Critical Issues, IN-01: `useCheckoutSale.test.ts` success-path tests never assert the outgoing request shape, Info, Phase 10: Code Review Report, Summary, Warnings, WR-01: Copy-ID button's hit target is 32×32px, not the UI-SPEC's mandated 44px minimum (+4 more)
 
 ### Community 217 - "LogoImage/index.tsx"
-Cohesion: 0.22
-Nodes (6): useReceiptSettings(), ReprintButton(), ReprintButtonProps, HomeDashboard(), LogoImage(), Props
+Cohesion: 0.14
+Nodes (11): mapPaymentRow(), usePayments(), PaymentHistoryList(), mockOnClose, mockOnPaymentSuccess, mockOnSuccess, mockPaymentsLoaded(), mockStaff (+3 more)
 
 ### Community 218 - "is_server_ready"
 Cohesion: 0.67
@@ -1593,16 +1602,16 @@ Cohesion: 0.17
 Nodes (11): Cost Observations, Cross-Milestone Trends, Key Lessons, Milestone: v1.1 — Pre-Launch Hardening, Patterns Established, Process Evolution, Project Retrospective, Top Lessons (Verified Across Milestones) (+3 more)
 
 ### Community 278 - "getServiceClient"
-Cohesion: 0.09
-Nodes (23): assertAuditLogEntry(), assertCajaEntry(), assertPaymentRecorded(), assertPurchaseOrderStatus(), assertStockMovement(), InventoryAdjustReason, bumpTabVersion(), __dirname (+15 more)
+Cohesion: 0.08
+Nodes (28): seedPaidTabForAudit(), assertAuditLogEntry(), assertCajaEntry(), assertPaymentRecorded(), assertPurchaseOrderStatus(), assertStockMovement(), InventoryAdjustReason, getServiceClient() (+20 more)
 
 ### Community 279 - "POSButton"
-Cohesion: 0.05
-Nodes (70): keypad, Phase, blank(), Line, PurchaseOrderForm(), CreateStaffDialogProps, db, GroupFormData (+62 more)
+Cohesion: 0.07
+Nodes (38): keypad, PurchaseOrderForm(), buildTree(), CategoryFormData, CategoryFormProps, CategoryWithDepth, NodeRowProps, CategoryForm() (+30 more)
 
 ### Community 280 - "ProductSalesPanel.tsx"
-Cohesion: 0.20
-Nodes (8): ProductSalesRow, capturedExportRows, dateRange, mockUseProductSalesReport, threeProducts, dateRange, mockUseProductSalesReport, threeProducts
+Cohesion: 0.33
+Nodes (5): CajaListener(), ProvidersProps, UpdaterProvider(), useAppUpdater(), UseAppUpdaterReturn
 
 ### Community 281 - "Phase 08 Plan 04: Refund SUPABASE_ERROR Fallback Translation Summary"
 Cohesion: 0.18
@@ -1621,24 +1630,28 @@ Cohesion: 0.15
 Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Known Stubs, Next Phase Readiness, Performance (+4 more)
 
 ### Community 285 - "DeletionsPostCloseReport.tsx"
-Cohesion: 0.43
-Nodes (5): useDeletionsPostReport(), DeletionsPostRow, buildColumns(), DeletionsPostCloseReport(), Props
+Cohesion: 0.10
+Nodes (19): Ambiguous-handoff ("unknown") operator UX, Audit surface, retention & queue-health, Canonical References, Claude's Discretion, Deferred Ideas, Established Patterns, Existing Code Insights, Existing codebase (printing boundary) (+11 more)
 
 ### Community 286 - "Goal Achievement"
 Cohesion: 0.18
 Nodes (10): Anti-Patterns Found, Behavioral Spot-Checks / Direct Re-Runs, Gaps Summary, Goal Achievement, Human Verification Required, Key Link Verification, Observable Truths, Phase 10: Quality debt & ops documentation Verification Report (+2 more)
 
 ### Community 287 - "JsonDiffViewer.stories.tsx"
-Cohesion: 0.22
-Nodes (8): Added, BothEmpty, DeeplyNested, meta, Modified, Removed, Story, Truncated
+Cohesion: 0.33
+Nodes (7): diffJson(), DiffNode, DiffStatus, DiffLine(), DiffLineProps, JsonDiffViewer(), JsonDiffViewerProps
+
+### Community 288 - "eslint-plugin-i18next"
+Cohesion: 0.15
+Nodes (19): DiscountScope, DiscountType, generateIdempotencyKey(), callProcessPayment(), ProcessPaymentEnvelopeSchema, ProcessPaymentSuccess, ProcessPaymentSuccessSchema, ProcessSplitPaymentSuccess (+11 more)
 
 ### Community 289 - "HomeDashboard.test.tsx"
-Cohesion: 0.28
-Nodes (8): mockBartender, mockLogout, mockManager, mockNavigate, mockStoreState(), setupBartender(), setupManager(), StoreState
+Cohesion: 0.13
+Nodes (14): CR-01: Reusing an already-open peek window never updates its displayed product, CR-02: ProductPeekWindow's barcode scanner is never disabled while WeightEntryDialog is open, Critical Issues, IN-01: Magic number for max weight, IN-02: Duplicate digit-entry logic between the global keydown handler and the button `append()` handler, IN-03: Test mock's random callback IDs risk a low-probability collision, Info, Phase 18: Code Review Report (+6 more)
 
 ### Community 290 - "reports/index.tsx"
-Cohesion: 0.05
-Nodes (37): fromDateStr(), ReportsPage(), toDateStr(), UserRole, rbacDenialMessage(), DateRangePicker(), PageContainer(), PageContainerProps (+29 more)
+Cohesion: 0.09
+Nodes (22): CategoryTabsProps, useDeletionsPostReport(), fromDateStr(), ReportsPage(), toDateStr(), DeletionsPostRow, Tabs(), TabsContent() (+14 more)
 
 ### Community 294 - "DeletionsPreSendPanel.tsx"
 Cohesion: 0.10
@@ -1653,8 +1666,8 @@ Cohesion: 0.17
 Nodes (11): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance, Phase 17 Plan 03: E2E shared-helper cleanup Summary (+3 more)
 
 ### Community 301 - "JsonDiffViewer.tsx"
-Cohesion: 0.21
-Nodes (19): beerCategory(), buildBusyBar(), buildClosingTime(), generateMockInventory(), generateMockShift(), generateMockStaff(), generateMockTab(), mixersCategory() (+11 more)
+Cohesion: 0.47
+Nodes (3): GroupedOrderItem, groupOrderItems(), OrderItem
 
 ### Community 302 - "payment/model/store.ts"
 Cohesion: 0.11
@@ -1665,16 +1678,16 @@ Cohesion: 0.13
 Nodes (14): Checker Sign-Off, Color, Copywriting Contract, Design System, Download PDF (RCP-03, `ReceiptPreview.tsx`), Interaction Contract, PDF Email Attachment Contract (RCP-03, `EmailReceiptDialog.tsx`), Phase 13 — UI Design Contract (+6 more)
 
 ### Community 312 - "PaymentForm.tsx"
-Cohesion: 0.09
-Nodes (32): cartItemsToRpcItems(), cartItemsToSyntheticTab(), placeholderId(), useCheckoutSale(), CreateStaffInput, useCreateStaff(), RemoveTabItemInput, RemoveTabItemRpcResult (+24 more)
+Cohesion: 0.29
+Nodes (4): useReceiptSettings(), HomeDashboard(), LogoImage(), Props
 
 ### Community 315 - "Phase 5 — UI Design Contract"
 Cohesion: 0.20
 Nodes (9): Checker Sign-Off, Color, Copywriting Contract, Design System, Phase 5 — UI Design Contract, Registry Safety, Spacing Scale, Typography (+1 more)
 
 ### Community 316 - "ok"
-Cohesion: 0.08
-Nodes (59): CATEGORY_QUERY_KEY, invalidateCategoryQueries(), mapCategoryRow(), useCategories(), useMutationCreateCategory(), useMutationUpdateCategory(), CreateProductInput, invalidateCatalogQueries() (+51 more)
+Cohesion: 0.07
+Nodes (61): CreateProductInput, invalidateCatalogQueries(), mapCategoryRow(), mapModifierRow(), mapProductRow(), PRODUCT_MANAGEMENT_QUERY_KEY, ProductModifierJoin, ProductRow (+53 more)
 
 ### Community 317 - "gotoAuthed"
 Cohesion: 0.11
@@ -1685,8 +1698,8 @@ Cohesion: 0.15
 Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 324 - "agentStore.ts"
-Cohesion: 0.21
-Nodes (11): AgentActions, AgentState, AgentStore, ConfirmActionCard(), Props, renderPreview(), TOOL_LABEL_KEYS, MessageBubble() (+3 more)
+Cohesion: 0.13
+Nodes (19): AgentActions, AgentState, AgentStore, useAgentStore, AgentButton(), AgentPanel(), CHIPS_BY_ROLE, CommandChips() (+11 more)
 
 ### Community 325 - "Goal Achievement"
 Cohesion: 0.20
@@ -1697,12 +1710,12 @@ Cohesion: 0.13
 Nodes (14): Accomplishments, Actuals (#2632), Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs (+6 more)
 
 ### Community 331 - "InventoryRow.tsx"
-Cohesion: 0.04
-Nodes (57): useInventoryRealtimeBridge(), ch, inventoryRowColumns(), InventoryRowProps, isLowStock(), LowBadgeCell(), QuantityAdjustCell(), StatusCell() (+49 more)
+Cohesion: 0.06
+Nodes (42): getProductRiskFlag(), ProductRiskFlag, useConfirmRiskyAdd(), calcWeightedLineTotal(), CartSelectors, CartStore, normalizePersistedHeldCart(), PersistedHeldCartSchema (+34 more)
 
 ### Community 332 - "useAddItemToTab.test.ts"
-Cohesion: 0.29
-Nodes (5): AddItemToTabInput, baseInput, mockedRpc, validRpcPayload, useAddItemToTab()
+Cohesion: 0.20
+Nodes (7): ReprintButton(), ReprintButtonProps, EditItemsButton(), EditItemsButtonProps, EditTicketButtonProps, PaymentPane(), ReopenTabButtonProps
 
 ### Community 334 - "Phase 17 Plan 06: Caja E2E Rewrite + Skip-Debt Cleanup Summary"
 Cohesion: 0.12
@@ -1710,15 +1723,15 @@ Nodes (15): Accomplishments, Actuals (#2632), Auto-fixed Issues, Decisions Made,
 
 ### Community 349 - "lib/supabase.ts"
 Cohesion: 0.06
-Nodes (17): RANGE_2035_FROM, RANGE_2035_TO, RANGE_FROM, RANGE_TO, RANGE_FROM, RANGE_TO, RANGE_FROM, RANGE_TO (+9 more)
+Nodes (18): RANGE_2035_FROM, RANGE_2035_TO, RANGE_FROM, RANGE_TO, RANGE_FROM, RANGE_TO, RANGE_FROM, RANGE_TO (+10 more)
 
 ### Community 352 - "Phase 15 Plan 03: Thread ReceiptSettings Through Every Print/Preview/Email Call Site Summary"
 Cohesion: 0.12
 Nodes (15): Accomplishments, Actuals (#2632), Auto-fixed Issues, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered (+7 more)
 
 ### Community 372 - "CajaDashboard.tsx"
-Cohesion: 0.22
-Nodes (8): buildTree(), CategoryFormData, CategoryFormProps, CategoryTreeEditor(), CategoryWithDepth, NodeRowProps, CategoryRouting, RoutingBadge()
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 376 - "Goal Achievement"
 Cohesion: 0.20
@@ -1749,8 +1762,8 @@ Cohesion: 0.14
 Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+5 more)
 
 ### Community 394 - "useAgent.ts"
-Cohesion: 0.32
-Nodes (10): ExtractedProduct, extractProductsFromImage(), extractProductsFromText(), findTextBlock(), getModel(), parseProducts(), { mockCallAgentProxy }, AgentProxyErrorBodySchema (+2 more)
+Cohesion: 0.19
+Nodes (16): readFileAsBase64(), readFileAsText(), useAgent(), ExtractedProduct, parseProductsCsv(), ExtractedProduct, extractProductsFromImage(), extractProductsFromText() (+8 more)
 
 ### Community 396 - "Phase 7: Backend data integrity - Discussion Log"
 Cohesion: 0.22
@@ -1797,8 +1810,8 @@ Cohesion: 0.10
 Nodes (19): Canonical References, Claude's Discretion, Cost basis reconciliation, Data capture gap (shrinkage/expiry reason codes), Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions (+11 more)
 
 ### Community 407 - "InventoryPagePanel.tsx"
-Cohesion: 0.07
-Nodes (47): ShrinkageRow, InventoryRow(), LowStock, Normal, OutOfStock, Story, useDeletionsPreReport(), usePaymentMethodsReport() (+39 more)
+Cohesion: 0.11
+Nodes (27): InventoryRow(), LowStock, Normal, OutOfStock, Story, Props, VarianceReport(), EmptyState() (+19 more)
 
 ### Community 408 - "Phase 8: Sale/payment workflow wiring + cleanup - Discussion Log"
 Cohesion: 0.25
@@ -1809,8 +1822,8 @@ Cohesion: 0.25
 Nodes (7): Manual-Only Verifications, Per-Task Verification Map, Phase 9 — Validation Strategy, Sampling Rate, Test Infrastructure, Validation Sign-Off, Wave 0 Requirements
 
 ### Community 410 - "VoidOpenUnitDialog.tsx"
-Cohesion: 0.46
-Nodes (5): useVoidOpenUnit(), UseVoidOpenUnitReturn, VoidOpenUnitArgs, VoidOpenUnitDialog(), VoidOpenUnitDialogProps
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 411 - "Phase 10 — Validation Strategy"
 Cohesion: 0.25
@@ -1829,8 +1842,8 @@ Cohesion: 0.50
 Nodes (3): Artifacts this phase produces (this plan's slice), STRIDE Threat Register, Trust Boundaries
 
 ### Community 415 - "Requirements: Supermarket POS"
-Cohesion: 0.11
-Nodes (18): AI Invoice Intake (v2/Beta, carried over from v1.1), Checkout Verification, E2E Suite Overhaul, Inventory Reporting, Out of Scope, Product Peek Window, Purchase Orders, Receipt Delivery (+10 more)
+Cohesion: 0.10
+Nodes (20): AI Invoice Intake (v2/Beta, carried over from v1.1), Checkout Verification, E2E Suite Overhaul, Inventory Reporting, Out of Scope, Printing Broker, Product Peek Window, Purchase Orders (+12 more)
 
 ### Community 417 - "Phase 14 Plan 02: 'Expired' Reason + D-01 Reason Picker Summary"
 Cohesion: 0.14
@@ -1874,7 +1887,7 @@ Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from 
 
 ### Community 427 - "PaymentPane.tsx"
 Cohesion: 0.15
-Nodes (11): computeAuthoritativeTotal(), computeExpectedShrinkageTotals(), computeExpectedValuationTotal(), getTaxRatePercent(), localDayRange(), seedCashPayment(), SeededPaidTab, seedPaidTabWithTwoItems() (+3 more)
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 428 - "05-01-PLAN.md"
 Cohesion: 0.50
@@ -1897,16 +1910,20 @@ Cohesion: 0.13
 Nodes (14): Accomplishments, Auto-fixed Issues, Decisions Made, Deferred / Pre-existing (not introduced by this plan), Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs (+6 more)
 
 ### Community 433 - "PaymentModal.test.tsx"
-Cohesion: 0.28
-Nodes (6): defaultProcessorMocks(), makeReceipt(), openedAt, renderModal(), tabNoPool, tabRappi
+Cohesion: 0.13
+Nodes (14): Checker Sign-Off, Color, Copywriting Contract, Design System, Error propagation to UI-originated callers (D-11, D-12, PRN-02/PRN-04), Interaction Contract, Phase 19 — UI Design Contract, Print Jobs Tab Contract (`PrintJobsTable`) (+6 more)
 
 ### Community 434 - "06-01-PLAN.md"
 Cohesion: 0.50
 Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
 
+### Community 435 - "ErrorBoundary.tsx"
+Cohesion: 0.14
+Nodes (13): App(), AppConfigProvider(), Props, Window, PeekApp(), Providers(), queryClient, Router() (+5 more)
+
 ### Community 436 - "category/model/queries.ts"
-Cohesion: 0.18
-Nodes (11): calcWeightedLineTotal(), CartSelectors, CartStore, normalizePersistedHeldCart(), PersistedHeldCartSchema, useCartStore, gramsFromKg(), WeightEntryDialog() (+3 more)
+Cohesion: 0.17
+Nodes (11): Architectural Responsibility Map, Assumptions Log, Don't Hand-Roll, Environment Availability, Metadata, Open Questions, Package Legitimacy Audit, Phase 19: Store-Local Durable Printing Service - Research (+3 more)
 
 ### Community 437 - "06-02-PLAN.md"
 Cohesion: 0.50
@@ -1917,16 +1934,16 @@ Cohesion: 0.50
 Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
 
 ### Community 439 - "receive-shipment-weighted-avg.integration.test.ts"
-Cohesion: 0.17
-Nodes (12): useVoidRefundReport(), VoidRefundRow, VoidRefundRowSchema, dateRange, EXPECTED_HEADERS, twoVoids, buildColumns(), Props (+4 more)
+Cohesion: 0.31
+Nodes (7): formatCents(), MoneyInput(), MoneyInputProps, parseToCents(), Default, Labeled, Story
 
 ### Community 440 - "CajaReportPanel.tsx"
-Cohesion: 0.22
-Nodes (10): EditHistoryRoute(), EditHistoryRouteProps, PurchaseOrdersRoute(), PurchaseOrdersRouteProps, RbacRoute(), RbacRouteProps, ReportsRoute(), ReportsRouteProps (+2 more)
+Cohesion: 0.31
+Nodes (6): buildColumns(), Props, dateRange, mockUseVoidRefundReport, twoVoids, VoidRefundPanel()
 
 ### Community 441 - "PaymentForm.test.tsx"
-Cohesion: 0.18
-Nodes (12): mockTab, mockTabItem, RemoveTabItemDialog(), RemoveTabItemDialogProps, baseItem, makeWrapper(), mockRemoveTabItem, renderDialog() (+4 more)
+Cohesion: 0.48
+Nodes (5): useInventoryRealtimeBridge(), InventoryPageInner(), useLowStockToast(), useNearExpiryToast(), canAccess()
 
 ### Community 442 - "rag.ts"
 Cohesion: 0.27
@@ -2004,13 +2021,9 @@ Nodes (11): Anti-Patterns Found, Behavioral Spot-Checks / E2E Execution, Data-Fl
 Cohesion: 0.15
 Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
-### Community 469 - "StaffSalesPanel.tsx"
-Cohesion: 0.07
-Nodes (25): TipSplitRow, CAJA_REPORT, CASES, CATEGORY_ROWS, DATE_RANGE, DELETIONS_POST_ROWS, DELETIONS_PRE_ROWS, HOURLY_ROWS (+17 more)
-
 ### Community 470 - "purchase-order/index.ts"
-Cohesion: 0.21
-Nodes (18): itemInsertRow(), mapItem(), mapPO(), PurchaseOrderItemRow, purchaseOrderKeys, PurchaseOrderListItem, rowPO(), useMutationCreatePurchaseOrder() (+10 more)
+Cohesion: 0.14
+Nodes (26): itemInsertRow(), mapItem(), mapPO(), PurchaseOrderItemRow, purchaseOrderKeys, PurchaseOrderListItem, rowPO(), useMutationCreatePurchaseOrder() (+18 more)
 
 ### Community 471 - "Phase 14: Inventory Analytics Reports (Valuation, Shrinkage/Waste, Expiry-Loss, Turnover) - Discussion Log"
 Cohesion: 0.18
@@ -2057,8 +2070,8 @@ Cohesion: 0.14
 Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+5 more)
 
 ### Community 494 - "router.tsx"
-Cohesion: 0.13
-Nodes (13): AuditPage, EditHistoryPage, HomePage, InventoryPage, LoginPage, PaymentsPage, PosPage, PurchaseOrdersPage (+5 more)
+Cohesion: 0.07
+Nodes (33): AuditRoute(), AuditRouteProps, mockUsePermissions, EditHistoryRoute(), EditHistoryRouteProps, PurchaseOrdersRoute(), PurchaseOrdersRouteProps, RbacRoute() (+25 more)
 
 ### Community 495 - "Phase 16 Plan 01: Purchase Orders Tracer (Schema/RLS + receive_shipment Extension) Summary"
 Cohesion: 0.15
@@ -2105,8 +2118,8 @@ Cohesion: 0.40
 Nodes (5): Phase Requirements → Test Map, Sampling Rate, Test Framework, Validation Architecture, Wave 0 Gaps
 
 ### Community 506 - "groupOrderItems.ts"
-Cohesion: 0.14
-Nodes (13): TabsActions, TabsState, OfflineAction, OfflineActionType, Tab, GroupedOrderItem, groupOrderItems(), OrderItem (+5 more)
+Cohesion: 0.17
+Nodes (11): Anti-Patterns Found, Behavioral Spot-Checks / E2E Execution (independently re-run, not trusted from SUMMARY), Code Review Critical Fixes — Independently Re-Verified, Gaps Summary, Goal Achievement, Human Verification Required, Key Link Verification, Observable Truths (+3 more)
 
 ### Community 507 - "14-01-PLAN.md"
 Cohesion: 0.50
@@ -2136,29 +2149,33 @@ Nodes (4): Claude's Discretion, Deferred Ideas (OUT OF SCOPE), Locked Decisions,
 Cohesion: 0.50
 Nodes (4): Primary (HIGH confidence — direct file reads this session), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
 
+### Community 514 - "dotenv"
+Cohesion: 0.33
+Nodes (3): ProcessPaymentRequestSchema, TODO: Move callProcessPayment invocation tests to e2e/05-payments.spec.ts, TODO: Move callSendReceiptEmail invocation tests to e2e/08-settings-receipt.spec
+
 ### Community 515 - "Security Domain"
 Cohesion: 0.67
 Nodes (3): Applicable ASVS Categories, Known Threat Patterns for this stack, Security Domain
 
 ### Community 516 - "EditPaidTabDialog.tsx"
-Cohesion: 0.07
-Nodes (43): useTab(), AddedRow, EditPaidTabDialog(), ItemOverride, ManagerPinDialog(), ItemOverride, REFUND_REASONS, RefundItemState (+35 more)
+Cohesion: 0.09
+Nodes (32): AddedRow, ItemOverride, ItemOverride, REFUND_REASONS, RefundItemState, RemoveTabItemDialog(), RemoveTabItemDialogProps, baseItem (+24 more)
 
 ### Community 519 - "useAgentStore"
-Cohesion: 0.30
-Nodes (8): useAgentStore, readFileAsBase64(), readFileAsText(), useAgent(), AgentButton(), AgentPanel(), ExtractedProduct, parseProductsCsv()
+Cohesion: 0.20
+Nodes (9): compilerOptions, allowImportingTsExtensions, noEmit, types, extends, include, node, ./**/*.ts (+1 more)
 
 ### Community 522 - "RBACDashboard.tsx"
-Cohesion: 0.24
-Nodes (12): ProductActions, ProductState, ProductStore, CategoryTabsProps, ProductCardProps, CartActions, ModifierSheetProps, product (+4 more)
+Cohesion: 0.50
+Nodes (3): Default, Story, WithAction
 
 ### Community 523 - "logger-instance.ts"
-Cohesion: 0.03
-Nodes (68): App(), AppConfigProvider(), Props, Window, ENTITY_BY_ACTION_TYPE, OfflineQueueProcessor(), payloadEntityId(), addOrderMutation (+60 more)
+Cohesion: 0.10
+Nodes (31): callCloseTabUpdate(), callProcessPaymentRpc(), OutcomePair, pgErr(), PgErrorShape, Row, tabs, AppError (+23 more)
 
 ### Community 525 - "@chromatic-com/storybook"
-Cohesion: 0.22
-Nodes (10): ReceiptPreview(), ReceiptPreviewProps, base, baseItems, Card, Cash, Rappi, Story (+2 more)
+Cohesion: 0.20
+Nodes (9): Experiment, How to Run, Investigation Trail, Observability, Research, Results, Spike 001: Windows Print Broker, What This Validates (+1 more)
 
 ### Community 526 - "Goal Achievement"
 Cohesion: 0.17
@@ -2169,8 +2186,8 @@ Cohesion: 0.50
 Nodes (3): Artifacts this phase produces (this plan's slice), STRIDE Threat Register, Trust Boundaries
 
 ### Community 528 - "input-otp.tsx"
-Cohesion: 0.40
-Nodes (4): InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot
+Cohesion: 0.22
+Nodes (9): Anti-Patterns to Avoid, Architecture Patterns, Pattern 1: Durable-accept-before-response, Pattern 2: Idempotency-key dedup before insert, Pattern 3: Never blind-resubmit an ambiguous handoff, Pattern 4: Windows Service SCM registration (production replacement for D-01), Pattern 5: Tauri NSIS post-install hook to register the service, Recommended Project Structure (+1 more)
 
 ### Community 529 - "13-02-PLAN.md"
 Cohesion: 0.50
@@ -2189,12 +2206,12 @@ Cohesion: 0.29
 Nodes (6): Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
 
 ### Community 536 - "loose-weight-hold-sale.spec.ts"
-Cohesion: 0.60
-Nodes (4): computeAuthoritativeTotal(), directSaleInput(), ensureLooseWeightFixtures(), getTaxRatePercent()
+Cohesion: 0.25
+Nodes (7): Candidate Architecture, Corrected, Decisions, Existing Codebase Observations, Research Confidence, Store-Local Durable Printing, Unresolved findings
 
 ### Community 537 - "e2e/tsconfig.json"
-Cohesion: 0.09
-Nodes (14): cleanupImportedProducts(), compilerOptions, allowImportingTsExtensions, noEmit, types, extends, include, chromePath (+6 more)
+Cohesion: 0.13
+Nodes (9): cleanupImportedProducts(), fetchProduct(), SeedProduct, getPeekMockCalls(), injectPeekWindowMock(), chromePath, __dirname, __dirname (+1 more)
 
 ### Community 538 - "Phase 17 Plan 14: Cross-Cutting Bucket-B Skip Resolution Summary"
 Cohesion: 0.14
@@ -2204,21 +2221,13 @@ Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from 
 Cohesion: 0.47
 Nodes (4): computeAuthoritativeTotal(), getTaxRatePercent(), SeededPaidTab, seedPaidTabViaDirectSale()
 
-### Community 540 - "UpdateAvailableDialog.stories.tsx"
-Cohesion: 0.29
-Nodes (6): Default, Downloading, ErrorState, meta, RestartReady, Story
-
 ### Community 541 - "usePhysicalCount.ts"
 Cohesion: 0.21
 Nodes (11): barcodeSvg(), db, __dirname, ean13ToBits(), envPath, escapeHtml(), L_EVEN, L_ODD (+3 more)
 
 ### Community 542 - "full-day-soak.spec.ts"
-Cohesion: 0.27
-Nodes (8): auditKeys, db, mapAuditRow(), sanitizeSearch(), useAuditLogs(), AuditLogFilters, AuditLogSchema, AuditLogFilterBarProps
-
-### Community 543 - "FileDropZone.tsx"
-Cohesion: 0.38
-Nodes (6): ACCEPTED_TYPES, FileDropZone(), FileDropZoneProps, getSpeechRecognition(), SpeechRecognitionEvent, SpeechRecognitionInstance
+Cohesion: 0.08
+Nodes (26): auditKeys, db, mapAuditRow(), sanitizeSearch(), useAuditLogs(), AuditLog, AuditLogFilters, AuditLogSchema (+18 more)
 
 ### Community 544 - "12-01-PLAN.md"
 Cohesion: 0.40
@@ -2229,20 +2238,20 @@ Cohesion: 0.40
 Nodes (4): Artifacts this phase produces, Flagged Assumptions (edge-probe items judged inapplicable, per specless-probe-fallback), STRIDE Threat Register, Trust Boundaries
 
 ### Community 546 - "pos-printer.ts"
-Cohesion: 0.15
-Nodes (21): delay(), escapeHtml(), isTauri(), openCashDrawer(), printRawText(), PrintRawTextOptions, printReceipt(), printReceiptWebFallback() (+13 more)
+Cohesion: 0.09
+Nodes (28): delay(), escapeHtml(), isTauri(), openCashDrawer(), printRawText(), PrintRawTextOptions, printReceipt(), printReceiptWebFallback() (+20 more)
 
 ### Community 547 - "domain.test.ts"
-Cohesion: 0.17
-Nodes (11): useModifierGroups(), DeletionsPostRowSchema, DeletionsPreRowSchema, HourlyRowSchema, ModifierGroupItemSchema, ModifierGroupSchema, PaymentMethodRowSchema, ProductModifierGroupSchema (+3 more)
+Cohesion: 0.25
+Nodes (7): Ambiguous-handoff (unknown) operator UX, Audit surface, retention & queue-health, Claude's Discretion, Deferred Ideas, Migrating existing callers to one contract, Phase 19: Store-Local Durable Printing Service - Discussion Log, Service identity & install method
 
 ### Community 548 - "Phase 17: E2E Suite Overhaul - Discussion Log"
 Cohesion: 0.25
 Nodes (7): Claude's Discretion, DB-Transaction Verification Depth, Deferred Ideas, Indian Product Test Data, Phase 17: E2E Suite Overhaul - Discussion Log, Rewrite Scope & Organization, Speed & Parallelization
 
 ### Community 549 - "CategoryTabs.stories.tsx"
-Cohesion: 0.18
-Nodes (10): CategoryTabs(), pillClass(), AllSelected, BeerSelected, CocktailsSelected, EmptyCategories, ManyCategories, mockCategories (+2 more)
+Cohesion: 0.17
+Nodes (15): db, GroupFormData, GroupFormProps, MODIFIER_GROUP_ITEMS_KEY, MODIFIER_GROUPS_KEY, ModifierGroupEditor(), ModifierSelector(), ModifierSelectorProps (+7 more)
 
 ### Community 550 - "open-units.spec.ts"
 Cohesion: 0.32
@@ -2253,12 +2262,8 @@ Cohesion: 0.29
 Nodes (7): Common Pitfalls, Pitfall 1: `global-teardown.ts`'s SUITE_MAP silently collapses after the D-06 rename, Pitfall 2: `inventory_log` vs `stock_movements` — the table CLAUDE.md/CONTEXT.md name doesn't exist, Pitfall 3: Two "confirmed bar-pos" files are actually hybrids, not clean deletions, Pitfall 4: `e2e/14-manual-stubs.spec.ts` is a live policy violation, Pitfall 5: `channel: 'chrome'` and `launchOptions.executablePath` should not both be set, Pitfall 6: `e2e/visual/45-visual-baseline.spec.ts` is the single most bar-pos-laden file in the suite, but its config is out-of-scope
 
 ### Community 552 - "tab/model/queries.ts"
-Cohesion: 0.15
-Nodes (22): AddOrderContext, buildRpcItemsJson(), CategoryEmbed, mapOrderItemRow(), mapOrderRow(), mapProductRow(), mapTabRow(), OpenTabMutationContext (+14 more)
-
-### Community 553 - "CheckoutPanel.test.tsx"
-Cohesion: 0.24
-Nodes (8): mockProductA, mockProductB, mockStaff, mockWeightedProduct, pressKey(), scanAndFlush(), scanKeys(), StoreState
+Cohesion: 0.05
+Nodes (68): ENTITY_BY_ACTION_TYPE, OfflineQueueProcessor(), payloadEntityId(), addOrderMutation, onlineStatus, openTabMutation, supabaseRpc, toastMock (+60 more)
 
 ### Community 555 - "Architecture Patterns"
 Cohesion: 0.33
@@ -2297,20 +2302,16 @@ Cohesion: 0.35
 Nodes (8): toReceiptPayload(), useMutationUpdateReceiptSettings(), encodeLogoDataUrl(), loadImage(), LogoEncodeError, useUploadLogo(), LogoUploader(), Props
 
 ### Community 569 - "AuditLogTable.tsx"
-Cohesion: 0.11
-Nodes (16): AuditLog, EntityIdCell(), EntityIdCellProps, LINKABLE_TYPES, TooltipContent, AuditLogDetailSheetProps, AuditLogTable(), formatAuditDate() (+8 more)
+Cohesion: 0.27
+Nodes (8): useDeletionsPreReport(), DeletionsPreRow, buildColumns(), DeletionsPreSendPanel(), Props, dateRange, mockUseDeletionsPreReport, sampleRow
 
 ### Community 572 - "Phase 17 — Validation Strategy"
 Cohesion: 0.20
 Nodes (9): audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117), Manual-Only Verifications, Per-Task Verification Map, Phase 17 — Validation Strategy, Sampling Rate, status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6), Test Infrastructure, Validation Sign-Off (+1 more)
 
-### Community 573 - "buildStartTicketText.ts"
-Cohesion: 0.43
-Nodes (6): buildStartTicketText(), centerLine(), divider(), lineLeftRight(), StartTicketOpts, baseOpts
-
 ### Community 574 - "ConfirmDialog.stories.tsx"
-Cohesion: 0.50
-Nodes (3): Default, Destructive, Story
+Cohesion: 0.25
+Nodes (7): Manual-Only Verifications, Per-Task Verification Map, Phase 19 — Validation Strategy, Sampling Rate, Test Infrastructure, Validation Sign-Off, Wave 0 Requirements
 
 ### Community 576 - "Phase 18 — Validation Strategy"
 Cohesion: 0.20
@@ -2321,8 +2322,8 @@ Cohesion: 0.27
 Nodes (9): db, __dirname, dryRun, ean13CheckDigit(), envPath, main(), makeBarcode(), regenAll (+1 more)
 
 ### Community 594 - "OpenUnitsTab.tsx"
-Cohesion: 0.57
-Nodes (4): useOpenOpenUnit(), UseOpenOpenUnitReturn, OpenUnitButton(), OpenUnitButtonProps
+Cohesion: 0.17
+Nodes (12): RawProductSalesRowSchema, useProductSalesReport(), ProductSalesRow, capturedExportRows, dateRange, mockUseProductSalesReport, threeProducts, ProductSalesPanel() (+4 more)
 
 ### Community 595 - "atomic-rpc-guards.spec.ts"
 Cohesion: 0.32
@@ -2332,13 +2333,9 @@ Nodes (4): computeAuthoritativeTotal(), directSaleInput(), getTaxRatePercent(), 
 Cohesion: 0.22
 Nodes (8): 17-12: Pre-existing lint errors in categories.spec.ts (moved verbatim from 31-categories.spec.ts), 17-14 (Task 3 — error-scenarios-and-validation.spec.ts), 17-17 (Task 1/Task 2 — phase wrap-up), DIRECT_SALE_FAILED leaks a raw Postgres constraint message to the checkout UI, Genuine gaps found during the src/features-to-e2e cross-reference audit, not closed here, Phase 17 — Deferred Items, Real bugs fixed while closing the agent-chat gap and running the full suite, `seedOpenTab`'s "any profile with this role" staff lookup was non-deterministic (fixed)
 
-### Community 598 - "EmptyState.stories.tsx"
-Cohesion: 0.27
-Nodes (7): combineTurnoverRows(), TurnoverRow, ExpiryLossSection(), InventoryAnalyticsPanel(), Props, Props, TurnoverSection()
-
 ### Community 599 - "PaymentModal.stories.tsx"
-Cohesion: 0.25
-Nodes (8): Logger, scenarios, PaymentModal(), CardPayment, CashPayment, mockProcessorsFor(), Story, stubReceipt()
+Cohesion: 0.29
+Nodes (7): Common Pitfalls, Pitfall 1: LAN/VPN cross-machine binding was never tested — Windows Firewall will silently block it, Pitfall 2: A non-`LocalSystem` service account may not see the printer the same way, Pitfall 3: A stuck head-of-queue job blocks every later job to that printer, Pitfall 4: "Fails immediately" is a client responsibility, not something the network guarantees, Pitfall 5: The Print Jobs audit tab has a different data source than every other Audit tab, Pitfall 6: Tauri's NSIS sidecar/resource handling doesn't guarantee the service binary gets replaced on upgrade
 
 ### Community 600 - "ci.spec.ts"
 Cohesion: 0.25
@@ -2346,23 +2343,23 @@ Nodes (7): Add-to-cart wiring, Claude's Discretion, Cross-window scan relay (PEE
 
 ### Community 602 - "Staff"
 Cohesion: 0.09
-Nodes (30): ClockInContext, ClockOutContext, db, fetchActiveProfiles(), fetchOrderItemsInRange(), mapShiftRow(), mapStaffRow(), OrderItemRow (+22 more)
+Nodes (35): LoginUiState, useLoginUiStore, ClockInContext, ClockOutContext, db, fetchActiveProfiles(), fetchOrderItemsInRange(), mapShiftRow() (+27 more)
 
-### Community 605 - "drizzle-orm"
-Cohesion: 0.29
-Nodes (6): mockAddItem, mockLookup, pressKey(), regularProduct, scanKeys(), weightedProduct
+### Community 604 - "eslint-config-prettier"
+Cohesion: 0.33
+Nodes (5): Patterns, Spike Conventions, Stack, Structure, Tools & Libraries
 
 ### Community 606 - "auth.ts"
-Cohesion: 0.08
-Nodes (17): enterPin(), envOrThrow(), gotoAuthed(), loginAs(), loginAsNamed(), staffForRole(), StaffRole, INTEGRATION_KEYS (+9 more)
+Cohesion: 0.11
+Nodes (17): enterPin(), envOrThrow(), loginAs(), loginAsNamed(), logout(), staffForRole(), StaffRole, INTEGRATION_KEYS (+9 more)
 
 ### Community 607 - "@fontsource/playfair-display"
 Cohesion: 0.43
 Nodes (4): createRoleScopedClient(), getAnonKey(), getUrl(), Role
 
 ### Community 613 - "@radix-ui/react-label"
-Cohesion: 0.29
-Nodes (4): AgentProxyRequestSchema, ProcessPaymentRequestSchema, TODO: Move callProcessPayment invocation tests to e2e/05-payments.spec.ts, TODO: Move callSendReceiptEmail invocation tests to e2e/08-settings-receipt.spec
+Cohesion: 0.25
+Nodes (8): CsvColumn, csvToBytes(), rowsToCsv(), sanitizeCsvCell(), COLUMNS, Row, RFC-4180, RFC-4180
 
 ### Community 614 - "react-dom"
 Cohesion: 0.47
@@ -2370,19 +2367,19 @@ Nodes (3): ensureOpenShift(), seedOpenTab(), seedTabWithDuplicateItems()
 
 ### Community 615 - "audit-route.tsx"
 Cohesion: 0.40
-Nodes (3): AuditRoute(), AuditRouteProps, mockUsePermissions
+Nodes (5): Phase Requirements → Test Map, Sampling Rate, Test Framework, Validation Architecture, Wave 0 Gaps
 
 ### Community 616 - "audit-actions.test.ts"
-Cohesion: 0.40
-Nodes (4): AuditActionSchema, MIGRATIONS_DIR, TARGET_RPCS, VALID_ACTIONS
+Cohesion: 0.10
+Nodes (27): useMutationSetOwnLocale(), CreateStaffDialog(), CreateStaffDialogProps, EditLocaleDialog(), EditLocaleDialogProps, { mutateAsyncMock, toastErrorMock, toastSuccessMock, changeLanguageMock, tMock }, targetStaff, AuditActionSchema (+19 more)
 
 ### Community 617 - "RoutingBadge.stories.tsx"
-Cohesion: 0.33
-Nodes (5): Bar, Kitchen, meta, None, Story
+Cohesion: 0.29
+Nodes (6): RoutingBadge(), Bar, Kitchen, meta, None, Story
 
 ### Community 618 - "OpenUnitsTab.test.tsx"
-Cohesion: 0.33
-Nodes (4): OpenUnitFixture, openUnitsState, productsState, roleState
+Cohesion: 0.40
+Nodes (4): Ideas, Spike Manifest, Spikes, store-local-printing
 
 ### Community 619 - "edge-cases.spec.ts"
 Cohesion: 0.60
@@ -2393,8 +2390,8 @@ Cohesion: 0.50
 Nodes (3): Artifacts this phase produces (this plan's slice), STRIDE Threat Register, Trust Boundaries
 
 ### Community 621 - "discount-and-revenue.spec.ts"
-Cohesion: 0.11
-Nodes (9): test, getMigrationList(), BAR_POS, BAR_POS, BAR_POS, cleanupTestData(), ensureOpenShift(), openPaymentFormWithItem() (+1 more)
+Cohesion: 0.09
+Nodes (12): test, gotoAuthed(), bumpTabVersion(), seedClosedTab(), BAR_POS, BAR_POS, CategoryPick, selectTabAndVerifyPin() (+4 more)
 
 ### Community 622 - "18-02-PLAN.md"
 Cohesion: 0.50
@@ -2404,28 +2401,76 @@ Nodes (3): Artifacts this phase produces (this plan's slice), STRIDE Threat Regi
 Cohesion: 0.50
 Nodes (3): Artifacts this phase produces (this plan's slice), STRIDE Threat Register, Trust Boundaries
 
-### Community 624 - "ClockOutDialog.test.tsx"
+### Community 634 - "useProductPeekWindow.test.ts"
 Cohesion: 0.50
-Nodes (3): mutateAsync, shift, staff
+Nodes (4): mockEmit, mockGetByLabel, mockWebviewWindowCtor, WebviewWindow()
+
+### Community 636 - "discount-and-revenue.spec.ts"
+Cohesion: 0.83
+Nodes (3): ensureOpenShift(), openPaymentFormWithItem(), seedOpenTabWithItem()
+
+### Community 637 - "Deferred Items — Phase 18"
+Cohesion: 0.50
+Nodes (3): Deferred Items — Phase 18, Out-of-scope test failures observed during 18-01 full-suite verification, Pre-existing e2e/checkout/ failures found during 18-03's full-folder regression run
+
+### Community 638 - "Standard Stack"
+Cohesion: 0.50
+Nodes (4): Alternatives Considered, Core (broker, new Rust crate — separate from `src-tauri`), Standard Stack, Supporting (Tauri app side — no new npm dependency)
+
+### Community 639 - "Code Examples"
+Cohesion: 0.50
+Nodes (4): Broker HTTP client kept on the Rust/Tauri side (D-09, D-12), Code Examples, Frontend Result mapping stays unchanged (D-09, D-11) — every caller already must handle the Result, SQLite ledger pragmas (already proven; carry forward unchanged)
+
+### Community 640 - "User Constraints (from CONTEXT.md)"
+Cohesion: 0.50
+Nodes (4): Claude's Discretion, Deferred Ideas (OUT OF SCOPE), Locked Decisions, User Constraints (from CONTEXT.md)
+
+### Community 641 - "Sources"
+Cohesion: 0.50
+Nodes (4): Primary (HIGH confidence), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
+
+### Community 643 - "Security Domain"
+Cohesion: 0.67
+Nodes (3): Applicable ASVS Categories (Level 1, per `.planning/config.json` `security_asvs_level: 1`), Known Threat Patterns for this stack, Security Domain
+
+### Community 648 - "CartItem.stories.tsx"
+Cohesion: 0.22
+Nodes (7): baseProduct, Default, limeModifier, MaxQuantity, shotModifier, Story, WithModifiers
+
+### Community 649 - "JsonDiffViewer.stories.tsx"
+Cohesion: 0.22
+Nodes (8): Added, BothEmpty, DeeplyNested, meta, Modified, Removed, Story, Truncated
+
+### Community 650 - "queries.staff-report.test.ts"
+Cohesion: 0.29
+Nodes (3): ChainResult, dateFrom, dateTo
+
+### Community 655 - "types.ts"
+Cohesion: 0.21
+Nodes (12): mockTab, mockTabItem, OrderCreate, OrderItemCreate, Tab, TabCreate, calculateSubtotal(), TabPaymentCard() (+4 more)
+
+### Community 657 - "offline-summary.test.ts"
+Cohesion: 0.40
+Nodes (4): OfflineActionType, formatDiscardedSummary(), actionArb, actionTypeArb
 
 ## Knowledge Gaps
-- **4696 isolated node(s):** `config`, `preview`, `$schema`, `style`, `rsc` (+4691 more)
+- **4913 isolated node(s):** `config`, `preview`, `$schema`, `style`, `rsc` (+4908 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **168 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `immer`, `remark-gfm`, `xlsx`, `clsx`, `class-variance-authority`, `@radix-ui/react-tooltip`, `supabase`, `pdf.tsx`, `libphonenumber-js`, `tailwind-merge`, `lucide-react`, `radix-ui`, `@radix-ui/react-dialog`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-opener`, `@radix-ui/react-scroll-area`, `@tauri-apps/plugin-process`, `@react-pdf/renderer`, `react-router-dom`, `recharts`, `shadcn`, `sonner`, `zustand`, `@tanstack/react-table`, `@tauri-apps/api`, `@tauri-apps/plugin-notification`, `tw-animate-css`, `@radix-ui/react-slot`, `@fontsource-variable/geist`, `package.json`, `@radix-ui/react-alert-dialog`, `react-error-boundary`, `date-fns`, `i18next`, `input-otp`, `@radix-ui/react-tabs`, `react-markdown`, `zod`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `react` connect `pdf.tsx` to `InventoryPagePanel.tsx`, `EditPaidTabDialog.tsx`, `CategoryTabs.stories.tsx`, `PINLoginForm.tsx`, `logger-instance.ts`, `dependencies`, `ui/index.ts`, `POSButton`, `email-receipt.ts`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `cn()` connect `ui/index.ts` to `reports/index.tsx`, `ExportButtons.tsx`, `CategoryTabs.stories.tsx`, `EditPaidTabDialog.tsx`, `LogoImage/index.tsx`, `PINLoginForm.tsx`, `InventoryRow.tsx`, `input-otp.tsx`, `useReceiveShipment.ts`, `card.tsx`, `InventoryPagePanel.tsx`, `PaymentForm.tsx`, `AuditLogTable.tsx`, `POSButton`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `drizzle-orm`, `immer`, `remark-gfm`, `xlsx`, `clsx`, `@radix-ui/react-tooltip`, `supabase`, `pdf.tsx`, `libphonenumber-js`, `tailwind-merge`, `lucide-react`, `radix-ui`, `@radix-ui/react-dialog`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-opener`, `@radix-ui/react-scroll-area`, `@tauri-apps/plugin-process`, `@react-pdf/renderer`, `react-router-dom`, `recharts`, `shadcn`, `sonner`, `zustand`, `@tanstack/react-table`, `@tauri-apps/api`, `@tauri-apps/plugin-notification`, `tw-animate-css`, `@radix-ui/react-slot`, `@fontsource-variable/geist`, `package.json`, `@radix-ui/react-alert-dialog`, `react-error-boundary`, `date-fns`, `i18next`, `input-otp`, `@radix-ui/react-tabs`, `react-markdown`, `zod`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `react` connect `pdf.tsx` to `mocks.ts`, `queries-analytics.ts`, `App.tsx`, `result.ts`, `dependencies`, `ui/index.ts`, `email-receipt.ts`, `ok`, `full-day-soak.spec.ts`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `ok()` connect `err` to `edge-function-contracts.ts`, `unknownError`, `useAgent.ts`, `App.tsx`, `result.ts`, `logger-instance.ts`, `useSuggestReorder.ts`, `inventory/model/queries.ts`, `settings/model/queries.ts`, `useExportReport.ts`, `queries-reports.ts`, `eslint-plugin-i18next`, `StaffDashboard.tsx`, `pos-printer.ts`, `queries-analytics.ts`, `CategoryTabs.stories.tsx`, `tab/model/queries.ts`, `open-unit/model/queries.ts`, `PaymentForm.tsx`, `LogoUploader.tsx`, `email-receipt.ts`, `ok`, `mocks.ts`, `Product`, `OpenUnitsTab.tsx`, `purchase-order/index.ts`, `Staff`, `audit-actions.test.ts`, `useServerTimeDrift.ts`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **What connects `config`, `preview`, `$schema` to the rest of the system?**
-  _4696 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _4913 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `domain.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.017580383992597735 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.018008348240906382 - nodes in this community are weakly interconnected._
 - **Should `Phase 10: Quality debt & ops documentation - Research` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
 - **Should `Phase 5: Delete void-order feature - Research` be split into smaller, more focused modules?**
