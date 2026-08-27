@@ -184,6 +184,9 @@ export type AppErrorCode =
   | 'NESTED_COMBO_FORBIDDEN' // Attempting to nest a combo inside another combo
   | 'SUPABASE_ERROR'
   | 'TAURI_ERROR'
+  | 'PRINT_BROKER_UNREACHABLE' // store-local print broker did not respond within the connect-timeout window
+  | 'PRINT_JOB_REJECTED' // broker rejected the job (auth/payload/persistence 4xx/5xx)
+  | 'PRINT_JOB_UNKNOWN' // broker marked the job status 'unknown' (ambiguous WinSpool handoff) — needs manual confirm, never auto-resubmit
   | 'EXPORT_CANCELLED'
   | 'EXPORT_FAILED'
   | 'PARENT_TAB_PAID' // parent tab already paid — cannot split
