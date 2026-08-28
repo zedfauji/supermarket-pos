@@ -15,6 +15,7 @@
  * comment above the deleted test below; that column was never on `categories`.)
  */
 
+import type { Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { expect, test } from '../fixtures';
 import { loginAs, logout } from '../helpers/auth';
@@ -30,8 +31,8 @@ import { openCaja, resetTestState } from '../helpers/supabase';
  * Uses the service-role client so that RLS doesn't block teardown.
  */
 async function cleanupTestCategories(names: string[]): Promise<void> {
-  const url = process.env.VITE_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const url = process.env.VITE_SUPABASE_URL ?? '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
   if (!url || !key) return;
   const admin = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -50,7 +51,7 @@ async function attemptModifierGroupInsertAsBartender(): Promise<{
   success: boolean;
   errorMessage: string | null;
 }> {
-  const url = process.env.VITE_SUPABASE_URL!;
+  const url = process.env.VITE_SUPABASE_URL ?? '';
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
   const bartenderEmail = process.env.E2E_BARTENDER_EMAIL;
   const bartenderPassword = process.env.E2E_BARTENDER_PASSWORD;
@@ -85,7 +86,7 @@ async function attemptModifierGroupInsertAsBartender(): Promise<{
   }
 
   // Succeeded unexpectedly — clean up
-  const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY ?? '', {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   await admin.from('modifier_groups').delete().eq('name', 'E2E-RLS-Test-Group');
@@ -111,7 +112,7 @@ const TEST_CATEGORY_NAMES = ['Beers', 'Regular', 'Corona'];
  * than requiring a specific `aria-modal="true"` that doesn't exist — is the
  * correct, locale-independent way to scope this.
  */
-function categoryDialog(page: import('@playwright/test').Page) {
+function categoryDialog(page: Page) {
   return page.locator('[role="dialog"]:not([aria-modal="false"])');
 }
 
