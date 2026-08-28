@@ -101,6 +101,40 @@ acceptance, route through one store-local broker, and remain auditable without a
   OS-reported completion, failure, cancellation, and unknown status; Windows status is never
   presented as proof of physical paper output.
 
+## v1.6 Requirements — Store Deployment: Signed Elevated Installer (proposed)
+
+Milestone goal: ship a seamless, elevated, self-signed installer for the store machine that boots
+into a fully working app against the remote Supabase project — schema, edge functions, and secrets
+included, not just the desktop binary. Remote DB schema (180 migrations) and one real admin account
+were bootstrapped ahead of planning via `/gsd-explore` 2026-08-27; remapped 2026-08-28 and found the
+remote project has **zero edge functions deployed** — this is now the largest gap, ahead of the
+installer packaging work the phase was originally scoped for.
+
+### Installer Packaging
+
+- [ ] **DEP-01**: The NSIS installer runs fully elevated (single UAC prompt covers Windows Service
+  registration, firewall rule, and cert Trusted-Root import) and is code-signed with a self-signed
+  certificate generated at build time and auto-trusted during install — no SmartScreen warning on
+  the store machine after first install.
+
+- [ ] **DEP-02**: An installer integrity-check script verifies the built artifact actually contains
+  the broker sidecar (`broker/broker.exe`), the signing certificate, the correct baked
+  `VITE_SUPABASE_URL` (the remote project, never `127.0.0.1`), and the NSIS printer-broker hooks —
+  before the installer ships to the store machine.
+
+### Remote Backend Completeness
+
+- [ ] **DEP-03**: All 12 Supabase Edge Functions the app depends on
+  (`process-payment`, `process-split-payment`, `create-staff`, `process-direct-sale`,
+  `receive-shipment`, `send-receipt-email`, `settings-backup`, `settings-restore`,
+  `settings-email-status`, `settings-test-email`, `get-server-time`, `agent-proxy`) are deployed to
+  the remote project — checkout, staff creation, and shipment receiving are unusable without them.
+
+- [ ] **DEP-04**: Every edge-function secret the deployed functions read (`ANTHROPIC_API_KEY`,
+  `RESEND_API_KEY`, `RECEIPT_FROM_EMAIL`, and the store-identity vars currently named `BAR_NAME`/
+  `BAR_ADDRESS` — a bar-pos naming leftover, rename or just set correctly) is set on the remote
+  project via `supabase secrets set`, not left at Supabase's empty default.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -179,6 +213,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRN-05 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-06 | Phase 19 (v1.5, proposed) | Complete |
 | PRN-07 | Phase 19 (v1.5, proposed) | Complete |
+| DEP-01 | Phase 20 (v1.6, proposed) | Pending |
+| DEP-02 | Phase 20 (v1.6, proposed) | Pending |
+| DEP-03 | Phase 20 (v1.6, proposed) | Pending |
+| DEP-04 | Phase 20 (v1.6, proposed) | Pending |
 
 **Coverage:**
 
@@ -186,6 +224,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.3 requirements: 13 total, 13/13 mapped (Phase 14: INVR-01..04, Phase 15: RCPD-01/02, Phase 16: PO-01..03, Phase 17: TEST-01..04)
 - v1.4 requirements: 4 total, 4/4 mapped (Phase 18: PEEK-01..04)
 - v1.5 proposed requirements: 7 total, 7/7 mapped to Phase 19
+- v1.6 proposed requirements: 4 total, 4/4 mapped to Phase 20
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*

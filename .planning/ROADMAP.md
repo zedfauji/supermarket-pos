@@ -89,15 +89,20 @@ the remote Supabase project.
 
 **Status:** Remote DB bootstrapped (180 migrations applied), real admin account seeded, NSIS
 `installMode: perMachine` and updater endpoint already fixed via `/gsd-explore` 2026-08-27 — see
-`.planning/notes/store-deployment-installer-decisions.md`. Not yet planned — run
-`/gsd-plan-phase 20` when ready.
+`.planning/notes/store-deployment-installer-decisions.md`. Remapped 2026-08-28 (local code/DB/edge
+functions vs. remote): DB schema is current (180/180 migrations match, nothing new since the
+2026-08-27 push), but **zero of the app's 12 edge functions are deployed to the remote project and
+zero secrets are set** — this is now the phase's biggest gap, bigger than the installer packaging
+work it was originally scoped for. Not yet planned — run `/gsd-plan-phase 20` when ready.
 
-- [ ] **Phase 20: Store Deployment: Signed Elevated Installer** - Wire self-signed cert generation +
-  Trusted-Root import into the NSIS build pipeline (`windows/hooks.nsh`, `tauri.conf.json` signing
-  config), write an installer integrity-check script (verifies broker.exe, cert, correct baked
-  Supabase URL, printer hooks are all present in the built artifact), and run a real
-  `npm run tauri build` + full install test confirming a single UAC prompt and no permission
-  failures end-to-end. Depends on Phase 19 (broker sidecar + hooks.nsh).
+- [ ] **Phase 20: Store Deployment: Signed Elevated Installer** (DEP-01..04) - Deploy all 12 Supabase
+  Edge Functions the app depends on and set their required secrets (`ANTHROPIC_API_KEY`,
+  `RESEND_API_KEY`, `RECEIPT_FROM_EMAIL`, `BAR_NAME`/`BAR_ADDRESS`) on the remote project; wire
+  self-signed cert generation + Trusted-Root import into the NSIS build pipeline
+  (`windows/hooks.nsh`, `tauri.conf.json` signing config); write an installer integrity-check script
+  (verifies broker.exe, cert, correct baked Supabase URL, printer hooks are all present in the built
+  artifact); run a real `npm run tauri build` + full install test confirming a single UAC prompt and
+  no permission failures end-to-end. Depends on Phase 19 (broker sidecar + hooks.nsh).
 
 ## Phase Details
 
