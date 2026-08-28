@@ -2,12 +2,13 @@
  * E2E tests for Phase 19 Plan 01 — durable test_print tracer (PRN-01/02/03, D-12).
  *
  * Test 4: invoke('test_print') mocked to resolve {job_id, status:'accepted'} —
- * clicking "Test Print" on /settings' Hardware tab shows the existing success
- * toast and does not throw.
+ * clicking "Test Print" on /settings' Hardware tab completes with no error
+ * toast (PRN-04 no-success-toast rule: a durable acceptance stays silent).
  * Test 8: invoke('test_print') mocked to reject with a "broker unreachable"
- * error — HardwareSettingsTab shows a toast.error. The exact AppErrorCode
- * mapping ('PRINT_BROKER_UNREACHABLE') is unit-tested directly in
- * pos-printer.test.ts; this spec proves the UI-visible consequence.
+ * error — HardwareSettingsTab shows the brokerUnreachable toast.error copy.
+ * The exact AppErrorCode mapping ('PRINT_BROKER_UNREACHABLE') is
+ * unit-tested directly in pos-printer.test.ts; this spec proves the
+ * UI-visible consequence.
  *
  * Mirrors print-retry-resilience.spec.ts's dual-global Tauri IPC mock
  * (`window.__TAURI__` + `window.__TAURI_INTERNALS__.invoke`) — the broker
@@ -22,6 +23,12 @@ import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { openCaja, resetTestState } from '../helpers/supabase';
 
 type TestPrintMockMode = 'success' | 'broker_unreachable';
+
+// Mirrors broker-submission.spec.ts's BROKER_UNREACHABLE_COPY — the en-US
+// text for common:printJobError.brokerUnreachable (i18n/locales/en-US/common.json).
+// The 4 fixed E2E login accounts (incl. admin) are pinned to en-US locale
+// (setup-dev-users.ts, per resetTestState's pinnedNames), so this text applies.
+const BROKER_UNREACHABLE_COPY = /print service unavailable.*print broker is running/i;
 
 async function injectTestPrintMock(page: Page, mode: TestPrintMockMode): Promise<void> {
   await page.addInitScript(m => {
@@ -65,16 +72,21 @@ test.describe('Broker-backed test_print (Phase 19 Plan 01 tracer)', () => {
     await openCaja(500);
   });
 
-  test('Test Print round-trips through the broker and shows the existing success toast (Test 4)', async ({
+  test('Test Print round-trips through the broker and stays silent on success, no error toast (Test 4)', async ({
     page,
   }) => {
     await injectTestPrintMock(page, 'success');
     await page.goto('/');
     await gotoHardwareSettings(page);
 
-    await page.getByRole('button', { name: /test print/i }).click();
+    const testPrintButton = page.getByRole('button', { name: /test print/i });
+    await testPrintButton.click();
 
-    await expect(page.getByText(/test print sent/i)).toBeVisible({ timeout: 10_000 });
+    // PRN-04 no-success-toast rule: a durably-accepted job stays silent
+    // (status badge only, wired in a later plan) — assert the button
+    // returns from its "Printing..." state and no error toast appears.
+    await expect(testPrintButton).toBeEnabled({ timeout: 10_000 });
+    await expect(page.getByText(BROKER_UNREACHABLE_COPY)).not.toBeVisible();
 
     await logout(page);
   });
@@ -86,7 +98,7 @@ test.describe('Broker-backed test_print (Phase 19 Plan 01 tracer)', () => {
 
     await page.getByRole('button', { name: /test print/i }).click();
 
-    await expect(page.getByText(/broker unreachable/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(BROKER_UNREACHABLE_COPY)).toBeVisible({ timeout: 10_000 });
 
     await logout(page);
   });
