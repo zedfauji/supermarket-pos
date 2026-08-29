@@ -83,6 +83,26 @@ export function usePrintJobs(filters: PrintJobFilters) {
   });
 }
 
+/**
+ * Installed Windows printer queue names plus the OS-configured default —
+ * powers the printer-select dropdown in Hardware Settings (closing the gap
+ * where print jobs sent a hardcoded placeholder printer name that never
+ * matched real hardware). Reads through the broker-backed `list_printers`
+ * Tauri command — never Supabase. Static-ish data (installed printers rarely
+ * change mid-session), so a longer staleTime than the job queries above.
+ */
+export function useAvailablePrinters() {
+  return useQuery({
+    queryKey: ['print-broker', 'printers'] as const,
+    queryFn: async (): Promise<{ printers: string[]; default: string | null }> => {
+      const result = await invoke<{ printers: string[]; default: string | null }>('list_printers');
+      return result;
+    },
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
 /** Statuses that still warrant polling — everything else is terminal (or
  * 'unknown', which does NOT self-resolve — see this plan's prohibitions). */
 const POLLING_STATUSES = new Set<PrintJobStatus>(['accepted', 'submitted_to_os']);

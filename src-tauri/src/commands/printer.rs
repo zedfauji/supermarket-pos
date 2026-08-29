@@ -181,11 +181,23 @@ fn write_fallback_bytes(bytes: &[u8]) -> Result<(), String> {
 // into broker/src/delivery.rs (Plan 19-01), which is the only place that
 // still talks to WinSpool directly.
 
-/// Wave-2 (Plan 19-02) placeholder: hardcoded until Settings gains a real
-/// configurable receipt-printer-name field. Out of this plan's scope — see
-/// D-09/Plan 19-06 note in 19-03-PLAN.md.
-fn receipt_printer_name() -> String {
+/// Fallback used only when Settings has no `printerName` configured yet
+/// (fresh install, or a store that never opened Hardware Settings) — kept as
+/// a named sentinel rather than silently picking the OS default, so an
+/// unconfigured store gets an obvious "printer not found" broker rejection
+/// instead of a job silently landing on the wrong queue.
+fn default_printer_name() -> String {
     "RECEIPT_PRINTER".to_string()
+}
+
+/// Resolves the printer name to submit a job under: the caller-supplied
+/// value (sourced from `ReceiptSettings.printerName` on the frontend) when
+/// non-empty, otherwise `default_printer_name()`.
+fn resolve_printer_name(printer_name: Option<String>) -> String {
+    printer_name
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(default_printer_name)
 }
 
 /// Response shape for a durably-accepted broker job (Phase 19: Store-Local
@@ -293,12 +305,13 @@ pub async fn print_receipt(
     lines: Vec<String>,
     logo_data_url: Option<String>,
     paper_width_chars: u16,
+    printer_name: Option<String>,
 ) -> Result<PrintJobAck, String> {
     let bytes = build_print_payload(&lines, logo_data_url.as_deref(), paper_width_chars);
 
     #[cfg(target_os = "windows")]
     {
-        submit_to_broker(&bytes, &receipt_printer_name(), "receipt").await
+        submit_to_broker(&bytes, &resolve_printer_name(printer_name), "receipt").await
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -307,11 +320,11 @@ pub async fn print_receipt(
     }
 }
 
-#[tauri::command]
-pub async fn open_cash_drawer() -> Result<PrintJobAck, String> {
+#[tauri::command(rename_all = "camelCase")]
+pub async fn open_cash_drawer(printer_name: Option<String>) -> Result<PrintJobAck, String> {
     #[cfg(target_os = "windows")]
     {
-        submit_to_broker(&DRAWER_PULSE, &receipt_printer_name(), "cash_drawer").await
+        submit_to_broker(&DRAWER_PULSE, &resolve_printer_name(printer_name), "cash_drawer").await
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -319,11 +332,11 @@ pub async fn open_cash_drawer() -> Result<PrintJobAck, String> {
     }
 }
 
-#[tauri::command]
-pub async fn print_raw_text(text: String) -> Result<PrintJobAck, String> {
+#[tauri::command(rename_all = "camelCase")]
+pub async fn print_raw_text(text: String, printer_name: Option<String>) -> Result<PrintJobAck, String> {
     #[cfg(target_os = "windows")]
     {
-        submit_to_broker(&text_to_esc_pos(&text), &receipt_printer_name(), "caja_summary").await
+        submit_to_broker(&text_to_esc_pos(&text), &resolve_printer_name(printer_name), "caja_summary").await
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -332,15 +345,15 @@ pub async fn print_raw_text(text: String) -> Result<PrintJobAck, String> {
     }
 }
 
-#[tauri::command]
-pub async fn test_print() -> Result<PrintJobAck, String> {
+#[tauri::command(rename_all = "camelCase")]
+pub async fn test_print(printer_name: Option<String>) -> Result<PrintJobAck, String> {
     let lines = vec![
         "Bar POS".to_string(),
         "TEST PRINT".to_string(),
         String::new(),
     ];
     let bytes = lines_to_esc_pos(&lines);
-    submit_to_broker(&bytes, &receipt_printer_name(), "test_print").await
+    submit_to_broker(&bytes, &resolve_printer_name(printer_name), "test_print").await
 }
 
 #[cfg(test)]
@@ -414,6 +427,18 @@ mod tests {
     }
 
     #[test]
+    fn resolve_printer_name_uses_configured_value_when_present() {
+        assert_eq!(resolve_printer_name(Some("EPSON TM-T88V".to_string())), "EPSON TM-T88V");
+    }
+
+    #[test]
+    fn resolve_printer_name_falls_back_to_default_when_none_or_blank() {
+        assert_eq!(resolve_printer_name(None), default_printer_name());
+        assert_eq!(resolve_printer_name(Some(String::new())), default_printer_name());
+        assert_eq!(resolve_printer_name(Some("   ".to_string())), default_printer_name());
+    }
+
+    #[test]
     fn text_to_esc_pos_prefixes_init_then_emits_raw_bytes_unchanged() {
         let out = text_to_esc_pos("hello\nworld");
         assert_eq!(&out[0..2], &[ESC, b'@']);
@@ -473,7 +498,7 @@ mod tests {
         let result = tauri::async_runtime::block_on(submit_to_broker_to(
             &broker_url,
             &bytes,
-            &receipt_printer_name(),
+            &default_printer_name(),
             "receipt",
         ));
 
@@ -491,7 +516,7 @@ mod tests {
         let result = tauri::async_runtime::block_on(submit_to_broker_to(
             &broker_url,
             &bytes,
-            &receipt_printer_name(),
+            &default_printer_name(),
             "receipt",
         ));
 
@@ -509,7 +534,7 @@ mod tests {
         let result = tauri::async_runtime::block_on(submit_to_broker_to(
             &broker_url,
             &DRAWER_PULSE,
-            &receipt_printer_name(),
+            &default_printer_name(),
             "cash_drawer",
         ));
 
@@ -525,7 +550,7 @@ mod tests {
         let result = tauri::async_runtime::block_on(submit_to_broker_to(
             &broker_url,
             &DRAWER_PULSE,
-            &receipt_printer_name(),
+            &default_printer_name(),
             "cash_drawer",
         ));
 

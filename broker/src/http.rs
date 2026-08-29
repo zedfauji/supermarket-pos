@@ -310,6 +310,20 @@ pub fn handle_list_jobs(conn: &Connection, query_string: &str) -> HttpResult {
     ok_json(&serde_json::json!({ "jobs": jobs, "total": total }))
 }
 
+/// `GET /printers` — installed printer queue names plus the OS-configured
+/// default (Settings' printer-select dropdown, closing the gap where
+/// `receipt_printer_name()` on the Tauri side was a hardcoded placeholder
+/// string that never matched any real Windows printer).
+pub fn handle_list_printers() -> HttpResult {
+    match crate::delivery::list_available_printers() {
+        Ok(printers) => ok_json(&serde_json::json!({
+            "printers": printers,
+            "default": crate::delivery::default_printer(),
+        })),
+        Err(e) => err_json(500, "enum_printers_failed", &e, None),
+    }
+}
+
 pub fn handle_audit(conn: &Connection) -> HttpResult {
     let mut stmt = conn
         .prepare("SELECT status, COUNT(*) FROM jobs GROUP BY status")
@@ -397,6 +411,8 @@ pub fn run_http_server(shutdown: Arc<AtomicBool>, db_path: &Path, bind_addr: &st
         } else if method == Method::Get && url.starts_with("/jobs/") {
             let id = url.trim_start_matches("/jobs/");
             let _ = request.respond(to_tiny_http_response(handle_get_job(&conn, id)));
+        } else if method == Method::Get && url == "/printers" {
+            let _ = request.respond(to_tiny_http_response(handle_list_printers()));
         } else if method == Method::Get && url == "/audit" {
             let _ = request.respond(to_tiny_http_response(handle_audit(&conn)));
         } else if method == Method::Get && url == "/health" {

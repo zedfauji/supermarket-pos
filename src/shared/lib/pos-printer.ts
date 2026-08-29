@@ -14,9 +14,17 @@ import { ok, err, tauriError } from '@shared/lib/result';
 
 /** Also used by open-product-peek-window/CheckoutPanel to no-op Tauri-only
  * window/event IPC calls when running outside a Tauri runtime (e.g. this
- * project's Playwright suite drives `npm run dev`, a plain browser tab). */
+ * project's Playwright suite drives `npm run dev`, a plain browser tab).
+ *
+ * Checks `__TAURI_INTERNALS__`, not `__TAURI__` — Tauri v2 only injects the
+ * latter when `app.withGlobalTauri` is set in tauri.conf.json (off here, and
+ * generally not recommended), while `__TAURI_INTERNALS__` is always present
+ * in a real Tauri webview regardless of that setting. Checking `__TAURI__`
+ * made this return false even inside the real desktop app, silently routing
+ * printReceipt/openCashDrawer/printRawText/testPrint to their browser-fallback
+ * branches and no-opping the peek window in production. */
 export function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI__' in window;
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 }
 
 // Bounded retry for a real (local IPC, not networked) printer — a fixed delay
@@ -122,6 +130,7 @@ export async function printReceipt(
           lines: receiptDataToPrinterLines(data, settings),
           logoDataUrl: settings.logoDataUrl,
           paperWidthChars: settings.paperWidthChars,
+          printerName: settings.printerName ?? undefined,
         });
         if (attempt > 1) {
           toast.success(i18n.t('featOrders:printer.printSucceededAfterRetry'), { id: toastId });
@@ -155,11 +164,15 @@ export async function printReceipt(
  * matches the pre-migration shape. See {@link printReceipt} for the
  * error-class mapping this mirrors.
  */
-export async function openCashDrawer(): Promise<Result<{ jobId: string }>> {
+export async function openCashDrawer(
+  printerName?: string | null
+): Promise<Result<{ jobId: string }>> {
   if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      const ack = await invoke<{ job_id: string; status: string }>('open_cash_drawer');
+      const ack = await invoke<{ job_id: string; status: string }>('open_cash_drawer', {
+        printerName: printerName ?? undefined,
+      });
       return ok({ jobId: ack.job_id });
     } catch (e) {
       return err(mapPrintInvokeError(e, 'Could not open cash drawer'));
@@ -173,6 +186,8 @@ export async function openCashDrawer(): Promise<Result<{ jobId: string }>> {
 export type PrintRawTextOptions = {
   /** When true, appends ESC/POS full-cut sequence (GS V A NUL) after the text. */
   autoCut: boolean | undefined;
+  /** Configured receipt printer name (ReceiptSettings.printerName). */
+  printerName: string | null | undefined;
 };
 
 /** ESC/POS full-cut command bytes: GS V A NUL */
@@ -198,6 +213,7 @@ export async function printRawText(
       const { invoke } = await import('@tauri-apps/api/core');
       const ack = await invoke<{ job_id: string; status: string }>('print_raw_text', {
         text: payload,
+        printerName: options?.printerName ?? undefined,
       });
       return ok({ jobId: ack.job_id });
     } catch (e) {
@@ -230,11 +246,13 @@ export async function printRawText(
  * `PRINT_JOB_REJECTED` for any other submission failure (auth/payload/
  * persistence).
  */
-export async function testPrint(): Promise<Result<{ jobId: string }>> {
+export async function testPrint(printerName?: string | null): Promise<Result<{ jobId: string }>> {
   if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      const ack = await invoke<{ job_id: string; status: string }>('test_print');
+      const ack = await invoke<{ job_id: string; status: string }>('test_print', {
+        printerName: printerName ?? undefined,
+      });
       return ok({ jobId: ack.job_id });
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Test print failed';

@@ -244,7 +244,7 @@ export function createLogger(context: Partial<LogContext>, config?: Partial<Logg
   const fullConfig: LoggerConfig = {
     minLevel: config?.minLevel || (import.meta.env.DEV ? 'debug' : 'info'),
     isDevelopment: config?.isDevelopment ?? import.meta.env.DEV,
-    isTauri: config?.isTauri ?? (typeof window !== 'undefined' && '__TAURI__' in window),
+    isTauri: config?.isTauri ?? (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window),
     enableRemoteLogging: config?.enableRemoteLogging ?? false,
   };
 

@@ -1,3 +1,3 @@
 
 export type { PrintJob, PrintJobDetail, PrintJobEvent, PrintJobFilters, PrintJobStatus } from './types';
-export { usePrintJobs, usePrintJob, printJobKeys } from './queries';
+export { usePrintJobs, usePrintJob, useAvailablePrinters, printJobKeys } from './queries';

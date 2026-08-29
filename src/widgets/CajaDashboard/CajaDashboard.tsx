@@ -186,7 +186,10 @@ export function CajaDashboard() {
       .filter(l => l !== '')
       .join('\n');
 
-    const result = await printRawText(lines, { autoCut: receiptSettings.data?.autoCut });
+    const result = await printRawText(lines, {
+      autoCut: receiptSettings.data?.autoCut,
+      printerName: receiptSettings.data?.printerName,
+    });
     setIsPrinting(false);
 
     // No toast on success — a successful durable acceptance stays silent

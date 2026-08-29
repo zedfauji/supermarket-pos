@@ -41,7 +41,8 @@ export async function ensurePeekWindowShown(code: string): Promise<void> {
   // bridge) — calling any of these APIs there throws (`window.__TAURI_INTERNALS__`
   // is undefined), which every barcode-scan E2E test would otherwise hit on
   // every scan/mount. The peek-window E2E spec explicitly injects the same
-  // `window.__TAURI__` global this checks for, so real coverage is unaffected.
+  // `window.__TAURI_INTERNALS__` global isTauri() checks for, so real coverage
+  // is unaffected.
   if (!isTauri()) return;
   const existing = await WebviewWindow.getByLabel(PEEK_WINDOW_LABEL);
   if (existing === null) {

@@ -28,8 +28,9 @@ pub const STUCK_QUEUE_THRESHOLD_MS: i64 = 60_000;
 pub mod win_print {
     use windows::core::{HSTRING, PWSTR};
     use windows::Win32::Graphics::Printing::{
-        ClosePrinter, DOC_INFO_1W, EndDocPrinter, GetJobW, JOB_INFO_1W, OpenPrinterW,
-        PRINTER_HANDLE, StartDocPrinterW, WritePrinter,
+        ClosePrinter, DOC_INFO_1W, EndDocPrinter, EnumPrintersW, GetDefaultPrinterW, GetJobW,
+        JOB_INFO_1W, OpenPrinterW, PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL, PRINTER_HANDLE,
+        PRINTER_INFO_4W, StartDocPrinterW, WritePrinter,
     };
 
     /// Sends RAW bytes to an explicitly NAMED printer queue (never the
@@ -103,6 +104,95 @@ pub mod win_print {
             let _ = ClosePrinter(handle);
         }
         Ok(None)
+    }
+
+    /// Enumerates locally-installed and remote-connection printer queue names
+    /// via WinSpool `EnumPrintersW` (level 4 — name + server only, the
+    /// cheapest info level for a plain name list). Two-call pattern: first
+    /// call with a zero-length buffer to learn the required size, second call
+    /// to actually fill it — the standard WinSpool idiom (mirrors
+    /// `query_job_status`'s `GetJobW` two-call shape above).
+    pub fn list_printer_names() -> Result<Vec<String>, String> {
+        let flags = PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS;
+        let mut needed: u32 = 0;
+        let mut returned: u32 = 0;
+        unsafe {
+            let _ = EnumPrintersW(flags, None, 4, None, &mut needed, &mut returned);
+        }
+        if needed == 0 {
+            return Ok(Vec::new());
+        }
+        let mut buf: Vec<u8> = vec![0; needed as usize];
+        unsafe {
+            EnumPrintersW(flags, None, 4, Some(&mut buf), &mut needed, &mut returned)
+                .map_err(|e| format!("EnumPrinters failed: {}", e.message()))?;
+        }
+        let mut names = Vec::new();
+        unsafe {
+            let base = buf.as_ptr() as *const PRINTER_INFO_4W;
+            for i in 0..returned as isize {
+                let info = &*base.offset(i);
+                if !info.pPrinterName.is_null() {
+                    if let Ok(name) = info.pPrinterName.to_string() {
+                        if !name.is_empty() {
+                            names.push(name);
+                        }
+                    }
+                }
+            }
+        }
+        Ok(names)
+    }
+
+    /// Reads the Windows-configured default printer name (`GetDefaultPrinterW`),
+    /// two-call pattern as above. Returns `None` when no default printer is
+    /// configured on this machine rather than erroring — the caller (broker
+    /// HTTP layer) treats an absent default as "let the store pick one",
+    /// never as a failure.
+    pub fn default_printer_name() -> Option<String> {
+        let mut needed: u32 = 0;
+        unsafe {
+            let _ = GetDefaultPrinterW(None, &mut needed);
+        }
+        if needed == 0 {
+            return None;
+        }
+        let mut buf: Vec<u16> = vec![0; needed as usize];
+        let result = unsafe { GetDefaultPrinterW(Some(PWSTR(buf.as_mut_ptr())), &mut needed) };
+        if !result.as_bool() {
+            return None;
+        }
+        let end = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+        Some(String::from_utf16_lossy(&buf[..end]))
+    }
+}
+
+/// Cross-platform wrapper around `win_print::list_printer_names` — the
+/// non-Windows dev fallback returns an empty list rather than failing, same
+/// posture as the rest of this module's non-Windows branches (`Err` on the
+/// delivery path above logs a warning and never resubmits; a printer *list*
+/// has no delivery consequence, so empty is enough for a dev machine that has
+/// no real WinSpool).
+pub fn list_available_printers() -> Result<Vec<String>, String> {
+    #[cfg(target_os = "windows")]
+    {
+        win_print::list_printer_names()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(Vec::new())
+    }
+}
+
+/// Cross-platform wrapper around `win_print::default_printer_name`.
+pub fn default_printer() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        win_print::default_printer_name()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        None
     }
 }
 

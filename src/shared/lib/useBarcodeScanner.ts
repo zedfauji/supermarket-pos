@@ -14,7 +14,10 @@ const DEFAULTS = { minLength: 4, maxGapMs: 50 };
  * This hook buffers characters globally; on Enter, if the buffer
  * length >= minLength, it fires onScan(code). Slow human typing
  * (gaps > maxGapMs) resets the buffer, so it does not interfere
- * with normal keyboard input.
+ * with normal keyboard input — including typing directly into a focused
+ * text input, which the gap timing alone is sufficient to tell apart from
+ * a scanner burst (a focus-based skip would otherwise also swallow a real
+ * scan whenever a text field happens to have focus).
  */
 export function useBarcodeScanner({ onScan, enabled = true, ...rest }: Options) {
   const minLength = rest.minLength ?? DEFAULTS.minLength;
@@ -31,17 +34,6 @@ export function useBarcodeScanner({ onScan, enabled = true, ...rest }: Options) 
     if (!enabled) return;
 
     function handler(e: KeyboardEvent) {
-      // Ignore when focus is in an editable element — the scanner's characters
-      // should be captured by the input itself.
-      const target = e.target as HTMLElement | null;
-      if (target) {
-        const tag = target.tagName;
-        const editable = target.isContentEditable;
-        if (editable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-          return;
-        }
-      }
-
       const now = Date.now();
       const gap = now - lastKeyAtRef.current;
       lastKeyAtRef.current = now;

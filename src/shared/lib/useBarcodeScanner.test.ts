@@ -69,4 +69,26 @@ describe('useBarcodeScanner', () => {
     // Only the post-gap keys should survive in the buffer.
     expect(onScan).toHaveBeenCalledWith('3456');
   });
+
+  it('fires onScan even when an INPUT element has focus', () => {
+    const onScan = vi.fn();
+    renderHook(() => {
+      useBarcodeScanner({ onScan });
+    });
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+
+    act(() => {
+      '1234567'.split('').forEach(k => {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+      });
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+
+    expect(onScan).toHaveBeenCalledWith('1234567');
+
+    document.body.removeChild(input);
+  });
 });

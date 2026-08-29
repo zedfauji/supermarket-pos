@@ -110,6 +110,32 @@ pub struct PrintJobDetailResp {
     pub events: Vec<PrintJobEventRow>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct PrinterList {
+    pub printers: Vec<String>,
+    pub default: Option<String>,
+}
+
+/// Proxies the broker's `GET /printers` — installed Windows printer queue
+/// names plus the OS-configured default, for the Settings printer-select
+/// dropdown (closes the gap where the Tauri print commands sent a hardcoded
+/// placeholder printer name that never matched real hardware).
+#[tauri::command(rename_all = "camelCase")]
+pub async fn list_printers() -> Result<PrinterList, String> {
+    let client = broker_client()?;
+    let resp = client
+        .get(format!("{BROKER_URL}/printers"))
+        .bearer_auth(resolve_broker_secret())
+        .send()
+        .await
+        .map_err(|e| format!("broker unreachable: {e}"))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("broker rejected request: HTTP {}", resp.status()));
+    }
+    resp.json::<PrinterList>().await.map_err(|e| e.to_string())
+}
+
 #[tauri::command(rename_all = "camelCase")]
 pub async fn get_print_jobs(filters: PrintJobFiltersReq, page_param: u32) -> Result<PrintJobsPage, String> {
     let client = broker_client()?;
