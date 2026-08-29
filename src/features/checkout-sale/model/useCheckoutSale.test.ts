@@ -110,7 +110,7 @@ describe('useCheckoutSale', () => {
     mockIsOnline.mockReturnValue(false);
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -124,7 +124,7 @@ describe('useCheckoutSale', () => {
     cajaState.currentCaja = null;
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -138,7 +138,7 @@ describe('useCheckoutSale', () => {
     staffState.currentShift = null;
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -154,7 +154,7 @@ describe('useCheckoutSale', () => {
     });
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(true);
     if (res.ok) {
@@ -173,7 +173,7 @@ describe('useCheckoutSale', () => {
     });
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCardPayment('tab-1', 10, 0);
+    const res = await result.current.processors.processCardPayment('tab-1', 10);
 
     expect(res.ok).toBe(true);
     if (res.ok) {
@@ -191,8 +191,8 @@ describe('useCheckoutSale', () => {
     const res = await result.current.processors.processSplitPayment(
       'tab-1',
       [
-        { method: 'cash', amount: 5, tipAmount: 0 },
-        { method: 'card', amount: 5, tipAmount: 0 },
+        { method: 'cash', amount: 5 },
+        { method: 'card', amount: 5 },
       ],
       10
     );
@@ -211,7 +211,7 @@ describe('useCheckoutSale', () => {
     mockCallProcessDirectSale.mockResolvedValue({ ok: true, data: {} });
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -226,7 +226,7 @@ describe('useCheckoutSale', () => {
     });
     const { result } = renderHook(() => useCheckoutSale());
 
-    const res = await result.current.processors.processCashPayment('tab-1', 10, 0, 10);
+    const res = await result.current.processors.processCashPayment('tab-1', 10, 10);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {

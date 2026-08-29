@@ -6,7 +6,6 @@ const BodySchema = z
   .object({
     tabId: z.string().uuid(),
     amount: z.number().nonnegative().multipleOf(0.01),
-    tipAmount: z.number().nonnegative().multipleOf(0.01),
     method: z.enum(['cash', 'card', 'rappi']),
     idempotencyKey: z.string().min(1).max(255),
     tenderedAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
@@ -150,7 +149,6 @@ Deno.serve(async (req: Request) => {
     p_tab_id: body.tabId,
     p_staff_id: authUser.id,
     p_amount: body.amount,
-    p_tip_amount: body.tipAmount,
     p_method: body.method,
     p_idempotency_key: body.idempotencyKey,
     p_tendered_amount: body.tenderedAmount ?? null,
@@ -183,7 +181,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: paymentRow, error: payErr } = await admin
     .from('payments')
-    .select('id, amount, tip_amount, method, processed_at, tendered_amount, reference_number')
+    .select('id, amount, method, processed_at, tendered_amount, reference_number')
     .eq('id', paymentId)
     .single();
 
@@ -314,8 +312,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const subtotal = body.amount;
-  const tipAmount = body.tipAmount;
-  const total = Math.round((subtotal + tipAmount) * 100) / 100;
+  const total = subtotal;
   const tendered = paymentRow.tendered_amount != null ? Number(paymentRow.tendered_amount) : null;
   const changeAmount =
     tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
@@ -328,7 +325,6 @@ Deno.serve(async (req: Request) => {
     customerName: tabRow.customer_name ?? 'Guest',
     items,
     subtotal,
-    tipAmount,
     total,
     paymentMethod: paymentRow.method,
     processedAt: paymentRow.processed_at,

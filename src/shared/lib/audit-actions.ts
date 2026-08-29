@@ -54,7 +54,7 @@ export const AuditActionSchema = z.enum([
   'staff.locale_change',
   // Settings
   'settings.update',
-  // Tip distribution
+  // Tip distribution (dropped Phase 1, D-21 — kept for migration-history audit)
   'tip_distribution.compute',
   // Promotions
   'promotion.apply',

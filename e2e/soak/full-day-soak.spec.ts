@@ -31,12 +31,6 @@ async function payCash(page: Page, tendered = 100): Promise<void> {
     .getByRole('button', { name: /^process payment$/i })
     .first()
     .click();
-  // PaymentForm defaults to a 15% tip preset (PaymentForm.tsx's
-  // defaultTipPercent fallback) — zero it via the custom-tip field so the
-  // total matches the caller's plain subtotal+tax expectation instead of
-  // silently disabling "Process payment" when a fixed `tendered` amount no
-  // longer covers subtotal + tax + an unrequested 15% tip.
-  await page.getByLabel('Custom tip').fill('0');
   await page.getByLabel(/amount tendered/i).fill(tendered.toFixed(2));
   await page
     .getByRole('button', { name: /^process payment$/i })
@@ -60,16 +54,13 @@ async function productPrice(admin: SupabaseClient, name: string): Promise<number
 async function cashSalesForCaja(admin: SupabaseClient): Promise<number> {
   const { data, error } = await admin
     .from('payments')
-    .select('amount, tip_amount, tabs!inner(caja_session_id)')
+    .select('amount, tabs!inner(caja_session_id)')
     .eq('method', 'cash')
     .eq('is_deleted', false)
     .neq('status', 'reopened_void')
     .eq('tabs.caja_session_id', cajaSessionId);
   if (error || !data) throw new Error(error?.message ?? 'Cash payment total unavailable');
-  return data.reduce(
-    (sum, payment) => sum + Number(payment.amount) + Number(payment.tip_amount),
-    0
-  );
+  return data.reduce((sum, payment) => sum + Number(payment.amount), 0);
 }
 
 async function createOpenUnitProduct(admin: SupabaseClient): Promise<string> {
@@ -178,7 +169,6 @@ test.describe.serial('Full-day soak', () => {
         p_idempotency_key: `full-day-${randomUUID()}`,
         p_method: 'cash',
         p_amount: bulkAmount,
-        p_tip_amount: 0,
         p_tendered_amount: 100,
       });
       expect(result.error, `bulk sale ${index + 1} returned an RPC error`).toBeNull();
@@ -204,7 +194,6 @@ test.describe.serial('Full-day soak', () => {
       p_idempotency_key: `tampered-${randomUUID()}`,
       p_method: 'cash',
       p_amount: bulkAmount,
-      p_tip_amount: 0,
       p_tendered_amount: 100,
     });
     expect(tamperedSale.error).toBeNull();
@@ -346,9 +335,6 @@ test.describe.serial('Full-day soak', () => {
       .getByRole('button', { name: /^process payment$/i })
       .first()
       .click();
-    // Zero the default 15% tip preset (see payCash's comment) — splitCash/
-    // splitCard below are computed from bulkAmount (subtotal+tax only).
-    await page.getByLabel('Custom tip').fill('0');
     await page.getByLabel(/split payment/i).click();
     const cashBeforeSplit = await cashSalesForCaja(admin);
     const splitCash = Math.round((bulkAmount / 2) * 100) / 100;

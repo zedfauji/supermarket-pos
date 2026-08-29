@@ -40,7 +40,6 @@ export type RappiPaymentResult = {
 export async function processCashPayment(
   tabId: string,
   amount: number,
-  tipAmount: number,
   tenderedAmount: number,
   discountInfo?: DiscountInfo,
   expectedVersion?: number,
@@ -50,7 +49,6 @@ export async function processCashPayment(
   const result = await callProcessPayment({
     tabId,
     amount,
-    tipAmount,
     method: 'cash',
     idempotencyKey,
     tenderedAmount,
@@ -65,8 +63,7 @@ export async function processCashPayment(
     return result;
   }
 
-  const change =
-    result.data.receiptData.changeAmount ?? Math.max(0, tenderedAmount - (amount + tipAmount));
+  const change = result.data.receiptData.changeAmount ?? Math.max(0, tenderedAmount - amount);
   return ok({
     paymentId: result.data.paymentId,
     changeAmount: Math.round(change * 100) / 100,
@@ -77,7 +74,6 @@ export async function processCashPayment(
 export async function processCardPayment(
   tabId: string,
   amount: number,
-  tipAmount: number,
   referenceNumber?: string,
   discountInfo?: DiscountInfo,
   expectedVersion?: number,
@@ -88,7 +84,6 @@ export async function processCardPayment(
   const result = await callProcessPayment({
     tabId,
     amount,
-    tipAmount,
     method: 'card',
     idempotencyKey,
     referenceNumber: trimmed && trimmed.length > 0 ? trimmed : undefined,
@@ -112,7 +107,6 @@ export async function processCardPayment(
 export type SplitPaymentLegInput = {
   method: 'cash' | 'card' | 'rappi';
   amount: number;
-  tipAmount: number;
   tenderedAmount?: number;
   referenceNumber?: string;
   rappiOrderId?: string;
@@ -165,7 +159,6 @@ export async function processRappiPayment(
   const result = await callProcessPayment({
     tabId,
     amount,
-    tipAmount: 0,
     method: 'rappi',
     idempotencyKey,
     rappiOrderId: rappiOrderId.trim(),

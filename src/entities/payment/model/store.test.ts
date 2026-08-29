@@ -5,7 +5,6 @@ import {
   selectPaymentsByMethod,
   selectPaymentsByStaffId,
   selectTotalRevenue,
-  selectTotalTips,
   usePaymentStore,
 } from './store';
 import type { CreatePayment, Payment } from './types';
@@ -18,7 +17,6 @@ const staff2 = '22222222-2222-4222-8222-222222222222';
 function createPayment(partial: Partial<Payment> & Pick<Payment, 'id' | 'tabId'>): Payment {
   return {
     amount: 10,
-    tipAmount: 2,
     method: 'cash',
     squarePaymentId: null,
     squareReceiptUrl: null,
@@ -46,7 +44,6 @@ describe('usePaymentStore', () => {
     const data: CreatePayment = {
       tabId: tabA,
       amount: 5,
-      tipAmount: 0,
       method: 'card',
       squarePaymentId: null,
       squareReceiptUrl: null,
@@ -154,7 +151,6 @@ describe('payment selectors', () => {
           tabId: tabA,
           method: 'cash',
           amount: 40,
-          tipAmount: 5,
           processedBy: staff1,
           processedAt: new Date('2026-04-17T10:00:00.000Z'),
         }),
@@ -163,7 +159,6 @@ describe('payment selectors', () => {
           tabId: tabB,
           method: 'card',
           amount: 60,
-          tipAmount: 10,
           processedBy: staff2,
           processedAt: new Date('2026-04-17T16:00:00.000Z'),
         }),
@@ -197,10 +192,9 @@ describe('payment selectors', () => {
     expect(inRange.map(p => p.id)).toEqual(['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1']);
   });
 
-  it('selectTotalRevenue and selectTotalTips sum in range', () => {
+  it('selectTotalRevenue sums in range', () => {
     const start = new Date('2026-04-17T00:00:00.000Z');
     const end = new Date('2026-04-17T23:59:59.999Z');
     expect(selectTotalRevenue(start, end)).toBe(100);
-    expect(selectTotalTips(start, end)).toBe(15);
   });
 });

@@ -28,7 +28,6 @@ import {
   PaymentMethodLabelsSchema,
   ReceiptSettingsSchema,
   SettingsBackupSummarySchema,
-  TipDistributionSettingsSchema,
   type BillingSettings,
   type EmailReceiptSettings,
   type GeneralSettings,
@@ -37,7 +36,6 @@ import {
   type ReceiptSettings,
   type SettingsBackupSummary,
   type SettingsKey,
-  type TipDistributionSettings,
 } from './types';
 
 const DEFAULT_GENERAL: GeneralSettings = {
@@ -50,7 +48,6 @@ const DEFAULT_GENERAL: GeneralSettings = {
 
 const DEFAULT_BILLING: BillingSettings = {
   taxRatePercent: 16,
-  defaultTipPercentages: [10, 15, 18, 20],
   paymentMethods: { cash: true, bbvaCard: true, rappi: true },
   firstHourMode: 'prorated',
 };
@@ -63,12 +60,6 @@ const DEFAULT_PAYMENT_LABELS: PaymentMethodLabels = {
   cash: 'Efectivo',
   card: 'Terminal BBVA',
   rappi: 'Rappi',
-};
-
-const DEFAULT_TIP_DISTRIBUTION: TipDistributionSettings = {
-  floorPct: 34,
-  barPct: 33,
-  kitchenPct: 33,
 };
 
 const DEFAULT_NEAR_EXPIRY: NearExpirySettings = { thresholdDays: 14 };
@@ -85,6 +76,7 @@ const DEFAULT_RECEIPT: ReceiptSettings = {
   autoCut: false,
   kdsEnabled: false,
   logoDataUrl: null,
+  printerName: null,
 };
 
 export type SettingsSnapshot = {
@@ -92,7 +84,6 @@ export type SettingsSnapshot = {
   billing: BillingSettings;
   emailReceipts: EmailReceiptSettings;
   paymentLabels: PaymentMethodLabels;
-  tipDistribution: TipDistributionSettings;
   nearExpiry: NearExpirySettings;
 };
 
@@ -121,7 +112,6 @@ const SETTINGS_KEYS: SettingsKey[] = [
   'email_receipts',
   'pool_tables',
   'payment_labels',
-  'tip_distribution',
   'near_expiry',
 ];
 
@@ -165,6 +155,7 @@ type ReceiptSettingsRow = Pick<
   | 'auto_cut'
   | 'kds_enabled'
   | 'logo_data_url'
+  | 'printer_name'
 >;
 
 function mapReceiptRow(row: ReceiptSettingsRow): ReceiptSettings {
@@ -180,6 +171,7 @@ function mapReceiptRow(row: ReceiptSettingsRow): ReceiptSettings {
     autoCut: row.auto_cut,
     kdsEnabled: row.kds_enabled,
     logoDataUrl: row.logo_data_url,
+    printerName: row.printer_name,
   });
 }
 
@@ -196,12 +188,8 @@ function toReceiptPayload(value: ReceiptSettings): ReceiptSettingsRow {
     auto_cut: value.autoCut,
     kds_enabled: value.kdsEnabled,
     logo_data_url: value.logoDataUrl,
+    printer_name: value.printerName,
   };
-}
-
-function parseTipDistribution(value: unknown): TipDistributionSettings {
-  const parsed = TipDistributionSettingsSchema.safeParse(value);
-  return parsed.success ? parsed.data : DEFAULT_TIP_DISTRIBUTION;
 }
 
 function parseNearExpiry(value: unknown): NearExpirySettings {
@@ -233,7 +221,6 @@ function toSnapshot(rows: SettingsRow[]): SettingsSnapshot {
     billing: parseBilling(byKey.get('billing')),
     emailReceipts: parseEmailReceipts(byKey.get('email_receipts')),
     paymentLabels: parsePaymentLabels(byKey.get('payment_labels')),
-    tipDistribution: parseTipDistribution(byKey.get('tip_distribution')),
     nearExpiry: parseNearExpiry(byKey.get('near_expiry')),
   };
   return snapshot;
@@ -284,7 +271,6 @@ export function useMutationUpdateSetting() {
         | EmailReceiptSettings
         | PaymentMethodLabels
         | ReceiptSettings
-        | TipDistributionSettings
         | NearExpirySettings
         | Record<string, unknown>;
     }): Promise<Result<void>> => {

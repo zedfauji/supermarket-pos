@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       agent_audit_log: {
@@ -653,7 +678,6 @@ export type Database = {
           status: string
           tab_id: string
           tendered_amount: number | null
-          tip_amount: number
           updated_at: string
         }
         Insert: {
@@ -680,7 +704,6 @@ export type Database = {
           status?: string
           tab_id: string
           tendered_amount?: number | null
-          tip_amount?: number
           updated_at?: string
         }
         Update: {
@@ -707,7 +730,6 @@ export type Database = {
           status?: string
           tab_id?: string
           tendered_amount?: number | null
-          tip_amount?: number
           updated_at?: string
         }
         Relationships: [
@@ -1086,6 +1108,7 @@ export type Database = {
           logo_data_url: string | null
           paper_width_chars: number
           print_on_start: boolean
+          printer_name: string | null
           show_cashier_name: boolean
           show_customer_name: boolean
           show_receipt_number: boolean
@@ -1102,6 +1125,7 @@ export type Database = {
           logo_data_url?: string | null
           paper_width_chars?: number
           print_on_start?: boolean
+          printer_name?: string | null
           show_cashier_name?: boolean
           show_customer_name?: boolean
           show_receipt_number?: boolean
@@ -1118,6 +1142,7 @@ export type Database = {
           logo_data_url?: string | null
           paper_width_chars?: number
           print_on_start?: boolean
+          printer_name?: string | null
           show_cashier_name?: boolean
           show_customer_name?: boolean
           show_receipt_number?: boolean
@@ -1720,6 +1745,10 @@ export type Database = {
         Returns: Json
       }
       get_caja_report: { Args: { p_caja_id: string }; Returns: Json }
+      get_category_revenue_report: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
       get_deletions_post_report: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -1741,6 +1770,18 @@ export type Database = {
         }[]
       }
       get_peak_hours_report: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_product_sales_report: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_stock_movement_deltas_after: {
+        Args: { p_after: string }
+        Returns: Json
+      }
+      get_stock_movement_deltas_two_cutoffs: {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
@@ -1786,7 +1827,6 @@ export type Database = {
           p_shift_id: string
           p_staff_id: string
           p_tendered_amount?: number
-          p_tip_amount?: number
         }
         Returns: Json
       }
@@ -1805,7 +1845,6 @@ export type Database = {
           p_staff_id: string
           p_tab_id: string
           p_tendered_amount?: number
-          p_tip_amount: number
         }
         Returns: Json
       }
@@ -1866,6 +1905,10 @@ export type Database = {
       set_own_locale: {
         Args: { p_locale: string; p_terminal_id?: string }
         Returns: Json
+      }
+      update_purchase_order_atomic: {
+        Args: { p_id: string; p_items: Json; p_supplier_id: string }
+        Returns: undefined
       }
       void_open_unit: {
         Args: { p_open_unit_id: string; p_reason: string }
@@ -2003,6 +2046,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       category_routing: ["KITCHEN", "BAR", "NONE"],

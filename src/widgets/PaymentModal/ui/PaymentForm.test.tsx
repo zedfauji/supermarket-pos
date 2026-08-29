@@ -43,7 +43,6 @@ vi.mock('@entities/settings', () => {
   const stableSettings = {
     billing: {
       taxRatePercent: 0,
-      defaultTipPercentages: [10, 15, 18, 20],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
     },
     paymentLabels: { cash: 'Efectivo', card: 'Terminal BBVA', rappi: 'Rappi' },
@@ -63,7 +62,7 @@ const shiftId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 /**
  * Minimal Tab with items totalling $20 (no pool charges, no tax with taxRate=0).
- * runningTotal = $20 + tip (15% of $20 = $3) = $23.
+ * runningTotal = $20.
  */
 const testTab: Tab = {
   id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
@@ -100,7 +99,6 @@ function makeReceipt(): ReceiptData {
     barAddress: '1 Main St',
     items: [],
     subtotal: 20,
-    tipAmount: 0,
     total: 20,
     paymentMethod: 'card',
     processedAt: new Date(),
@@ -255,9 +253,9 @@ describe('PaymentForm — card charge override', () => {
     const user = userEvent.setup();
     renderForm();
     await selectCardMethod(user);
-    // baseSubtotal=20, taxRate=0, tip=15% of 20=3, runningTotal=23
+    // baseSubtotal=20, taxRate=0, runningTotal=20
     const input = screen.getByLabelText('Charge amount');
-    expect(input).toHaveValue('23.00');
+    expect(input).toHaveValue('20.00');
   });
 
   it('onChange on MoneyInput sets the override', async () => {
@@ -310,7 +308,7 @@ describe('PaymentForm — card charge override', () => {
     // reset button should disappear again
     expect(screen.queryByTestId('card-override-reset')).not.toBeInTheDocument();
     // input should return to runningTotal
-    expect(input).toHaveValue('23.00');
+    expect(input).toHaveValue('20.00');
   });
 
   it('submit button is disabled when cardChargeOverride is 0', async () => {
@@ -326,7 +324,7 @@ describe('PaymentForm — card charge override', () => {
     expect(screen.getByRole('button', { name: /confirm card payment/i })).toBeDisabled();
   });
 
-  it('processCardPayment called with override amount and tipAmount=0 when override set', async () => {
+  it('processCardPayment called with override amount when override set', async () => {
     const user = userEvent.setup();
     const processors = makeProcessors();
     renderForm(processors);
@@ -342,11 +340,10 @@ describe('PaymentForm — card charge override', () => {
     await waitFor(() => {
       expect(processors.processCardPayment).toHaveBeenCalled();
     });
-    // override amount=45, tipAmount=0 (because override is set), no ref, no discount, no version (testTab has none)
+    // override amount=45, no ref, no discount, no version (testTab has none)
     expect(processors.processCardPayment).toHaveBeenCalledWith(
       testTab.id,
       45,
-      0,
       undefined,
       undefined,
       undefined,
@@ -354,7 +351,7 @@ describe('PaymentForm — card charge override', () => {
     );
   });
 
-  it('processCardPayment called with baseSubtotal and tipAmount when no override', async () => {
+  it('processCardPayment called with baseSubtotal when no override', async () => {
     const user = userEvent.setup();
     const processors = makeProcessors();
     renderForm(processors);
@@ -366,11 +363,10 @@ describe('PaymentForm — card charge override', () => {
     await waitFor(() => {
       expect(processors.processCardPayment).toHaveBeenCalled();
     });
-    // No override: chargeAmount=baseSubtotal=20, tipAmount=3 (15% of 20, taxRate=0), no ref, no discount, no version (testTab has none)
+    // No override: chargeAmount=baseSubtotal=20 (taxRate=0), no ref, no discount, no version (testTab has none)
     expect(processors.processCardPayment).toHaveBeenCalledWith(
       testTab.id,
       20,
-      3,
       undefined,
       undefined,
       undefined,
@@ -514,8 +510,8 @@ describe('PaymentForm — split mode', () => {
       ...makeReceipt(),
       total: 20,
       tenders: [
-        { method: 'cash' as const, amount: 12, tipAmount: 0, tenderedAmount: 12, changeAmount: 0 },
-        { method: 'card' as const, amount: 8, tipAmount: 0 },
+        { method: 'cash' as const, amount: 12, tenderedAmount: 12, changeAmount: 0 },
+        { method: 'card' as const, amount: 8 },
       ],
     };
     const processors = makeProcessors({

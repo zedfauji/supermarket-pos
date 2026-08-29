@@ -61,46 +61,6 @@ export function calculateTabSubtotal(orders: Order[]): number {
 }
 
 /**
- * Calculates tip amount from percentage or flat amount.
- *
- * @param subtotal - The subtotal to calculate tip on
- * @param tipPercent - Tip percentage (e.g., 20 for 20%)
- * @param tipFlat - Flat tip amount
- * @returns Tip amount rounded to 2 decimal places
- *
- * @example
- * // 20% tip on $50.00
- * calculateTipAmount(50.00, 20, null)
- * // Returns: 10.00
- *
- * @example
- * // Flat $5.00 tip
- * calculateTipAmount(50.00, null, 5.00)
- * // Returns: 5.00
- *
- * @example
- * // No tip
- * calculateTipAmount(50.00, null, null)
- * // Returns: 0.00
- */
-export function calculateTipAmount(
-  subtotal: number,
-  tipPercent: number | null,
-  tipFlat: number | null
-): number {
-  if (tipPercent !== null) {
-    const tip = subtotal * (tipPercent / 100);
-    return Math.round(tip * 100) / 100;
-  }
-
-  if (tipFlat !== null) {
-    return Math.round(tipFlat * 100) / 100;
-  }
-
-  return 0;
-}
-
-/**
  * Formats elapsed time in seconds to a readable string.
  *
  * @param totalSeconds - Total elapsed seconds
@@ -182,20 +142,6 @@ export function formatTimeOpen(openedAt: Date, now: Date = new Date()): string {
 export function getCurrentTime(): string {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-}
-
-export function calculateTipSuggestions(subtotal: number): {
-  tip10: number;
-  tip15: number;
-  tip18: number;
-  tip20: number;
-} {
-  return {
-    tip10: calculateTipAmount(subtotal, 10, null),
-    tip15: calculateTipAmount(subtotal, 15, null),
-    tip18: calculateTipAmount(subtotal, 18, null),
-    tip20: calculateTipAmount(subtotal, 20, null),
-  };
 }
 
 /**

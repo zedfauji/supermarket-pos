@@ -185,7 +185,6 @@ function makePayment(overrides: Partial<Payment> & { id: string; tabId: string }
     id: overrides.id,
     tabId: overrides.tabId,
     amount: overrides.amount ?? 100,
-    tipAmount: overrides.tipAmount ?? 0,
     method: overrides.method ?? 'cash',
     squarePaymentId: null,
     squareReceiptUrl: null,

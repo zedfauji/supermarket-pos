@@ -4,7 +4,6 @@ import type { CartItem, Order } from './domain';
 import {
   calculateOrderItemLineTotal,
   calculateTabSubtotal,
-  calculateTipAmount,
   formatElapsed,
   generateIdempotencyKey,
   getDiscountBase,
@@ -259,43 +258,6 @@ describe('calculateTabSubtotal', () => {
     ];
     const subtotal = calculateTabSubtotal(orders);
     expect(subtotal).toBe(10.56);
-  });
-});
-
-describe('calculateTipAmount', () => {
-  it('should calculate percentage tip', () => {
-    const tip = calculateTipAmount(50.0, 20, null);
-    expect(tip).toBe(10.0);
-  });
-
-  it('should calculate flat tip', () => {
-    const tip = calculateTipAmount(50.0, null, 5.0);
-    expect(tip).toBe(5.0);
-  });
-
-  it('should return 0 if no tip', () => {
-    const tip = calculateTipAmount(50.0, null, null);
-    expect(tip).toBe(0);
-  });
-
-  it('should prioritize percentage over flat', () => {
-    const tip = calculateTipAmount(50.0, 20, 5.0);
-    expect(tip).toBe(10.0); // Uses percentage
-  });
-
-  it('should round percentage tip to 2 decimal places', () => {
-    const tip = calculateTipAmount(33.33, 15, null);
-    expect(tip).toBe(5.0); // 33.33 * 0.15 = 4.9995 â†’ 5.00
-  });
-
-  it('should handle 0% tip', () => {
-    const tip = calculateTipAmount(50.0, 0, null);
-    expect(tip).toBe(0);
-  });
-
-  it('should handle large percentage tips', () => {
-    const tip = calculateTipAmount(100.0, 100, null);
-    expect(tip).toBe(100.0);
   });
 });
 

@@ -5,7 +5,6 @@ const validPayment = {
   id: '123e4567-e89b-12d3-a456-426614174000',
   tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   amount: 12.5,
-  tipAmount: 2.5,
   method: 'cash' as const,
   squarePaymentId: null,
   squareReceiptUrl: null,
@@ -44,7 +43,6 @@ describe('CreatePaymentSchema', () => {
     const r = CreatePaymentSchema.safeParse({
       tabId: validPayment.tabId,
       amount: 1,
-      tipAmount: 0,
       method: 'rappi',
       squarePaymentId: null,
       squareReceiptUrl: null,

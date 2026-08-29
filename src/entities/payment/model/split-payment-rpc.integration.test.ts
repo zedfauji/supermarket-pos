@@ -188,8 +188,8 @@ describe('process_split_payment_atomic RPC + payments split columns (integration
       tabId = seed.tabId;
 
       const legs = [
-        { method: 'cash', amount: 30.0, tipAmount: 0, tenderedAmount: 30.0 },
-        { method: 'card', amount: 20.0, tipAmount: 5.0 },
+        { method: 'cash', amount: 30.0, tenderedAmount: 30.0 },
+        { method: 'card', amount: 20.0 },
       ];
 
       const { data, error } = await svc.rpc('process_split_payment_atomic', {
@@ -229,8 +229,8 @@ describe('process_split_payment_atomic RPC + payments split columns (integration
       tabId = seed.tabId;
 
       const legs = [
-        { method: 'cash', amount: 35.0, tipAmount: 0, tenderedAmount: 35.0 },
-        { method: 'card', amount: 20.0, tipAmount: 0 },
+        { method: 'cash', amount: 35.0, tenderedAmount: 35.0 },
+        { method: 'card', amount: 20.0 },
       ];
 
       const { data, error } = await svc.rpc('process_split_payment_atomic', {
@@ -257,7 +257,6 @@ describe('process_split_payment_atomic RPC + payments split columns (integration
     const legs = Array.from({ length: 5 }, () => ({
       method: 'cash',
       amount: 10.0,
-      tipAmount: 0,
       tenderedAmount: 10.0,
     }));
 
@@ -281,8 +280,8 @@ describe('process_split_payment_atomic RPC + payments split columns (integration
       tabId = seed.tabId;
 
       const legs = [
-        { method: 'cash', amount: 30.0, tipAmount: 0, tenderedAmount: 30.0 },
-        { method: 'card', amount: 20.0, tipAmount: 0 },
+        { method: 'cash', amount: 30.0, tenderedAmount: 30.0 },
+        { method: 'card', amount: 20.0 },
       ];
       const key = idKey('split-idempotent');
 

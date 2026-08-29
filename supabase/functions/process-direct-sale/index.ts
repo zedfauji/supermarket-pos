@@ -13,7 +13,6 @@ const itemSchema = z.object({
 const legSchema = z.object({
   method: z.enum(['cash', 'card']),
   amount: z.number().nonnegative().multipleOf(0.01),
-  tipAmount: z.number().nonnegative().multipleOf(0.01),
   tenderedAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
   referenceNumber: z.string().max(64).nullable().optional(),
 });
@@ -25,7 +24,6 @@ const BodySchema = z
     idempotencyKey: z.string().min(1).max(255),
     method: z.enum(['cash', 'card']).optional(),
     amount: z.number().nonnegative().multipleOf(0.01).optional(),
-    tipAmount: z.number().nonnegative().multipleOf(0.01).optional(),
     tenderedAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
     legs: z.array(legSchema).min(1).max(4).optional(),
@@ -73,7 +71,6 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 type SaleReceiptPayment = {
   amount: number;
-  tip_amount: number;
   method: 'cash' | 'card';
   processed_at: string;
   tendered_amount: number | null;
@@ -116,7 +113,7 @@ async function buildSaleReceipt(
       admin.from('profiles').select('name').eq('id', staffId).maybeSingle(),
       admin
         .from('payments')
-        .select('amount, tip_amount, method, processed_at, tendered_amount, reference_number')
+        .select('amount, method, processed_at, tendered_amount, reference_number')
         .eq('tab_id', tabId)
         .order('processed_at', { ascending: true }),
       admin
@@ -171,15 +168,12 @@ async function buildSaleReceipt(
   const legs = payments as SaleReceiptPayment[];
   const tenders = legs.map(leg => {
     const amount = Number(leg.amount);
-    const tip = Number(leg.tip_amount);
     const tenderedAmount = leg.tendered_amount == null ? null : Number(leg.tendered_amount);
     return {
       method: leg.method,
       amount,
-      tipAmount: tip,
       tenderedAmount,
-      changeAmount:
-        tenderedAmount == null ? null : Math.round((tenderedAmount - amount - tip) * 100) / 100,
+      changeAmount: tenderedAmount == null ? null : Math.round((tenderedAmount - amount) * 100) / 100,
       terminalReference: leg.reference_number ?? undefined,
     };
   });
@@ -188,8 +182,6 @@ async function buildSaleReceipt(
   // from a single payment row -- this is the fix for CR-03 (a split sale
   // previously showed one leg's amount as the whole sale's total).
   const subtotal = Math.round(legs.reduce((sum, leg) => sum + Number(leg.amount), 0) * 100) / 100;
-  const tipAmount =
-    Math.round(legs.reduce((sum, leg) => sum + Number(leg.tip_amount), 0) * 100) / 100;
   // legs.length > 0 is guaranteed by the payments.length===0 guard above.
   const firstLeg = legs[0]!;
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
@@ -200,8 +192,7 @@ async function buildSaleReceipt(
     customerName: tab.customer_name ?? 'Walk-in',
     items,
     subtotal,
-    tipAmount,
-    total: Math.round((subtotal + tipAmount) * 100) / 100,
+    total: subtotal,
     // Single-tender-compatible fields, derived from the sole tender leg when
     // there is exactly one; the `tenders` array below is authoritative for
     // split sales.
@@ -275,14 +266,12 @@ Deno.serve(async (req: Request) => {
     p_idempotency_key: body.data.idempotencyKey,
     p_method: body.data.method ?? null,
     p_amount: body.data.amount ?? null,
-    p_tip_amount: body.data.tipAmount ?? 0,
     p_tendered_amount: body.data.tenderedAmount ?? null,
     p_reference_number: body.data.referenceNumber?.trim() || null,
     p_legs:
       body.data.legs?.map(leg => ({
         method: leg.method,
         amount: leg.amount,
-        tipAmount: leg.tipAmount,
         ...(leg.tenderedAmount != null ? { tenderedAmount: leg.tenderedAmount } : {}),
         ...(leg.referenceNumber ? { referenceNumber: leg.referenceNumber } : {}),
       })) ?? null,

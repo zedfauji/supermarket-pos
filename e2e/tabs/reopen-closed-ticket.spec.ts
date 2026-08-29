@@ -157,7 +157,6 @@ async function seedPaidTabViaDirectSale(): Promise<SeededPaidTab> {
     p_idempotency_key: `e2e-reopen-${randomUUID()}`,
     p_method: 'cash',
     p_amount: amount,
-    p_tip_amount: 0,
     // Tendered must cover `amount` — a fixed 100 broke once a seeded active
     // product's base_price (plus tax) exceeded 100 (Rule 1 fix, Plan 09-03).
     p_tendered_amount: amount,

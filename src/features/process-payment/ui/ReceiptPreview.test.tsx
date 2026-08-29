@@ -39,7 +39,6 @@ const receipt: ReceiptData = {
   barAddress: '',
   items: [{ name: 'Beer', quantity: 1, unitPrice: 5, lineTotal: 5 }],
   subtotal: 5,
-  tipAmount: 0,
   total: 5,
   paymentMethod: 'cash',
   processedAt: new Date('2026-04-17T12:00:00.000Z'),

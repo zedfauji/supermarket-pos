@@ -90,9 +90,6 @@ export function PaymentMethodsReport({ dateRange }: Props) {
               <TableHead className="tabular-nums">
                 {t('paymentMethodsReport.columnGrossAmount')}
               </TableHead>
-              <TableHead className="tabular-nums">
-                {t('paymentMethodsReport.columnTipAmount')}
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -116,7 +113,6 @@ export function PaymentMethodsReport({ dateRange }: Props) {
                   <TableCell className="capitalize">{row.method}</TableCell>
                   <TableCell className="tabular-nums">{row.legCount}</TableCell>
                   <TableCell className="tabular-nums">{formatMoney(row.grossAmount)}</TableCell>
-                  <TableCell className="tabular-nums">{formatMoney(row.tipAmount)}</TableCell>
                 </TableRow>
               );
             })}

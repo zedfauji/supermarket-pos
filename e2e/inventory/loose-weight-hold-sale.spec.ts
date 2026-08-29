@@ -191,7 +191,6 @@ test.describe('Loose-weight checkout', () => {
         p_idempotency_key: `weight-sale-${randomUUID()}`,
         p_method: 'cash',
         p_amount: total,
-        p_tip_amount: 0,
         p_tendered_amount: 100,
       },
     };

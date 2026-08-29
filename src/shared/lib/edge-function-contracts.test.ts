@@ -13,7 +13,6 @@ function baseValidRequest() {
   return {
     tabId,
     amount: 10,
-    tipAmount: 1,
     method: 'cash' as const,
     idempotencyKey: 'payment_cash_abc',
     tenderedAmount: 20,
@@ -30,13 +29,12 @@ function validReceiptData(overrides: Partial<ReceiptData> = {}): ReceiptData {
     barAddress: 'Calle 1',
     items: [{ name: 'Beer', quantity: 1, unitPrice: 10, lineTotal: 10 }],
     subtotal: 10,
-    tipAmount: 1,
-    total: 11,
+    total: 10,
     paymentMethod: 'cash',
     processedAt: new Date('2026-04-17T12:00:00.000Z'),
     squareReceiptUrl: null,
     tenderedAmount: 20,
-    changeAmount: 9,
+    changeAmount: 10,
     ...overrides,
   };
 }
@@ -127,7 +125,6 @@ describe('ProcessPaymentRequestSchema', () => {
     const r = ProcessPaymentRequestSchema.safeParse({
       ...baseValidRequest(),
       method: 'rappi',
-      tipAmount: 0,
       tenderedAmount: undefined,
       rappiOrderId: 'R-99',
     });
@@ -158,7 +155,6 @@ describe('ProcessPaymentRequestSchema', () => {
     const r = ProcessPaymentRequestSchema.safeParse({
       ...baseValidRequest(),
       method: 'rappi',
-      tipAmount: 0,
       tenderedAmount: undefined,
       rappiOrderId: undefined,
     });
@@ -169,7 +165,6 @@ describe('ProcessPaymentRequestSchema', () => {
     const r = ProcessPaymentRequestSchema.safeParse({
       ...baseValidRequest(),
       method: 'rappi',
-      tipAmount: 0,
       tenderedAmount: undefined,
       rappiOrderId: '   ',
     });

@@ -126,7 +126,6 @@
     "columnMethod": "Método",
     "columnLegCount": "Pagos",
     "columnGrossAmount": "Monto bruto",
-    "columnTipAmount": "Propina",
     "rollupLabel": "Total del día"
   },
   "productSalesPanel": {
@@ -359,13 +358,10 @@
     "restoreBackupLabel": "Restaurar respaldo"
   },
   "billingSettingsTab": {
-    "tipPercentagesInvalid": "Los porcentajes de propina deben ser de 1 a 4 valores separados por comas entre 0 y 100.",
     "taxRateInvalid": "La tasa de impuesto debe estar entre 0 y 100.",
     "billingSaved": "Configuración de facturación guardada.",
     "title": "Facturación",
     "taxRateLabel": "Tasa de impuesto (IVA %)",
-    "tipDefaultsLabel": "Porcentajes de propina predeterminados",
-    "tipDefaultsPlaceholder": "10, 15, 18, 20",
     "enabledPaymentMethods": "Métodos de pago habilitados",
     "firstHourModeLabel": "Modo de facturación de la primera hora",
     "firstHourModeDescription": "Controla cómo se facturan las sesiones de menos de 60 minutos.",
@@ -417,6 +413,11 @@
     "opening": "Abriendo...",
     "openCashDrawer": "Abrir caja registradora",
     "receiptSettingsTitle": "Configuración de recibo",
+    "printerLabel": "Impresora de recibos",
+    "printerNotConfiguredOption": "No configurada — usando respaldo",
+    "printerDetectedDefault": "Impresora predeterminada de Windows: {{name}}",
+    "printerListError": "No se pudo listar las impresoras instaladas — revisa el servicio del broker de impresión.",
+    "printerListEmpty": "No se encontraron impresoras en esta máquina.",
     "paperWidthLabel": "Ancho de papel",
     "showCashierName": "Mostrar nombre del cajero",
     "showCustomerName": "Mostrar nombre del cliente",

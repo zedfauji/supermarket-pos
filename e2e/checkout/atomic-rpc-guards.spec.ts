@@ -84,7 +84,6 @@ function toEdgeBody(
     p_items: { product_id: string; quantity: number; unit_price: number }[];
     p_method: string;
     p_amount: number;
-    p_tip_amount: number;
     p_tendered_amount: number;
   },
   idempotencyKey: string
@@ -100,7 +99,6 @@ function toEdgeBody(
     idempotencyKey,
     method: args.p_method,
     amount: args.p_amount,
-    tipAmount: args.p_tip_amount,
     tenderedAmount: args.p_tendered_amount,
   };
 }
@@ -185,7 +183,6 @@ test.describe('Direct-sale checkout', () => {
         p_idempotency_key: `direct-sale-${randomUUID()}`,
         p_method: 'cash',
         p_amount: total,
-        p_tip_amount: 0,
         p_tendered_amount: 100,
       },
     };
@@ -251,8 +248,8 @@ test.describe('Direct-sale checkout', () => {
       p_amount: null,
       p_tendered_amount: null,
       p_legs: [
-        { method: 'cash', amount: cashAmount, tipAmount: 0, tenderedAmount: cashAmount },
-        { method: 'card', amount: cardAmount, tipAmount: 0 },
+        { method: 'cash', amount: cashAmount, tenderedAmount: cashAmount },
+        { method: 'card', amount: cardAmount },
       ],
       p_expected_total: amount,
     };
@@ -448,7 +445,6 @@ test.describe('Direct-sale checkout', () => {
       p_idempotency_key: `direct-sale-${randomUUID()}`,
       p_method: 'cash',
       p_amount: totalIgnoringModifier,
-      p_tip_amount: 0,
       p_tendered_amount: 100,
     });
     expect(result.error).toBeNull();
@@ -505,8 +501,8 @@ test.describe('Direct-sale checkout', () => {
       p_amount: null,
       p_tendered_amount: null,
       p_legs: [
-        { method: 'cash', amount: cashAmount, tipAmount: 0, tenderedAmount: cashAmount },
-        { method: 'card', amount: cardAmount, tipAmount: 0 },
+        { method: 'cash', amount: cashAmount, tenderedAmount: cashAmount },
+        { method: 'card', amount: cardAmount },
       ],
       p_expected_total: wrongTotal,
     });

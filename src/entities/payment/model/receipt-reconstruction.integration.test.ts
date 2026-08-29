@@ -152,7 +152,6 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
       {
         tab_id: IT_TAB_SINGLE,
         amount: 20,
-        tip_amount: 0,
         method: 'cash',
         tendered_amount: 20,
         processed_by: STAFF_ID,
@@ -161,7 +160,6 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
       {
         tab_id: IT_TAB_SPLIT,
         amount: 30,
-        tip_amount: 0,
         method: 'cash',
         tendered_amount: 30,
         processed_by: STAFF_ID,
@@ -170,7 +168,6 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
       {
         tab_id: IT_TAB_SPLIT,
         amount: 20,
-        tip_amount: 0,
         method: 'card',
         tendered_amount: null,
         reference_number: 'TERM123',

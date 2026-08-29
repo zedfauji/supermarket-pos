@@ -5,7 +5,6 @@ describe('BillingSettingsSchema firstHourMode', () => {
   it('defaults firstHourMode to prorated', () => {
     const result = BillingSettingsSchema.parse({
       taxRatePercent: 16,
-      defaultTipPercentages: [10, 15],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
     });
     expect(result.firstHourMode).toBe('prorated');
@@ -14,7 +13,6 @@ describe('BillingSettingsSchema firstHourMode', () => {
   it('accepts full mode', () => {
     const result = BillingSettingsSchema.parse({
       taxRatePercent: 16,
-      defaultTipPercentages: [10, 15],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
       firstHourMode: 'full',
     });
@@ -24,7 +22,6 @@ describe('BillingSettingsSchema firstHourMode', () => {
   it('accepts prorated mode explicitly', () => {
     const result = BillingSettingsSchema.parse({
       taxRatePercent: 16,
-      defaultTipPercentages: [10, 15],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
       firstHourMode: 'prorated',
     });
@@ -35,7 +32,6 @@ describe('BillingSettingsSchema firstHourMode', () => {
     expect(() =>
       BillingSettingsSchema.parse({
         taxRatePercent: 16,
-        defaultTipPercentages: [],
         paymentMethods: { cash: true, bbvaCard: true, rappi: true },
         firstHourMode: 'half',
       })

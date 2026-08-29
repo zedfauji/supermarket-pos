@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
-import { useExportReport, type TipSplitRow } from '../model/useExportReport';
+import { useExportReport } from '../model/useExportReport';
 
 type CajaProps = {
   reportType: 'caja';
@@ -63,11 +63,6 @@ type StaffProps = {
 type RefundsRegisterProps = {
   reportType: 'refunds-register';
   data: { rows: RefundRegisterRow[]; dateRange: { from: Date; to: Date } };
-};
-
-type TipSplitProps = {
-  reportType: 'tip-split';
-  data: { rows: TipSplitRow[] };
 };
 
 type DeletionsPreProps = {
@@ -113,7 +108,6 @@ type Props =
   | CategoriesProps
   | StaffProps
   | RefundsRegisterProps
-  | TipSplitProps
   | DeletionsPreProps
   | DeletionsPostProps
   | PaymentMethodsProps
@@ -166,8 +160,6 @@ export function ExportButtons(props: Props) {
               ? 'refunds-register-pdf'
               : 'refunds-register-csv';
         await exportReport(type, props.data);
-      } else if (props.reportType === 'tip-split') {
-        await exportReport('tip-split-csv', props.data);
       } else if (props.reportType === 'deletions-pre') {
         await exportReport('deletions-pre-csv', props.data);
       } else if (props.reportType === 'deletions-post') {
@@ -200,7 +192,6 @@ export function ExportButtons(props: Props) {
   // silently produce a CSV would be a misleading toolbar.
   /* eslint-disable i18next/no-literal-string -- reportType literal comparisons, not UI copy */
   const isCsvOnly =
-    props.reportType === 'tip-split' ||
     props.reportType === 'deletions-pre' ||
     props.reportType === 'deletions-post' ||
     props.reportType === 'payment-methods' ||

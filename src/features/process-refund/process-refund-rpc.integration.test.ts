@@ -183,7 +183,6 @@ async function seedPaidTabWithPayment(svc: any): Promise<PaidTabSeed> {
     .insert({
       tab_id: tab.id,
       amount: 50.0,
-      tip_amount: 0,
       method: 'cash',
       processed_by: staffId,
       idempotency_key: `seed-refund-test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,

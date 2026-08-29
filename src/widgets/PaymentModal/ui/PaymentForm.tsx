@@ -43,13 +43,11 @@ import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 
 type PayMethod = 'cash' | 'card' | 'rappi';
-type TipMode = 'preset' | 'custom';
 
 type SplitRow = {
   id: string;
   method: PayMethod;
   amount: number;
-  tip: number;
   tenderedAmount: number;
   cardReference: string;
 };
@@ -60,7 +58,6 @@ type SplitRowAction =
   | { type: 'REMOVE_ROW'; rowId: string }
   | { type: 'SET_METHOD'; rowId: string; method: PayMethod }
   | { type: 'SET_AMOUNT'; rowId: string; value: number }
-  | { type: 'SET_TIP'; rowId: string; value: number }
   | { type: 'SET_TENDERED'; rowId: string; value: number }
   | { type: 'SET_CARD_REF'; rowId: string; value: string };
 
@@ -75,7 +72,6 @@ function makeDefaultSplitRow(method: PayMethod): SplitRow {
     id: nextSplitRowId(),
     method,
     amount: 0,
-    tip: 0,
     tenderedAmount: 0,
     cardReference: '',
   };
@@ -95,8 +91,6 @@ function splitRowsReducer(state: SplitRow[], action: SplitRowAction): SplitRow[]
       return state.map(r => (r.id === action.rowId ? { ...r, method: action.method } : r));
     case 'SET_AMOUNT':
       return state.map(r => (r.id === action.rowId ? { ...r, amount: action.value } : r));
-    case 'SET_TIP':
-      return state.map(r => (r.id === action.rowId ? { ...r, tip: action.value } : r));
     case 'SET_TENDERED':
       return state.map(r => (r.id === action.rowId ? { ...r, tenderedAmount: action.value } : r));
     case 'SET_CARD_REF':
@@ -106,7 +100,6 @@ function splitRowsReducer(state: SplitRow[], action: SplitRowAction): SplitRow[]
   }
 }
 
-const DEFAULT_TIP_PRESETS = [10, 15, 18, 20] as const;
 const DEFAULT_ENABLED_METHODS = {
   cash: true,
   bbvaCard: true,
@@ -161,7 +154,6 @@ export function PaymentForm({
   const { data: appSettings } = useSettings();
   const { data: receiptSettings } = useReceiptSettings();
   const settings = receiptSettings ?? ReceiptSettingsSchema.parse({});
-  const tipPresets = appSettings?.billing.defaultTipPercentages ?? DEFAULT_TIP_PRESETS;
   const enabledMethods = appSettings?.billing.paymentMethods ?? DEFAULT_ENABLED_METHODS;
   const taxRatePercent = appSettings?.billing.taxRatePercent ?? DEFAULT_TAX_RATE_PERCENT;
   const paymentLabels = appSettings?.paymentLabels ?? {
@@ -173,9 +165,6 @@ export function PaymentForm({
 
   const [step, setStep] = useState<'pay' | 'receipt'>('pay');
   const [method, setMethod] = useState<PayMethod>('cash');
-  const [tipMode, setTipMode] = useState<TipMode>('preset');
-  const [selectedTipPercent, setSelectedTipPercent] = useState(15);
-  const [customTip, setCustomTip] = useState(0);
   const [tenderedAmount, setTenderedAmount] = useState(0);
   const [cardReference, setCardReference] = useState('');
   const [cardChargeOverride, setCardChargeOverride] = useState<number | null>(null);
@@ -206,11 +195,6 @@ export function PaymentForm({
     } else {
       setMethod('cash');
     }
-    setTipMode('preset');
-    const firstPreset = tipPresets.at(0);
-    const secondPreset = tipPresets.at(1);
-    const defaultTipPercent = secondPreset ?? firstPreset ?? 15;
-    setSelectedTipPercent(defaultTipPercent);
     setTenderedAmount(0);
     setCardReference('');
     setCardChargeOverride(null);
@@ -221,14 +205,7 @@ export function PaymentForm({
     setIsSplitMode(false);
     idempotencyKeyRef.current = null;
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [
-    tab.id,
-    isRappiTab,
-    enabledMethods.cash,
-    enabledMethods.bbvaCard,
-    enabledMethods.rappi,
-    tipPresets,
-  ]);
+  }, [tab.id, isRappiTab, enabledMethods.cash, enabledMethods.bbvaCard, enabledMethods.rappi]);
 
   /* Split-mode rows: seed 2 default rows on toggle-ON, clear on toggle-OFF */
   useEffect(() => {
@@ -286,12 +263,7 @@ export function PaymentForm({
     return Math.round(afterDiscount * (taxRatePercent / 100) * 100) / 100;
   }, [afterDiscount, method, taxRatePercent]);
   const subtotalWithTax = Math.round((afterDiscount + taxAmount) * 100) / 100;
-  const tipAmount = useMemo(() => {
-    if (method === 'rappi') return 0;
-    if (tipMode === 'custom') return Math.max(0, customTip);
-    return Math.round(subtotalWithTax * (selectedTipPercent / 100) * 100) / 100;
-  }, [customTip, method, selectedTipPercent, subtotalWithTax, tipMode]);
-  const runningTotal = Math.round((subtotalWithTax + tipAmount) * 100) / 100;
+  const runningTotal = subtotalWithTax;
   const changeDue = Math.max(0, Math.round((tenderedAmount - runningTotal) * 100) / 100);
   const effectiveCardAmount = cardChargeOverride ?? runningTotal;
 
@@ -310,7 +282,7 @@ export function PaymentForm({
 
   const perRowMethodValid = (row: SplitRow): boolean => {
     if (row.method === 'cash') {
-      return row.tenderedAmount >= Math.round((row.amount + row.tip) * 100) / 100;
+      return row.tenderedAmount >= row.amount;
     }
     return true;
   };
@@ -344,7 +316,6 @@ export function PaymentForm({
       const r = await processors.processCashPayment(
         tab.id,
         subtotalWithTax,
-        tipAmount,
         tenderedAmount,
         discountInfoArg,
         tab.version,
@@ -367,11 +338,9 @@ export function PaymentForm({
       idempotencyKeyRef.current ??= generateIdempotencyKey('payment_card');
       const ref = cardReference.trim();
       const chargeAmount = cardChargeOverride ?? subtotalWithTax;
-      const chargeTip = cardChargeOverride !== null ? 0 : tipAmount;
       const r = await processors.processCardPayment(
         tab.id,
         chargeAmount,
-        chargeTip,
         ref.length > 0 ? ref : undefined,
         discountInfoArg,
         tab.version,
@@ -430,7 +399,7 @@ export function PaymentForm({
       };
       try {
         if (method === 'cash') {
-          const drawer = await openCashDrawer();
+          const drawer = await openCashDrawer(settings.printerName);
           if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
           const printed = await printReceipt(receipt, settings);
           if (!printed.ok)
@@ -459,7 +428,6 @@ export function PaymentForm({
     const legs: SplitPaymentLegInput[] = splitRows.map(row => ({
       method: row.method,
       amount: row.amount,
-      tipAmount: row.method === 'rappi' ? 0 : row.tip,
       ...(row.method === 'cash' ? { tenderedAmount: row.tenderedAmount } : {}),
       ...(row.method === 'card' && row.cardReference.trim().length > 0
         ? { referenceNumber: row.cardReference.trim() }
@@ -513,7 +481,7 @@ export function PaymentForm({
       };
       try {
         if (legs.some(l => l.method === 'cash')) {
-          const drawer = await openCashDrawer();
+          const drawer = await openCashDrawer(settings.printerName);
           if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
         }
         for (const receipt of result.data.receipts) {
@@ -589,40 +557,6 @@ export function PaymentForm({
               </div>
             </div>
           </section>
-
-          {method !== 'rappi' && (
-            <section className="space-y-3">
-              <h4 className="font-medium">{t('paymentForm.tip')}</h4>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {tipPresets.map(percent => (
-                  <POSButton
-                    key={percent}
-                    type="button"
-                    variant={
-                      tipMode === 'preset' && selectedTipPercent === percent ? 'default' : 'outline'
-                    }
-                    touchSize="large"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      setTipMode('preset');
-                      setSelectedTipPercent(percent);
-                    }}
-                  >
-                    {`${String(percent)}%`}
-                  </POSButton>
-                ))}
-              </div>
-              <MoneyInput
-                label={t('paymentForm.customTip')}
-                value={tipMode === 'custom' ? customTip : 0}
-                onChange={value => {
-                  setCustomTip(value);
-                  setTipMode('custom');
-                }}
-                disabled={isProcessing}
-              />
-            </section>
-          )}
 
           {method !== 'rappi' && (
             <section className="space-y-2 rounded-lg border p-3" data-testid="discount-section">
@@ -756,12 +690,6 @@ export function PaymentForm({
                 <MoneyDisplay amount={taxAmount} size="sm" />
               </div>
             )}
-            {method !== 'rappi' && (
-              <div className="flex items-center justify-between text-sm">
-                <span>{t('paymentForm.tip')}</span>
-                <MoneyDisplay amount={tipAmount} size="sm" />
-              </div>
-            )}
             <div className="flex items-center justify-between border-t pt-2 text-lg font-semibold">
               <span>{t('paymentForm.total')}</span>
               <MoneyDisplay amount={runningTotal} size="lg" />
@@ -877,17 +805,6 @@ export function PaymentForm({
                       disabled={isProcessing}
                     />
 
-                    {row.method !== 'rappi' && (
-                      <MoneyInput
-                        label={t('paymentForm.tip')}
-                        value={row.tip}
-                        onChange={value => {
-                          dispatchSplitRows({ type: 'SET_TIP', rowId: row.id, value });
-                        }}
-                        disabled={isProcessing}
-                      />
-                    )}
-
                     {row.method === 'cash' && (
                       <>
                         <MoneyInput
@@ -903,7 +820,7 @@ export function PaymentForm({
                           <MoneyDisplay
                             amount={Math.max(
                               0,
-                              Math.round((row.tenderedAmount - (row.amount + row.tip)) * 100) / 100
+                              Math.round((row.tenderedAmount - row.amount) * 100) / 100
                             )}
                             size="sm"
                           />
@@ -936,7 +853,7 @@ export function PaymentForm({
 
                     <p className="text-xs text-muted-foreground">
                       {t('paymentForm.splitRowCharges', {
-                        amount: formatMoney(row.amount + row.tip),
+                        amount: formatMoney(row.amount),
                       })}
                     </p>
                   </div>

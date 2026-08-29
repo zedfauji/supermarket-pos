@@ -22,8 +22,7 @@ describe('payment-processor', () => {
     barAddress: '',
     items: [],
     subtotal: 10,
-    tipAmount: 1,
-    total: 11,
+    total: 10,
     paymentMethod: 'cash' as const,
     processedAt: new Date(),
     squareReceiptUrl: null,
@@ -40,7 +39,7 @@ describe('payment-processor', () => {
       })
     );
 
-    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 1, 20);
+    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 20);
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.data.changeAmount).toBe(9);
@@ -66,7 +65,7 @@ describe('payment-processor', () => {
         })
       );
 
-    await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 1, '   ');
+    await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, '   ');
     const cardTuple = spy.mock.calls[0];
     if (cardTuple === undefined) throw new Error('expected call');
     expect(cardTuple[0].referenceNumber).toBeUndefined();
@@ -88,7 +87,6 @@ describe('payment-processor', () => {
     if (rappiTuple === undefined) throw new Error('expected call');
     expect(rappiTuple[0]).toMatchObject({
       method: 'rappi',
-      tipAmount: 0,
       rappiOrderId: 'R-1',
     });
   });
@@ -105,7 +103,6 @@ describe('payment-processor', () => {
     await processCashPayment(
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       10,
-      1,
       20,
       undefined,
       5
@@ -124,7 +121,7 @@ describe('payment-processor', () => {
       })
     );
 
-    await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 1, 20);
+    await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 20);
     const tuple = spy.mock.calls[0];
     if (tuple === undefined) throw new Error('expected call');
     expect(tuple[0].expectedVersion).toBeUndefined();
@@ -135,7 +132,7 @@ describe('payment-processor', () => {
       err({ code: 'VALIDATION_ERROR', message: 'Insufficient tender' })
     );
 
-    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 1, 50);
+    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 50);
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.error.message).toBe('Insufficient tender');
@@ -151,10 +148,10 @@ describe('payment-processor', () => {
       })
     );
 
-    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 1, 25.67);
+    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 25.67);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.data.changeAmount).toBe(14.67);
+      expect(r.data.changeAmount).toBe(15.67);
     }
   });
 
@@ -167,10 +164,10 @@ describe('payment-processor', () => {
       })
     );
 
-    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10.33, 2.22, 20);
+    const r = await processCashPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10.33, 20);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.data.changeAmount).toBe(7.45);
+      expect(r.data.changeAmount).toBe(9.67);
     }
   });
 
@@ -185,7 +182,7 @@ describe('payment-processor', () => {
         })
       );
 
-    await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5, 0, '  AUTH123  ');
+    await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5, '  AUTH123  ');
     const arg = spy.mock.calls[0]?.[0];
     expect(arg?.referenceNumber).toBe('AUTH123');
   });
@@ -195,7 +192,7 @@ describe('payment-processor', () => {
       err({ code: 'AUTH_FORBIDDEN', message: 'No' })
     );
 
-    const r = await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5, 0);
+    const r = await processCardPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5);
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.error.code).toBe('AUTH_FORBIDDEN');
@@ -215,8 +212,8 @@ describe('payment-processor', () => {
   });
 
   describe('processSplitPayment', () => {
-    const leg1 = { method: 'cash' as const, amount: 6, tipAmount: 1, tenderedAmount: 10 };
-    const leg2 = { method: 'card' as const, amount: 5, tipAmount: 0.5 };
+    const leg1 = { method: 'cash' as const, amount: 6, tenderedAmount: 10 };
+    const leg2 = { method: 'card' as const, amount: 5 };
 
     it('returns ok with paymentGroupId + paymentIds + receipts for 2 legs summing to expectedTotal', async () => {
       const spy = vi.spyOn(contracts, 'callProcessSplitPayment').mockResolvedValue(

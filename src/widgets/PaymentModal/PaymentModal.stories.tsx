@@ -22,7 +22,6 @@ function stubReceipt(tab: Tab): ReceiptData {
     barAddress: '',
     items: [],
     subtotal: 0,
-    tipAmount: 0,
     total: 0,
     paymentMethod: 'cash',
     processedAt: new Date(),
@@ -33,24 +32,23 @@ function stubReceipt(tab: Tab): ReceiptData {
 function mockProcessorsFor(tab: Tab): PaymentProcessors {
   const receipt = stubReceipt(tab);
   return {
-    processCashPayment: async (_tabId, amount, tip, tendered) => {
-      logger.info('storybook.payment.mock', { method: 'cash', amount, tip, tendered });
+    processCashPayment: async (_tabId, amount, tendered) => {
+      logger.info('storybook.payment.mock', { method: 'cash', amount, tendered });
       await new Promise(r => setTimeout(r, 400));
       return ok({
         paymentId: '00000000-0000-4000-8000-000000000001',
-        changeAmount: Math.max(0, tendered - (amount + tip)),
+        changeAmount: Math.max(0, tendered - amount),
         receiptData: {
           ...receipt,
           subtotal: amount,
-          tipAmount: tip,
-          total: amount + tip,
+          total: amount,
           tenderedAmount: tendered,
-          changeAmount: Math.max(0, tendered - (amount + tip)),
+          changeAmount: Math.max(0, tendered - amount),
         },
       });
     },
-    processCardPayment: async (_tabId, amount, tip) => {
-      logger.info('storybook.payment.mock', { method: 'card', amount, tip });
+    processCardPayment: async (_tabId, amount) => {
+      logger.info('storybook.payment.mock', { method: 'card', amount });
       await new Promise(r => setTimeout(r, 400));
       return ok({
         paymentId: '00000000-0000-4000-8000-000000000002',
@@ -58,8 +56,7 @@ function mockProcessorsFor(tab: Tab): PaymentProcessors {
           ...receipt,
           paymentMethod: 'card',
           subtotal: amount,
-          tipAmount: tip,
-          total: amount + tip,
+          total: amount,
         },
       });
     },
@@ -76,7 +73,6 @@ function mockProcessorsFor(tab: Tab): PaymentProcessors {
           ...receipt,
           paymentMethod: 'rappi',
           subtotal: amount,
-          tipAmount: 0,
           total: amount,
         },
       });
@@ -91,8 +87,7 @@ function mockProcessorsFor(tab: Tab): PaymentProcessors {
           ...receipt,
           paymentMethod: leg.method,
           subtotal: leg.amount,
-          tipAmount: leg.tipAmount,
-          total: leg.amount + leg.tipAmount,
+          total: leg.amount,
         })),
       });
     },

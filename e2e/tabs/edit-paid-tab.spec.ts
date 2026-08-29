@@ -117,7 +117,6 @@ async function seedPaidTab(
     .insert({
       tab_id: tab.id,
       amount: unitPrice,
-      tip_amount: 0,
       method: 'cash',
       is_refund: false,
       processed_by: profile.id,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { LogoUploader } from '@features/upload-logo';
+import { useAvailablePrinters } from '@entities/print-job';
 import { useReceiptSettings, useMutationUpdateReceiptSettings } from '@entities/settings';
 import type { ReceiptSettings } from '@entities/settings';
 import type { UserRole } from '@shared/lib/domain';
@@ -46,7 +47,6 @@ const SAMPLE_RECEIPT_DATA: ReceiptData = {
     },
   ],
   subtotal: 128,
-  tipAmount: 0,
   total: 128,
   paymentMethod: 'cash',
   processedAt: new Date('2026-01-01T12:00:00.000Z'),
@@ -61,6 +61,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
   const [openingDrawer, setOpeningDrawer] = useState(false);
   const { data: receiptSettings } = useReceiptSettings();
   const updateReceiptSettings = useMutationUpdateReceiptSettings();
+  const { data: printerList, isError: printerListErrored } = useAvailablePrinters();
 
   // Optimistic local state — mirrors server value, updated immediately on change.
   // Lazy initializer captures the first available server value; afterwards
@@ -97,7 +98,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
 
   const runTestPrint = async () => {
     setPrinting(true);
-    const result = await testPrint();
+    const result = await testPrint(receipt?.printerName);
     setPrinting(false);
     if (!result.ok) {
       toast.error(t(printJobErrorCopyKey(result.error.code)));
@@ -109,7 +110,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
 
   const runOpenDrawer = async () => {
     setOpeningDrawer(true);
-    const result = await openCashDrawer();
+    const result = await openCashDrawer(receipt?.printerName);
     setOpeningDrawer(false);
     if (!result.ok) {
       toast.error(t(printJobErrorCopyKey(result.error.code)));
@@ -157,6 +158,42 @@ export function HardwareSettingsTab({ currentRole }: Props) {
         {receipt && (
           <div className="space-y-4 rounded-lg border p-4">
             <h3 className="font-medium">{t('hardwareSettingsTab.receiptSettingsTitle')}</h3>
+
+            <div className="space-y-1">
+              <Label htmlFor="printer-name">{t('hardwareSettingsTab.printerLabel')}</Label>
+              <select
+                id="printer-name"
+                value={receipt.printerName ?? ''}
+                onChange={e => {
+                  patchReceipt({ printerName: e.target.value.length > 0 ? e.target.value : null });
+                }}
+                className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">{t('hardwareSettingsTab.printerNotConfiguredOption')}</option>
+                {printerList?.printers.map(name => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                {receipt.printerName &&
+                  printerList?.printers.every(name => name !== receipt.printerName) && (
+                    <option value={receipt.printerName}>{receipt.printerName}</option>
+                  )}
+              </select>
+              {printerListErrored && (
+                <p className="text-sm text-destructive">{t('hardwareSettingsTab.printerListError')}</p>
+              )}
+              {!printerListErrored && printerList?.printers.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t('hardwareSettingsTab.printerListEmpty')}
+                </p>
+              )}
+              {printerList?.default && (
+                <p className="text-sm text-muted-foreground">
+                  {t('hardwareSettingsTab.printerDetectedDefault', { name: printerList.default })}
+                </p>
+              )}
+            </div>
 
             <div className="space-y-1">
               <Label htmlFor="paper-width">{t('hardwareSettingsTab.paperWidthLabel')}</Label>

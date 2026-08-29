@@ -26,14 +26,13 @@ vi.mock('@shared/lib/pos-printer', async importOriginal => {
   };
 });
 
-// Stable settings object — same reference every render so tipPresets dependency
-// in PaymentModal's useEffect does not trigger spurious resets of tenderedAmount.
-// taxRatePercent=0 keeps test money amounts simple (no tax arithmetic in assertions).
+// Stable settings object — same reference every render so it doesn't trigger
+// spurious resets of tenderedAmount. taxRatePercent=0 keeps test money
+// amounts simple (no tax arithmetic in assertions).
 vi.mock('@entities/settings', () => {
   const stableSettings = {
     billing: {
       taxRatePercent: 0,
-      defaultTipPercentages: [10, 15, 18, 20],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
     },
   };
@@ -149,13 +148,12 @@ function makeReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
       { name: 'Whiskey', quantity: 1, unitPrice: 9, lineTotal: 9 },
     ],
     subtotal: 22,
-    tipAmount: 3.3,
-    total: 25.3,
+    total: 22,
     paymentMethod: 'cash',
     processedAt: new Date('2026-04-17T12:00:00.000Z'),
     squareReceiptUrl: null,
     tenderedAmount: 40,
-    changeAmount: 14.7,
+    changeAmount: 18,
   };
   return { ...base, ...overrides };
 }
@@ -248,49 +246,9 @@ describe('PaymentModal', () => {
       .closest('div') as HTMLElement;
     expect(within(itemsSubtotalRow).getByLabelText('$22.00 dollars')).toBeInTheDocument();
     expect(within(dialog).getByText('Total')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$25.30 dollars')).toBeInTheDocument();
+    const totalRow = within(dialog).getByText('Total').closest('div') as HTMLElement;
+    expect(within(totalRow).getByLabelText('$22.00 dollars')).toBeInTheDocument();
     expect(within(dialog).queryByText('Pool charges')).not.toBeInTheDocument();
-  });
-
-  it('applies preset tip percentages and custom tip on tabNoPool', async () => {
-    const user = userEvent.setup();
-    renderModal(tabNoPool);
-    const dialog = screen.getByRole('dialog');
-
-    const pct15 = within(dialog).getByRole('button', { name: '15%' });
-    const pct10 = within(dialog).getByRole('button', { name: '10%' });
-    const pct18 = within(dialog).getByRole('button', { name: '18%' });
-    const pct20 = within(dialog).getByRole('button', { name: '20%' });
-
-    expect(pct15.className).toContain('bg-primary');
-    expect(pct10.className).toContain('border-border');
-    expect(within(dialog).getByLabelText('$3.30 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$25.30 dollars')).toBeInTheDocument();
-
-    await user.click(pct10);
-    expect(within(dialog).getByLabelText('$2.20 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$24.20 dollars')).toBeInTheDocument();
-
-    await user.click(pct18);
-    expect(within(dialog).getByLabelText('$3.96 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$25.96 dollars')).toBeInTheDocument();
-
-    await user.click(pct20);
-    expect(within(dialog).getByLabelText('$4.40 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$26.40 dollars')).toBeInTheDocument();
-
-    await user.click(pct15);
-    expect(within(dialog).getByLabelText('$3.30 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$25.30 dollars')).toBeInTheDocument();
-
-    const customInput = within(dialog).getByLabelText('Custom tip');
-    await user.clear(customInput);
-    await user.type(customInput, '5.00');
-    expect(within(dialog).getByLabelText('$5.00 dollars')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$27.00 dollars')).toBeInTheDocument();
-
-    await user.click(pct10);
-    expect(within(dialog).getByLabelText('$24.20 dollars')).toBeInTheDocument();
   });
 
   it('toggles payment method between cash and card', async () => {
@@ -349,7 +307,6 @@ describe('PaymentModal', () => {
     expect(processors.processCashPayment).toHaveBeenCalledWith(
       tabNoPool.id,
       22,
-      3.3,
       30,
       undefined,
       undefined,
@@ -459,7 +416,7 @@ describe('PaymentModal', () => {
     await user.type(tendered, '40.00');
 
     expect(within(dialog).getByText('Change due')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('$14.70 dollars')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('$18.00 dollars')).toBeInTheDocument();
   });
 
   it('completes Rappi payment without cash drawer', async () => {
@@ -467,7 +424,6 @@ describe('PaymentModal', () => {
     const receipt = makeReceipt({
       tabId: tabRappi.id,
       paymentMethod: 'rappi',
-      tipAmount: 0,
       total: 22,
     });
     const processors: PaymentProcessors = {
@@ -520,7 +476,6 @@ describe('PaymentModal', () => {
     expect(processors.processCardPayment).toHaveBeenCalledWith(
       tabNoPool.id,
       22,
-      3.3,
       'AUTH-777',
       undefined,
       undefined,

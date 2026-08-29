@@ -507,7 +507,6 @@ export async function seedClosedTab(): Promise<string> {
   const { error: paymentErr } = await admin.from('payments').insert({
     tab_id: tab.id,
     amount: 10,
-    tip_amount: 0,
     method: 'cash',
     square_payment_id: null,
     square_receipt_url: null,

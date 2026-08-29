@@ -540,7 +540,6 @@ describe('PaymentMethodRowSchema', () => {
       method: 'cash',
       legCount: 6,
       grossAmount: 1200,
-      tipAmount: 100,
       isRollup: false,
     });
     expect(result.success).toBe(true);
@@ -552,7 +551,6 @@ describe('PaymentMethodRowSchema', () => {
       method: 'card',
       legCount: 20,
       grossAmount: 5000,
-      tipAmount: 400,
       isRollup: true,
     });
     expect(result.success).toBe(true);
@@ -564,7 +562,6 @@ describe('PaymentMethodRowSchema', () => {
       method: 'bitcoin',
       legCount: 1,
       grossAmount: 10,
-      tipAmount: 0,
       isRollup: false,
     });
     expect(result.success).toBe(false);

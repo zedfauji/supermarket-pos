@@ -145,13 +145,3 @@ export const selectTotalRevenue = (startDate: Date, endDate: Date) => {
   const payments = selectPaymentsByDateRange(startDate, endDate);
   return payments.reduce((total, payment) => total + payment.amount, 0);
 };
-
-/**
- * Selector: Calculate total tips for a date range
- * @param startDate - Start date
- * @param endDate - End date
- */
-export const selectTotalTips = (startDate: Date, endDate: Date) => {
-  const payments = selectPaymentsByDateRange(startDate, endDate);
-  return payments.reduce((total, payment) => total + payment.tipAmount, 0);
-};

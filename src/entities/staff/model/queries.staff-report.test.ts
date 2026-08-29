@@ -63,8 +63,8 @@ function profilesChain<T>(resolved: ChainResult<T>) {
   return chain;
 }
 
-// fetchOrderItemsInRange:        .select().gte().lte()        → lte is terminal (awaited)
-// fetchPaymentsWithTipsInRange:  .select().gte().lte().not()  → not is terminal (awaited)
+// fetchOrderItemsInRange:  .select().gte().lte()        → lte is terminal (awaited)
+// fetchPaymentsInRange:    .select().gte().lte().not()  → not is terminal (awaited)
 //
 // The thenable trick: every chain method returns the same object.
 // The object implements `.then()` so `await lte()` resolves immediately via the thenable.

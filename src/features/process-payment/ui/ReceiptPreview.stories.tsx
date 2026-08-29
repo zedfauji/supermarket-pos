@@ -16,13 +16,12 @@ const base: ReceiptData = {
   barAddress: 'Av. Insurgentes 123, CDMX',
   items: baseItems,
   subtotal: 210,
-  tipAmount: 31.5,
-  total: 241.5,
+  total: 210,
   paymentMethod: 'cash',
   processedAt: new Date('2026-04-17T14:30:00'),
   squareReceiptUrl: null,
   tenderedAmount: 250,
-  changeAmount: 8.5,
+  changeAmount: 40,
 };
 
 const meta = {
@@ -50,8 +49,6 @@ export const Card: Story = {
       paymentMethod: 'card',
       tenderedAmount: undefined,
       changeAmount: undefined,
-      tipAmount: 42,
-      total: 252,
       terminalReference: 'AUTH987654',
     },
   },
@@ -62,7 +59,6 @@ export const Rappi: Story = {
     receipt: {
       ...base,
       paymentMethod: 'rappi',
-      tipAmount: 0,
       total: 210,
       tenderedAmount: undefined,
       changeAmount: undefined,

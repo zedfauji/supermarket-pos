@@ -123,7 +123,7 @@
     /* POS-specific tokens — signal meaning unchanged, retuned to the brass/glass world */
     --pos-accent: oklch(0.55 0.13 155); /* jade — table available */
     --pos-danger: oklch(0.55 0.21 25); /* garnet — table occupied / danger */
-    --pos-warning: oklch(0.62 0.17 55); /* amber — needs-attention threshold (low stock, happy hour, tip-split warning) */
+    --pos-warning: oklch(0.62 0.17 55); /* amber — needs-attention threshold (low stock, near-expiry) */
     --pos-highlight: oklch(0.58 0.14 170); /* emerald — "best/top" row emphasis in reports */
   }
 

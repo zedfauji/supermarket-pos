@@ -32,7 +32,6 @@ function sampleReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     barAddress: '1 St',
     items: [{ name: 'Item', quantity: 1, unitPrice: 5, lineTotal: 5 }],
     subtotal: 5,
-    tipAmount: 0,
     total: 5,
     paymentMethod: 'cash',
     processedAt: new Date('2026-04-17T10:00:00.000Z'),
@@ -98,7 +97,7 @@ describe('printReceipt', () => {
   const originalAlert = window.alert;
 
   beforeEach(() => {
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
     vi.mocked(invoke).mockReset();
     vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-receipt-job', status: 'accepted' });
     vi.mocked(toast.loading).mockClear();
@@ -109,7 +108,7 @@ describe('printReceipt', () => {
   afterEach(() => {
     window.open = originalOpen;
     window.alert = originalAlert;
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
   });
 
   it('uses web fallback when not Tauri and window.open succeeds', async () => {
@@ -133,7 +132,7 @@ describe('printReceipt', () => {
   });
 
   it('invokes print_receipt in Tauri and returns the broker job id (PRN-02)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
     expect(result.ok).toBe(true);
@@ -147,7 +146,7 @@ describe('printReceipt', () => {
   });
 
   it('sends logoDataUrl and paperWidthChars from settings on the Tauri invoke (RCPD-02)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
     const result = await printReceipt(
       sampleReceipt(),
@@ -161,7 +160,7 @@ describe('printReceipt', () => {
   });
 
   it('maps a non-broker invoke failure to PRINT_JOB_REJECTED after retries', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('Printer offline'));
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
@@ -173,7 +172,7 @@ describe('printReceipt', () => {
   });
 
   it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE after retries (D-12)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
@@ -184,7 +183,7 @@ describe('printReceipt', () => {
   });
 
   it('retries print_receipt up to 3 times before failing (RCP-04)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('Printer offline'));
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
@@ -196,7 +195,7 @@ describe('printReceipt', () => {
   });
 
   it('succeeds after a transient failure on attempt 2', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke)
       .mockRejectedValueOnce(new Error('busy'))
       .mockResolvedValueOnce({ job_id: 'mock-receipt-job-2', status: 'accepted' });
@@ -213,7 +212,7 @@ describe('printReceipt', () => {
   });
 
   it('stays silent on an immediate first-attempt success', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
     const result = await printReceipt(sampleReceipt(), defaultReceiptSettings());
 
@@ -228,7 +227,7 @@ describe('openCashDrawer', () => {
   const originalAlert = window.alert;
 
   beforeEach(() => {
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
     vi.mocked(invoke).mockReset();
     vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-drawer-job', status: 'accepted' });
     window.alert = vi.fn();
@@ -236,7 +235,7 @@ describe('openCashDrawer', () => {
 
   afterEach(() => {
     window.alert = originalAlert;
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
   });
 
   it('shows alert and returns ok when not Tauri', async () => {
@@ -248,17 +247,17 @@ describe('openCashDrawer', () => {
   });
 
   it('invokes open_cash_drawer in Tauri and returns the broker job id (PRN-02)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     const result = await openCashDrawer();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.jobId).toBe('mock-drawer-job');
     }
-    expect(invoke).toHaveBeenCalledWith('open_cash_drawer');
+    expect(invoke).toHaveBeenCalledWith('open_cash_drawer', { printerName: undefined });
   });
 
   it('maps a non-broker invoke failure to PRINT_JOB_REJECTED', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('drawer jam'));
 
     const result = await openCashDrawer();
@@ -269,7 +268,7 @@ describe('openCashDrawer', () => {
   });
 
   it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
 
     const result = await openCashDrawer();
@@ -284,7 +283,7 @@ describe('testPrint', () => {
   const originalAlert = window.alert;
 
   beforeEach(() => {
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
     vi.mocked(invoke).mockReset();
     vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-job-1', status: 'accepted' });
     window.alert = vi.fn();
@@ -292,7 +291,7 @@ describe('testPrint', () => {
 
   afterEach(() => {
     window.alert = originalAlert;
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
   });
 
   it('returns err when not in Tauri', async () => {
@@ -305,17 +304,17 @@ describe('testPrint', () => {
   });
 
   it('invokes test_print in Tauri and returns the broker job id (PRN-02)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     const result = await testPrint();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.jobId).toBe('mock-job-1');
     }
-    expect(invoke).toHaveBeenCalledWith('test_print');
+    expect(invoke).toHaveBeenCalledWith('test_print', { printerName: undefined });
   });
 
   it('maps a "broker unreachable" failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
 
     const result = await testPrint();
@@ -326,7 +325,7 @@ describe('testPrint', () => {
   });
 
   it('maps any other submission failure to PRINT_JOB_REJECTED', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('broker rejected job: HTTP 400'));
 
     const result = await testPrint();
@@ -345,7 +344,7 @@ describe('printRawText', () => {
   const originalOpen = window.open;
 
   beforeEach(() => {
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
     vi.mocked(invoke).mockReset();
     vi.mocked(invoke).mockResolvedValue({ job_id: 'mock-raw-text-job', status: 'accepted' });
     // Silence browser fallback popup in non-Tauri path
@@ -354,13 +353,13 @@ describe('printRawText', () => {
 
   afterEach(() => {
     window.open = originalOpen;
-    delete (window as unknown as { __TAURI__?: unknown }).__TAURI__;
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
   });
 
   it('appends ESC/POS cut bytes when autoCut is true (AC-1)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
-    const result = await printRawText('hello', { autoCut: true });
+    const result = await printRawText('hello', { autoCut: true, printerName: undefined });
 
     expect(result.ok).toBe(true);
     expect(invoke).toHaveBeenCalledWith('print_raw_text', {
@@ -369,16 +368,16 @@ describe('printRawText', () => {
   });
 
   it('does NOT append cut bytes when autoCut is false (AC-2)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
-    const result = await printRawText('hello', { autoCut: false });
+    const result = await printRawText('hello', { autoCut: false, printerName: undefined });
 
     expect(result.ok).toBe(true);
     expect(invoke).toHaveBeenCalledWith('print_raw_text', { text: 'hello' });
   });
 
   it('does NOT append cut bytes when options are omitted (AC-2)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
     const result = await printRawText('hello');
 
@@ -387,7 +386,7 @@ describe('printRawText', () => {
   });
 
   it('invokes print_raw_text in Tauri and returns the broker job id (PRN-02)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
 
     const result = await printRawText('hello');
 
@@ -398,10 +397,10 @@ describe('printRawText', () => {
   });
 
   it('maps a non-broker invoke failure to PRINT_JOB_REJECTED', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('Paper jam'));
 
-    const result = await printRawText('hello', { autoCut: true });
+    const result = await printRawText('hello', { autoCut: true, printerName: undefined });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -411,7 +410,7 @@ describe('printRawText', () => {
   });
 
   it('maps a "broker unreachable" invoke failure to PRINT_BROKER_UNREACHABLE (D-12)', async () => {
-    (window as unknown as { __TAURI__: unknown }).__TAURI__ = {};
+    (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {};
     vi.mocked(invoke).mockRejectedValue(new Error('broker unreachable: connection refused'));
 
     const result = await printRawText('hello');

@@ -86,13 +86,11 @@ export function useCheckoutSale() {
   const submit = async (payment: {
     method?: 'cash' | 'card';
     amount?: number;
-    tipAmount?: number;
     tenderedAmount?: number;
     referenceNumber?: string;
     legs?: {
       method: 'cash' | 'card';
       amount: number;
-      tipAmount: number;
       tenderedAmount?: number;
       referenceNumber?: string;
     }[];
@@ -116,7 +114,6 @@ export function useCheckoutSale() {
       idempotencyKey: idempotencyKeyRef.current,
       ...(payment.method ? { method: payment.method } : {}),
       ...(payment.amount !== undefined ? { amount: payment.amount } : {}),
-      ...(payment.tipAmount !== undefined ? { tipAmount: payment.tipAmount } : {}),
       ...(payment.tenderedAmount !== undefined ? { tenderedAmount: payment.tenderedAmount } : {}),
       ...(payment.referenceNumber ? { referenceNumber: payment.referenceNumber } : {}),
       ...(payment.legs ? { legs: payment.legs } : {}),
@@ -138,7 +135,6 @@ export function useCheckoutSale() {
       processCashPayment: async (
         _tabId: string,
         amount: number,
-        tipAmount: number,
         tenderedAmount: number,
         discountInfo?: DiscountInfo,
         _expectedVersion?: number,
@@ -147,7 +143,6 @@ export function useCheckoutSale() {
         const result = await submit({
           method: 'cash',
           amount,
-          tipAmount,
           tenderedAmount,
           ...(discountInfo ? { discountInfo } : {}),
           ...(idempotencyKeyOverride ? { idempotencyKeyOverride } : {}),
@@ -168,7 +163,6 @@ export function useCheckoutSale() {
       processCardPayment: async (
         _tabId: string,
         amount: number,
-        tipAmount: number,
         referenceNumber?: string,
         discountInfo?: DiscountInfo,
         _expectedVersion?: number,
@@ -177,7 +171,6 @@ export function useCheckoutSale() {
         const result = await submit({
           method: 'card',
           amount,
-          tipAmount,
           ...(referenceNumber ? { referenceNumber } : {}),
           ...(discountInfo ? { discountInfo } : {}),
           ...(idempotencyKeyOverride ? { idempotencyKeyOverride } : {}),

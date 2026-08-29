@@ -6,7 +6,6 @@ export {
   PaymentMethodLabelsSchema,
   ReceiptSettingsSchema,
   SettingsBackupSummarySchema,
-  TipDistributionSettingsSchema,
 } from '@shared/lib/domain';
 
 export type {
@@ -18,5 +17,4 @@ export type {
   ReceiptSettings,
   SettingsBackupSummary,
   SettingsKey,
-  TipDistributionSettings,
 } from '@shared/lib/domain';

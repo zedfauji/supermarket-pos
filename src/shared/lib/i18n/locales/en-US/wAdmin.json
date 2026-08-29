@@ -126,7 +126,6 @@
     "columnMethod": "Method",
     "columnLegCount": "Payments",
     "columnGrossAmount": "Gross amount",
-    "columnTipAmount": "Tip",
     "rollupLabel": "Day total"
   },
   "productSalesPanel": {
@@ -359,13 +358,10 @@
     "restoreBackupLabel": "Restore backup"
   },
   "billingSettingsTab": {
-    "tipPercentagesInvalid": "Tip percentages must be 1-4 comma-separated values between 0 and 100.",
     "taxRateInvalid": "Tax rate must be between 0 and 100.",
     "billingSaved": "Billing settings saved.",
     "title": "Billing",
     "taxRateLabel": "Tax rate (IVA %)",
-    "tipDefaultsLabel": "Default tip percentages",
-    "tipDefaultsPlaceholder": "10, 15, 18, 20",
     "enabledPaymentMethods": "Enabled payment methods",
     "firstHourModeLabel": "First hour billing mode",
     "firstHourModeDescription": "Controls how sessions under 60 minutes are billed.",
@@ -417,6 +413,11 @@
     "opening": "Opening...",
     "openCashDrawer": "Open Cash Drawer",
     "receiptSettingsTitle": "Receipt Settings",
+    "printerLabel": "Receipt printer",
+    "printerNotConfiguredOption": "Not configured — using fallback",
+    "printerDetectedDefault": "Windows default printer: {{name}}",
+    "printerListError": "Could not list installed printers — check the print broker service.",
+    "printerListEmpty": "No printers found on this machine.",
     "paperWidthLabel": "Paper width",
     "showCashierName": "Show cashier name",
     "showCustomerName": "Show customer name",

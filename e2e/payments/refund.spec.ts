@@ -130,7 +130,6 @@ async function seedPaidTab(
     .insert({
       tab_id: tab.id,
       amount: itemCount * unitPrice,
-      tip_amount: 0,
       method: 'cash',
       is_refund: false,
       processed_by: profile.id,
@@ -352,7 +351,6 @@ test('T5: REFUND_EXCEEDS_ORIGINAL blocks double-refund of fully-refunded payment
   await db.from('payments').insert({
     tab_id: tabId,
     amount: -20.0,
-    tip_amount: 0,
     method: 'cash',
     is_refund: true,
     refund_id: existingRefund.id,
@@ -435,7 +433,6 @@ test('T6: refund remaining 3 items with restock=false — no stock ledger change
   await db.from('payments').insert({
     tab_id: tabId,
     amount: -20.0,
-    tip_amount: 0,
     method: 'cash',
     is_refund: true,
     refund_id: partialRefund.id,

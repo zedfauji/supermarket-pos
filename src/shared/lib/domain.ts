@@ -461,7 +461,6 @@ export const PaymentSchema = z.object({
   // (nonnegative). Keep the multipleOf(0.01) precision constraint without the
   // sign restriction.
   amount: z.number().multipleOf(0.01),
-  tipAmount: MoneySchema,
   method: PaymentMethodSchema,
   squarePaymentId: z.string().nullable(),
   squareReceiptUrl: UrlSchema.nullable(),
@@ -499,12 +498,11 @@ export type PaymentUpdate = z.infer<typeof PaymentUpdateSchema>;
 
 /**
  * One row of a split-payment submission — any payment method per row, each
- * with its own tip and method-specific fields (D-02/D-03).
+ * with its own method-specific fields (D-02/D-03).
  */
 export const SplitPaymentLegSchema = z.object({
   method: PaymentMethodSchema,
   amount: MoneySchema,
-  tipAmount: MoneySchema,
   tenderedAmount: MoneySchema.nullable().optional(),
   referenceNumber: z.string().max(64).nullable().optional(),
   rappiOrderId: z.string().max(128).nullable().optional(),
@@ -781,7 +779,6 @@ export const SettingsKeySchema = z.enum([
   'pool_tables',
   'receipt',
   'payment_labels',
-  'tip_distribution',
   'near_expiry',
 ]);
 export type SettingsKey = z.infer<typeof SettingsKeySchema>;
@@ -812,11 +809,6 @@ export type PaymentMethodLabels = z.infer<typeof PaymentMethodLabelsSchema>;
 
 export const BillingSettingsSchema = z.object({
   taxRatePercent: z.number().min(0).max(100).default(16),
-  defaultTipPercentages: z
-    .array(z.number().int().min(0).max(100))
-    .min(1)
-    .max(4)
-    .default([10, 15, 18, 20]),
   paymentMethods: BillingPaymentMethodsSchema.default({
     cash: true,
     bbvaCard: true,
@@ -832,14 +824,6 @@ export const EmailReceiptSettingsSchema = z.object({
 });
 
 export type EmailReceiptSettings = z.infer<typeof EmailReceiptSettingsSchema>;
-
-export const TipDistributionSettingsSchema = z.object({
-  floorPct: z.number().min(0).max(100),
-  barPct: z.number().min(0).max(100),
-  kitchenPct: z.number().min(0).max(100),
-});
-
-export type TipDistributionSettings = z.infer<typeof TipDistributionSettingsSchema>;
 
 export const NearExpirySettingsSchema = z.object({
   thresholdDays: z.number().int().min(1).max(365).default(14),
@@ -865,6 +849,10 @@ export const ReceiptSettingsSchema = z.object({
   autoCut: z.boolean().default(false),
   kdsEnabled: z.boolean().default(false),
   logoDataUrl: z.string().nullable().default(null),
+  // Windows printer queue name (WinSpool), e.g. "EPSON TM-T88V Receipt". Null
+  // until a store picks one in Hardware Settings — the Rust command layer
+  // falls back to a "RECEIPT_PRINTER" sentinel when null, never guesses.
+  printerName: z.string().nullable().default(null),
 });
 
 export type ReceiptSettings = z.infer<typeof ReceiptSettingsSchema>;
@@ -923,24 +911,6 @@ export const CajaEntrySchema = z.object({
   staffName: z.string().optional(),
 });
 export type CajaEntry = z.infer<typeof CajaEntrySchema>;
-
-// ============================================================================
-// TIP DISTRIBUTION ENTRY (immutable per-caja-close 3-way split snapshot)
-// ============================================================================
-
-export const TipDistributionEntrySchema = z.object({
-  id: UuidSchema,
-  cajaSessionId: UuidSchema,
-  floorPct: z.number().min(0).max(100),
-  barPct: z.number().min(0).max(100),
-  kitchenPct: z.number().min(0).max(100),
-  totalTips: MoneySchema,
-  floorAmount: MoneySchema,
-  barAmount: MoneySchema,
-  kitchenAmount: MoneySchema,
-  createdAt: TimestampSchema,
-});
-export type TipDistributionEntry = z.infer<typeof TipDistributionEntrySchema>;
 
 export const CajaEntryCreateSchema = z.object({
   cajaSessionId: UuidSchema,
@@ -1099,7 +1069,6 @@ export const PaymentMethodRowSchema = z.object({
   method: PaymentMethodSchema,
   legCount: z.number(),
   grossAmount: MoneySchema,
-  tipAmount: MoneySchema,
   isRollup: z.boolean(),
 });
 
@@ -1243,7 +1212,6 @@ export const domain = {
     EmailReceiptSettings: EmailReceiptSettingsSchema,
     ReceiptSettings: ReceiptSettingsSchema,
     SettingsBackupSummary: SettingsBackupSummarySchema,
-    TipDistributionSettings: TipDistributionSettingsSchema,
     NearExpirySettings: NearExpirySettingsSchema,
 
     CajaStatus: CajaStatusSchema,
@@ -1252,7 +1220,6 @@ export const domain = {
     CajaEntryType: CajaEntryTypeSchema,
     CajaEntry: CajaEntrySchema,
     CajaEntryCreate: CajaEntryCreateSchema,
-    TipDistributionEntry: TipDistributionEntrySchema,
     CajaReport: CajaReportSchema,
     CajaReportSummary: CajaReportSummarySchema,
     CashReconciliation: CashReconciliationSchema,

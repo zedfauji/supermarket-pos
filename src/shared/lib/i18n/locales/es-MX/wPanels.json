@@ -48,8 +48,6 @@
     "itemTypesAndTotal": "{{itemTypeCount}} tipo{{plural}} de producto · {{itemCount}} en total",
     "itemsSubtotal": "Subtotal de productos",
     "tableMinLabel": "Mesa {{tableNumber}} · {{minutes}} min",
-    "tip": "Propina",
-    "customTip": "Propina personalizada",
     "discount": "Descuento",
     "discountDescription": "Aplica un descuento porcentual o de monto fijo a este pedido",
     "discountScopeAll": "Todos los productos",

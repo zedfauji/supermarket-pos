@@ -48,8 +48,6 @@
     "itemTypesAndTotal": "{{itemTypeCount}} item type{{plural}} · {{itemCount}} total",
     "itemsSubtotal": "Items subtotal",
     "tableMinLabel": "Table {{tableNumber}} · {{minutes}} min",
-    "tip": "Tip",
-    "customTip": "Custom tip",
     "discount": "Discount",
     "discountDescription": "Apply a percentage or fixed-amount discount to this order",
     "discountScopeAll": "All Items",

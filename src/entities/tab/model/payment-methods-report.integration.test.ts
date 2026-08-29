@@ -80,16 +80,15 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
     });
     if (tabR.error) throw new Error(`beforeEach tab: ${JSON.stringify(tabR.error)}`);
 
-    // cash=100/tip10 + card=50/tip5 are the only legs that must count.
-    // reopened_void (Phase 23 exclusion, A3) and is_refund=true rows must be
-    // excluded; an out-of-range cash payment must also be excluded.
+    // cash=100 + card=50 are the only legs that must count. reopened_void
+    // (Phase 23 exclusion, A3) and is_refund=true rows must be excluded; an
+    // out-of-range cash payment must also be excluded.
     const paymentsR = await testDb.from('payments').upsert([
       {
         id: IT_PAY_CASH,
         tab_id: IT_TAB_ID,
         method: 'cash',
         amount: 100,
-        tip_amount: 10,
         status: 'completed',
         is_refund: false,
         processed_by: STAFF_ID,
@@ -101,7 +100,6 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
         tab_id: IT_TAB_ID,
         method: 'card',
         amount: 50,
-        tip_amount: 5,
         status: 'completed',
         is_refund: false,
         processed_by: STAFF_ID,
@@ -113,7 +111,6 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
         tab_id: IT_TAB_ID,
         method: 'cash',
         amount: 999,
-        tip_amount: 0,
         status: 'reopened_void',
         is_refund: false,
         processed_by: STAFF_ID,
@@ -125,7 +122,6 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
         tab_id: IT_TAB_ID,
         method: 'cash',
         amount: 888,
-        tip_amount: 0,
         status: 'completed',
         is_refund: true,
         processed_by: STAFF_ID,
@@ -137,7 +133,6 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
         tab_id: IT_TAB_ID,
         method: 'cash',
         amount: 777,
-        tip_amount: 0,
         status: 'completed',
         is_refund: false,
         processed_by: STAFF_ID,
@@ -195,19 +190,16 @@ describe('usePaymentMethodsReport — integration (real Supabase)', () => {
     expect(sessionCash).toBeDefined();
     expect(sessionCash?.legCount).toBe(1);
     expect(sessionCash?.grossAmount).toBe(100);
-    expect(sessionCash?.tipAmount).toBe(10);
 
     expect(sessionCard).toBeDefined();
     expect(sessionCard?.legCount).toBe(1);
     expect(sessionCard?.grossAmount).toBe(50);
-    expect(sessionCard?.tipAmount).toBe(5);
 
     // D-08: the day-level rollup row (cajaSessionId=null) sums the per-session rows.
     expect(rollupCash).toBeDefined();
     expect(rollupCash?.cajaSessionId).toBeNull();
     expect(rollupCash?.legCount).toBe(sessionCash?.legCount);
     expect(rollupCash?.grossAmount).toBe(sessionCash?.grossAmount);
-    expect(rollupCash?.tipAmount).toBe(sessionCash?.tipAmount);
 
     expect(rollupCard).toBeDefined();
     expect(rollupCard?.cajaSessionId).toBeNull();

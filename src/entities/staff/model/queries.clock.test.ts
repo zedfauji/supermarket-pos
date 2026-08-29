@@ -109,7 +109,6 @@ describe('useShiftClosePreview', () => {
       tab_id: TEST_TAB_ID,
       processed_by: STAFF_ID,
       amount: 50,
-      tip_amount: 0,
       method: 'cash',
       idempotency_key: `test-${TEST_PAYMENT_ID}`,
     });

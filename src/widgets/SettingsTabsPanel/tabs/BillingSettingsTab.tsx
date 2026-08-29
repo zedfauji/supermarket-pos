@@ -12,7 +12,6 @@ type Props = {
 
 type BillingForm = {
   taxRatePercent: string;
-  tipPercentagesCsv: string;
   paymentMethods: {
     cash: boolean;
     bbvaCard: boolean;
@@ -23,22 +22,9 @@ type BillingForm = {
 
 const DEFAULT_FORM: BillingForm = {
   taxRatePercent: '16',
-  tipPercentagesCsv: '10, 15, 18, 20',
   paymentMethods: { cash: true, bbvaCard: true, rappi: true },
   firstHourMode: 'prorated',
 };
-
-function parseTipPercentages(raw: string): number[] | null {
-  const parsed = raw
-    .split(',')
-    .map(part => part.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter(value => Number.isFinite(value) && value >= 0 && value <= 100);
-
-  if (parsed.length === 0 || parsed.length > 4) return null;
-  return parsed.map(value => Math.round(value));
-}
 
 const DEFAULT_LABELS: PaymentMethodLabels = {
   cash: 'Efectivo',
@@ -61,7 +47,6 @@ export function BillingSettingsTab({ currentRole }: Props) {
     if (!dirty) {
       setForm({
         taxRatePercent: String(data.billing.taxRatePercent),
-        tipPercentagesCsv: data.billing.defaultTipPercentages.join(', '),
         paymentMethods: {
           cash: data.billing.paymentMethods.cash,
           bbvaCard: data.billing.paymentMethods.bbvaCard,
@@ -87,12 +72,7 @@ export function BillingSettingsTab({ currentRole }: Props) {
   );
 
   const save = async () => {
-    const tips = parseTipPercentages(form.tipPercentagesCsv);
     const taxRatePercent = Number(form.taxRatePercent);
-    if (tips == null) {
-      toast.error(t('billingSettingsTab.tipPercentagesInvalid'));
-      return;
-    }
     if (!Number.isFinite(taxRatePercent) || taxRatePercent < 0 || taxRatePercent > 100) {
       toast.error(t('billingSettingsTab.taxRateInvalid'));
       return;
@@ -102,7 +82,6 @@ export function BillingSettingsTab({ currentRole }: Props) {
       key: 'billing',
       value: {
         taxRatePercent,
-        defaultTipPercentages: tips,
         paymentMethods: form.paymentMethods,
         firstHourMode: form.firstHourMode,
       },
@@ -132,20 +111,6 @@ export function BillingSettingsTab({ currentRole }: Props) {
               onChange={event => {
                 setDirty(true);
                 setForm(current => ({ ...current, taxRatePercent: event.target.value }));
-              }}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="settings-tip-defaults">
-              {t('billingSettingsTab.tipDefaultsLabel')}
-            </Label>
-            <Input
-              id="settings-tip-defaults"
-              value={form.tipPercentagesCsv}
-              placeholder={t('billingSettingsTab.tipDefaultsPlaceholder')}
-              onChange={event => {
-                setDirty(true);
-                setForm(current => ({ ...current, tipPercentagesCsv: event.target.value }));
               }}
             />
           </div>

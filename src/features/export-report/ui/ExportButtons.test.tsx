@@ -22,7 +22,6 @@ import type {
   VoidRefundRow,
 } from '@shared/lib/domain';
 import { renderWithProviders } from '@shared/lib/test-utils';
-import type { TipSplitRow } from '../model/useExportReport';
 import { ExportButtons } from './ExportButtons';
 
 vi.mock('@entities/staff/model/store', () => ({
@@ -129,8 +128,6 @@ const REFUNDS_REGISTER_ROWS: RefundRegisterRow[] = [
   },
 ];
 
-const TIP_SPLIT_ROWS: TipSplitRow[] = [{ bucket: 'Floor', pct: 34, amount: 34 }];
-
 const DELETIONS_PRE_ROWS: DeletionsPreRow[] = [
   {
     orderId: '99999999-9999-9999-9999-999999999999',
@@ -157,7 +154,6 @@ const PAYMENT_METHOD_ROWS: PaymentMethodRow[] = [
     method: 'cash',
     legCount: 5,
     grossAmount: 100,
-    tipAmount: 10,
     isRollup: false,
   },
 ];
@@ -178,7 +174,6 @@ const CASES: { reportType: string; data: unknown; excelPdf: boolean }[] = [
     data: { rows: REFUNDS_REGISTER_ROWS, dateRange: DATE_RANGE },
     excelPdf: true,
   },
-  { reportType: 'tip-split', data: { rows: TIP_SPLIT_ROWS }, excelPdf: false },
   {
     reportType: 'deletions-pre',
     data: { rows: DELETIONS_PRE_ROWS, dateRange: DATE_RANGE },

@@ -42,7 +42,6 @@ function mapPaymentRow(row: Record<string, unknown>): Payment {
     id: row['id'],
     tabId: row['tab_id'],
     amount: row['amount'],
-    tipAmount: row['tip_amount'] ?? 0,
     method: row['method'],
     squarePaymentId: row['square_payment_id'],
     squareReceiptUrl: row['square_receipt_url'],
@@ -92,7 +91,6 @@ type ReceiptOrderRow = {
 
 type ReceiptPaymentRow = {
   amount: number;
-  tip_amount: number;
   method: 'cash' | 'card';
   processed_at: string;
   tendered_amount: number | null;
@@ -116,7 +114,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
       db.from('tabs').select('customer_name, staff_id').eq('id', tabId).maybeSingle(),
       db
         .from('payments')
-        .select('amount, tip_amount, method, processed_at, tendered_amount, reference_number')
+        .select('amount, method, processed_at, tendered_amount, reference_number')
         .eq('tab_id', tabId)
         .order('processed_at', { ascending: true }),
       db
@@ -155,20 +153,17 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
   const legs = payments as ReceiptPaymentRow[];
   const tenders = legs.map(leg => {
     const amount = leg.amount;
-    const tip = leg.tip_amount;
     const tenderedAmount = leg.tendered_amount;
     return {
       method: leg.method,
       amount,
-      tipAmount: tip,
       tenderedAmount,
-      changeAmount: tenderedAmount == null ? null : round2(tenderedAmount - amount - tip),
+      changeAmount: tenderedAmount == null ? null : round2(tenderedAmount - amount),
       terminalReference: leg.reference_number ?? undefined,
     };
   });
 
   const subtotal = round2(legs.reduce((sum, leg) => sum + leg.amount, 0));
-  const tipAmount = round2(legs.reduce((sum, leg) => sum + leg.tip_amount, 0));
   const firstLeg = legs[0];
   if (!firstLeg) {
     throw new Error(`fetchReceiptDataForPayment: no payment legs for tab ${tabId}`);
@@ -183,8 +178,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     customerName: (tab as { customer_name: string | null }).customer_name ?? 'Walk-in',
     items,
     subtotal,
-    tipAmount,
-    total: round2(subtotal + tipAmount),
+    total: subtotal,
     paymentMethod: firstLeg.method,
     processedAt: firstLeg.processed_at,
     squareReceiptUrl: null,

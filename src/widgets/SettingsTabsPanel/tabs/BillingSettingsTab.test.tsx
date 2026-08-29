@@ -10,7 +10,6 @@ const { mutateAsyncMock, toastErrorMock, toastSuccessMock, mockSettingsData } = 
   mockSettingsData: {
     billing: {
       taxRatePercent: 16,
-      defaultTipPercentages: [10, 15, 18, 20],
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
       firstHourMode: 'prorated' as const,
     },

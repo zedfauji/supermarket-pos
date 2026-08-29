@@ -28,7 +28,6 @@ const receipt: ReceiptData = {
   barAddress: '',
   items: [],
   subtotal: 1,
-  tipAmount: 0,
   total: 1,
   paymentMethod: 'cash',
   processedAt: new Date(),

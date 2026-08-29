@@ -111,7 +111,6 @@ function makeReceipt(overrides?: Partial<ReceiptData>): ReceiptData {
     barAddress: '',
     items: [],
     subtotal: 1,
-    tipAmount: 0,
     total: 1,
     paymentMethod: 'cash',
     processedAt: new Date('2026-08-24T12:00:00Z'),

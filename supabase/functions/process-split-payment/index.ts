@@ -10,7 +10,6 @@ const legSchema = z
   .object({
     method: z.enum(['cash', 'card', 'rappi']),
     amount: z.number().nonnegative().multipleOf(0.01),
-    tipAmount: z.number().nonnegative().multipleOf(0.01),
     tenderedAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
     rappiOrderId: z.string().max(128).nullable().optional(),
@@ -303,7 +302,7 @@ Deno.serve(async (req: Request) => {
   const { data: paymentRows, error: payErr } = await admin
     .from('payments')
     .select(
-      'id, amount, tip_amount, method, processed_at, tendered_amount, reference_number, split_index, discount_scope, discount_type, discount_value, discount_amount'
+      'id, amount, method, processed_at, tendered_amount, reference_number, split_index, discount_scope, discount_type, discount_value, discount_amount'
     )
     .eq('payment_group_id', paymentGroupId)
     .order('split_index');
@@ -318,7 +317,6 @@ Deno.serve(async (req: Request) => {
   type PaymentLegRow = {
     id: string;
     amount: number;
-    tip_amount: number;
     method: string;
     processed_at: string;
     tendered_amount: number | null;
@@ -335,8 +333,7 @@ Deno.serve(async (req: Request) => {
 
   const receipts = (paymentRows as PaymentLegRow[]).map(legRow => {
     const subtotal = Number(legRow.amount);
-    const tipAmount = Number(legRow.tip_amount);
-    const total = Math.round((subtotal + tipAmount) * 100) / 100;
+    const total = subtotal;
     const tendered = legRow.tendered_amount != null ? Number(legRow.tendered_amount) : null;
     const changeAmount = tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
     const ref = legRow.reference_number;
@@ -347,7 +344,6 @@ Deno.serve(async (req: Request) => {
       customerName,
       items,
       subtotal,
-      tipAmount,
       total,
       paymentMethod: legRow.method,
       processedAt: legRow.processed_at,

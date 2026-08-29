@@ -522,7 +522,6 @@ async function seedPaidTabWithTwoItems(cajaSessionId: string): Promise<SeededPai
     p_idempotency_key: `e2e-report-tabs-removal-${randomUUID()}`,
     p_method: 'cash',
     p_amount: amount,
-    p_tip_amount: 0,
     p_tendered_amount: amount,
   });
   if (error) {

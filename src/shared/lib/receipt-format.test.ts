@@ -21,13 +21,12 @@ function baseReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     barAddress: 'Av. Revolución 123, CDMX',
     items: [{ name: 'Cerveza', quantity: 2, unitPrice: 45, lineTotal: 90 }],
     subtotal: 90,
-    tipAmount: 13.5,
-    total: 103.5,
+    total: 90,
     paymentMethod: 'cash',
     processedAt: new Date('2026-04-17T18:00:00.000Z'),
     squareReceiptUrl: null,
     tenderedAmount: 200,
-    changeAmount: 96.5,
+    changeAmount: 110,
     ...overrides,
   };
 }
@@ -65,7 +64,6 @@ describe('buildThermalReceiptText', () => {
     const text = buildThermalReceiptText(
       baseReceipt({
         paymentMethod: 'rappi',
-        tipAmount: 0,
         total: 90,
         tenderedAmount: null,
         changeAmount: null,
@@ -81,7 +79,7 @@ describe('buildThermalReceiptText', () => {
     expect(text).toContain('Entregado');
     expect(text).toContain('Cambio');
     expect(text).toContain('$200.00');
-    expect(text).toContain('$96.50');
+    expect(text).toContain('$110.00');
   });
 
   it('shows terminal reference when set', () => {
@@ -107,13 +105,12 @@ describe('buildThermalReceiptText', () => {
     const text = buildThermalReceiptText(
       baseReceipt({
         subtotal: 100,
-        tipAmount: 0,
         total: 100,
         tenderedAmount: null,
         changeAmount: null,
         tenders: [
-          { method: 'cash', amount: 50, tipAmount: 0, tenderedAmount: 50, changeAmount: 0 },
-          { method: 'card', amount: 50, tipAmount: 0, terminalReference: 'BBVA-42' },
+          { method: 'cash', amount: 50, tenderedAmount: 50, changeAmount: 0 },
+          { method: 'card', amount: 50, terminalReference: 'BBVA-42' },
         ],
       }),
       'es-MX',
@@ -130,7 +127,7 @@ describe('buildThermalReceiptText', () => {
   it('falls back to the single-payment line when only one tender leg is present', () => {
     const text = buildThermalReceiptText(
       baseReceipt({
-        tenders: [{ method: 'cash', amount: 90, tipAmount: 13.5, tenderedAmount: 200, changeAmount: 96.5 }],
+        tenders: [{ method: 'cash', amount: 90, tenderedAmount: 200, changeAmount: 110 }],
       }),
       'es-MX',
       defaultReceiptSettings()
@@ -156,7 +153,6 @@ describe('buildThermalReceiptText', () => {
       baseReceipt({
         items: [{ name: longName, quantity: 1, unitPrice: 1, lineTotal: 1 }],
         subtotal: 1,
-        tipAmount: 0,
         total: 1,
         tenderedAmount: 5,
         changeAmount: 4,
@@ -195,7 +191,6 @@ describe('buildThermalReceiptText', () => {
     expect(text).toContain('Cajero');
     expect(text).toContain('Cliente');
     expect(text).toContain('Subtotal');
-    expect(text).toContain('Propina');
     expect(text).toContain('Total');
     expect(text).toContain('Pago');
     expect(text).toContain('Entregado');

@@ -111,7 +111,6 @@ async function seedPaidTabViaDirectSale(): Promise<SeededPaidTab> {
     p_idempotency_key: `e2e-offline-${randomUUID()}`,
     p_method: 'cash',
     p_amount: amount,
-    p_tip_amount: 0,
     p_tendered_amount: amount,
   });
   if (error) throw new Error(`seed: process_direct_sale_atomic failed - ${error.message}`);

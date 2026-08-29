@@ -36,7 +36,7 @@ const HELP_BY_ROUTE: Record<string, HelpEntry> = {
 
 - **Hardware**: test the receipt printer, open the cash drawer, upload a logo.
 - **Receipt**: set paper width and toggle which lines print.
-- **Billing**: tax rate, tip presets, first-hour billing mode.
+- **Billing**: tax rate, first-hour billing mode.
 - **Backup**: create and restore settings snapshots.`,
   },
   '/reports': {

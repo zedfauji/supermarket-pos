@@ -67,7 +67,6 @@ export type ExportType =
   | 'refunds-register-csv'
   // Net-new report types (Plans 08/09) — CSV-only for now; Excel/PDF stay optional
   // per-report per D-11/D-12, added later if a widget plan wants them.
-  | 'tip-split-csv'
   | 'deletions-pre-csv'
   | 'deletions-post-csv'
   | 'payment-methods-csv'
@@ -140,14 +139,6 @@ type ExpiryLossContext = {
 type TurnoverContext = {
   rows: TurnoverRow[];
   dateRange: { from: Date; to: Date };
-};
-
-// Tip-split has no dateRange — it's a per-caja-session snapshot, selected by
-// TipBucketDistributionPanel via a session picker, not a date range.
-export type TipSplitRow = { bucket: string; pct: number; amount: number };
-
-type TipSplitContext = {
-  rows: TipSplitRow[];
 };
 
 // ============================================================================
@@ -231,12 +222,6 @@ const REFUNDS_REGISTER_CSV_COLUMNS: CsvColumn<RefundRegisterCsvRow>[] = [
   { key: 'restockCount', header: 'Restock Count' },
 ];
 
-const TIP_SPLIT_CSV_COLUMNS: CsvColumn<TipSplitRow>[] = [
-  { key: 'bucket', header: 'Bucket' },
-  { key: 'pct', header: 'Percent' },
-  { key: 'amount', header: 'Amount' },
-];
-
 type DeletionsPreCsvRow = Omit<DeletionsPreRow, 'removedAt'> & { removedAt: string };
 const DELETIONS_PRE_CSV_COLUMNS: CsvColumn<DeletionsPreCsvRow>[] = [
   { key: 'removedAt', header: 'Removed At' },
@@ -260,7 +245,6 @@ const PAYMENT_METHODS_CSV_COLUMNS: CsvColumn<PaymentMethodRow>[] = [
   { key: 'method', header: 'Method' },
   { key: 'legCount', header: 'Leg Count' },
   { key: 'grossAmount', header: 'Gross Amount' },
-  { key: 'tipAmount', header: 'Tip Amount' },
   { key: 'isRollup', header: 'Day Rollup' },
 ];
 
@@ -323,7 +307,6 @@ export function useExportReport() {
     type: 'refunds-register-excel' | 'refunds-register-pdf' | 'refunds-register-csv',
     data: RefundRegisterContext
   ): Promise<Result<void>>;
-  async function exportReport(type: 'tip-split-csv', data: TipSplitContext): Promise<Result<void>>;
   async function exportReport(
     type: 'deletions-pre-csv',
     data: DeletionsPreContext
@@ -472,11 +455,6 @@ export function useExportReport() {
           const ctx = data as RefundRegisterContext;
           const rows = ctx.rows.map(r => ({ ...r, date: r.date.toLocaleDateString() }));
           bytes = csvToBytes(rowsToCsv(rows, REFUNDS_REGISTER_CSV_COLUMNS));
-          break;
-        }
-        case 'tip-split-csv': {
-          const ctx = data as TipSplitContext;
-          bytes = csvToBytes(rowsToCsv(ctx.rows, TIP_SPLIT_CSV_COLUMNS));
           break;
         }
         case 'deletions-pre-csv': {

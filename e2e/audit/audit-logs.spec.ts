@@ -111,7 +111,6 @@ async function seedPaidTabForAudit(customerName: string): Promise<{ tabId: strin
     .insert({
       tab_id: tab.id,
       amount: product.base_price,
-      tip_amount: 0,
       method: 'cash',
       is_refund: false,
       processed_by: profile.id,

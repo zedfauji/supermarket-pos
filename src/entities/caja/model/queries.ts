@@ -4,19 +4,8 @@
 // resolve excluded callees across a multi-line method chain — 21-08 quirk).
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type {
-  CajaEntry,
-  CajaEntryCreate,
-  CajaReport,
-  CajaSession,
-  TipDistributionEntry,
-} from '@shared/lib/domain';
-import {
-  CajaEntrySchema,
-  CajaReportSchema,
-  CajaSessionSchema,
-  TipDistributionEntrySchema,
-} from '@shared/lib/domain';
+import type { CajaEntry, CajaEntryCreate, CajaReport, CajaSession } from '@shared/lib/domain';
+import { CajaEntrySchema, CajaReportSchema, CajaSessionSchema } from '@shared/lib/domain';
 import i18n from '@shared/lib/i18n';
 import { logger } from '@shared/lib/logger-instance';
 import {
@@ -510,67 +499,6 @@ export function useMutationCreateCajaEntry() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: cajaEntryKeys.all });
       void queryClient.invalidateQueries({ queryKey: cajaKeys.all });
-    },
-  });
-}
-
-// ============================================================================
-// TIP DISTRIBUTION ENTRY (immutable per-caja-close 3-way split snapshot)
-// ============================================================================
-
-const tipDistributionKeys = {
-  all: ['tip-distribution-entry'] as const,
-  bySession: (id: string) => [...tipDistributionKeys.all, id] as const,
-};
-
-function mapTipDistributionEntryRow(row: Record<string, unknown>): Result<TipDistributionEntry> {
-  try {
-    return ok(
-      TipDistributionEntrySchema.parse({
-        id: row.id,
-        cajaSessionId: row.caja_session_id,
-        floorPct: Number(row.floor_pct),
-        barPct: Number(row.bar_pct),
-        kitchenPct: Number(row.kitchen_pct),
-        totalTips: Number(row.total_tips),
-        floorAmount: Number(row.floor_amount),
-        barAmount: Number(row.bar_amount),
-        kitchenAmount: Number(row.kitchen_amount),
-        createdAt: new Date(row.created_at as string),
-      })
-    );
-  } catch (e) {
-    return err(unknownError(e));
-  }
-}
-
-/** Fetches the immutable tip-distribution entry for a closed caja session (report panel). */
-export function useTipDistributionEntry(cajaSessionId: string | null) {
-  return useQuery({
-    queryKey: cajaSessionId
-      ? tipDistributionKeys.bySession(cajaSessionId)
-      : tipDistributionKeys.all,
-    enabled: !!cajaSessionId,
-    staleTime: 60_000,
-    queryFn: async (): Promise<Result<TipDistributionEntry | null>> => {
-      if (!cajaSessionId) return err(unknownError('No caja session id.'));
-
-      const res = await supabaseQuery(() =>
-        db
-          .from('tip_distribution_entries')
-          .select('*')
-          .eq('caja_session_id', cajaSessionId)
-          .maybeSingle()
-      );
-
-      if (!res.ok) {
-        logger.error('caja.tip_distribution_entry.fetch_failed', { message: res.error.message });
-        return res as Result<TipDistributionEntry | null>;
-      }
-
-      if (!res.data) return ok(null);
-
-      return mapTipDistributionEntryRow(res.data as Record<string, unknown>);
     },
   });
 }

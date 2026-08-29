@@ -2,7 +2,7 @@
  * E2E: Payment Edge Cases — /payments
  *
  * Tests exact-change calculation, insufficient cash validation,
- * tip field (optional), and discount field (optional).
+ * and discount field (optional).
  */
 
 import { expect, test, type Page } from '../fixtures';
@@ -181,38 +181,6 @@ test.describe('Payment Edge Cases', () => {
     } else {
       expect(isDisabled).toBe(true);
     }
-    await logout(page);
-  });
-
-  test('PE3: tip field — enter $2 tip, receipt shows tip line', async ({ page }) => {
-    test.setTimeout(120_000);
-    await loginAs(page, 'manager');
-    await seedTabWithProduct('PE3 Tip Test');
-
-    await unlockPaymentForm(page, 'PE3 Tip Test');
-
-    await page.getByTestId('payment-btn-cash').click();
-    // "Custom tip" (paymentForm.customTip) is the actual field label — a bare
-    // /tip/i regex also matches the "Tip" summary-line MoneyDisplay elsewhere
-    // in the form and the preset-percentage buttons' surrounding copy,
-    // producing a strict-mode violation that `.catch(() => false)` silently
-    // swallowed as "not visible", which is what made this test wrongly
-    // believe tip UI wasn't implemented. It is — see PaymentForm.tsx's
-    // customTip MoneyInput, rendered whenever method !== 'rappi'.
-    const tipInput = page.getByLabel(/custom tip/i);
-    await expect(tipInput).toBeVisible({ timeout: 10_000 });
-
-    await tipInput.fill('2');
-    await page.getByLabel(/amount tendered/i).fill('500');
-    await page.getByRole('button', { name: /process payment/i }).click();
-
-    await expect(page.getByRole('heading', { name: 'Receipt' })).toBeVisible({ timeout: 90_000 });
-    // A bare /tip/i also matches "PE3 Tip Test" in the tab-name heading above
-    // the receipt (strict-mode violation) — scope to the receipt's own <pre>
-    // block and assert the actual tip line with its $2.00 amount.
-    const receiptText = page.locator('pre');
-    await expect(receiptText).toContainText(/tip\s+\$2\.00/i, { timeout: 5_000 });
-    await page.getByRole('button', { name: 'Done' }).click();
     await logout(page);
   });
 

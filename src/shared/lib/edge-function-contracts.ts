@@ -36,7 +36,6 @@ import type { AppError } from './supabase-contracts';
 export const ReceiptTenderSchema = z.object({
   method: PaymentMethodSchema,
   amount: MoneySchema,
-  tipAmount: MoneySchema,
   tenderedAmount: MoneySchema.nullable().optional(),
   changeAmount: MoneySchema.nullable().optional(),
   /** Terminal / BBVA receipt reference — never log raw value */
@@ -68,7 +67,6 @@ export const ReceiptDataSchema = z.object({
     })
   ),
   subtotal: MoneySchema,
-  tipAmount: MoneySchema,
   total: MoneySchema,
   paymentMethod: PaymentMethodSchema,
   processedAt: TimestampSchema,
@@ -104,7 +102,6 @@ export const ProcessPaymentRequestSchema = z
   .object({
     tabId: UuidSchema,
     amount: MoneySchema,
-    tipAmount: MoneySchema,
     method: PaymentMethodSchema,
     idempotencyKey: z.string().min(1).max(255),
     tenderedAmount: MoneySchema.nullable().optional(),
@@ -522,7 +519,6 @@ export const ProcessDirectSaleRequestSchema = z
     idempotencyKey: z.string().min(1).max(255),
     method: z.enum(['cash', 'card']).optional(),
     amount: MoneySchema.optional(),
-    tipAmount: MoneySchema.optional(),
     tenderedAmount: MoneySchema.nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
     legs: z
@@ -530,7 +526,6 @@ export const ProcessDirectSaleRequestSchema = z
         z.object({
           method: z.enum(['cash', 'card']),
           amount: MoneySchema,
-          tipAmount: MoneySchema,
           tenderedAmount: MoneySchema.nullable().optional(),
           referenceNumber: z.string().max(64).nullable().optional(),
         })
@@ -715,7 +710,6 @@ export const SplitPaymentLegRequestSchema = z
   .object({
     method: PaymentMethodSchema,
     amount: MoneySchema,
-    tipAmount: MoneySchema,
     tenderedAmount: MoneySchema.nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
     rappiOrderId: z.string().max(128).nullable().optional(),
