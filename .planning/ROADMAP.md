@@ -385,7 +385,20 @@ SmartScreen warning, no localhost-baked build.
      with zero manual configuration steps beyond running the installer and clicking through that
      one SmartScreen prompt.
 
-**Plans:** TBD
+**Plans:** 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 20-01-PLAN.md — Tracer: deploy all 12 edge functions + reachability smoke-check (DEP-03), then
+  collect real secret values (checkpoint:human-action) and set them on the remote project (DEP-04)
+
+**Wave 2** *(blocked on Wave 1 completion — shares `.gitignore`/`.env.production` protection with Plan 01)*
+
+- [ ] 20-02-PLAN.md — Self-signed cert generation + NSIS Trusted-Root import + signed real build (DEP-01),
+  pre-ship installer integrity-check script (DEP-02), and CI release-pipeline signing wire-up
+
+**UI hint**: no
 
 ## Progress
 
@@ -413,7 +426,7 @@ v1.2 (paused) resumes at Phase 11 → 12 → 13 if picked back up; v1.3 (active)
 | 17. E2E Suite Overhaul | v1.3 | 17/17 | In Progress|  |
 | 18. Barcode Scan Product Peek Window | v1.4 | 3/3 | In Progress|  |
 | 19. Store-Local Durable Printing Service | v1.5 | 0/8 | Planned | - |
-| 20. Store Deployment: Signed Elevated Installer | v1.6 | 0/TBD | Not started | - |
+| 20. Store Deployment: Signed Elevated Installer | v1.6 | 0/2 | Planned | - |
 
 ### Phase 17: E2E Suite Overhaul
 
