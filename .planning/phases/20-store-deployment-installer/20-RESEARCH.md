@@ -493,17 +493,22 @@ functions.
 | A3 | 7-Zip's NSIS support extracts/lists Tauri-v2-produced NSIS installers specifically (not just NSIS installers in general) without special flags | Pattern 4 | If Tauri's NSIS output uses a compression mode 7z can't read, DEP-02's integrity check needs a fallback (e.g., source-side checks only — verifying `tauri.conf.json`'s resource map and `windows/hooks.nsh` contents, both already fully readable) |
 | A4 | The store machine's actual delivery path (build-on-machine vs. USB vs. LAN share) has not been decided by the user — this research recommends one for DEP-01's sake but it is not a locked decision | Common Pitfalls 1, Open Questions | If the user insists on distributing via the existing public GitHub Release download flow, DEP-01's "no SmartScreen" criterion cannot be met by code-signing alone, and the phase needs either a real CA cert or a revised success criterion |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which delivery mechanism ships the installer to the store machine?**
+1. **Which delivery mechanism ships the installer to the store machine?** — RESOLVED (2026-08-28, user
+   decision via AskUserQuestion during `/gsd-plan-phase 20`): keep the existing public GitHub Release
+   download for the initial install. Since MOTW/SmartScreen mechanics mean this conflicts with DEP-01's
+   original "no SmartScreen" wording, DEP-01 was relaxed (see REQUIREMENTS.md and ROADMAP.md) to accept
+   a one-time "More info → Run anyway" click-through on first launch instead of requiring a real CA cert
+   or a local/USB delivery change. No GitHub Actions delivery-mechanism changes are in scope for this
+   phase; 20-02-PLAN.md's Task 3 does still wire the same signing mechanism into the release workflow's
+   Windows runner so the artifact customers actually download is the signed one.
    - What we know: the existing `.github/workflows/release.yml` produces a public, browser-downloadable
      GitHub Release; MOTW/SmartScreen mechanics mean this conflicts with DEP-01 as literally worded.
-   - What's unclear: whether the user intends to keep using that pipeline for this one-store deployment,
-     or build/transfer locally instead.
-   - Recommendation: planner should surface this explicitly as a decision point before writing tasks —
-     it changes whether any GitHub Actions changes are in scope for this phase at all.
 
-2. **Does the Tauri auto-updater's own install flow re-trigger SmartScreen on future updates?**
+2. **Does the Tauri auto-updater's own install flow re-trigger SmartScreen on future updates?** — RESOLVED
+   (out of scope): explicitly deferred to a later phase if update-time SmartScreen becomes a real observed
+   problem. DEP-01 only covers behavior after first install.
    - What we know: `tauri.conf.json`'s updater config uses a separate minisign keypair
      (`TAURI_SIGNING_PRIVATE_KEY`) for update-package integrity, unrelated to Authenticode/SmartScreen.
    - What's unclear: whether the updater's own downloaded-and-installed artifact (which DOES cross a
@@ -511,15 +516,12 @@ functions.
      whether that matters for UX (updates are typically silent/passive, `installMode: "passive"` per
      `tauri.conf.json` — a passive UI may not surface a SmartScreen dialog the same way a fresh
      double-click launch would, but this is not confirmed this session).
-   - Recommendation: out of this phase's explicit scope (DEP-01 only covers "after first install") — flag
-     for a later phase if update-time SmartScreen becomes a real observed problem.
 
-3. **Should `BAR_NAME`/`BAR_ADDRESS` actually be renamed, or just set with real values?**
+3. **Should `BAR_NAME`/`BAR_ADDRESS` actually be renamed, or just set with real values?** — RESOLVED: set
+   the values correctly now (20-01-PLAN.md Task 3); rename deferred as a zero-urgency follow-up, not
+   included in this phase's diff.
    - What we know: DEP-04's wording allows either ("rename or just set correctly"); 3 separate call sites
      read these exact names with different fallback defaults.
-   - What's unclear: whether a rename is worth the diff size for a single-store deploy phase.
-   - Recommendation: set the values correctly now (required either way); defer the rename as a
-     zero-urgency follow-up unless the planner judges the diff trivial to include.
 
 ## Environment Availability
 
