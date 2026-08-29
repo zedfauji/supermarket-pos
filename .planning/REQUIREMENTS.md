@@ -114,8 +114,11 @@ installer packaging work the phase was originally scoped for.
 
 - [ ] **DEP-01**: The NSIS installer runs fully elevated (single UAC prompt covers Windows Service
   registration, firewall rule, and cert Trusted-Root import) and is code-signed with a self-signed
-  certificate generated at build time and auto-trusted during install — no SmartScreen warning on
-  the store machine after first install.
+  certificate generated at build time and auto-trusted during install. The installer is distributed
+  via the existing public GitHub Release download, which applies Mark-of-the-Web and means SmartScreen
+  will still show once on first launch regardless of signing (a self-signed cert cannot suppress this
+  for a browser-downloaded file) — a one-time "More info → Run anyway" click-through on first launch
+  is accepted; no SmartScreen warning is expected on any subsequent run or update.
 
 - [ ] **DEP-02**: An installer integrity-check script verifies the built artifact actually contains
   the broker sidecar (`broker/broker.exe`), the signing certificate, the correct baked

@@ -347,6 +347,46 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 20: Store Deployment: Signed Elevated Installer
+
+**Goal:** A `npm run tauri build` on this repo produces a single NSIS installer that a store owner
+can run with one UAC prompt to get a fully working, code-signed POS pointed at a fully deployed
+remote Supabase backend — no manual `supabase functions deploy`, no manual secret-setting, no
+SmartScreen warning, no localhost-baked build.
+**Depends on:** Phase 19 (broker sidecar + `windows/hooks.nsh` post-install hook infrastructure)
+**Requirements:** DEP-01, DEP-02, DEP-03, DEP-04
+**Success Criteria:**
+
+  1. All 12 Supabase Edge Functions the app depends on (`process-payment`, `process-split-payment`,
+     `create-staff`, `process-direct-sale`, `receive-shipment`, `send-receipt-email`,
+     `settings-backup`, `settings-restore`, `settings-email-status`, `settings-test-email`,
+     `get-server-time`, `agent-proxy`) are deployed to the remote project and reachable — verified by
+     invoking each from a real build.
+
+  2. Every edge-function secret (`ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RECEIPT_FROM_EMAIL`,
+     `BAR_NAME`/`BAR_ADDRESS`) is set on the remote project via `supabase secrets set` — verified by
+     `supabase secrets list` showing all required keys with non-empty digests.
+
+  3. `npm run tauri build` produces an NSIS installer that runs fully elevated (single UAC prompt)
+     and, in that one elevation, registers the print-broker Windows Service, adds the LAN firewall
+     rule, and imports the build-time self-signed cert into the machine's Trusted Root store —
+     verified by a real install with no follow-up permission prompts or manual steps.
+
+  4. An installer integrity-check script confirms the built artifact contains `broker/broker.exe`,
+     the signing certificate, the correct baked `VITE_SUPABASE_URL` (the remote project, never
+     `127.0.0.1`), and the NSIS printer-broker hooks — verified by running the script against the
+     built artifact before it ships.
+
+  5. The installer keeps shipping via the existing public GitHub Release download; a one-time
+     SmartScreen "More info → Run anyway" click-through on first launch (unavoidable for a
+     browser-downloaded, self-signed-cert file per Mark-of-the-Web) is accepted, and no SmartScreen
+     warning appears on any subsequent run or auto-update. A real end-to-end smoke pass (login →
+     checkout → print → shipment receiving → staff creation) succeeds against the remote backend
+     with zero manual configuration steps beyond running the installer and clicking through that
+     one SmartScreen prompt.
+
+**Plans:** TBD
+
 ## Progress
 
 **Execution Order:**
@@ -373,6 +413,7 @@ v1.2 (paused) resumes at Phase 11 → 12 → 13 if picked back up; v1.3 (active)
 | 17. E2E Suite Overhaul | v1.3 | 17/17 | In Progress|  |
 | 18. Barcode Scan Product Peek Window | v1.4 | 3/3 | In Progress|  |
 | 19. Store-Local Durable Printing Service | v1.5 | 0/8 | Planned | - |
+| 20. Store Deployment: Signed Elevated Installer | v1.6 | 0/TBD | Not started | - |
 
 ### Phase 17: E2E Suite Overhaul
 
