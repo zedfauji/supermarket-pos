@@ -48,3 +48,44 @@ context: GSD exploration of packaging a seamless, elevated Windows installer for
   whether anything went wrong.
 - `must_change_pin: true` on the seeded admin means the very first login will force a PIN change —
   make sure whoever does that first login expects the prompt.
+
+## Incident: Vinty Owner could not log in (2026-08-30)
+
+**Symptom:** After the installer shipped, `Vinty Owner` could not log in ("No se pudo iniciar sesión"),
+password recovery failed, and magic link failed — all with generic client-facing errors. Supabase
+Studio's own "Reset password" action also failed with `Database error finding user`.
+
+**Root cause:** This account was seeded above via a raw SQL INSERT into `auth.users`, not through
+GoTrue's Admin API. GoTrue's Go driver scans several `auth.users` text columns
+(`confirmation_token`, `email_change`, `email_change_token_new`, `recovery_token`) into non-nullable
+Go strings. These 4 columns have **no `DEFAULT ''`** at the Postgres schema level (unlike their
+siblings `email_change_token_current`/`phone_change`/`phone_change_token`/`reauthentication_token`,
+which already default to `''`). The raw INSERT above didn't set them, so they landed `NULL` —
+confirmed via Supabase's own log stream (`auth_logs`): every affected endpoint (`/token`, `/recover`,
+`/magiclink`, `/admin/users`) returned a 500 `error finding user: sql: Scan error ... converting NULL
+to string is unsupported`. GoTrue's own `createUser`/Admin API always sets these explicitly, which is
+exactly why none of this repo's own seeded fixture/test accounts (all created via
+`scripts/setup-dev-users.ts`, `scripts/setup-test-fixtures.ts`, `scripts/seed-remote-e2e-admin.ts`, or
+the app's `create-staff` edge function) ever hit this — only this one hand-seeded production account did.
+
+**Fix:**
+1. Live backfill (`UPDATE auth.users SET confirmation_token = COALESCE(...), ...`) — confirmed real
+   login succeeded immediately after.
+2. Captured as `supabase/migrations/20260830000001_auth_users_token_defaults.sql` (idempotent
+   COALESCE backfill) so any environment applying migrations from scratch gets the same repair.
+3. **Could not** add a schema-level `DEFAULT ''` to close the gap permanently — `ALTER TABLE
+   auth.users ALTER COLUMN ... SET DEFAULT ''` fails with `must be owner of table users` (42501)
+   under both `supabase db push` and a direct SQL connection, and even `SET ROLE
+   supabase_auth_admin` is itself permission-denied. Supabase deliberately locks ownership of the
+   `auth` schema to its own managed GoTrue service — this is a platform boundary the project cannot
+   migrate around.
+4. **Prevention is procedural, not schematic:** never create an `auth.users` row via a raw SQL INSERT
+   again. Always provision accounts through GoTrue's Admin API (`supabase.auth.admin.createUser()`)
+   or Supabase Studio's "Add user" button (which calls the same Admin API internally) — both already
+   set every token column correctly.
+
+Also discovered mid-incident: the disposable E2E fixture admin account created by Phase 20's
+gap-closure plan (20-03) was removed post-launch along with all other E2E test residue
+(payments/refunds/tabs/orders/caja_sessions/products), and the catalog was reseeded with 27 real
+Indian grocery products across 9 categories, plus a real staff account (`Alex Cashier`, cashier role).
+Full ledger entry: `.planning/WINDOWS.md` #42.

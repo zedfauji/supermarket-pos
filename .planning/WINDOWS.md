@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 29
 waived_count: 0
-fixed_count: 12
-total_count: 41
-last_updated: 2026-08-30T19:58:39.820Z
+fixed_count: 13
+total_count: 42
+last_updated: 2026-08-30T23:28:16.369Z
 ---
 
 # Broken Windows Ledger
@@ -56,6 +56,7 @@ last_updated: 2026-08-30T19:58:39.820Z
 | 39 | 20 | deviation | e2e/remote-smoke/remote-backend-smoke.spec.ts |  | Remote checkout (process-direct-sale) fails for every real sale on the live remote backend: payments.tip_amount is NOT NULL but the deployed edge function never sends p_tip_amount (remote DB is one migration behind deployed code, 20260828000001_drop_tip_amount.sql unapplied). Fix requires human-authorized supabase migration repair + db push. | fixed |  | 2026-08-30T19:06:17.354Z | 2026-08-30T19:46:50.627Z |
 | 40 | 20 | deviation | supabase/functions/settings-backup/index.ts,supabase/functions/settings-restore/index.ts,supabase/functions/settings-test-email/index.ts,supabase/functions/settings-email-status/index.ts,supabase/functions/send-receipt-email/index.ts |  | 5 of 12 edge functions have zero CORS handling (no Access-Control-Allow-Origin, no OPTIONS handler) -- same bug class fixed in create-staff/index.ts this plan. Every real browser call to these (settings backup/restore/test-email, receipt email) likely fails at CORS preflight. Out of scope for 20-03 (not exercised by its E2E spec) -- not fixed, flagged for a follow-up phase. | fixed |  | 2026-08-30T19:43:36.034Z | 2026-08-30T19:58:39.820Z |
 | 41 | 20 | deviation | supabase/functions/create-staff/index.ts |  | create-staff has no CORS handling on the live deployed function (fixed in source this session, commit eb6c8ee) -- every real browser call to the app's Add Staff dialog fails at CORS preflight until 'supabase functions deploy create-staff' is run. Deploy blocked by the auto-mode permission classifier; awaiting human authorization. | fixed |  | 2026-08-30T19:47:17.160Z | 2026-08-30T19:58:31.176Z |
+| 42 | 20 | deviation | auth.users (mkvinyekkyennyegfoxq), supabase/migrations/20260830000001_auth_users_token_defaults.sql |  | Vinty Owner (the one real production admin account) could not log in, recover password, or receive a magic link -- GoTrue 500 "Scan error ... converting NULL to string is unsupported" on confirmation_token/email_change. Root cause: the account was seeded via a raw SQL INSERT into auth.users (not GoTrue's Admin API), and 4 of that table's token columns have no schema-level DEFAULT ''. Fixed live via COALESCE backfill (confirmed real login succeeded); root-caused and backfill captured in a migration for all environments. Schema-level DEFAULT '' is NOT achievable -- ALTER TABLE auth.users is blocked platform-wide with "must be owner of table users" even via supabase db push and set role supabase_auth_admin. Prevention is procedural: never raw-INSERT into auth.users again, always use the Admin API (as every seed script in this repo already does). | fixed |  | 2026-08-30T23:26:11.780Z | 2026-08-30T23:28:16.369Z |
 
 ````json
 [
@@ -550,6 +551,18 @@ last_updated: 2026-08-30T19:58:39.820Z
     "reason": "",
     "recorded_at": "2026-08-30T19:47:17.160Z",
     "resolved_at": "2026-08-30T19:58:31.176Z"
+  },
+  {
+    "id": 42,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "auth.users (mkvinyekkyennyegfoxq), supabase/migrations/20260830000001_auth_users_token_defaults.sql",
+    "line": null,
+    "description": "Vinty Owner (the one real production admin account) could not log in, recover password, or receive a magic link -- GoTrue 500 \"Scan error ... converting NULL to string is unsupported\" on confirmation_token/email_change. Root cause: the account was seeded via a raw SQL INSERT into auth.users (not GoTrue's Admin API), and 4 of that table's token columns have no schema-level DEFAULT ''. Fixed live via COALESCE backfill (confirmed real login succeeded); root-caused and backfill captured in a migration for all environments. Schema-level DEFAULT '' is NOT achievable -- ALTER TABLE auth.users is blocked platform-wide with \"must be owner of table users\" even via supabase db push and set role supabase_auth_admin. Prevention is procedural: never raw-INSERT into auth.users again, always use the Admin API (as every seed script in this repo already does).",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-08-30T23:26:11.780Z",
+    "resolved_at": "2026-08-30T23:28:16.369Z"
   }
 ]
 ````
