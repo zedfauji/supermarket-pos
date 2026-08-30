@@ -1,16 +1,16 @@
 # Graph Report - supermarket-pos  (2026-08-30)
 
 ## Corpus Check
-- 1317 files · ~2,396,684 words
+- 1317 files · ~2,397,693 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 9114 nodes · 15572 edges · 700 communities (527 shown, 173 thin omitted)
+- 9114 nodes · 15572 edges · 698 communities (525 shown, 173 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 84 edges (avg confidence: 0.69)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5c46fd49`
+- Built from commit: `7b2429aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -678,15 +678,13 @@
 - card.tsx
 - @radix-ui/react-tabs
 - react-markdown
-- StaffDashboard.test.tsx
 - RefundsRegister.test.tsx
 - CommandChips.tsx
 - useExportReport.test.ts
-- test-setup.ts
 - @chromatic-com/storybook
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (702 total, 174 thin omitted)` - 497 edges
+1. `Communities (700 total, 173 thin omitted)` - 497 edges
 2. `ok()` - 206 edges
 3. `err()` - 172 edges
 4. `cn()` - 142 edges
@@ -712,11 +710,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (700 total, 173 thin omitted)
+## Communities (698 total, 173 thin omitted)
 
 ### Community 0 - "domain.ts"
 Cohesion: 0.02
-Nodes (117): AuditLogFiltersSchema, AuditSource, AuditSourceSchema, BillingPaymentMethodsSchema, CajaEntryCreateSchema, CajaEntryType, CajaEntryTypeSchema, CajaReportStaff (+109 more)
+Nodes (123): AuditLogFiltersSchema, AuditSource, AuditSourceSchema, BillingPaymentMethodsSchema, CajaEntryCreateSchema, CajaEntryType, CajaEntryTypeSchema, CajaReportStaff (+115 more)
 
 ### Community 1 - "Phase 10: Quality debt & ops documentation - Research"
 Cohesion: 0.04
@@ -783,8 +781,8 @@ Cohesion: 0.04
 Nodes (48): Alternatives Considered, Anti-Patterns to Avoid, Applicable ASVS Categories, Architectural Responsibility Map, Architecture Patterns, Assumptions Log, Claude's Discretion, Code Examples (+40 more)
 
 ### Community 17 - "inventory/model/queries.ts"
-Cohesion: 0.07
-Nodes (39): ENTITY_BY_ACTION_TYPE, OfflineQueueProcessor(), payloadEntityId(), addOrderMutation, onlineStatus, openTabMutation, supabaseRpc, toastMock (+31 more)
+Cohesion: 0.05
+Nodes (55): ENTITY_BY_ACTION_TYPE, OfflineQueueProcessor(), payloadEntityId(), addOrderMutation, onlineStatus, openTabMutation, supabaseRpc, toastMock (+47 more)
 
 ### Community 18 - "Phase 1: Strip & Rebrand - Research"
 Cohesion: 0.04
@@ -847,8 +845,8 @@ Cohesion: 0.18
 Nodes (31): data_dir(), db_path(), err_json(), ErrorResp, handle_audit(), handle_get_job(), handle_submit(), log() (+23 more)
 
 ### Community 33 - "csv.test.ts"
-Cohesion: 0.20
-Nodes (14): db, invalidateOpenUnits(), mapOpenUnitRow(), mapRpcError(), openUnitKeys, useMutationCorrectOpenUnit(), useMutationOpenOpenUnit(), useMutationVoidOpenUnit() (+6 more)
+Cohesion: 0.21
+Nodes (13): db, invalidateOpenUnits(), mapOpenUnitRow(), mapRpcError(), openUnitKeys, useMutationCorrectOpenUnit(), useMutationOpenOpenUnit(), useMutationVoidOpenUnit() (+5 more)
 
 ### Community 34 - "StaffDashboard.tsx"
 Cohesion: 0.08
@@ -880,7 +878,7 @@ Nodes (48): Anti-Patterns to Avoid, Applicable ASVS Categories (Level 1), Archit
 
 ### Community 41 - "Communities (618 total, 165 thin omitted)"
 Cohesion: 0.00
-Nodes (497): Communities (702 total, 174 thin omitted), Community 0 - "domain.ts", Community 100 - "Phase 2 Plan 07: Authorized Sale-Level Receipt for Direct and Split-Tender Sales Summary", Community 101 - "Phase 10 Plan 01: Suppliers loading + error states Summary", Community 102 - "scaffold.sh", Community 103 - "devDependencies", Community 104 - "global-teardown.ts", Community 105 - "Phase 1 Plan 1: Self-Hosted Supabase Provisioning Summary" (+489 more)
+Nodes (497): Communities (700 total, 173 thin omitted), Community 0 - "domain.ts", Community 100 - "Phase 2 Plan 07: Authorized Sale-Level Receipt for Direct and Split-Tender Sales Summary", Community 101 - "Phase 10 Plan 01: Suppliers loading + error states Summary", Community 102 - "scaffold.sh", Community 103 - "devDependencies", Community 104 - "global-teardown.ts", Community 105 - "Phase 1 Plan 1: Self-Hosted Supabase Provisioning Summary" (+489 more)
 
 ### Community 42 - "PINLoginForm.tsx"
 Cohesion: 0.10
@@ -904,7 +902,7 @@ Nodes (25): Locale, CURRENCY_SYMBOL, formatMoneyIn(), formatPercent(), parseMone
 
 ### Community 47 - "dependencies"
 Cohesion: 0.07
-Nodes (27): class-variance-authority, cmdk, dependencies, class-variance-authority, cmdk, @radix-ui/react-dialog, react-dom, react-i18next (+19 more)
+Nodes (27): clsx, cmdk, dependencies, clsx, cmdk, @radix-ui/react-dialog, react-dom, react-i18next (+19 more)
 
 ### Community 48 - "pdf.tsx"
 Cohesion: 0.19
@@ -1128,7 +1126,7 @@ Nodes (14): check_prerequisites(), create_configs(), create_readme(), create_sec
 
 ### Community 103 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): @eslint/js, eslint-plugin-react-hooks, openai, devDependencies, @eslint/js, eslint-plugin-react-hooks, knip, openai (+7 more)
+Nodes (15): autoprefixer, eslint-plugin-react-hooks, openai, devDependencies, autoprefixer, eslint-plugin-react-hooks, knip, openai (+7 more)
 
 ### Community 104 - "global-teardown.ts"
 Cohesion: 0.18
@@ -1575,8 +1573,8 @@ Cohesion: 0.15
 Nodes (12): CR-01: `backups/` (created by the new backup script) is not gitignored — real path to committing full DB dumps, Critical Issues, IN-01: `useCheckoutSale.test.ts` success-path tests never assert the outgoing request shape, Info, Phase 10: Code Review Report, Summary, Warnings, WR-01: Copy-ID button's hit target is 32×32px, not the UI-SPEC's mandated 44px minimum (+4 more)
 
 ### Community 217 - "LogoImage/index.tsx"
-Cohesion: 0.07
-Nodes (33): ProvidersProps, UpdaterProvider(), db, rbacKeys, FromMock, useRolePermissions(), db, OverrideInput (+25 more)
+Cohesion: 0.10
+Nodes (23): db, rbacKeys, FromMock, useRolePermissions(), db, createWrapper(), InsertChain, TogglePermissionInput (+15 more)
 
 ### Community 218 - "is_server_ready"
 Cohesion: 0.67
@@ -2310,10 +2308,6 @@ Nodes (8): CodeChunk, formatChunks(), generateEmbedding(), getApiKey(), getEmbed
 Cohesion: 0.14
 Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Known Stubs, Out-of-scope discoveries (not fixed, logged), Performance (+5 more)
 
-### Community 539 - "reopen-closed-ticket.spec.ts"
-Cohesion: 0.33
-Nodes (5): baseInput, mockedRpc, useProcessRefund(), ProcessRefundInput, ProcessRefundInputSchema
-
 ### Community 541 - "usePhysicalCount.ts"
 Cohesion: 0.21
 Nodes (11): barcodeSvg(), db, __dirname, ean13ToBits(), envPath, escapeHtml(), L_EVEN, L_ODD (+3 more)
@@ -2425,10 +2419,6 @@ Nodes (7): Manual-Only Verifications, Per-Task Verification Map, Phase 19 — Va
 ### Community 576 - "Phase 18 — Validation Strategy"
 Cohesion: 0.20
 Nodes (9): audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117), Manual-Only Verifications, Per-Task Verification Map, Phase 18 — Validation Strategy, Sampling Rate, status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6), Test Infrastructure, Validation Sign-Off (+1 more)
-
-### Community 577 - "zustand"
-Cohesion: 0.29
-Nodes (6): SupplierCreate, SupplierCreateSchema, SupplierProduct, SupplierProductSchema, SupplierUpdate, SupplierUpdateSchema
 
 ### Community 578 - "assign-barcodes.ts"
 Cohesion: 0.27
@@ -2708,14 +2698,14 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `react` connect `pdf.tsx` to `pos-printer.ts`, `drizzle-orm`, `Product`, `dependencies`, `ui/index.ts`, `StaffSalesPanel.tsx`, `email-receipt.ts`, `LogoImage/index.tsx`?**
   _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `immer`, `remark-gfm`, `xlsx`, `RoutingBadge.tsx`, `dotenv`, `RefundsRegister.test.tsx`, `ConfirmActionCard.tsx`, `content.ts`, `DeletionsPostCloseReport.tsx`, `zod`, `@fontsource/playfair-display`, `input-otp`, `@radix-ui/react-tooltip`, `supabase`, `pdf.tsx`, `@radix-ui/react-tabs`, `react-markdown`, `lucide-react`, `tailwind-merge`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-opener`, `test-setup.ts`, `@radix-ui/react-scroll-area`, `@react-pdf/renderer`, `react-router-dom`, `shadcn`, `sonner`, `@tanstack/react-table`, `@tauri-apps/api`, `@tauri-apps/plugin-notification`, `tw-animate-css`, `@radix-ui/react-slot`, `@fontsource-variable/geist`, `package.json`, `@radix-ui/react-alert-dialog`, `react-error-boundary`, `date-fns`, `i18next`?**
+- **Why does `dependencies` connect `dependencies` to `immer`, `remark-gfm`, `xlsx`, `RoutingBadge.tsx`, `dotenv`, `RefundsRegister.test.tsx`, `ConfirmActionCard.tsx`, `content.ts`, `DeletionsPostCloseReport.tsx`, `reopen-closed-ticket.spec.ts`, `zod`, `@fontsource/playfair-display`, `input-otp`, `@radix-ui/react-tooltip`, `supabase`, `pdf.tsx`, `@radix-ui/react-tabs`, `react-markdown`, `lucide-react`, `tailwind-merge`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-opener`, `@radix-ui/react-scroll-area`, `@react-pdf/renderer`, `react-router-dom`, `shadcn`, `sonner`, `@tanstack/react-table`, `@tauri-apps/api`, `@tauri-apps/plugin-notification`, `tw-animate-css`, `@radix-ui/react-slot`, `@fontsource-variable/geist`, `package.json`, `@radix-ui/react-alert-dialog`, `react-error-boundary`, `date-fns`, `i18next`?**
   _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `ok()` connect `err` to `drizzle-orm`, `edge-function-contracts.ts`, `discount-and-revenue.spec.ts`, `unknownError`, `logger-instance.ts`, `inventory/model/queries.ts`, `card.tsx`, `getServiceClient`, `settings/model/queries.ts`, `useExportReport.ts`, `reopen-closed-ticket.spec.ts`, `queries-reports.ts`, `csv.test.ts`, `StaffDashboard.tsx`, `card.tsx`, `tab/model/queries.ts`, `PINLoginForm.tsx`, `open-unit/model/queries.ts`, `useReceiveShipment.ts`, `@radix-ui/react-dialog`, `email-receipt.ts`, `BillingSettingsTab.tsx`, `tip-distribution-math.ts`, `payment/model/queries.ts`, `LogoImage/index.tsx`, `HomeDashboard.test.tsx`, `lib/supabase.ts`, `discount-and-revenue.spec.ts`, `useServerTimeDrift.ts`?**
+- **Why does `ok()` connect `err` to `drizzle-orm`, `edge-function-contracts.ts`, `discount-and-revenue.spec.ts`, `unknownError`, `logger-instance.ts`, `inventory/model/queries.ts`, `card.tsx`, `getServiceClient`, `settings/model/queries.ts`, `useExportReport.ts`, `queries-reports.ts`, `csv.test.ts`, `StaffDashboard.tsx`, `card.tsx`, `tab/model/queries.ts`, `PINLoginForm.tsx`, `open-unit/model/queries.ts`, `useReceiveShipment.ts`, `@radix-ui/react-dialog`, `email-receipt.ts`, `BillingSettingsTab.tsx`, `tip-distribution-math.ts`, `payment/model/queries.ts`, `LogoImage/index.tsx`, `HomeDashboard.test.tsx`, `lib/supabase.ts`, `discount-and-revenue.spec.ts`, `useServerTimeDrift.ts`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **What connects `config`, `preview`, `$schema` to the rest of the system?**
   _5223 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `domain.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.018425687576209184 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.01804748062015504 - nodes in this community are weakly interconnected._
 - **Should `Phase 10: Quality debt & ops documentation - Research` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
 - **Should `useStaffStore` be split into smaller, more focused modules?**
