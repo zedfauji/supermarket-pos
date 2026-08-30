@@ -71,8 +71,18 @@ so this exception only actually surfaces via the PINKeypad's own keys.
 This phase introduces **no new typography** — every text role below is inherited verbatim from the
 reused components (`AlertDialogTitle`, `AlertDialogDescription`, `PINKeypad`, `Label`, `Input`
 placeholder/hint text). Declared here for completeness/traceability, not as new design decisions.
-Capped at 2 weights (dimension-4 contract): 400 regular for Body/Label/Display, 600 semibold for
-Heading only.
+`IdleLockOverlay` renders exactly **2 font weights**: 400 regular (Body/Label/Display) and 600
+semibold (Heading only).
+
+`PINKeypad`'s optional label span (`font-medium`, 500 weight, `shared/ui/PINKeypad.tsx:114`) only
+renders when a `label` prop is passed — it's conditional (`{label && <label ...>}`). Unlike
+`ManagerPinDialog` (which passes `label={t('managerPinGate.pinLabel')}` and keeps that pre-existing
+500-weight label — untouched, out of scope for this phase), `IdleLockOverlay`'s `PINKeypad` usage
+**omits the `label` prop entirely**. The overlay's own `AlertDialogTitle` ("Pantalla bloqueada" /
+"Screen Locked") and `AlertDialogDescription` ("Ingresa el PIN de cualquier empleado para
+desbloquear." / "Enter any staff member's PIN to unlock.") already communicate "enter your PIN," so
+the label is redundant here and dropping it also keeps this surface at 2 weights, not 3. The
+500-weight label span never renders on this phase's overlay.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
@@ -81,15 +91,9 @@ Heading only.
 | Heading | 18px (`text-lg`) | 600 semibold, `font-heading` (Playfair Display) | 1.2 |
 | Display | 24px (`text-2xl`) | 400 regular | 1 (PIN dot display — `●`/`○` glyphs, unchanged `PINKeypad` styling) |
 
-**Exception (declared, justified, same treatment as the Spacing exceptions above):**
-`PINKeypad`'s own label text (its internal `font-medium`, 500 weight) is a pre-existing style baked
-into `shared/ui/PINKeypad.tsx`, reused verbatim by `IdleLockOverlay` — not a new weight introduced
-by this phase's design decisions. Changing it would mean editing `PINKeypad.tsx` itself, which is
-out of scope for this phase (it's shared, load-bearing UI used by `ManagerPinDialog` and other
-existing flows; a weight tweak there is a cross-cutting change this phase does not need and should
-not risk). This is accepted as a scoped inherited exception to the 2-weight cap, exactly as
-`PINKeypad`'s 64px keys and 56px dialog buttons are accepted exceptions to the spacing scale above
-— not a third weight newly chosen for this phase's own surfaces.
+`LockSettingsTab` (this phase's other new surface) uses only roles already in the table above
+(`Label` 400, `Heading` 600 for its section title, `Body` 400 for the hint text) — same component
+set as `NearExpirySettingsTab`, no third weight there either.
 
 ---
 
@@ -128,7 +132,6 @@ en-US, per the project's `no-literal-string` lint gate):
 |-----|-----------|------|-------|
 | `idleLock.title` | `featOrders` | "Pantalla bloqueada" | "Screen Locked" |
 | `idleLock.description` | `featOrders` | "Ingresa el PIN de cualquier empleado para desbloquear." | "Enter any staff member's PIN to unlock." |
-| `idleLock.pinLabel` | `featOrders` | "Ingresa tu PIN" | "Enter PIN" |
 | `idleLock.incorrectPin` | `featOrders` | "PIN incorrecto. Intenta de nuevo." | "Incorrect PIN. Try again." |
 | `lockSettingsTab.title` | `wAdmin` | "Bloqueo automático de pantalla" | "Auto-Lock Timeout" |
 | `lockSettingsTab.thresholdLabel` | `wAdmin` | "Bloquear después de (segundos)" | "Lock after (seconds)" |
