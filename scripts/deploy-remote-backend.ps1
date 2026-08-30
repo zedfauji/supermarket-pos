@@ -160,7 +160,45 @@ foreach ($name in $requiredFunctions) {
 Write-Host "Section 1 (DEP-03: functions deploy + reachability) checks passed" -ForegroundColor Green
 
 # --- Secrets (DEP-04) ---
-# Task 3 appends the secrets-set/secrets-list logic below this marker. NOTE: the
-# terminal `Write-Host "All checks passed"` / `exit 0` for the WHOLE script belongs
-# at the true end of file, after Task 3's appended section -- do not leave an
-# `exit 0` here, it would prevent Task 3's appended code from ever running.
+
+$requiredSecrets = @(
+    'ANTHROPIC_API_KEY',
+    'RESEND_API_KEY',
+    'RECEIPT_FROM_EMAIL',
+    'BAR_NAME',
+    'BAR_ADDRESS'
+)
+
+# --- Check: secrets env file exists and has >= 5 non-empty lines ---------------
+$secretsEnvFile = Join-Path $PSScriptRoot '..\supabase\.env.secrets.production'
+if (-not (Test-Path -LiteralPath $secretsEnvFile)) {
+    Fail "supabase/.env.secrets.production not found at '$secretsEnvFile'."
+}
+$nonEmptyLines = Get-Content -LiteralPath $secretsEnvFile | Where-Object { $_.Trim() -ne '' }
+if (@($nonEmptyLines).Count -lt 5) {
+    Fail "supabase/.env.secrets.production has fewer than 5 non-empty lines."
+}
+Write-Host "OK: supabase/.env.secrets.production exists with >= 5 non-empty lines." -ForegroundColor Green
+
+# --- Set secrets on the remote project ------------------------------------------
+Write-Host "Running: supabase secrets set --env-file supabase/.env.secrets.production --project-ref $projectRef" -ForegroundColor Cyan
+& supabase secrets set --env-file $secretsEnvFile --project-ref $projectRef
+if ($LASTEXITCODE -ne 0) {
+    Fail "supabase secrets set failed (exit code $LASTEXITCODE)."
+}
+Write-Host "OK: supabase secrets set completed." -ForegroundColor Green
+
+# --- Confirm all 5 required secret names are present (names only, never values) -
+$secretsListJson = & supabase secrets list --project-ref $projectRef -o json
+if ($LASTEXITCODE -ne 0) {
+    Fail "supabase secrets list failed (exit code $LASTEXITCODE)."
+}
+$secretNames = ($secretsListJson | ConvertFrom-Json) | Select-Object -ExpandProperty name
+$missingSecrets = $requiredSecrets | Where-Object { $secretNames -notcontains $_ }
+if ($missingSecrets) {
+    Fail "supabase secrets list is missing required secret(s): $($missingSecrets -join ', ')"
+}
+Write-Host "OK: supabase secrets list shows all 5 required secret names (values never printed)." -ForegroundColor Green
+
+Write-Host "All checks passed" -ForegroundColor Green
+exit 0

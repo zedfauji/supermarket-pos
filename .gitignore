@@ -16,6 +16,10 @@ dist-ssr
 .env
 .env.local
 
+# Phase 20 (DEP-04): remote production secrets — never commit (public repo)
+.env.production
+supabase/.env.secrets.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
