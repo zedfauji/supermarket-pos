@@ -36,6 +36,10 @@ supabase/.env.secrets.production
 *.key.pub
 *.pem
 
+# Phase 20 (DEP-01): build-regenerated self-signed code-signing cert resource —
+# fresh thumbprint every build, so this is an artifact, not a source input; never commit
+src-tauri/cert/
+
 *storybook.log
 storybook-static
 

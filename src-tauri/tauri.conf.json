@@ -29,6 +29,7 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "publisher": "Taj House of Spice Supermarket POS",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,7 +38,8 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../broker/target/release/broker.exe": "broker/broker.exe"
+      "../broker/target/release/broker.exe": "broker/broker.exe",
+      "cert/selfsigned.cer": "cert/selfsigned.cer"
     },
     "windows": {
       "nsis": {

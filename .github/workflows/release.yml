@@ -34,6 +34,13 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      - name: generate build cert (Phase 20, DEP-01)
+        id: gencert
+        shell: pwsh
+        run: |
+          $thumbprint = powershell -File scripts/generate-build-cert.ps1
+          echo "thumbprint=$thumbprint" >> $env:GITHUB_OUTPUT
+
       - uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,3 +54,4 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
           projectPath: supermarket-pos
+          args: '--config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}'

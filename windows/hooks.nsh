@@ -17,8 +17,12 @@
 ;     than erroring).
 ;   - `sc.exe start` on an already-running service is a documented no-op exit
 ;     code, not a failure.
+;   - `certutil -f -addstore Root` (Phase 20: Store Deployment: Signed Elevated
+;     Installer) uses `-f` (force), which makes re-adding an already-present
+;     cert a no-op rather than an error — safe to re-run on upgrade.
 !macro NSIS_HOOK_POSTINSTALL
   ExecWait '"$INSTDIR\broker\broker.exe" install'
   ExecWait 'netsh advfirewall firewall add rule name="Store Print Broker" dir=in action=allow program="$INSTDIR\broker\broker.exe" protocol=TCP localport=8973 profile=private remoteip=LocalSubnet'
   ExecWait 'sc.exe start PrintBrokerService'
+  ExecWait 'certutil -f -addstore Root "$INSTDIR\cert\selfsigned.cer"'
 !macroend
