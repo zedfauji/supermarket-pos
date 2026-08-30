@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 29
+open_count: 30
 waived_count: 0
 fixed_count: 9
-total_count: 38
-last_updated: 2026-08-27T16:35:25.923Z
+total_count: 39
+last_updated: 2026-08-30T19:06:17.354Z
 ---
 
 # Broken Windows Ledger
@@ -53,6 +53,7 @@ last_updated: 2026-08-27T16:35:25.923Z
 | 36 | 18 | deviation | e2e/checkout/barcode-scan-search.spec.ts |  | 9 tests fail pre-existing (confirmed via main branch diff, not introduced by 18-03): Phase 18's already-merged 18-01 CheckoutPanel change made scan populate only the search box (never mutate cart directly) since add-to-cart now flows through the peek window; this spec's tests still assert the pre-Phase-18 direct scan-to-cart UX. Covered instead by e2e/checkout/peek-window.spec.ts. Follow-up plan should retire/rewrite these assertions. | open |  | 2026-08-27T02:44:37.654Z |  |
 | 37 | 18 | deviation | e2e/checkout/atomic-rpc-guards.spec.ts | 400 | 2 tests (rejects a forged zero modifier delta, rejects a modifier not linked to the item product) fail pre-existing with 'Margarita not found' -- a bar-pos-era product name absent from Phase 17's Indian-grocery seed catalog. Unrelated to barcode scanning or the peek window; a stale fixture reference. | open |  | 2026-08-27T02:44:45.971Z |  |
 | 38 | 19 | unrun-verify | broker/src/delivery.rs |  | must_haves.truths #6 (ambiguous-handoff 'unknown', never auto-resubmitted) is a verbatim port of the spike's real-hardware-validated branch but has no independent automated test in this plan's suite — exercising GetJobW returning None deterministically requires a live Windows printer object with unpredictable RAW-datatype behavior, which this plan's own verification note allows skipping when unavailable. | open |  | 2026-08-27T16:35:25.923Z |  |
+| 39 | 20 | deviation | e2e/remote-smoke/remote-backend-smoke.spec.ts |  | Remote checkout (process-direct-sale) fails for every real sale on the live remote backend: payments.tip_amount is NOT NULL but the deployed edge function never sends p_tip_amount (remote DB is one migration behind deployed code, 20260828000001_drop_tip_amount.sql unapplied). Fix requires human-authorized supabase migration repair + db push. | open |  | 2026-08-30T19:06:17.354Z |  |
 
 ````json
 [
@@ -510,6 +511,18 @@ last_updated: 2026-08-27T16:35:25.923Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-27T16:35:25.923Z",
+    "resolved_at": null
+  },
+  {
+    "id": 39,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "e2e/remote-smoke/remote-backend-smoke.spec.ts",
+    "line": null,
+    "description": "Remote checkout (process-direct-sale) fails for every real sale on the live remote backend: payments.tip_amount is NOT NULL but the deployed edge function never sends p_tip_amount (remote DB is one migration behind deployed code, 20260828000001_drop_tip_amount.sql unapplied). Fix requires human-authorized supabase migration repair + db push.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-30T19:06:17.354Z",
     "resolved_at": null
   }
 ]
