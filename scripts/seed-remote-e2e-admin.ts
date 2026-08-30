@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   const admin = getServiceClient();
   const { data: existing, error } = await admin
     .from('profiles')
-    .select('id, role')
+    .select('id, role, locale')
     .eq('name', name)
     .maybeSingle();
   if (error) {
@@ -42,11 +42,19 @@ async function main(): Promise<void> {
   }
 
   if (existing) {
+    // Every UI selector in the remote-smoke spec asserts on English text —
+    // the app's cold-start default is es-MX (no browser-driven fallback),
+    // so this fixture must be pinned to en-US, same convention as the
+    // 4 local E2E accounts (setup-dev-users.ts).
+    if (existing.locale !== 'en-US') {
+      await admin.from('profiles').update({ locale: 'en-US' }).eq('id', existing.id as string);
+    }
     console.log(`already exists, skipping (id: ${existing.id as string}, role: ${existing.role as string})`);
     return;
   }
 
   const userId = await seedNewStaffMember(name, pin, 'admin');
+  await admin.from('profiles').update({ locale: 'en-US' }).eq('id', userId);
   console.log(`created fixture admin (id: ${userId})`);
 }
 
