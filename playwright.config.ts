@@ -51,7 +51,10 @@ export default defineConfig({
   // and loading a file that imports from 'vitest' inside Playwright's test
   // runner throws `Cannot redefine property: Symbol($$jest-matchers-object)`
   // and silently aborts discovery for the entire run (0 tests found).
-  testIgnore: [/visual\//, /\.test\.ts$/],
+  // /remote-smoke\// — this suite runs separately via playwright.remote.config.ts
+  // (npm run test:e2e:remote-smoke) against the real remote Supabase project;
+  // it must never run as a side effect of the default local-backend suite.
+  testIgnore: [/visual\//, /\.test\.ts$/, /remote-smoke\//],
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,

@@ -20,6 +20,9 @@ dist-ssr
 .env.production
 supabase/.env.secrets.production
 
+# Phase 20-03: remote E2E smoke-test credentials (service_role key + fixture admin PIN) — never commit
+.env.remote-e2e
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -48,9 +51,11 @@ coverage/
 artifacts/
 e2e-results/
 e2e-results-visual/
+e2e-results-remote-smoke/
 e2e-blob-reports/
 playwright-report/
 playwright-report-visual/
+playwright-report-remote-smoke/
 verification-artifacts/
 e2e/visual/**/*-snapshots/
 
