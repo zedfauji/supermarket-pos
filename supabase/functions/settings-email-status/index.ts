@@ -2,10 +2,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 type ErrorBody = { ok: false; error: { code: string; message: string } };
 
+// Missing on this function until now — every other edge function in this
+// project sets these, and their absence means every real browser call fails
+// at CORS preflight before ever reaching this code.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
 }
 
@@ -14,6 +22,7 @@ function err(status: number, code: string, message: string): Response {
 }
 
 Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return err(405, 'METHOD_NOT_ALLOWED', 'POST only');
 
   const authHeader = req.headers.get('Authorization');
