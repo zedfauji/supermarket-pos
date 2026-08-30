@@ -236,8 +236,10 @@ export async function getMigrationList(): Promise<{ name: string; applied: boole
   }
 
   return files.map(name => {
-    // CLI output shows only the timestamp prefix (e.g. "20260414000001"), not the full filename
-    const timestamp = name.split('_')[0];
+    // CLI output shows only the timestamp prefix (e.g. "20260414000001"), not the full filename.
+    // String.split always returns at least one element, so the `?? name` fallback is unreachable
+    // in practice — it exists only to satisfy noUncheckedIndexedAccess.
+    const timestamp = name.split('_')[0] ?? name;
     return {
       name,
       applied: cliOutput.includes(timestamp),
