@@ -10,7 +10,18 @@ const BodySchema = z.object({
   locale: z.enum(['es-MX', 'en-US']).optional(),
 })
 
+// Missing on this function until now — every other edge function in this
+// project (process-direct-sale, receive-shipment, etc.) sets these, and their
+// absence here means every real browser call to create-staff (the app's own
+// "Add Staff" dialog) fails at CORS preflight before ever reaching this code.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
   // Bearer-JWT verification via a direct HTTP call to /auth/v1/user.
   // admin.auth.getUser() fails on ES256-signed tokens ("Unsupported JWT
   // algorithm ES256") in this supabase-js version — the Auth REST API
@@ -19,7 +30,7 @@ Deno.serve(async (req) => {
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Missing bearer token' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -37,7 +48,7 @@ Deno.serve(async (req) => {
   if (!authVerifyResp.ok) {
     return new Response(JSON.stringify({ error: 'Invalid session' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -56,7 +67,7 @@ Deno.serve(async (req) => {
   if (callerProfileError || !callerProfile || !['admin', 'manager'].includes(callerProfile.role)) {
     return new Response(JSON.stringify({ error: 'Insufficient role' }), {
       status: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -66,7 +77,7 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -74,7 +85,7 @@ Deno.serve(async (req) => {
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: 'Invalid request' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -86,7 +97,7 @@ Deno.serve(async (req) => {
   if (['admin', 'manager'].includes(role) && callerProfile.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Insufficient role' }), {
       status: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -104,7 +115,7 @@ Deno.serve(async (req) => {
   if (authError) {
     return new Response(JSON.stringify({ error: authError.message }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -125,7 +136,7 @@ Deno.serve(async (req) => {
     await supabaseAdmin.auth.admin.deleteUser(staffId)
     return new Response(JSON.stringify({ error: profileError.message }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 
@@ -140,6 +151,6 @@ Deno.serve(async (req) => {
   })
 
   return new Response(JSON.stringify({ id: staffId, email, name, role }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
 })
