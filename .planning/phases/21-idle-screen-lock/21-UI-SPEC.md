@@ -31,6 +31,16 @@ call is needed. The two new pieces of UI in this phase (`IdleLockOverlay`, `Lock
 **compositions** of these existing primitives, modeled directly on `ManagerPinDialog.tsx` (overlay)
 and `NearExpirySettingsTab.tsx` (settings tab) — see RESEARCH.md Recommended Project Structure.
 
+**Visual focal point:** `IdleLockOverlay` is this phase's primary screen. Its focal point is the
+`PINKeypad` — centered on the blurred `--popover/90` surface, the only interactive element on the
+screen (no nav, no secondary actions, no dismiss control). This matches `ManagerPinDialog`'s
+existing focal treatment verbatim; `IdleLockOverlay` changes none of that hierarchy, only the
+title/description copy (see Copywriting Contract) and its non-dismissable behavior.
+
+**Accessible-label fallback:** `PINKeypad`'s backspace button is icon-only and already ships an
+`aria-label={t('pinKeypad.backspace')}` (`shared/ui/PINKeypad.tsx:194`) — inherited verbatim by
+`IdleLockOverlay`, no new accessible-name work needed this phase.
+
 ---
 
 ## Spacing Scale
@@ -60,14 +70,26 @@ so this exception only actually surfaces via the PINKeypad's own keys.
 
 This phase introduces **no new typography** — every text role below is inherited verbatim from the
 reused components (`AlertDialogTitle`, `AlertDialogDescription`, `PINKeypad`, `Label`, `Input`
-placeholder/hint text). Declared here for completeness/traceability, not as new design decisions:
+placeholder/hint text). Declared here for completeness/traceability, not as new design decisions.
+Capped at 2 weights (dimension-4 contract): 400 regular for Body/Label/Display, 600 semibold for
+Heading only.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px (`text-sm`) | 400 regular | 1.5 |
-| Label | 14px (`text-sm`) | 500 medium (inherited from `PINKeypad`'s built-in `font-medium` label style — out of scope to change this phase) | 1.5 |
+| Label | 14px (`text-sm`) | 400 regular | 1.5 |
 | Heading | 18px (`text-lg`) | 600 semibold, `font-heading` (Playfair Display) | 1.2 |
 | Display | 24px (`text-2xl`) | 400 regular | 1 (PIN dot display — `●`/`○` glyphs, unchanged `PINKeypad` styling) |
+
+**Exception (declared, justified, same treatment as the Spacing exceptions above):**
+`PINKeypad`'s own label text (its internal `font-medium`, 500 weight) is a pre-existing style baked
+into `shared/ui/PINKeypad.tsx`, reused verbatim by `IdleLockOverlay` — not a new weight introduced
+by this phase's design decisions. Changing it would mean editing `PINKeypad.tsx` itself, which is
+out of scope for this phase (it's shared, load-bearing UI used by `ManagerPinDialog` and other
+existing flows; a weight tweak there is a cross-cutting change this phase does not need and should
+not risk). This is accepted as a scoped inherited exception to the 2-weight cap, exactly as
+`PINKeypad`'s 64px keys and 56px dialog buttons are accepted exceptions to the spacing scale above
+— not a third weight newly chosen for this phase's own surfaces.
 
 ---
 
