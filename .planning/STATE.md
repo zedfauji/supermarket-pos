@@ -107,6 +107,11 @@ Last activity: 2026-08-30 — Phase 20 marked complete
 
 ### Roadmap Evolution
 
+- Phase 21 added: Idle Screen Lock — configurable per-terminal inactivity timeout (default 60s)
+  locks every screen for every role incl. admin, no transaction exemption; unlocks on any valid
+  staff PIN with session identity unchanged; lock+unlock both audit-logged. Requirements LCK-01..04
+  captured via `/gsd-explore` 2026-08-30.
+
 - Phase 19 added: Store-Local Durable Printing Service — LAN/VPN-only Windows broker, durable
   acceptance before workflow success, restart-surviving queue, named-printer routing, correlated
   error propagation, and auditable command/event history.

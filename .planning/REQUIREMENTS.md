@@ -138,6 +138,30 @@ installer packaging work the phase was originally scoped for.
   `BAR_ADDRESS` — a bar-pos naming leftover, rename or just set correctly) is set on the remote
   project via `supabase secrets set`, not left at Supabase's empty default.
 
+## v1.7 Requirements — Idle Screen Lock (proposed, not yet roadmapped)
+
+Milestone goal: any screen, any role (including admin), locks behind a PIN prompt after a period of
+inactivity — a physically unattended till should never sit open. Captured via `/gsd-explore`
+2026-08-30.
+
+### Idle Lock
+
+- [ ] **LCK-01**: An idle-lock overlay engages after a configurable inactivity timeout (default 60s)
+  on every screen, for every role including admin, with no exemption for in-progress transactions
+  (open cart, payment modal, etc.) — the overlay blocks all interaction until unlocked.
+
+- [ ] **LCK-02**: The inactivity timeout is configurable per-terminal (same storage pattern as
+  `receipt_settings` — one row per terminal, not a single global value), editable only by
+  `manage_settings`-gated roles.
+
+- [ ] **LCK-03**: The overlay unlocks on any valid staff PIN — not necessarily the PIN of the staff
+  member who was active before idling. The active session's identity does not change on unlock; this
+  is a screen lock, not a re-login or role switch.
+
+- [ ] **LCK-04**: Both the lock event and the unlock event are written to `audit_logs`, each recording
+  which staff member was the active session owner and, for unlock, which staff member's PIN unlocked
+  it (may differ from the session owner).
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -220,6 +244,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEP-02 | Phase 20 (v1.6) | Complete |
 | DEP-03 | Phase 20 (v1.6) | Complete |
 | DEP-04 | Phase 20 (v1.6) | Complete |
+| LCK-01 | Not yet roadmapped (v1.7) | Pending |
+| LCK-02 | Not yet roadmapped (v1.7) | Pending |
+| LCK-03 | Not yet roadmapped (v1.7) | Pending |
+| LCK-04 | Not yet roadmapped (v1.7) | Pending |
 
 **Coverage:**
 
@@ -228,6 +256,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.4 requirements: 4 total, 4/4 mapped (Phase 18: PEEK-01..04)
 - v1.5 proposed requirements: 7 total, 7/7 mapped to Phase 19
 - v1.6 proposed requirements: 4 total, 4/4 mapped to Phase 20
+- v1.7 proposed requirements: 4 total, 0/4 mapped (not yet roadmapped)
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*

@@ -56,6 +56,24 @@ Full phase details: `.planning/milestones/v1.1-ROADMAP.md` · Phase artifacts: `
 - [x] **Phase 15: Receipt Designer (Layout, Branding & Logo Printing)** - Editable header/footer/toggles with print-accurate live preview, plus thermal logo printing via new Rust `GS v 0` support (completed 2026-08-23)
 - [x] **Phase 16: Purchase Orders & Reordering** - PO creation, low-stock-seeded draft generation, and full receiving delegated to `receive_shipment` (completed 2026-08-24)
 
+### Phase 21: Idle Screen Lock
+
+**Goal:** Any screen, any role (incl. admin) locks behind a PIN prompt after a configurable
+inactivity timeout — default 60s, per-terminal (`receipt_settings`-style), no exemption for
+in-progress transactions. Unlock accepts any valid staff PIN; active session identity is
+unchanged (screen lock, not re-login). Lock and unlock events both write to `audit_logs`,
+recording the session owner and (for unlock) the unlocking staff member. Needs: global
+idle-detection hook, lock overlay component (PIN-entry, reuse `ManagerPinDialog` pattern),
+per-terminal timeout migration + Settings UI (`manage_settings`-gated), audit_logs writes,
+Playwright E2E coverage per this repo's no-manual-UAT policy.
+**Requirements**: LCK-01, LCK-02, LCK-03, LCK-04
+**Depends on:** Phase 20
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 21 to break down)
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.
