@@ -8,7 +8,7 @@
 - 🚧 **v1.3 Receipt Designer + Inventory Management Expansion** — Phases 14-17 (in progress)
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
 - ✅ **v1.5 Store-Local Durable Printing** — Phase 19 (8/8 plans complete 2026-08-27; Spike 001 validated)
-- 🔜 **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (proposed, not started — captured via `/gsd-explore`)
+- ✅ **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (3/3 plans complete 2026-08-30, incl. gap-closure plan 20-03; DEP-01..04 satisfied)
 
 ## Phases
 
@@ -95,14 +95,17 @@ functions vs. remote): DB schema is current (180/180 migrations match, nothing n
 zero secrets are set** — this is now the phase's biggest gap, bigger than the installer packaging
 work it was originally scoped for. Not yet planned — run `/gsd-plan-phase 20` when ready.
 
-- [ ] **Phase 20: Store Deployment: Signed Elevated Installer** (DEP-01..04) - Deploy all 12 Supabase
-  Edge Functions the app depends on and set their required secrets (`ANTHROPIC_API_KEY`,
-  `RESEND_API_KEY`, `RECEIPT_FROM_EMAIL`, `BAR_NAME`/`BAR_ADDRESS`) on the remote project; wire
-  self-signed cert generation + Trusted-Root import into the NSIS build pipeline
-  (`windows/hooks.nsh`, `tauri.conf.json` signing config); write an installer integrity-check script
-  (verifies broker.exe, cert, correct baked Supabase URL, printer hooks are all present in the built
-  artifact); run a real `npm run tauri build` + full install test confirming a single UAC prompt and
-  no permission failures end-to-end. Depends on Phase 19 (broker sidecar + hooks.nsh).
+- [x] **Phase 20: Store Deployment: Signed Elevated Installer** (DEP-01..04) — completed 2026-08-30 (3/3
+  plans: 20-01, 20-02, 20-03 gap-closure). All 12 Supabase Edge Functions deployed and reachable on the
+  remote project, all 5 required secrets set (`ANTHROPIC_API_KEY` is a store-owner-approved placeholder,
+  pending real key before launch); self-signed cert generation + Authenticode signing + Trusted-Root
+  import wired into the NSIS build pipeline and CI release workflow; `scripts/verify-installer-integrity.ps1`
+  proves broker.exe/cert/baked-URL/printer-hooks are all present; a real `npm run tauri build` produced a
+  signed installer with a matching Authenticode thumbprint. Gap-closure plan 20-03 added an automated
+  remote-backend E2E smoke spec (login → shipment receiving → checkout+print → staff creation → teardown)
+  per this repo's mandatory-automated-testing policy, which also surfaced and fixed two live production
+  bugs: a `payments.tip_amount` NOT NULL migration-sync gap, and missing CORS headers on 6 edge functions.
+  Full detail: `.planning/phases/20-store-deployment-installer/20-VERIFICATION.md`.
 
 ## Phase Details
 
@@ -385,18 +388,25 @@ SmartScreen warning, no localhost-baked build.
      with zero manual configuration steps beyond running the installer and clicking through that
      one SmartScreen prompt.
 
-**Plans:** 2 plans
+**Plans:** 3 plans (20-03 added post-verification — gap closure for Success Criterion 5, see
+`.planning/phases/20-store-deployment-installer/20-VERIFICATION.md`)
 
 Plans:
 **Wave 1**
 
-- [ ] 20-01-PLAN.md — Tracer: deploy all 12 edge functions + reachability smoke-check (DEP-03), then
+- [x] 20-01-PLAN.md — Tracer: deploy all 12 edge functions + reachability smoke-check (DEP-03), then
   collect real secret values (checkpoint:human-action) and set them on the remote project (DEP-04)
 
 **Wave 2** *(blocked on Wave 1 completion — shares `.gitignore`/`.env.production` protection with Plan 01)*
 
-- [ ] 20-02-PLAN.md — Self-signed cert generation + NSIS Trusted-Root import + signed real build (DEP-01),
+- [x] 20-02-PLAN.md — Self-signed cert generation + NSIS Trusted-Root import + signed real build (DEP-01),
   pre-ship installer integrity-check script (DEP-02), and CI release-pipeline signing wire-up
+
+**Wave 3** *(blocked on Wave 1/2 completion — gap closure)*
+
+- [ ] 20-03-PLAN.md — Remote-backend E2E smoke spec (dedicated fixture admin, remote-pointed Playwright
+  config, shipment receiving + checkout/print + staff creation with full teardown) closing Success
+  Criterion 5
 
 **UI hint**: no
 
