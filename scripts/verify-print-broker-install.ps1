@@ -32,10 +32,16 @@
       4. $env:ProgramData\PrintBroker\client-secret.txt exists and is
          non-empty.
       5. An HTTP GET to http://127.0.0.1:8973/health returns {"ok":true}.
+      6. (Phase 20, DEP-01) The build's self-signed cert thumbprint (-ExpectedThumbprint)
+         is present in Cert:\LocalMachine\Root — proves windows/hooks.nsh's
+         `certutil -f -addstore Root` line actually ran and succeeded during install.
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory)]
+    [string]$ExpectedThumbprint
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -119,6 +125,17 @@ if ($response.ok -ne $true) {
     Fail "GET http://127.0.0.1:8973/health did not return { ""ok"": true } (got: $($response | ConvertTo-Json -Compress))."
 }
 Write-Host "OK: broker /health endpoint responded { ""ok"": true }." -ForegroundColor Green
+
+# --- Check 6: build cert imported into Trusted Root (Phase 20, DEP-01) -----
+try {
+    $rootCert = Get-ChildItem Cert:\LocalMachine\Root | Where-Object Thumbprint -eq $ExpectedThumbprint
+} catch {
+    Fail "Get-ChildItem Cert:\LocalMachine\Root failed: $($_.Exception.Message)"
+}
+if (-not $rootCert) {
+    Fail "cert not found in Trusted Root after install"
+}
+Write-Host "OK: build cert (thumbprint $ExpectedThumbprint) present in Cert:\LocalMachine\Root." -ForegroundColor Green
 
 Write-Host "All checks passed" -ForegroundColor Green
 exit 0
