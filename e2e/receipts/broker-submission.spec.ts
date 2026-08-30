@@ -51,6 +51,15 @@ async function injectBrokerMock(
       (window as unknown as Record<string, unknown>)['__invokeCallCounts'] = {};
       const callbacks = new Map<number, (arg: unknown) => void>();
 
+      // CheckoutPanel's isTauri()-guarded listen() effect mounts on /pos and
+      // its cleanup synchronously reads this global before ever calling
+      // invoke() (see e2e/helpers/tauriPeekMock.ts) — without it, unmount
+      // throws "Cannot read properties of undefined (reading
+      // 'unregisterListener')" as an uncaught page error.
+      (window as unknown as Record<string, unknown>)['__TAURI_EVENT_PLUGIN_INTERNALS__'] = {
+        unregisterListener: () => undefined,
+      };
+
       (window as unknown as Record<string, unknown>)['__TAURI_INTERNALS__'] = {
         invoke(cmd: string, args: unknown): Promise<unknown> {
           const counts = (window as unknown as Record<string, unknown>)[

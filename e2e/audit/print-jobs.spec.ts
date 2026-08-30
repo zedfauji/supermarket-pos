@@ -168,12 +168,15 @@ test.describe('Print Jobs audit tab (Plan 19-08, PRN-05)', () => {
       .poll(async () => (await lastGetPrintJobsCall(page))?.filters?.status, { timeout: 10_000 })
       .toBe('failed');
 
-    // Click a row's sr-only accessible trigger to open the detail Sheet —
-    // same pattern e2e/audit/audit-logs.spec.ts already proves for
-    // AuditLogTable's "View diff for..." trigger.
-    await page
-      .getByRole('button', { name: /view print job pj-unknown-1/i })
-      .click();
+    // Activate the row's sr-only accessible trigger via keyboard, not a mouse
+    // click — a visually-hidden 1x1px element is reached by real users only
+    // via Tab/AT, and clicking its clipped geometry is flaky (the row's own
+    // onRowClick div sits visually on top of that same point and intercepts
+    // the pointer event; audit-logs.spec.ts's identical sr-only-button
+    // pattern shows the same latent flakiness).
+    const viewJobTrigger = page.getByRole('button', { name: /view print job pj-unknown-1/i });
+    await viewJobTrigger.focus();
+    await viewJobTrigger.press('Enter');
 
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible({ timeout: 5_000 });

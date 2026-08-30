@@ -80,7 +80,11 @@ export function PrintJobFilterBar({ staged, onStagedChange, onApply }: PrintJobF
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select value={staged.origin ?? ALL_VALUE} onValueChange={setOrigin}>
-        <SelectTrigger id="print-job-filter-origin" className="w-[160px]">
+        <SelectTrigger
+          id="print-job-filter-origin"
+          aria-label={t('printJobFilterBar.allOrigins')}
+          className="w-[160px]"
+        >
           <SelectValue placeholder={t('printJobFilterBar.allOrigins')} />
         </SelectTrigger>
         <SelectContent>
@@ -104,7 +108,7 @@ export function PrintJobFilterBar({ staged, onStagedChange, onApply }: PrintJobF
       />
 
       <Select value={staged.status ?? ALL_VALUE} onValueChange={setStatus}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger aria-label={t('printJobFilterBar.allStatuses')} className="w-[180px]">
           <SelectValue placeholder={t('printJobFilterBar.allStatuses')} />
         </SelectTrigger>
         <SelectContent>

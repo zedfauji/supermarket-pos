@@ -77,7 +77,12 @@ export function PrintJobStatusBadge({ status, onReprint, className }: PrintJobSt
   const label = t(config.labelKey);
 
   const badge = (
-    <Badge role="status" variant={config.variant} className={cn('font-medium', config.className, className)}>
+    <Badge
+      role="status"
+      aria-label={label}
+      variant={config.variant}
+      className={cn('font-medium', config.className, className)}
+    >
       <Icon className="h-3 w-3" aria-hidden />
       {label}
     </Badge>

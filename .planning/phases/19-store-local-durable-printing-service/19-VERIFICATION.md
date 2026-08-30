@@ -1,24 +1,70 @@
 ---
 phase: 19-store-local-durable-printing-service
 verified: 2026-08-27T23:03:00Z
-status: gaps_found
-score: 6/7 PRN requirements fully verified (1 partial); 42/43 plan-level must_haves.truths verified (1 partial)
+reverified: 2026-08-28T23:59:00Z
+status: passed
+score: 7/7 PRN requirements fully verified; 43/43 plan-level must_haves.truths verified
 behavior_unverified: 0
 overrides_applied: 0
-gaps:
+gaps: []
+resolved_gaps:
   - truth: "The inbound firewall rule is scoped to LocalSubnet on TCP 8973, not an unrestricted allow-all rule (19-02-PLAN.md must_have #5, ties to PRN-01's LAN/VPN-only intent)."
-    status: partial
-    reason: "windows/hooks.nsh's netsh command (`netsh advfirewall firewall add rule name=\"Store Print Broker\" dir=in action=allow program=\"$INSTDIR\\broker\\broker.exe\" protocol=TCP localport=8973 profile=private`) omits `remoteip=LocalSubnet` entirely. `profile=private` restricts the rule to firing only when Windows classifies the active network as Private (blocking Public-profile/raw-internet exposure, which is the core of PRN-01's 'not exposed to the public internet'), but it does NOT restrict the remote/source IP address — the default when `remoteip` is omitted is `remoteip=any`. Any host that can route to the broker while the interface is in the Private profile (not just same-subnet devices) can reach TCP 8973. scripts/verify-print-broker-install.ps1's Check 3 only asserts protocol=TCP and localport=8973 — it never asserts a remoteip/LocalSubnet scope, so this gap is also unverified in the install-verification script. 19-02-SUMMARY.md marks this must-have 'met' citing only `profile=private`, which conflates network-profile scoping with IP-range scoping — the specific LocalSubnet claim is not actually implemented."
-    artifacts:
-      - path: "windows/hooks.nsh"
-        issue: "netsh firewall rule has no remoteip=LocalSubnet (or equivalent) clause"
-      - path: "scripts/verify-print-broker-install.ps1"
-        issue: "Check 3 does not assert a remote-IP/LocalSubnet scope on the firewall rule, so this gap would not be caught even at real deployment"
-    missing:
-      - "Add `remoteip=LocalSubnet` (or a store-specific CIDR) to the netsh command in windows/hooks.nsh's post-install hook."
-      - "Add an assertion in scripts/verify-print-broker-install.ps1 Check 3 that the rule's RemoteAddress is LocalSubnet, not Any."
+    status: resolved
+    resolved_at: 2026-08-28
+    resolved_by: "31b4ce2 fix(19-02): scope firewall rule by remoteip=LocalSubnet, not profile alone"
+    evidence: "windows/hooks.nsh's netsh command now includes remoteip=LocalSubnet; scripts/verify-print-broker-install.ps1 Check 3 now asserts $addressFilter.RemoteAddress -eq 'LocalSubnet'. Confirmed by reading both files directly."
 deferred: []
 ---
+
+## 2026-08-28 Re-verification (actual E2E execution, not list-only)
+
+The 2026-08-27 report ran `npx playwright test --list` on the phase's 4 broker/print-job
+specs (13 tests) rather than executing them, citing missing `.env.local` credentials in that
+sandboxed environment. On this machine `.env.local` is present, so all 13 tests were actually
+run against `npm run dev`. **6 of 13 tests failed on first real execution** — none of these were
+caught by the prior list-only pass. All are now fixed and green (13/13 passing, confirmed by two
+independent full reruns):
+
+1. **Test-fixture bug** (`e2e/receipts/broker-submission.spec.ts`, 3 tests) — the dual-global
+   Tauri IPC mock set `window.__TAURI__`/`window.__TAURI_INTERNALS__` but never
+   `window.__TAURI_EVENT_PLUGIN_INTERNALS__`, which real Tauri's `listen()` cleanup reads
+   synchronously on unmount (`@tauri-apps/api/event.js`). `CheckoutPanel`'s `isTauri()`-guarded
+   listener effect fires because the mock makes `isTauri()` true, and its cleanup crashed with
+   `Cannot read properties of undefined (reading 'unregisterListener')` — an uncaught page error
+   that failed the cash-checkout (PaymentForm) tests before they ever reached their assertions.
+   Fixed by adding the same no-op stub `e2e/helpers/tauriPeekMock.ts` already documents needing.
+2. **Real app a11y/test bug** (`src/shared/ui/PrintJobStatusBadge.tsx`, surfaced by 3 tests across
+   `unknown-status-confirm.spec.ts` and `print-jobs.spec.ts`) — the badge set `role="status"` but
+   never `aria-label`. Per the ARIA spec, `status` is a live-region role with `nameFrom: author`
+   only — it does NOT support name-from-content, so despite rendering visible text ("Needs
+   confirmation"), the badge's actual accessible name was empty. Screen readers would announce it
+   unlabeled; `getByRole('status', { name: ... })` correctly found nothing. Its sibling
+   `StatusBadge.tsx` already sets `aria-label` — this component just missed the same convention.
+   Fixed by adding `aria-label={label}`.
+3. **Same pattern, different component** (`src/widgets/PrintJobsTable/PrintJobFilterBar.tsx`,
+   1 test) — both `SelectTrigger`s (origin, status) had no `aria-label`/associated `<label>`, so
+   their `role="combobox"` elements were also unnamed (combobox is likewise `nameFrom: author`).
+   `AuditLogFilterBar`'s identical Selects have the same gap, but it was never caught because no
+   `AuditLogFilterBar` test targets a combobox by accessible name — pre-existing, out of this
+   phase's scope, left untouched. Fixed both triggers in `PrintJobFilterBar.tsx` with
+   `aria-label={t(...)}`.
+4. **Test-flakiness bug** (`e2e/audit/print-jobs.spec.ts`, 1 test) — `.click()` on the row's
+   sr-only "View print job" trigger intermittently failed with "`<td>` intercepts pointer events":
+   a visually-hidden 1×1px-clipped element is not something a mouse user could ever actually
+   click, so its screen geometry racing against the row's own `onRowClick` overlay is inherently
+   unreliable. Confirmed this is a pre-existing latent issue, not new to Phase 19: the identical
+   sr-only-button-click pattern in `e2e/audit/audit-logs.spec.ts` (`should open diff sheet on row
+   click`) reproduced the same interception and only passed on Playwright's automatic retry
+   (`1 flaky`). Fixed print-jobs.spec.ts's own test by activating the trigger via keyboard
+   (`.focus()` + `.press('Enter')`), matching how sr-only elements are actually reached by
+   real users (AT/keyboard, never mouse-click-by-coordinate). `audit-logs.spec.ts` carries the
+   same latent flakiness but is Phase 17 territory — left untouched, out of this phase's scope.
+
+`npm run typecheck` and `npm run lint` both clean after all fixes (same pre-existing
+`eslint-plugin-boundaries` legacy-selector tooling warning as before, unrelated).
+
+**Verdict: PASSED.** All 7 PRN requirements and all 43 plan-level must-haves now hold with actual
+(not merely listed) E2E confirmation on top of the existing unit/cargo-test coverage.
 
 # Phase 19: Store-Local Durable Printing Service Verification Report
 
