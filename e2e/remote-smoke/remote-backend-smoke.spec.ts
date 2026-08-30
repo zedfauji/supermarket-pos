@@ -264,7 +264,7 @@ test.describe('Remote backend smoke pass', () => {
       // against a real remote backend where a 409 can mean a genuine deployed
       // schema/code mismatch, not just a test-data issue (see 20-03-SUMMARY.md).
       page.on('response', async res => {
-        if (res.url().includes('process-direct-sale') && res.status() >= 400) {
+        if (res.url().includes('functions/v1/process-direct-sale') && res.status() >= 400) {
           console.error('process-direct-sale error response:', await res.text().catch(() => '<unreadable>'));
         }
       });
@@ -331,6 +331,11 @@ test.describe('Remote backend smoke pass', () => {
       paymentId = payment.id as string;
 
       // Step 4: staff creation.
+      page.on('response', async res => {
+        if (res.url().includes('functions/v1/create-staff')) {
+          console.error(`create-staff response ${res.status()}:`, await res.text().catch(() => '<unreadable>'));
+        }
+      });
       await gotoAuthed(page, '/staff');
       await page.getByRole('button', { name: /add staff|agregar personal/i }).click();
       const staffDialog = page.getByRole('dialog');
@@ -342,6 +347,16 @@ test.describe('Remote backend smoke pass', () => {
       await page.getByRole('option', { name: 'cashier', exact: true }).click();
       await staffDialog.getByRole('button', { name: /create staff|crear personal/i }).click();
       await expect(page.getByText(staffName, { exact: true })).toBeVisible({ timeout: 15_000 });
+
+      // The UI can render an optimistic row before/without the edge function's
+      // insert actually landing — confirm the real DB row exists, proving
+      // create-staff actually ran, not just that the UI looked happy.
+      await expect
+        .poll(async () => {
+          const { data } = await db.from('profiles').select('id').eq('name', staffName).maybeSingle();
+          return data ? true : false;
+        }, { timeout: 10_000 })
+        .toBe(true);
     } finally {
       // Cleanup — runs unconditionally, self-verifying (asserts its own effect below).
       if (paymentId) {
@@ -354,10 +369,18 @@ test.describe('Remote backend smoke pass', () => {
           await expect(refundDialog).toBeVisible({ timeout: 10_000 });
 
           const itemCheckboxes = refundDialog.getByRole('checkbox', { name: /^select .* for refund$/i });
+          await expect(itemCheckboxes.first()).toBeVisible({ timeout: 10_000 });
           const itemCount = await itemCheckboxes.count();
+          let selected = 0;
           for (let i = 0; i < itemCount; i++) {
             const cb = itemCheckboxes.nth(i);
-            if (!(await cb.isDisabled())) await cb.check();
+            if (!(await cb.isDisabled())) {
+              await cb.check();
+              selected++;
+            }
+          }
+          if (selected === 0) {
+            throw new Error(`Refund cleanup: found ${itemCount} item checkbox(es), 0 selectable — cannot request approval`);
           }
           const restockCheckboxes = refundDialog.getByRole('checkbox', { name: /^restock /i });
           const restockCount = await restockCheckboxes.count();
@@ -368,10 +391,12 @@ test.describe('Remote backend smoke pass', () => {
 
           const reasonTrigger = refundDialog.locator('#refund-reason');
           await expect(reasonTrigger).toBeVisible({ timeout: 5_000 });
-          await reasonTrigger.click();
-          await page.getByRole('option', { name: /wrong.*order/i }).click();
+          await reasonTrigger.click({ timeout: 10_000 });
+          await page.getByRole('option', { name: /wrong.*order/i }).click({ timeout: 10_000 });
 
-          await page.getByRole('button', { name: /request approval/i }).click();
+          const requestApprovalBtn = page.getByRole('button', { name: /request approval/i });
+          await expect(requestApprovalBtn).toBeEnabled({ timeout: 10_000 });
+          await requestApprovalBtn.click({ timeout: 10_000 });
           const pinDialog = page.getByRole('alertdialog');
           await expect(pinDialog).toBeVisible({ timeout: 8_000 });
           await enterManagerPin(page, adminPin);
