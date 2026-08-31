@@ -36,6 +36,8 @@ function makeCajaReport(overrides: Partial<CajaReport> = {}): CajaReport {
       cashSales: 800.25,
       cardSales: 600.25,
       rappiSales: 100,
+      bankTransferSales: 0,
+      bankTransferPending: 0,
       orderCount: 30,
       tabCount: 12,
       totalExpenses: 200,

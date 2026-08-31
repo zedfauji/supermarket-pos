@@ -182,6 +182,8 @@
     "cashSales": "Ventas en efectivo",
     "cardSales": "Ventas con tarjeta",
     "rappiSales": "Ventas por Rappi",
+    "bankTransferSales": "Ventas por transferencia bancaria",
+    "bankTransferPending": "Transferencias bancarias pendientes",
     "tabsOrders": "Cuentas / Pedidos",
     "cashReconciliation": "Conciliación de efectivo",
     "openingCashLabel": "Fondo inicial",
