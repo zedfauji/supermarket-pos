@@ -3,7 +3,7 @@ import { useCallback, type ReactNode } from 'react';
 import { useTerminalLockSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Staff } from '@shared/lib/domain';
-import { useLockStateStore } from '../model/lock-state-store';
+import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { useIdleLockAudit } from '../model/useIdleLockAudit';
 import { useIdleTimer } from '../model/useIdleTimer';
 import { IdleLockOverlay } from './IdleLockOverlay';

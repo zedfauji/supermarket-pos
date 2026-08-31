@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useCartStore, calcWeightedLineTotal } from '@entities/tab/model/cartStore';
 import type { Product } from '@shared/lib/domain';
 import { formatMoney } from '@shared/lib/format';
+import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { POSButton } from '@shared/ui/POSButton';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
@@ -44,10 +45,11 @@ export function WeightEntryDialog({
   );
   const weightGrams = gramsFromKg(value);
   const isValid = weightGrams > 0 && weightGrams <= 50_000;
+  const locked = useLockStateStore(s => s.locked);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!open) return;
+      if (!open || locked) return;
       if (/^[0-9]$/.test(event.key)) {
         setValue(current => current + event.key);
       }
@@ -62,7 +64,7 @@ export function WeightEntryDialog({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [open, value]);
+  }, [open, locked, value]);
 
   const append = (key: string) => {
     if (key !== '.' || !value.includes('.')) {

@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { cn } from '@shared/lib/utils';
 
 import {
@@ -87,6 +88,7 @@ export function ConfirmDialog({
   confirmClassName,
 }: ConfirmDialogProps) {
   const { t } = useTranslation('common');
+  const locked = useLockStateStore(s => s.locked);
   // Radix's AlertDialogAction/AlertDialogCancel are both internally a
   // DialogPrimitive.Close — clicking EITHER one closes the dialog and fires
   // onOpenChange(false), which would otherwise also invoke onCancel below
@@ -106,9 +108,15 @@ export function ConfirmDialog({
     onCancel();
   }, [onCancel]);
 
-  // Keyboard support
+  // Keyboard support. Gated on `locked` (idle-screen-lock, D-01: "no
+  // exemption, even mid-transaction") -- this listener is attached to
+  // `window`, not scoped to any DOM node inside the dialog, so it fires on
+  // any Enter/Escape keypress regardless of focus. Without this guard, a
+  // ConfirmDialog left open when the terminal locks (e.g. PaymentForm's
+  // offline-retry dialog) can have its onConfirm mutation fired blind by a
+  // stray keypress while the visual lock overlay is on top of it.
   React.useEffect(() => {
-    if (!open || isLoading) return;
+    if (!open || isLoading || locked) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -124,7 +132,7 @@ export function ConfirmDialog({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, isLoading, handleConfirm, handleCancel]);
+  }, [open, isLoading, locked, handleConfirm, handleCancel]);
 
   return (
     <AlertDialog

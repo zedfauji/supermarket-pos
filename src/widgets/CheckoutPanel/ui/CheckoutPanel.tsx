@@ -8,7 +8,6 @@ import { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/use
 import { WeightEntryDialog } from '@features/add-loose-weight-item/ui/WeightEntryDialog';
 import { useCheckoutSale } from '@features/checkout-sale/model/useCheckoutSale';
 import { HoldSaleBanner } from '@features/hold-sale/ui/HoldSaleBanner';
-import { useLockStateStore } from '@features/idle-screen-lock/model/lock-state-store';
 import {
   ADD_TO_CART_EVENT,
   BARCODE_SCANNED_EVENT,
@@ -20,6 +19,7 @@ import { useStaffStore } from '@entities/staff';
 import { useCartStore } from '@entities/tab/model/cartStore';
 import { CartItem } from '@entities/tab/ui/CartItem';
 import { formatMoney } from '@shared/lib/format';
+import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
 import { MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';

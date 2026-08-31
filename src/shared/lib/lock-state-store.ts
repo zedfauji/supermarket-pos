@@ -8,10 +8,15 @@ interface LockState {
 /**
  * Single source of truth for "is the screen currently locked" within this
  * window's JS realm, so any module (e.g. CheckoutPanel's global
- * useBarcodeScanner listener) can read it without prop-drilling from App.tsx
- * down through the FSD layers. Deliberately no `persist` middleware -- lock
- * state is a live, per-session UI flag, not something that should survive a
- * reload (IdleLockProvider re-arms the idle timer fresh on every mount).
+ * useBarcodeScanner listener, or shared/ui's ConfirmDialog/WeightEntryDialog
+ * global keydown listeners) can read it without prop-drilling from App.tsx
+ * down through the FSD layers. Lives in shared/lib (not
+ * features/idle-screen-lock) specifically so shared/ui components can depend
+ * on it without inverting the FSD import direction (app -> pages -> widgets
+ * -> features -> entities -> shared). Deliberately no `persist` middleware --
+ * lock state is a live, per-session UI flag, not something that should
+ * survive a reload (IdleLockProvider re-arms the idle timer fresh on every
+ * mount).
  *
  * Not shared across Tauri OS windows (e.g. the Product Peek window) -- each
  * window has its own JS realm and its own instance of this store. See

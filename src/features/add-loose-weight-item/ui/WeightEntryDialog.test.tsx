@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as CartStoreModule from '@entities/tab/model/cartStore';
 import type { Product } from '@shared/lib/domain';
+import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { renderWithProviders } from '@shared/lib/test-utils';
 import { WeightEntryDialog } from './WeightEntryDialog';
 
@@ -69,6 +70,7 @@ describe('WeightEntryDialog', () => {
   beforeEach(() => {
     mockAddWeightedItem.mockClear();
     mockUpdateWeightedItem.mockClear();
+    useLockStateStore.getState().setLocked(false);
   });
 
   it('keeps confirmation disabled until a positive weight is entered', async () => {
@@ -228,5 +230,25 @@ describe('WeightEntryDialog', () => {
     expect(mockAddWeightedItem).not.toHaveBeenCalled();
     expect(mockUpdateWeightedItem).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('ignores global keydown digit entry while the terminal is locked (WR-01, same root cause as CR-01)', () => {
+    act(() => {
+      useLockStateStore.getState().setLocked(true);
+    });
+    renderWithProviders(
+      <WeightEntryDialog open onOpenChange={() => {}} product={mockProduct} mode="add" />
+    );
+
+    typeHalfKilo();
+
+    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDisabled();
+
+    act(() => {
+      useLockStateStore.getState().setLocked(false);
+    });
+    typeHalfKilo();
+
+    expect(screen.getByRole('button', { name: /add to cart/i })).toBeEnabled();
   });
 });
