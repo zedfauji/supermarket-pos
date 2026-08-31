@@ -56,10 +56,26 @@ unspecified).
   automate confirmation, but is out of scope for this build — manual admin confirmation is the
   near-term design target.
 
+### supabase-env-parity
+
+Keep the local self-hosted Supabase dev/test stack and the remote Supabase Cloud project
+(`mkvinyekkyennyegfoxq`) in known sync before every remote deploy — document-only delta audits,
+no code changes. Triggered as a pre-deploy sanity check, not tied to a specific feature build.
+
+**Requirements:**
+
+- A migration that fixes a live-reproduced production bug must never sit undeployed on remote
+  while its matching frontend change ships — deploy DB migration before or with the app build
+  that depends on it, never after (Spike 006).
+- Edge functions deployed from an ephemeral agent worktree path must be diffed against `main`
+  before being trusted as in-sync — their `updated_at` freezes at worktree-deploy time, not at
+  the worktree's later commits (Spike 006).
+
 ## Spikes
 
 | # | Idea | Name | Type | Validates | Verdict | Tags |
 |---|------|------|------|-----------|---------|------|
+| 006 | supabase-env-parity | local-remote-supabase-delta | standard | Given the local self-hosted Supabase dev stack and the remote Supabase Cloud project, when compared across schema/migrations/RPCs/edge functions/extensions/RLS/auth config, then every material delta is documented before the next feature deploy | VALIDATED | supabase, migrations, edge-functions, ops, sanity-check |
 | 001 | store-local-printing | windows-print-broker | standard | Given a LAN client and installed broker, when a job is durably accepted and the POS exits, then the broker retains, routes, and audits it through a named Windows printer queue | VALIDATED | windows-service, printing, sqlite, lan |
 | 002 | bank-transfer-payment-tracking | bank-integration-research | standard | Given the store banks with Banorte and others, when researched for MX SPEI/business-API/open-banking integration options, then a clear feasibility verdict on programmatic reconciliation vs. manual reference-code matching is produced | PARTIAL | research, payments, mexico, spei |
 | 003 | bank-transfer-payment-tracking | reference-code-design | standard | Given a 6-digit payload + Luhn check digit inside SPEI's 7-digit referencia numerica limit, when a customer or admin mistypes it, then the mistype is almost always caught rather than silently matching the wrong sale | VALIDATED | algorithm, payments, mexico, spei |
