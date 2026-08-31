@@ -716,7 +716,7 @@ serve a different, non-overlapping case (staff member who knows their current PI
 | A2 | `ManagerPinDialog` with `requiredAction="manage_staff"` is the correct `requiredAction` value to pass for D-03's confirm gate (since `manage_staff` is admin-only per `rbac.ts`, matching D-01's admin-only requirement) | Pattern 5 | If a different `requiredAction` is intended, `eligibleStaff` inside `ManagerPinDialog` would include managers, weakening the D-03 gate to non-admin-only, though the edge function's own D-01 check would still block the actual write |
 | A3 | The recommended partial-failure handling in Pitfall 1 (distinct error path, no compensating action) is sufficient without a queued-retry mechanism | Pitfall 1 | If manual retry/support intervention proves too slow in practice, a follow-up phase might need a background reconciliation job — out of scope for this phase per CONTEXT.md's boundary, but worth flagging as a known residual risk |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What exact recovery/error UX happens on the Pitfall 1 partial-failure path?**
    - What we know: `auth.users` succeeded, `profiles` update failed — the two stores have diverged.
@@ -727,6 +727,10 @@ serve a different, non-overlapping case (staff member who knows their current PI
    - Recommendation: planner should add an explicit task/requirement for this specific failure mode
      rather than leaving it to "same as create-staff's error handling," since the failure semantics are
      genuinely different (see Pitfall 1).
+   - **RESOLVED:** Option (a). `22-01-PLAN.md` Task 1 step 3 returns a distinct `PARTIAL_FAILURE:`-prefixed
+     error (mapped client-side to `PIN_RESET_PARTIAL_FAILURE` in step 2) and writes an explicit
+     partial-divergence audit entry — no automatic retry. No follow-up reconciliation job is in this
+     phase's scope (tracked as residual risk T-22-03/A3 in the plan's threat model).
 
 2. **Does D-06 imply new reactivation UI must ship in this phase, or is the server-side guard
    sufficient?**
@@ -734,6 +738,9 @@ serve a different, non-overlapping case (staff member who knows their current PI
    - What's unclear: whether CONTEXT.md's author was aware of this gap when writing D-06.
    - Recommendation: raise this explicitly during planning/requirements-derivation rather than
      guessing; default to "server-side guard only, no new UI" (option 1 in Pitfall 3) unless corrected.
+   - **RESOLVED:** Option 1. `22-01-PLAN.md`'s "Artifacts This Phase Produces" section explicitly states
+     "no reactivation/deactivation UI... D-06's guard is server-side only" — Task 2's SM11 test proves
+     the guard via direct `getServiceClient()` seeding, independent of any UI.
 
 ## Environment Availability
 
