@@ -7,7 +7,8 @@
     "backup": "Respaldo",
     "products": "Productos",
     "billing": "Facturación",
-    "nearExpiry": "Próxima caducidad"
+    "nearExpiry": "Próxima caducidad",
+    "lockTimeout": "Bloqueo automático"
   },
   "noPermission": "No tienes permiso para ver la configuración.",
   "language": {

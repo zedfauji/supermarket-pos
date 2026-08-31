@@ -7,7 +7,8 @@
     "backup": "Backup",
     "products": "Products",
     "billing": "Billing",
-    "nearExpiry": "Near Expiry"
+    "nearExpiry": "Near Expiry",
+    "lockTimeout": "Auto-Lock Timeout"
   },
   "noPermission": "You do not have permission to view settings.",
   "language": {

@@ -9,6 +9,7 @@ import { EmailReceiptsSettingsTab } from './tabs/EmailReceiptsSettingsTab';
 import { GeneralSettingsTab } from './tabs/GeneralSettingsTab';
 import { HardwareSettingsTab } from './tabs/HardwareSettingsTab';
 import { LanguageSettingsTab } from './tabs/LanguageSettingsTab';
+import { LockSettingsTab } from './tabs/LockSettingsTab';
 import { NearExpirySettingsTab } from './tabs/NearExpirySettingsTab';
 import { ProductsSettingsTab } from './tabs/ProductsSettingsTab';
 
@@ -62,6 +63,11 @@ export function SettingsTabsPanel() {
           key: 'near-expiry',
           label: t('tabs.nearExpiry'),
           render: () => <NearExpirySettingsTab currentRole={currentRole} />,
+        },
+        {
+          key: 'lock-timeout',
+          label: t('tabs.lockTimeout'),
+          render: () => <LockSettingsTab currentRole={currentRole} />,
         }
       );
     }

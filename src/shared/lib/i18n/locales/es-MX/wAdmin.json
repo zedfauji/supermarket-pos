@@ -303,6 +303,13 @@
     "saveButton": "Guardar ventana de alerta",
     "saved": "Ventana de alerta de caducidad guardada"
   },
+  "lockSettingsTab": {
+    "title": "Bloqueo automático de pantalla",
+    "thresholdLabel": "Bloquear después de (segundos)",
+    "thresholdHint": "La pantalla se bloquea automáticamente tras este número de segundos de inactividad. Rango: 15-600 segundos.",
+    "saveButton": "Guardar tiempo de bloqueo",
+    "saved": "Tiempo de bloqueo guardado."
+  },
   "permissionMatrix": {
     "updateFailed": "No se pudo actualizar el permiso",
     "permissionEnabled": "Permiso habilitado",
