@@ -105,12 +105,12 @@ app for other privileged actions.
 
 **Requirements**: PINRST-01, PINRST-02, PINRST-03, PINRST-04, PINRST-05, PINRST-06, PINRST-07, PINRST-08
 **Depends on:** Nothing (independent auth/security surface; does not depend on Phase 21's idle-lock UI)
-**Plans:** 1 plan
+**Plans:** 1/1 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 22-01-PLAN.md — Tracer: admin-reset-pin edge function (D-01/02/04/06/08 + Pitfall-1 dual-write handling) + client contracts + AdminResetPinDialog (D-03/D-07) + StaffDashboard wiring, full happy-path E2E; then D-01 negative/D-06 inactive-target hardening; then D-08 self-target E2E
+- [x] 22-01-PLAN.md — Tracer: admin-reset-pin edge function (D-01/02/04/06/08 + Pitfall-1 dual-write handling) + client contracts + AdminResetPinDialog (D-03/D-07) + StaffDashboard wiring, full happy-path E2E; then D-01 negative/D-06 inactive-target hardening; then D-08 self-target E2E
 
 **UI hint**: yes
 
