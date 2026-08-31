@@ -84,7 +84,7 @@ export function useCheckoutSale() {
   );
 
   const submit = async (payment: {
-    method?: 'cash' | 'card';
+    method?: 'cash' | 'card' | 'bank_transfer';
     amount?: number;
     tenderedAmount?: number;
     referenceNumber?: string;
@@ -97,6 +97,8 @@ export function useCheckoutSale() {
     expectedTotal?: number;
     discountInfo?: DiscountInfo | undefined;
     idempotencyKeyOverride?: string;
+    customerName?: string;
+    customerPhone?: string;
   }) => {
     if (!isOnline()) {
       return err(networkOfflineError());
@@ -126,6 +128,8 @@ export function useCheckoutSale() {
             discountAmount: payment.discountInfo.amount,
           }
         : {}),
+      ...(payment.customerName ? { customerName: payment.customerName } : {}),
+      ...(payment.customerPhone ? { customerPhone: payment.customerPhone } : {}),
     });
   };
 
@@ -183,6 +187,36 @@ export function useCheckoutSale() {
               })
             : result;
         return ok({ paymentId: result.data.paymentId, receiptData: result.data.receiptData });
+      },
+      processBankTransferPayment: async (
+        _tabId: string,
+        amount: number,
+        customerName: string,
+        customerPhone: string,
+        discountInfo?: DiscountInfo,
+        _expectedVersion?: number,
+        idempotencyKeyOverride?: string
+      ) => {
+        const result = await submit({
+          method: 'bank_transfer',
+          amount,
+          customerName,
+          customerPhone,
+          ...(discountInfo ? { discountInfo } : {}),
+          ...(idempotencyKeyOverride ? { idempotencyKeyOverride } : {}),
+        });
+        if (!result.ok || !result.data.paymentId || !result.data.receiptData)
+          return result.ok
+            ? err({
+                code: 'UNKNOWN_ERROR',
+                message: i18n.t('featOrders:checkoutSale.paymentIncomplete'),
+              })
+            : result;
+        return ok({
+          paymentId: result.data.paymentId,
+          referenceCode: result.data.receiptData.terminalReference ?? '',
+          receiptData: result.data.receiptData,
+        });
       },
       processRappiPayment: () =>
         Promise.resolve(

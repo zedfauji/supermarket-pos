@@ -3,7 +3,7 @@
  * Can be embedded inline (PaymentPane) or wrapped in a Dialog (PaymentModal).
  */
 
-import { AlertCircle, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Copy, Loader2, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ import {
   processCashPayment,
   processRappiPayment,
   processSplitPayment,
+  type DiscountInfo,
   type SplitPaymentLegInput,
 } from '@shared/lib/payment-processor';
 import { openCashDrawer, printJobErrorCopyKey, printReceipt } from '@shared/lib/pos-printer';
@@ -42,11 +43,15 @@ import {
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 
-type PayMethod = 'cash' | 'card' | 'rappi';
+type PayMethod = 'cash' | 'card' | 'rappi' | 'bank_transfer';
+
+// bank_transfer is checkout-time single-method only (no split-leg support
+// this phase, see PLAN 23-02) — split rows keep the pre-existing method set.
+type SplitPayMethod = Exclude<PayMethod, 'bank_transfer'>;
 
 type SplitRow = {
   id: string;
-  method: PayMethod;
+  method: SplitPayMethod;
   amount: number;
   tenderedAmount: number;
   cardReference: string;
@@ -54,9 +59,9 @@ type SplitRow = {
 
 type SplitRowAction =
   | { type: 'RESET_ROWS'; rows: SplitRow[] }
-  | { type: 'ADD_ROW'; defaultMethod: PayMethod }
+  | { type: 'ADD_ROW'; defaultMethod: SplitPayMethod }
   | { type: 'REMOVE_ROW'; rowId: string }
-  | { type: 'SET_METHOD'; rowId: string; method: PayMethod }
+  | { type: 'SET_METHOD'; rowId: string; method: SplitPayMethod }
   | { type: 'SET_AMOUNT'; rowId: string; value: number }
   | { type: 'SET_TENDERED'; rowId: string; value: number }
   | { type: 'SET_CARD_REF'; rowId: string; value: string };
@@ -67,7 +72,7 @@ function nextSplitRowId(): string {
   return `split-row-${String(splitRowCounter)}`;
 }
 
-function makeDefaultSplitRow(method: PayMethod): SplitRow {
+function makeDefaultSplitRow(method: SplitPayMethod): SplitRow {
   return {
     id: nextSplitRowId(),
     method,
@@ -112,6 +117,22 @@ export type PaymentProcessors = {
   processCardPayment: typeof processCardPayment;
   processRappiPayment: typeof processRappiPayment;
   processSplitPayment: typeof processSplitPayment;
+  /**
+   * Only ever supplied by CheckoutPanel (via useCheckoutSale) — absent from
+   * defaultProcessors, which PaymentPane's generic tab-payment flow uses.
+   * This absence is the sole client-side gate implementing D-16's
+   * "checkout-time only" scoping (T-23-06): PaymentForm only renders the
+   * Bank Transfer method button when this field is present.
+   */
+  processBankTransferPayment?: (
+    tabId: string,
+    amount: number,
+    customerName: string,
+    customerPhone: string,
+    discountInfo?: DiscountInfo,
+    expectedVersion?: number,
+    idempotencyKeyOverride?: string
+  ) => ReturnType<typeof processCardPayment>;
 };
 
 const defaultProcessors: PaymentProcessors = {
@@ -168,6 +189,8 @@ export function PaymentForm({
   const [tenderedAmount, setTenderedAmount] = useState(0);
   const [cardReference, setCardReference] = useState('');
   const [cardChargeOverride, setCardChargeOverride] = useState<number | null>(null);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [discountScope, setDiscountScope] = useState<DiscountScope>('all');
   const [discountType, setDiscountType] = useState<DiscountType>('percent');
   const [discountValue, setDiscountValue] = useState(0);
@@ -198,6 +221,8 @@ export function PaymentForm({
     setTenderedAmount(0);
     setCardReference('');
     setCardChargeOverride(null);
+    setCustomerName('');
+    setCustomerPhone('');
     setDiscountScope('all');
     setDiscountType('percent');
     setDiscountValue(0);
@@ -210,7 +235,7 @@ export function PaymentForm({
   /* Split-mode rows: seed 2 default rows on toggle-ON, clear on toggle-OFF */
   useEffect(() => {
     if (isSplitMode) {
-      const defaultMethod: PayMethod = enabledMethods.cash
+      const defaultMethod: SplitPayMethod = enabledMethods.cash
         ? 'cash'
         : enabledMethods.bbvaCard
           ? 'card'
@@ -269,10 +294,12 @@ export function PaymentForm({
 
   const canSubmitCash = tenderedAmount >= runningTotal && runningTotal > 0;
   const canSubmitCard = effectiveCardAmount > 0;
+  const canSubmitBankTransfer = customerPhone.trim().length > 0;
   const canSubmit =
     staffId.length > 0 &&
     (method !== 'cash' || canSubmitCash) &&
-    (method !== 'card' || canSubmitCard);
+    (method !== 'card' || canSubmitCard) &&
+    (method !== 'bank_transfer' || canSubmitBankTransfer);
 
   const splitRowsSum = useMemo(
     () => Math.round(splitRows.reduce((s, r) => s + r.amount, 0) * 100) / 100,
@@ -342,6 +369,30 @@ export function PaymentForm({
         tab.id,
         chargeAmount,
         ref.length > 0 ? ref : undefined,
+        discountInfoArg,
+        tab.version,
+        idempotencyKeyRef.current
+      );
+      if (!r.ok)
+        return {
+          ok: false,
+          error: { message: r.error.message, code: r.error.code as AppErrorCode },
+        };
+      return { ok: true, data: { receiptData: r.data.receiptData } };
+    }
+
+    if (method === 'bank_transfer') {
+      if (!processors.processBankTransferPayment) {
+        return { ok: false, error: { message: t('featOrders:checkoutSale.bankTransferUnavailable') } };
+      }
+      // eslint-disable-next-line i18next/no-literal-string -- idempotency-key prefix, not UI copy
+      idempotencyKeyRef.current ??= generateIdempotencyKey('payment_bank_transfer');
+      const name = customerName.trim() || t('featOrders:checkoutSale.defaultCustomerName');
+      const r = await processors.processBankTransferPayment(
+        tab.id,
+        subtotalWithTax,
+        name,
+        customerPhone.trim(),
         discountInfoArg,
         tab.version,
         idempotencyKeyRef.current
@@ -511,6 +562,37 @@ export function PaymentForm({
   if (step === 'receipt' && receiptData) {
     return (
       <div className="flex flex-1 flex-col overflow-hidden p-4 sm:px-6">
+        {receiptData.paymentMethod === 'bank_transfer' && receiptData.terminalReference && (
+          <section
+            className="mb-4 space-y-2 rounded-lg border-2 border-[var(--pos-accent)] p-4 text-center"
+            data-testid="bank-transfer-reference-code-section"
+          >
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              {t('featOrders:checkoutSale.referenceCodeHeading')}
+            </h3>
+            <p
+              className="font-mono text-4xl font-bold tracking-widest"
+              data-testid="bank-transfer-reference-code"
+            >
+              {receiptData.terminalReference}
+            </p>
+            <POSButton
+              type="button"
+              variant="outline"
+              touchSize="default"
+              onClick={() => {
+                void navigator.clipboard.writeText(receiptData.terminalReference ?? '');
+                toast.success(t('featOrders:checkoutSale.codeCopied'));
+              }}
+            >
+              <Copy className="mr-2 size-4" />
+              {t('featOrders:checkoutSale.copyCode')}
+            </POSButton>
+            <p className="text-xs text-muted-foreground">
+              {t('featOrders:checkoutSale.referenceCodeInstructions')}
+            </p>
+          </section>
+        )}
         <ReceiptPreview
           receipt={receiptData}
           onDone={() => {
@@ -864,7 +946,7 @@ export function PaymentForm({
                   variant="outline"
                   disabled={isProcessing || splitRows.length >= 4}
                   onClick={() => {
-                    const defaultMethod: PayMethod = enabledMethods.cash
+                    const defaultMethod: SplitPayMethod = enabledMethods.cash
                       ? 'cash'
                       : enabledMethods.bbvaCard
                         ? 'card'
@@ -938,6 +1020,20 @@ export function PaymentForm({
                     {paymentLabels.rappi}
                   </POSButton>
                 )}
+                {processors.processBankTransferPayment && (
+                  <POSButton
+                    type="button"
+                    touchSize="xl"
+                    variant={method === 'bank_transfer' ? 'default' : 'outline'}
+                    disabled={isProcessing}
+                    data-testid="payment-btn-bank-transfer"
+                    onClick={() => {
+                      setMethod('bank_transfer');
+                    }}
+                  >
+                    {t('featOrders:checkoutSale.bankTransferMethodLabel')}
+                  </POSButton>
+                )}
               </div>
             )}
           </section>
@@ -992,6 +1088,44 @@ export function PaymentForm({
                   maxLength={64}
                   disabled={isProcessing}
                   autoComplete="off"
+                />
+              </div>
+            </section>
+          )}
+
+          {!isSplitMode && method === 'bank_transfer' && (
+            <section className="space-y-3 rounded-lg border p-4">
+              <div className="space-y-2">
+                <Label htmlFor="bank-transfer-customer-name">
+                  {t('featOrders:checkoutSale.customerNameLabel')}
+                </Label>
+                <Input
+                  id="bank-transfer-customer-name"
+                  value={customerName}
+                  onChange={e => {
+                    setCustomerName(e.target.value);
+                  }}
+                  placeholder={t('featOrders:checkoutSale.defaultCustomerName')}
+                  maxLength={100}
+                  disabled={isProcessing}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank-transfer-customer-phone">
+                  {t('featOrders:checkoutSale.customerPhoneLabel')}
+                </Label>
+                <Input
+                  id="bank-transfer-customer-phone"
+                  value={customerPhone}
+                  onChange={e => {
+                    setCustomerPhone(e.target.value);
+                  }}
+                  placeholder={t('featOrders:checkoutSale.customerPhonePlaceholder')}
+                  maxLength={30}
+                  disabled={isProcessing}
+                  autoComplete="off"
+                  data-testid="bank-transfer-phone-input"
                 />
               </div>
             </section>

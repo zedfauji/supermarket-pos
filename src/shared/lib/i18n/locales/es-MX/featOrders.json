@@ -19,7 +19,16 @@
     "defaultCustomerName": "Cliente de mostrador",
     "paymentIncomplete": "No se pudo completar el pago.",
     "rappiUnavailable": "Aún no disponible",
-    "rappiNotSupported": "Rappi no está disponible para ventas directas"
+    "rappiNotSupported": "Rappi no está disponible para ventas directas",
+    "bankTransferMethodLabel": "Transferencia bancaria",
+    "bankTransferUnavailable": "La transferencia bancaria no está disponible aquí",
+    "customerNameLabel": "Nombre del cliente (opcional)",
+    "customerPhoneLabel": "Teléfono del cliente",
+    "customerPhonePlaceholder": "Número a 10 dígitos",
+    "referenceCodeHeading": "Código de referencia",
+    "referenceCodeInstructions": "Pide al cliente que ingrese este código en el campo de referencia numérica de su transferencia bancaria. Si su banco no ofrece ese campo, puede ingresarlo en el campo de concepto — solo dígitos, nunca una frase.",
+    "copyCode": "Copiar código",
+    "codeCopied": "Código copiado"
   },
   "weightEntry": {
     "title": "Ingresar peso",
