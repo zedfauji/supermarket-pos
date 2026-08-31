@@ -19,6 +19,9 @@ export const AuditActionSchema = z.enum([
   'payment.process',
   'payment.process_split',
   'payment.refund',
+  'payment.transfer_marked_pending',
+  'payment.transfer_confirmed',
+  'payment.transfer_disputed',
   // Tabs
   'tab.close',
   'tab.transfer',

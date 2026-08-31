@@ -29,6 +29,8 @@ export const STAFF_ACTIONS = [
   'view_audit_log',
   'edit_paid_tab',
   'reopen_tab',
+  'confirm_transfer_payment',
+  'dispute_transfer_payment',
 ] as const;
 
 export type StaffAction = (typeof STAFF_ACTIONS)[number];
@@ -52,6 +54,8 @@ const MANAGER_EXTRA: ReadonlySet<StaffAction> = new Set([
   'view_audit_log', // view /audit page — manager+ only
   'edit_paid_tab', // correct a paid tab after the fact — manager+ only
   'reopen_tab', // reopen a closed/paid tab — manager+ only (D-04)
+  'confirm_transfer_payment', // confirm a pending bank-transfer sale — manager+ only (Phase 23, D-07)
+  'dispute_transfer_payment', // dispute a pending bank-transfer sale — manager+ only (Phase 23, D-07)
 ]);
 
 const KITCHEN_ACTIONS: ReadonlySet<StaffAction> = new Set(['clock_in', 'clock_out']);

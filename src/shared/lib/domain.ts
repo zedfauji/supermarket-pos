@@ -87,11 +87,12 @@ export const OrderStatus = {
   VOIDED: 'voided',
 } as const;
 
-export const PaymentMethodSchema = z.enum(['cash', 'card', 'rappi']);
+export const PaymentMethodSchema = z.enum(['cash', 'card', 'rappi', 'bank_transfer']);
 export const PaymentMethod = {
   CASH: 'cash',
   CARD: 'card',
   RAPPI: 'rappi',
+  BANK_TRANSFER: 'bank_transfer',
 } as const;
 
 export const InventoryAdjustReasonSchema = z.enum([
@@ -1459,6 +1460,43 @@ export const ProcessRefundInputSchema = z
   });
 
 export type ProcessRefundInput = z.infer<typeof ProcessRefundInputSchema>;
+
+// ============================================================================
+// Phase 23-01 — BANK TRANSFER PAYMENT TRACKING
+// ============================================================================
+
+export const BankTransferStatusSchema = z.enum(['pending', 'confirmed', 'disputed']);
+export type BankTransferStatus = z.infer<typeof BankTransferStatusSchema>;
+
+export const BankTransferSchema = z.object({
+  id: UuidSchema,
+  paymentId: UuidSchema,
+  referenceCode: z.string().regex(/^\d{7}$/),
+  amount: MoneySchema,
+  status: BankTransferStatusSchema,
+  customerName: z.string(),
+  customerPhone: z.string().nullable(),
+  createdBy: UuidSchema,
+  createdAt: TimestampSchema,
+  confirmedBy: UuidSchema.nullable(),
+  confirmedAt: TimestampSchema.nullable(),
+  disputedBy: UuidSchema.nullable(),
+  disputedAt: TimestampSchema.nullable(),
+  disputeReason: z.string().nullable(),
+});
+export type BankTransfer = z.infer<typeof BankTransferSchema>;
+
+export const ConfirmTransferInputSchema = z.object({
+  paymentId: UuidSchema,
+  enteredCode: z.string().regex(/^\d{7}$/, 'Code must be 7 digits'),
+});
+export type ConfirmTransferInput = z.infer<typeof ConfirmTransferInputSchema>;
+
+export const DisputeTransferInputSchema = z.object({
+  paymentId: UuidSchema,
+  reason: z.string().min(1).max(200),
+});
+export type DisputeTransferInput = z.infer<typeof DisputeTransferInputSchema>;
 
 // ============================================================================
 // Phase 8 S6-01: Report row schemas for analytics widgets
