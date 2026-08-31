@@ -33,10 +33,10 @@ function mapTransferRow(row: Record<string, unknown>): BankTransfer {
   return {
     id: row['id'] as string,
     paymentId: row['payment_id'] as string,
-    referenceCode: payment['reference_number'] as string,
+    referenceCode: (payment['reference_number'] as string | null) ?? '',
     amount: payment['amount'] as number,
     status: row['status'] as BankTransfer['status'],
-    customerName: tab['customer_name'] as string,
+    customerName: (tab['customer_name'] as string | null) ?? 'Walk-in',
     customerPhone: row['customer_phone'] as string | null,
     createdBy: row['created_by'] as string,
     createdAt: new Date(row['created_at'] as string),
