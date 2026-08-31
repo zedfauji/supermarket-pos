@@ -39,7 +39,7 @@ function staffForRole(role: StaffRole): { name: string; pin: string } {
   return { name: envOrThrow('E2E_ADMIN_NAME'), pin: envOrThrow('E2E_ADMIN_PIN') };
 }
 
-async function enterPin(page: Page, pin: string): Promise<void> {
+export async function enterPin(page: Page, pin: string): Promise<void> {
   for (const ch of pin) {
     const label = ch === '0' ? KEY_0_RE : `Key ${ch}`;
     await page.getByRole('button', { name: label }).click();
