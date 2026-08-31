@@ -19,7 +19,16 @@
     "defaultCustomerName": "Walk-in",
     "paymentIncomplete": "Payment could not be completed.",
     "rappiUnavailable": "Not yet available",
-    "rappiNotSupported": "Rappi is not available for direct sales"
+    "rappiNotSupported": "Rappi is not available for direct sales",
+    "bankTransferMethodLabel": "Bank Transfer",
+    "bankTransferUnavailable": "Bank transfer is not available here",
+    "customerNameLabel": "Customer Name (optional)",
+    "customerPhoneLabel": "Customer Phone",
+    "customerPhonePlaceholder": "10-digit phone number",
+    "referenceCodeHeading": "Reference Code",
+    "referenceCodeInstructions": "Have the customer enter this code in their bank transfer's numeric reference field (referencia numérica). If their bank doesn't offer that field, they can enter it in the concepto field instead — digits only, never a phrase.",
+    "copyCode": "Copy code",
+    "codeCopied": "Code copied"
   },
   "weightEntry": {
     "title": "Enter weight",
