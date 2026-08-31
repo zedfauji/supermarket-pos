@@ -1,8 +1,9 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 import { useTerminalLockSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Staff } from '@shared/lib/domain';
+import { useLockStateStore } from '../model/lock-state-store';
 import { useIdleLockAudit } from '../model/useIdleLockAudit';
 import { useIdleTimer } from '../model/useIdleTimer';
 import { IdleLockOverlay } from './IdleLockOverlay';
@@ -25,18 +26,18 @@ export function IdleLockProvider({ children }: IdleLockProviderProps) {
   const currentShift = useStaffStore(s => s.currentShift);
   const { data: lockSettings } = useTerminalLockSettings();
   const { recordLock, recordUnlock } = useIdleLockAudit();
-  const [locked, setLocked] = useState(false);
+  const locked = useLockStateStore(s => s.locked);
 
   const timeoutMs = (lockSettings?.lockTimeoutSeconds ?? DEFAULT_LOCK_TIMEOUT_SECONDS) * 1000;
 
   const handleIdle = useCallback(() => {
-    setLocked(true);
+    useLockStateStore.getState().setLocked(true);
     void recordLock(currentStaff, currentShift?.id ?? null);
   }, [currentStaff, currentShift, recordLock]);
 
   const handleUnlock = useCallback(
     (matchedStaff: Staff) => {
-      setLocked(false);
+      useLockStateStore.getState().setLocked(false);
       void recordUnlock(currentStaff, matchedStaff, currentShift?.id ?? null);
     },
     [currentStaff, currentShift, recordUnlock]

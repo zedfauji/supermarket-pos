@@ -8,6 +8,7 @@ import { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/use
 import { WeightEntryDialog } from '@features/add-loose-weight-item/ui/WeightEntryDialog';
 import { useCheckoutSale } from '@features/checkout-sale/model/useCheckoutSale';
 import { HoldSaleBanner } from '@features/hold-sale/ui/HoldSaleBanner';
+import { useLockStateStore } from '@features/idle-screen-lock/model/lock-state-store';
 import {
   ADD_TO_CART_EVENT,
   BARCODE_SCANNED_EVENT,
@@ -33,8 +34,15 @@ export function CheckoutPanel() {
   // UI is mounted (paymentOpen) or a weight dialog owns the register
   // (weightEntry.isOpen for add, editingWeightItemId for edit), a scan must
   // not silently add to or reopen a cart that a modal transition is about to
-  // clear or that is not currently editable (CHK-01, T-02-08-01).
-  const scannerEnabled = !paymentOpen && !weightEntry.isOpen && editingWeightItemId === null;
+  // clear or that is not currently editable (CHK-01, T-02-08-01). Also gated
+  // on !locked (T-21-06, RESEARCH.md Pitfall 3): this hook's window-level
+  // keydown listener is genuinely global -- it fires regardless of the
+  // idle-lock overlay's own focus trap -- so without this gate a raw
+  // barcode-scanner keystroke burst could still open/refresh the Product
+  // Peek window while the screen visually appears locked, defeating the
+  // lock's purpose even though no cart mutation occurs.
+  const locked = useLockStateStore(s => s.locked);
+  const scannerEnabled = !paymentOpen && !weightEntry.isOpen && editingWeightItemId === null && !locked;
   // A scan only populates the product search box — it never adds to the cart
   // by itself. useBarcodeScanner hands over the full scanned code in one
   // call, so this always replaces `search` rather than appending to it.
