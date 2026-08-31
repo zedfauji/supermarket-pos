@@ -1673,7 +1673,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      clear_must_change_pin: { Args: { p_terminal_id?: string }; Returns: Json }
+      clear_must_change_pin: {
+        Args: { p_new_pin: string; p_terminal_id?: string }
+        Returns: Json
+      }
       close_caja_session: {
         Args: {
           p_caja_id: string

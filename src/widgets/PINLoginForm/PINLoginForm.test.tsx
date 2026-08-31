@@ -228,6 +228,7 @@ describe('PINLoginForm', () => {
       });
       await waitFor(() => {
         expect(mockRpc).toHaveBeenCalledWith('clear_must_change_pin', {
+          p_new_pin: '222222',
           p_terminal_id: expect.any(String) as unknown as string,
         });
       });

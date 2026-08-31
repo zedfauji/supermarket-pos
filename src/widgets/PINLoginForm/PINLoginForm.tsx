@@ -131,6 +131,7 @@ export function PINLoginForm() {
       /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       const db = supabase as any;
       const { error: clearError } = (await db.rpc('clear_must_change_pin', {
+        p_new_pin: newPin,
         p_terminal_id: TERMINAL_ID,
       })) as { error: { message: string } | null };
       /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
