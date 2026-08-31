@@ -119,9 +119,10 @@ Plans:
 **Goal:** Cashier marks a completed sale as awaiting bank transfer with a system-generated reference code; admin/manager manually confirms or disputes it against their own banking app on the `/payments` page. Replaces the paper name+phone reconciliation slip with a fully audited state machine — no auto-confirm path anywhere.
 **Requirements**: BTP-01, BTP-02, BTP-03, BTP-04, BTP-05, BTP-06, BTP-07, BTP-08, BTP-09, BTP-10
 **Depends on:** Nothing (independent payments/RBAC surface — does not depend on Phase 22's admin-PIN-reset work)
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Validated via spikes 002–005 (`.planning/spikes/`, idea key `bank-transfer-payment-tracking`):
+
 - Reference code: 6-digit payload + Luhn check digit (7 digits total), targets SPEI's Banxico-standard `referencia numerica` field.
 - State machine: cashier marks `pending` → manager+/admin `confirmed`/`disputed`, mirrors the existing `process_refund` RBAC-gate + audit-log pattern. Always a manual tap — no auto-confirm, even for unambiguous matches.
 - UI: "Bank Transfers" tab on the existing `/payments` page, listing pending/confirmed/disputed sales with a CSV export for end-of-day reconciliation.
@@ -130,11 +131,11 @@ Validated via spikes 002–005 (`.planning/spikes/`, idea key `bank-transfer-pay
 Plans:
 **Wave 1**
 
-- [ ] 23-01-PLAN.md — Tracer (backend): payment_method enum + bank_transfers schema/RLS, Luhn PL/pgSQL port, process_payment_atomic/process_direct_sale_atomic extension, confirm_transfer_payment/dispute_transfer_payment RPCs, RBAC + audit registration, Zod types — proven via a real RPC integration test (BTP-01, BTP-02, BTP-03, BTP-04, BTP-05, BTP-06, BTP-09, BTP-10)
+- [x] 23-01-PLAN.md — Tracer (backend): payment_method enum + bank_transfers schema/RLS, Luhn PL/pgSQL port, process_payment_atomic/process_direct_sale_atomic extension, confirm_transfer_payment/dispute_transfer_payment RPCs, RBAC + audit registration, Zod types — proven via a real RPC integration test (BTP-01, BTP-02, BTP-03, BTP-04, BTP-05, BTP-06, BTP-09, BTP-10)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 23-02-PLAN.md — Checkout wiring: PaymentForm "Bank Transfer" method, useCheckoutSale processor, edge-function contract extension, E2E proof of mark-pending (BTP-02)
+- [x] 23-02-PLAN.md — Checkout wiring: PaymentForm "Bank Transfer" method, useCheckoutSale processor, edge-function contract extension, E2E proof of mark-pending (BTP-02)
 
 **Wave 3** *(blocked on Wave 2 completion — shares featOrders.json)*
 
@@ -149,6 +150,17 @@ Plans:
 - [ ] 23-05-PLAN.md — CSV export (Tauri-native, rowsToCsv) + get_caja_report bank-transfer revenue breakout (BTP-08, BTP-10)
 
 **UI hint**: yes
+
+### Phase 24: Tax Configuration (Inclusive/Exclusive Toggle)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 24 to break down)
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 

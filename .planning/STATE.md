@@ -6,15 +6,15 @@ current_phase: 23
 current_phase_name: Bank Transfer Payment Tracking
 status: executing
 stopped_at: Phase 22 UI-SPEC approved
-last_updated: "2026-08-31T16:35:23.050Z"
-last_activity: 2026-08-30
-last_activity_desc: Phase 21 complete, transitioned to Phase 22
-state_head: cab0630064a94d786bc0456f6e69c3b036294f1b
+last_updated: "2026-08-31T20:10:16.573Z"
+last_activity: 2026-08-31
+last_activity_desc: Phase 23 execution started
+state_head: f74ff1d8452a18c3fa47741d55e14f154bfe2f07
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 20
-  completed_plans: 14
+  completed_plans: 17
   percent: 67
 ---
 
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 21 — Idle Screen Lock
+**Current focus:** Phase 23 — Bank Transfer Payment Tracking
 
 ## Current Position
 
-Phase: 23 (Bank Transfer Payment Tracking) — READY TO EXECUTE
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-30 — Phase 21 complete, transitioned to Phase 22
+Phase: 23 (Bank Transfer Payment Tracking) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 23
+Last activity: 2026-08-31 — Phase 23 execution started
 
 ## Performance Metrics
 
@@ -117,6 +117,12 @@ Last activity: 2026-08-30 — Phase 21 complete, transitioned to Phase 22
 - Phase 22 added: Admin PIN Reset (Server-Side Recovery Path) — Edge Function-backed admin PIN
   reset for a staff member who has genuinely forgotten their PIN (no in-app recovery exists today;
   `force_pin_change` requires knowing the current PIN to log in first). Independent of Phase 21.
+
+- Phase 24 added: Tax Configuration (Inclusive/Exclusive Toggle) — global `taxInclusive` toggle in
+  Billing settings, fixing a live bug where checkout and the server-side
+  `process_direct_sale_atomic` RPC always apply tax additively even though store prices already
+  include tax (every sale currently overcharged by the tax amount). Requirements TAX-01..05
+  captured via `/gsd-explore` 2026-08-31. Grey areas deferred to discuss-phase.
 
 - Phase 23 added: Bank Transfer Payment Tracking — cashier marks a sale awaiting bank transfer
   with a system-generated reference code, admin/manager manually confirms/disputes on `/payments`,

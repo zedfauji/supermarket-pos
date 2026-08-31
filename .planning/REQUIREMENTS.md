@@ -206,6 +206,24 @@ during `/gsd-plan-phase 23` — no formal SPEC.md exists for this phase.
 - [ ] **BTP-09**: A cashier-role account is denied `confirm_transfer_payment`/`dispute_transfer_payment` server-side (RPC role re-check), independent of any client-side gating.
 - [ ] **BTP-10**: Bank statement data is never imported into or synced with the POS in this phase — no CSV import, no bank API pull, no PSP webhook. A pending/disputed bank-transfer sale still counts toward `get_caja_report`/`get_payment_methods_report` revenue totals immediately at checkout (same treatment as cash/card), with an additional "pending bank transfer" breakout so admin can see how much of today's revenue is still unconfirmed.
 
+## v1.10 Requirements — Tax Configuration (Inclusive/Exclusive Toggle)
+
+Milestone goal: fix a live overcharge bug and add the missing control for it. Store's product
+prices already include tax (IVA), but checkout (`PaymentForm.tsx`) and the server-side
+`process_direct_sale_atomic` RPC (both variants) always apply tax additively on top of the cart
+total — every sale is currently overcharged by the tax amount. Explored via `/gsd-explore`
+2026-08-31 (topic: how tax percentage is configured). Grey areas (default toggle value for
+existing installs, exact receipt copy, whether report/margin math needs updating, whether
+exclusive mode is still needed) are deferred to discuss-phase for Phase 24, not resolved here.
+
+### Tax Configuration
+
+- [ ] **TAX-01**: Billing settings gains a `taxInclusive` boolean toggle (admin-only, `manage_settings`), alongside the existing `taxRatePercent`.
+- [ ] **TAX-02**: When `taxInclusive` is on, checkout total equals the sum of item prices unchanged; tax is decomposed backward for display (`subtotal = total / (1 + rate/100)`, `tax = total - subtotal`) rather than added on top.
+- [ ] **TAX-03**: When `taxInclusive` is off, checkout keeps today's additive math (`tax = subtotal * rate/100`, `total = subtotal + tax`) for stores whose shelf prices exclude tax.
+- [ ] **TAX-04**: The server-side `process_direct_sale_atomic` RPC (and its cost-snapshot variant) recomputes tax using the same mode-aware formula as the client and validates the client-submitted total against it — the anti-tamper total-match guard must not reject valid inclusive-mode sales.
+- [ ] **TAX-05**: Printed/PDF/email receipts show the decomposed subtotal + tax line matching whichever mode is active, not just a flat tax-on-top line.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -310,6 +328,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BTP-08 | Phase 23 (v1.9) | Not Started |
 | BTP-09 | Phase 23 (v1.9) | Not Started |
 | BTP-10 | Phase 23 (v1.9) | Not Started |
+| TAX-01 | Phase 24 (v1.10) | Not Started |
+| TAX-02 | Phase 24 (v1.10) | Not Started |
+| TAX-03 | Phase 24 (v1.10) | Not Started |
+| TAX-04 | Phase 24 (v1.10) | Not Started |
+| TAX-05 | Phase 24 (v1.10) | Not Started |
 
 **Coverage:**
 
@@ -321,7 +344,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.7 proposed requirements: 4 total, 0/4 mapped (not yet roadmapped)
 - v1.8 requirements: 8 total, 8/8 mapped to Phase 22 (PINRST-01..08)
 - v1.9 requirements: 10 total, 10/10 mapped to Phase 23 (BTP-01..10)
+- v1.10 requirements: 5 total, 5/5 mapped to Phase 24 (TAX-01..05, not yet planned)
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*
 *Last updated: 2026-08-31 — Phase 23 (Bank Transfer Payment Tracking) requirements formalized during `/gsd-plan-phase 23` from CONTEXT.md D-01..D-17 (no formal SPEC.md for this phase; decisions sourced from `/gsd-spike` sessions 002-005, not a live discuss-phase); BTP-01..10 added, traceability mapped 10/10*
+
+*2026-08-31 — Phase 24 (Tax Configuration) added via `/gsd-explore`; TAX-01..05 captured, traceability mapped 5/5; grey areas (default toggle value, receipt copy, report/margin impact, exclusive-mode necessity) left open for discuss-phase, not decided here.*
