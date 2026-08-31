@@ -29,6 +29,10 @@ const SM9_NEW_PIN = '444555';
 
 const SM11_STAFF_NAME = 'SM11-Inactive-Target';
 
+const SM12_ADMIN_NAME = 'SM12-Self-Reset-Admin';
+const SM12_OLD_PIN = '555444';
+const SM12_NEW_PIN = '666333';
+
 /**
  * Reads the current browser session's Supabase access token out of
  * localStorage (mirrors 50-direct-sale-checkout.spec.ts's helper of the
@@ -60,6 +64,7 @@ test.describe('Staff Management', () => {
     await deleteTestStaff(SM8_STAFF_NAME).catch(() => undefined);
     await deleteTestStaff(SM9_TARGET_NAME).catch(() => undefined);
     await deleteTestStaff(SM11_STAFF_NAME).catch(() => undefined);
+    await deleteTestStaff(SM12_ADMIN_NAME).catch(() => undefined);
   });
 
   test('SM1: /staff page shows staff list with at least one member', async ({ page }) => {
@@ -358,9 +363,9 @@ test.describe('Staff Management', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-    await dialog.getByLabel('New PIN', { exact: true }).fill(SM9_NEW_PIN);
-    await dialog.getByLabel(/confirm new pin/i).fill(SM9_NEW_PIN);
-    await dialog.getByRole('button', { name: /^reset pin$/i }).click();
+    await dialog.getByLabel(/^(new pin|pin nuevo)$/i).fill(SM9_NEW_PIN);
+    await dialog.getByLabel(/confirm new pin|confirmar pin nuevo/i).fill(SM9_NEW_PIN);
+    await dialog.getByRole('button', { name: /^(reset pin|restablecer pin)$/i }).click();
 
     const confirmGate = page.getByRole('alertdialog');
     await expect(confirmGate).toBeVisible({ timeout: 10_000 });
@@ -368,7 +373,9 @@ test.describe('Staff Management', () => {
     if (!adminPin) throw new Error('Missing E2E_ADMIN_PIN');
     await enterPin(page, adminPin);
 
-    await expect(page.getByText(/pin reset for/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/pin reset for|pin restablecido para/i)).toBeVisible({
+      timeout: 15_000,
+    });
 
     await logout(page);
 
@@ -397,6 +404,75 @@ test.describe('Staff Management', () => {
     await logout(page).catch(() => undefined);
 
     await deleteTestStaff(SM9_TARGET_NAME).catch(() => undefined);
+  });
+
+  test('SM12: admin resets their OWN PIN via Reset PIN, no special-case block (D-08)', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    // Disposable seeded admin account — never the shared E2E_ADMIN_NAME/PIN
+    // fixture (mutating that shared credential would race with every other
+    // spec file that calls loginAs(page, 'admin') in a parallel worker).
+    await seedNewStaffMember(SM12_ADMIN_NAME, SM12_OLD_PIN, 'admin');
+
+    await loginAsNamed(page, SM12_ADMIN_NAME, SM12_OLD_PIN);
+    await page.goto('/staff');
+
+    const staffRow = page.getByRole('row', { name: new RegExp(SM12_ADMIN_NAME) });
+    await expect(staffRow).toBeVisible({ timeout: 15_000 });
+    await staffRow.getByRole('button', { name: /reset pin|restablecer pin/i }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+
+    // This test logs in AS the disposable seeded admin account, which
+    // defaults to es-MX locale (unlike the shared E2E_ADMIN_NAME fixture
+    // SM9 uses, presumed en-US) — match both locales' field labels.
+    await dialog.getByLabel(/^(new pin|pin nuevo)$/i).fill(SM12_NEW_PIN);
+    await dialog.getByLabel(/confirm new pin|confirmar pin nuevo/i).fill(SM12_NEW_PIN);
+    await dialog.getByRole('button', { name: /^(reset pin|restablecer pin)$/i }).click();
+
+    const confirmGate = page.getByRole('alertdialog');
+    await expect(confirmGate).toBeVisible({ timeout: 10_000 });
+    // ManagerPinDialog's eligibleStaff filter is canAccess(role, 'manage_staff'),
+    // admin-only per rbac.ts's ADMIN_EXTRA — this disposable account IS role
+    // admin, so its own current (old) PIN passes the confirm gate.
+    await enterPin(page, SM12_OLD_PIN);
+
+    await expect(page.getByText(/pin reset for|pin restablecido para/i)).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await logout(page);
+
+    // The post-reset forced-change loop (D-04) applies to a self-reset
+    // exactly as it does to any other target — mirrors SM2/SM9's exact
+    // manual login-flow assertion shape (loginAsNamed's built-in
+    // toHaveURL(/home|pos/) assertion would fail here, since must_change_pin
+    // routes to the forced-change screen instead of navigating away).
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { name: WHO_ARE_YOU_RE })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByRole('button', { name: new RegExp(SM12_ADMIN_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })
+      .click();
+    await expect(
+      page.getByRole('heading', {
+        name: new RegExp(`^${SM12_ADMIN_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+      })
+    ).toBeVisible({ timeout: 15_000 });
+
+    await enterPin(page, SM12_NEW_PIN);
+
+    await expect(
+      page.getByRole('heading', { name: /set a new pin|establece un nuevo pin/i })
+    ).toBeVisible({ timeout: 10_000 });
+
+    await logout(page).catch(() => undefined);
+
+    await deleteTestStaff(SM12_ADMIN_NAME).catch(() => undefined);
   });
 
   test('SM3: login as E2E-TestStaff succeeds', async ({ page }) => {
