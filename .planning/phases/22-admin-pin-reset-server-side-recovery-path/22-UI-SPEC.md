@@ -68,15 +68,19 @@ classes, not redefined for this phase:
 |------|------|--------|-------------|--------|
 | Body / field input | 14px (`text-sm`) | 400 (regular) | default (1.5, Tailwind `text-sm` line-height) | `DialogContent` root sets `text-sm` (`dialog.tsx:56`); `Input` inherits |
 | Label | 14px (`text-sm`) | 400 (regular, via `className="font-normal"` override) | 1 (`leading-none`) | `CreateStaffDialog.tsx:96` overrides `label.tsx`'s default `font-medium` to `font-normal` — follow this override for the two new PIN-field labels, matching the sibling dialog exactly |
-| Dialog title (`AdminResetPinDialog`) | 16px (`text-base`) | 500 (medium), `font-heading` | 1 (`leading-none`) | `DialogTitle`, `dialog.tsx:113` |
+| Dialog title (`AdminResetPinDialog`) | 16px (`text-base`) | 600 (semibold, `font-semibold` override), `font-heading` | 1 (`leading-none`) | `DialogTitle`, `dialog.tsx:113` — the default `DialogTitle` weight is 500 (medium); `AdminResetPinDialog` MUST pass `className="font-semibold"` on its `DialogTitle` (same override pattern `CreateStaffDialog.tsx:96` already uses on `Label`) so its title renders at 600, matching the reused `AlertDialogTitle` below |
 | Dialog description | 14px (`text-sm`) | 400 (regular), `text-muted-foreground` | default | `DialogDescription`, `dialog.tsx:127` |
 | Confirm-gate title (`ManagerPinDialog`, reused unmodified) | 18px (`text-lg`) | 600 (semibold), `font-heading` | default | `AlertDialogTitle`, `alert-dialog.tsx:73` — unchanged, not touched by this phase |
 
-3 sizes in play for this phase's new surface (14 / 16 / 18px — the 18px belongs to the reused,
-unmodified `ManagerPinDialog`). 2 weights: 400 (regular — labels, body, descriptions) and 600
-(semibold — reused `AlertDialogTitle` only); the new dialog's own title is 500 (medium) per the
-existing `DialogTitle` primitive — this is an inherited exception, not a new weight introduced by
-this phase, and must not be overridden to match `AlertDialogTitle`'s 600.
+3 sizes in play for this phase's new surface (14 / 16 / 18px). Exactly 2 weights across both
+dialogs this phase composes together: 400 (regular — labels, body, descriptions) and 600
+(semibold — `AdminResetPinDialog`'s own `DialogTitle`, via the `font-semibold` override above,
+AND the reused `AlertDialogTitle`). The `DialogTitle` primitive's un-overridden default (500,
+medium) does NOT apply here — this phase's executor must add the override, it is not optional
+styling. This closes the three-weight gap: without the override, `AdminResetPinDialog` (500) and
+`ManagerPinDialog` (600) would render two different title weights across a single sequential
+task (open reset dialog → confirm via PIN gate), which is a real, visible inconsistency even
+though the two dialogs are never on-screen simultaneously.
 
 ---
 
@@ -96,6 +100,11 @@ not literal hex values in component code — no new color is introduced by this 
 Accent reserved for: the `AdminResetPinDialog` submit button ("Reset PIN") and the dialog's inherited
 focus ring only — never the row-level trigger button (which stays `variant="outline"`, matching its
 sibling "Force PIN Change").
+
+**Focal point:** On open, the eye lands on the new-PIN `Input` first (it's the only interactive
+field with content to enter and carries native autofocus, matching `CreateStaffDialog`'s first-field
+autofocus convention) — not the accent-colored "Reset PIN" submit button, which stays visually
+secondary (bottom-right, static) until both PIN fields are filled and valid.
 
 ---
 
