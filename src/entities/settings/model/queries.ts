@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useStaffStore } from '@entities/staff/model/store';
 import {
   callCreateSettingsBackup,
   callRestoreSettingsBackup,
@@ -389,6 +390,7 @@ export function useMutationUpdateReceiptSettings() {
 }
 
 export function useTerminalLockSettings() {
+  const isAuthenticated = useStaffStore(s => s.isAuthenticated);
   const query = useQuery({
     queryKey: terminalLockSettingsKeys.all,
     queryFn: async (): Promise<Result<TerminalLockSettings>> => {
@@ -417,6 +419,17 @@ export function useTerminalLockSettings() {
           : DEFAULT_TERMINAL_LOCK
       );
     },
+    // Gated on isAuthenticated (Rule 1 fix, Plan 21-02): terminal_lock_settings'
+    // SELECT RLS policy is `TO authenticated` -- an ungated query fires once at
+    // initial app mount, before login, when the client is still anonymous. RLS
+    // silently returns zero rows (no error), and that `null` result gets cached
+    // for staleTime with no later invalidation on login, permanently stranding
+    // IdleLockProvider on DEFAULT_TERMINAL_LOCK (60s) regardless of the admin's
+    // configured per-terminal value -- until a full page reload happens to
+    // occur. Gating `enabled` here means the query simply doesn't fire until a
+    // real session exists, so its first (and only meaningfully cached) fetch is
+    // always authenticated.
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
   });
 
