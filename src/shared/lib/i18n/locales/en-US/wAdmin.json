@@ -236,7 +236,11 @@
     "elapsedHours": "{{count}}h",
     "elapsedDays": "{{count}}d",
     "emptyTitle": "No bank transfers yet",
-    "emptyDescription": "Bank-transfer sales awaiting reconciliation will appear here."
+    "emptyDescription": "Bank-transfer sales awaiting reconciliation will appear here.",
+    "exportCsvButton": "Export CSV",
+    "csvFileLabel": "CSV File",
+    "exportSuccessToast": "Bank transfers exported successfully.",
+    "exportErrorToast": "Export failed. Please try again."
   },
   "refundsRegister": {
     "emptyTitle": "No refunds",

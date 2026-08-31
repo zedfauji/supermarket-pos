@@ -89,6 +89,8 @@ function makeCajaReport(): CajaReport {
       cashSales: 600,
       cardSales: 300,
       rappiSales: 100,
+      bankTransferSales: 0,
+      bankTransferPending: 0,
       orderCount: 15,
       tabCount: 6,
       totalExpenses: 0,

@@ -147,6 +147,14 @@ export function CajaReportPanel() {
               { label: t('cajaReportPanel.cashSales'), value: report.summary.cashSales },
               { label: t('cajaReportPanel.cardSales'), value: report.summary.cardSales },
               { label: t('cajaReportPanel.rappiSales'), value: report.summary.rappiSales },
+              {
+                label: t('cajaReportPanel.bankTransferSales'),
+                value: report.summary.bankTransferSales,
+              },
+              {
+                label: t('cajaReportPanel.bankTransferPending'),
+                value: report.summary.bankTransferPending,
+              },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-lg border p-4">
                 <p className="text-sm text-muted-foreground">{label}</p>

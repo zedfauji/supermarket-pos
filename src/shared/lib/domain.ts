@@ -941,6 +941,10 @@ export const CajaReportSummarySchema = z.object({
   cashSales: MoneySchema,
   cardSales: MoneySchema,
   rappiSales: MoneySchema,
+  // Phase 23-05 (D-15/BTP-10): bank-transfer revenue breakout — Pending is a
+  // subset of Sales (the still-unconfirmed portion), not an additional total.
+  bankTransferSales: MoneySchema,
+  bankTransferPending: MoneySchema,
   orderCount: z.number().int().nonnegative(),
   tabCount: z.number().int().nonnegative(),
   totalExpenses: MoneySchema,

@@ -182,6 +182,8 @@
     "cashSales": "Cash Sales",
     "cardSales": "Card Sales",
     "rappiSales": "Rappi Sales",
+    "bankTransferSales": "Bank Transfer Sales",
+    "bankTransferPending": "Bank Transfer Pending",
     "tabsOrders": "Tabs / Orders",
     "cashReconciliation": "Cash Reconciliation",
     "openingCashLabel": "Opening cash",

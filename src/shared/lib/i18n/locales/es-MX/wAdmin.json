@@ -236,7 +236,11 @@
     "elapsedHours": "{{count}}h",
     "elapsedDays": "{{count}}d",
     "emptyTitle": "Aún no hay transferencias bancarias",
-    "emptyDescription": "Las ventas por transferencia bancaria pendientes de conciliar aparecerán aquí."
+    "emptyDescription": "Las ventas por transferencia bancaria pendientes de conciliar aparecerán aquí.",
+    "exportCsvButton": "Exportar CSV",
+    "csvFileLabel": "Archivo CSV",
+    "exportSuccessToast": "Transferencias bancarias exportadas correctamente.",
+    "exportErrorToast": "Error al exportar. Inténtalo de nuevo."
   },
   "refundsRegister": {
     "emptyTitle": "Sin reembolsos",
