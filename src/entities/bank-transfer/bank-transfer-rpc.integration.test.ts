@@ -242,6 +242,62 @@ async function cleanup(svc: any, tabId: string): Promise<void> {
   await svc.from('tabs').delete().eq('id', tabId);
 }
 
+/**
+ * Seeds an ALREADY-CLOSED caja session (avoids the one-open-session-at-a-time
+ * unique constraint colliding with other concurrent test/dev activity on this
+ * shared local DB) and an open tab attached to it, ready for a bank-transfer
+ * payment. Used by the CR-01 netBalance regression test.
+ */
+async function seedClosedCajaWithOpenTab(
+  svc: any,
+  amount: number,
+): Promise<{ cajaId: string; tabId: string; staffId: string }> {
+  const { staffId, shiftId } = await getStaffAndShift(svc);
+
+  const { data: caja, error: cajaErr } = await svc
+    .from('caja_sessions')
+    .insert({ opened_by: staffId, closed_by: staffId, opening_cash: 0, status: 'closed' })
+    .select('id')
+    .single();
+  if (cajaErr || !caja) throw new Error(`seedClosedCajaWithOpenTab: caja insert failed: ${cajaErr?.message ?? 'no row'}`);
+
+  const { data: product } = await svc.from('products').select('id').eq('is_active', true).limit(1).single();
+  if (!product) throw new Error('seedClosedCajaWithOpenTab: no active product found');
+
+  const { data: tab, error: tabErr } = await svc
+    .from('tabs')
+    .insert({
+      customer_name: `Bank Transfer Caja Report Tab ${Date.now()}`,
+      staff_id: staffId,
+      shift_id: shiftId,
+      caja_session_id: caja.id,
+      status: 'open',
+    })
+    .select('id')
+    .single();
+  if (tabErr || !tab) throw new Error(`seedClosedCajaWithOpenTab: tab insert failed: ${tabErr?.message ?? 'no row'}`);
+
+  const { data: order, error: orderErr } = await svc
+    .from('orders')
+    .insert({ tab_id: tab.id, staff_id: staffId, status: 'served' })
+    .select('id')
+    .single();
+  if (orderErr || !order) throw new Error(`seedClosedCajaWithOpenTab: order insert failed: ${orderErr?.message ?? 'no row'}`);
+
+  const { error: itemErr } = await svc
+    .from('order_items')
+    .insert({ order_id: order.id, product_id: product.id, quantity: 1, unit_price: amount, modifier_price_delta: 0 });
+  if (itemErr) throw new Error(`seedClosedCajaWithOpenTab: item insert failed: ${itemErr.message}`);
+
+  return { cajaId: caja.id as string, tabId: tab.id as string, staffId };
+}
+
+/** Cleanup for seedClosedCajaWithOpenTab: also removes the caja_sessions row. */
+async function cleanupCaja(svc: any, tabId: string, cajaId: string): Promise<void> {
+  await cleanup(svc, tabId);
+  await svc.from('caja_sessions').delete().eq('id', cajaId);
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('bank-transfer RPCs (integration)', () => {
@@ -429,4 +485,76 @@ describe('bank-transfer RPCs (integration)', () => {
     expect(transfer?.dispute_reason).toBe('no matching transfer found by end of day');
     expect(transfer?.disputed_by).toBeTruthy();
   });
+
+  // ── Code-review regression coverage (23-REVIEW.md CR-01 / WR-03) ──────────
+  // These two are deliberately separate from the tests above: both findings
+  // were fixed in the migration files but the fix was never re-applied to the
+  // live database until the phase-close verification pass caught it via
+  // direct pg_get_functiondef introspection. Neither prior test would have
+  // caught that gap (Test 1 above already uses the service-role client,
+  // which the WR-03 guard explicitly allowlists; nothing exercised
+  // get_caja_report at all). These assert against the live RPC output so a
+  // future un-applied migration would fail CI instead of silently shipping.
+
+  itPlain(
+    'CR-01 regression: get_caja_report netBalance includes bank-transfer sales',
+    async () => {
+      const svc = getServiceDb();
+      const seed = await seedClosedCajaWithOpenTab(svc, 320.0);
+      tabId = seed.tabId;
+      try {
+        await markPendingTransfer(svc, seed.tabId, seed.staffId, 320.0, null);
+
+        const { data, error } = await svc.rpc('get_caja_report', { p_caja_id: seed.cajaId });
+        expect(error).toBeNull();
+        expect(data?.ok).toBe(true);
+
+        // Isolated session: only one bank-transfer payment exists, no cash/card/
+        // rappi sales and no caja_entries — netBalance must equal the bank-transfer
+        // amount. Pre-fix, netBalance omitted v_bank_transfer_sales entirely and
+        // would read 0 here regardless of bankTransferSales being correct.
+        expect(data.summary.bankTransferSales).toBe(320);
+        expect(data.summary.netBalance).toBe(data.summary.bankTransferSales);
+      } finally {
+        await cleanupCaja(svc, seed.tabId, seed.cajaId);
+      }
+    },
+  );
+
+  itAuth(
+    'WR-03 regression: process_payment_atomic rejects bank_transfer outside the checkout-time context',
+    async () => {
+      const svc = getServiceDb();
+      const seed = await seedOpenTabForTransfer(svc, 80.0);
+      tabId = seed.tabId;
+
+      // An authenticated (non-service-role) client calling the RPC directly —
+      // NOT via process_direct_sale_atomic — never has the transaction-local
+      // app.bank_transfer_checkout_context GUC set. Pre-fix this call
+      // succeeded; the fix must reject it with FORBIDDEN before any row is
+      // written.
+      const managerClient = await getAuthClient(
+        process.env['E2E_MANAGER_NAME']!,
+        process.env['E2E_MANAGER_PIN']!,
+      );
+      const idKey = `wr-03-regression-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const { data, error } = await (managerClient as any).rpc('process_payment_atomic', {
+        p_tab_id: seed.tabId,
+        p_staff_id: seed.staffId,
+        p_amount: 80.0,
+        p_method: 'bank_transfer',
+        p_idempotency_key: idKey,
+      });
+
+      if (error) {
+        expect(error.message).toContain('FORBIDDEN');
+      } else {
+        expect(data?.ok).toBe(false);
+        expect(data?.code).toBe('FORBIDDEN');
+      }
+
+      const { data: payments } = await svc.from('payments').select('id').eq('tab_id', seed.tabId);
+      expect((payments ?? []).length).toBe(0);
+    },
+  );
 });
