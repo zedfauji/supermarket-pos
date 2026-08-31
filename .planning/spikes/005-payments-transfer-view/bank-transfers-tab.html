@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Spike 005 — Bank Transfers tab (Payments page)</title>
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #131722; --border: #262b3a; --text: #e6e8ee; --muted: #8a90a2;
+    --pending: #d9a441; --confirmed: #3ecf8e; --disputed: #e5534b; --accent: #5b8cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; padding: 24px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  button { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+  .tab { padding: 6px 12px; border-radius: 6px; cursor: pointer; color: var(--muted); font-size: 13px; }
+  .tab.active { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  .code { font-family: ui-monospace, monospace; letter-spacing: 0.05em; background: #1c2030; padding: 2px 6px; border-radius: 4px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge.pending { background: rgba(217,164,65,0.15); color: var(--pending); }
+  .badge.confirmed { background: rgba(62,207,142,0.15); color: var(--confirmed); }
+  .badge.disputed { background: rgba(229,83,75,0.15); color: var(--disputed); }
+  .elapsed-stale { color: var(--disputed); font-weight: 600; }
+  .row-actions button { padding: 5px 10px; font-size: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 30px; }
+  .footer-note { color: var(--muted); font-size: 12px; margin-top: 14px; }
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 20px; width: 340px; }
+  dialog::backdrop { background: rgba(0,0,0,0.6); }
+  dialog h3 { margin: 0 0 4px; font-size: 15px; }
+  dialog p { color: var(--muted); margin: 0 0 14px; font-size: 12px; }
+  dialog input { width: 100%; padding: 8px 10px; background: #0b0e14; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: ui-monospace, monospace; letter-spacing: 0.1em; font-size: 15px; margin-bottom: 8px; }
+  dialog .error { color: var(--disputed); font-size: 12px; min-height: 16px; margin-bottom: 8px; }
+  dialog .actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<h1>Payments &rsaquo; Bank Transfers</h1>
+<p class="sub">Spike 005 &mdash; pending/confirmed/disputed bank-transfer sales, replacing the paper name+phone slip. Every confirm/dispute is a manual tap by a manager/admin &mdash; there is no auto-confirm button anywhere on this page, by design (Spike 004).</p>
+
+<div class="toolbar">
+  <div class="tabs" id="tabs"></div>
+  <div style="flex:1"></div>
+  <button class="secondary" id="exportBtn">Export CSV (pending + confirmed)</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Reference</th>
+      <th>Customer</th>
+      <th>Amount</th>
+      <th>Elapsed</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+<p class="footer-note" id="emptyNote"></p>
+
+<dialog id="confirmDialog">
+  <h3 id="dialogTitle">Confirm transfer</h3>
+  <p id="dialogSub">Type the reference code exactly as it appears on the sale &mdash; matched against Spike 003's Luhn check digit before comparing to the real code.</p>
+  <input id="codeInput" maxlength="7" placeholder="0000000" autocomplete="off" />
+  <div class="error" id="codeError"></div>
+  <div class="actions">
+    <button class="secondary" onclick="closeDialog()">Cancel</button>
+    <button id="confirmSubmit">Confirm</button>
+  </div>
+</dialog>
+
+<dialog id="disputeDialog">
+  <h3>Dispute transfer</h3>
+  <p>Reason is required and audit-logged.</p>
+  <input id="disputeReasonInput" maxlength="120" placeholder="e.g. no matching transfer found" autocomplete="off" style="letter-spacing:normal; font-family: inherit;" />
+  <div class="error" id="disputeError"></div>
+  <div class="actions">
+    <button class="secondary" onclick="closeDisputeDialog()">Cancel</button>
+    <button id="disputeSubmit">Dispute</button>
+  </div>
+</dialog>
+
+<script>
+// ---- Spike 003's Luhn logic, ported inline (no bundler — CONVENTIONS.md) ----
+function luhnCheckDigit(payload) {
+  let sum = 0;
+  const digits = payload.split('').reverse();
+  for (let i = 0; i < digits.length; i++) {
+    let d = Number(digits[i]);
+    if (i % 2 === 0) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+  }
+  return (10 - (sum % 10)) % 10;
+}
+function isValidCode(code) {
+  if (!/^\d{7}$/.test(code)) return false;
+  return luhnCheckDigit(code.slice(0, 6)) === Number(code[6]);
+}
+function genCode() {
+  let payload = '';
+  for (let i = 0; i < 6; i++) payload += Math.floor(Math.random() * 10);
+  return payload + String(luhnCheckDigit(payload));
+}
+
+// ---- Mock data: seeded to show the exact ambiguity case from the align checkpoint
+// (two customers, same $450 amount, same evening) resolved by distinct reference codes ----
+const now = Date.now();
+const HOUR = 3600 * 1000;
+let sales = [
+  { saleId: 'sale-1001', referenceCode: genCode(), customerName: 'Maria Lopez', customerPhone: '+52 55 1234 5678', amount: 450, status: 'pending', createdAt: now - 6.5 * HOUR },
+  { saleId: 'sale-1002', referenceCode: genCode(), customerName: 'Juan Perez', customerPhone: '+52 55 8765 4321', amount: 450, status: 'pending', createdAt: now - 2.1 * HOUR },
+  { saleId: 'sale-1003', referenceCode: genCode(), customerName: 'Ana Ruiz', customerPhone: '+52 55 1111 2222', amount: 200, status: 'pending', createdAt: now - 0.4 * HOUR },
+  { saleId: 'sale-0997', referenceCode: genCode(), customerName: 'Carlos Diaz', customerPhone: '+52 55 3333 4444', amount: 320, status: 'confirmed', createdAt: now - 26 * HOUR, confirmedBy: 'admin', confirmedAt: now - 20 * HOUR },
+  { saleId: 'sale-0991', referenceCode: genCode(), customerName: 'Rosa Fernandez', customerPhone: '+52 55 5555 6666', amount: 150, status: 'disputed', createdAt: now - 50 * HOUR, disputeReason: 'no matching transfer found by end of day' },
+];
+
+let filter = 'pending';
+const TABS = [
+  { key: 'pending', label: 'Pending' },
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'disputed', label: 'Disputed' },
+  { key: 'all', label: 'All' },
+];
+
+function elapsedLabel(createdAt) {
+  const ms = Date.now() - createdAt;
+  const hrs = ms / HOUR;
+  if (hrs < 1) return `${Math.round(ms / 60000)}m`;
+  if (hrs < 24) return `${hrs.toFixed(1)}h`;
+  return `${(hrs / 24).toFixed(1)}d`;
+}
+function isStale(createdAt) { return (Date.now() - createdAt) > 8 * HOUR; }
+
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = '';
+  TABS.forEach(t => {
+    const count = t.key === 'all' ? sales.length : sales.filter(s => s.status === t.key).length;
+    const div = document.createElement('div');
+    div.className = 'tab' + (filter === t.key ? ' active' : '');
+    div.textContent = `${t.label} (${count})`;
+    div.onclick = () => { filter = t.key; render(); };
+    el.appendChild(div);
+  });
+}
+
+function render() {
+  renderTabs();
+  const rows = document.getElementById('rows');
+  const list = (filter === 'all' ? sales : sales.filter(s => s.status === filter))
+    .slice()
+    .sort((a, b) => a.createdAt - b.createdAt); // oldest first — staleness surfaces at the top
+  rows.innerHTML = '';
+  document.getElementById('emptyNote').textContent = list.length === 0 ? 'Nothing here.' : '';
+
+  list.forEach(s => {
+    const tr = document.createElement('tr');
+    const stale = s.status === 'pending' && isStale(s.createdAt);
+    tr.innerHTML = `
+      <td><span class="code">${s.referenceCode}</span></td>
+      <td>${s.customerName}<br><span style="color:var(--muted);font-size:12px">${s.customerPhone}</span></td>
+      <td>$${s.amount.toFixed(2)} MXN</td>
+      <td class="${stale ? 'elapsed-stale' : ''}">${elapsedLabel(s.createdAt)}${stale ? ' ⚠' : ''}</td>
+      <td><span class="badge ${s.status}">${s.status}</span></td>
+      <td class="row-actions"></td>
+    `;
+    const actionsCell = tr.querySelector('.row-actions');
+    if (s.status === 'pending') {
+      const confirmBtn = document.createElement('button');
+      confirmBtn.textContent = 'Confirm';
+      confirmBtn.onclick = () => openDialog(s);
+      const disputeBtn = document.createElement('button');
+      disputeBtn.className = 'secondary';
+      disputeBtn.textContent = 'Dispute';
+      disputeBtn.style.marginLeft = '6px';
+      disputeBtn.onclick = () => openDisputeDialog(s);
+      actionsCell.appendChild(confirmBtn);
+      actionsCell.appendChild(disputeBtn);
+    } else if (s.status === 'confirmed') {
+      actionsCell.textContent = `by ${s.confirmedBy || 'manager'}`;
+      actionsCell.style.color = 'var(--muted)';
+    } else if (s.status === 'disputed') {
+      actionsCell.textContent = s.disputeReason;
+      actionsCell.style.color = 'var(--muted)';
+    }
+    rows.appendChild(tr);
+  });
+}
+
+// ---- Confirm dialog: always a manual code entry, always Luhn-validated first ----
+let activeConfirmSale = null;
+const dialog = document.getElementById('confirmDialog');
+function openDialog(sale) {
+  activeConfirmSale = sale;
+  document.getElementById('dialogTitle').textContent = `Confirm ${sale.customerName} — $${sale.amount.toFixed(2)}`;
+  document.getElementById('codeInput').value = '';
+  document.getElementById('codeError').textContent = '';
+  dialog.showModal();
+  document.getElementById('codeInput').focus();
+}
+function closeDialog() { dialog.close(); activeConfirmSale = null; }
+document.getElementById('confirmSubmit').onclick = () => {
+  const entered = document.getElementById('codeInput').value.trim();
+  const errEl = document.getElementById('codeError');
+  if (!isValidCode(entered)) {
+    errEl.textContent = 'Not a valid code (check-digit fails) — likely a typo, re-check the receipt.';
+    return;
+  }
+  if (entered !== activeConfirmSale.referenceCode) {
+    errEl.textContent = 'Valid format, but does not match this sale\'s code. Wrong sale selected?';
+    return;
+  }
+  activeConfirmSale.status = 'confirmed';
+  activeConfirmSale.confirmedBy = 'you (manager)';
+  activeConfirmSale.confirmedAt = Date.now();
+  closeDialog();
+  render();
+};
+
+// ---- Dispute dialog: reason required, no native prompt() ----
+let activeDisputeSale = null;
+const disputeDialog = document.getElementById('disputeDialog');
+function openDisputeDialog(sale) {
+  activeDisputeSale = sale;
+  document.getElementById('disputeReasonInput').value = '';
+  document.getElementById('disputeError').textContent = '';
+  disputeDialog.showModal();
+  document.getElementById('disputeReasonInput').focus();
+}
+function closeDisputeDialog() { disputeDialog.close(); activeDisputeSale = null; }
+document.getElementById('disputeSubmit').onclick = () => {
+  const reason = document.getElementById('disputeReasonInput').value.trim();
+  if (!reason) {
+    document.getElementById('disputeError').textContent = 'Reason is required.';
+    return;
+  }
+  activeDisputeSale.status = 'disputed';
+  activeDisputeSale.disputeReason = reason;
+  closeDisputeDialog();
+  render();
+};
+
+// ---- CSV export: neutralizes formula injection (CWE-1236), mirroring rowsToCsv (shared/lib/exporters/csv.ts) ----
+function csvCell(value) {
+  let s = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // prefix risky leading chars
+  if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+document.getElementById('exportBtn').onclick = () => {
+  const rows = sales.filter(s => s.status === 'pending' || s.status === 'confirmed');
+  const header = ['Sale ID', 'Reference Code', 'Customer', 'Phone', 'Amount', 'Status', 'Created At', 'Confirmed By'];
+  const lines = [header.map(csvCell).join(',')];
+  rows.forEach(s => {
+    lines.push([
+      s.saleId, s.referenceCode, s.customerName, s.customerPhone,
+      s.amount.toFixed(2), s.status, new Date(s.createdAt).toISOString(), s.confirmedBy || '',
+    ].map(csvCell).join(','));
+  });
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bank-transfers-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+render();
+</script>
+</body>
+</html>
