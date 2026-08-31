@@ -56,7 +56,7 @@ export function useExportBankTransfersCsv() {
           amount: tr.amount,
           status: i18n.t(`wAdmin:bankTransfersList.status.${tr.status}`),
           createdAt: tr.createdAt.toLocaleString(),
-          confirmedBy: tr.confirmedBy ?? '',
+          confirmedBy: tr.confirmedByName ?? '',
         }));
 
       const bytes = csvToBytes(rowsToCsv(rows, buildColumns(i18n.t)));

@@ -135,15 +135,15 @@ function buildColumns(
         const transfer = row.original;
         if (transfer.status === 'confirmed') {
           return (
-            <span className="font-mono text-sm text-muted-foreground">
-              {t('bankTransfersList.confirmedBy', { id: transfer.confirmedBy?.slice(0, 8) ?? '' })}
+            <span className="text-sm text-muted-foreground">
+              {t('bankTransfersList.confirmedBy', { name: transfer.confirmedByName ?? '' })}
             </span>
           );
         }
         if (transfer.status === 'disputed') {
           return (
             <span className="text-sm text-muted-foreground">
-              {transfer.disputeReason ?? t('bankTransfersList.disputedBy', { id: transfer.disputedBy?.slice(0, 8) ?? '' })}
+              {transfer.disputeReason ?? t('bankTransfersList.disputedBy', { name: transfer.disputedByName ?? '' })}
             </span>
           );
         }

@@ -1483,8 +1483,10 @@ export const BankTransferSchema = z.object({
   createdBy: UuidSchema,
   createdAt: TimestampSchema,
   confirmedBy: UuidSchema.nullable(),
+  confirmedByName: z.string().nullable(),
   confirmedAt: TimestampSchema.nullable(),
   disputedBy: UuidSchema.nullable(),
+  disputedByName: z.string().nullable(),
   disputedAt: TimestampSchema.nullable(),
   disputeReason: z.string().nullable(),
 });

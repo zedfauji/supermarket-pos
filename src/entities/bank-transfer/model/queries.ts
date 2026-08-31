@@ -21,13 +21,22 @@ export const bankTransferKeys = {
 
 // Selecting the parent payment's amount/reference_number and the payment's
 // tab's customer_name — this table is 1:1 with payments (Plan 01), never with
-// order_items, so no order-level join is needed.
+// order_items, so no order-level join is needed. WR-04 fix (23-REVIEW.md):
+// also embed the resolving staff member's name via the confirmed_by/disputed_by
+// FKs (column-name hint, same pattern as entities/caja/model/queries.ts's
+// opened_by_profile/closed_by_profile — the FK-constraint-name hint form
+// doesn't parse under supabase-js's select-string type inference).
+// Kept as one string literal (not `+`-concatenated) — supabase-js's select-string
+// type inference relies on the literal type, which string concatenation widens
+// to plain `string` and breaks (surfaces as data: GenericStringError[]).
 const TRANSFER_SELECT =
-  '*, payments!inner(amount, reference_number, tab_id, tabs!inner(customer_name))';
+  '*, payments!inner(amount, reference_number, tab_id, tabs!inner(customer_name)), confirmed_by_profile:profiles!confirmed_by(name), disputed_by_profile:profiles!disputed_by(name)';
 
 function mapTransferRow(row: Record<string, unknown>): BankTransfer {
   const payment = row['payments'] as Record<string, unknown>;
   const tab = payment['tabs'] as Record<string, unknown>;
+  const confirmedByProfile = row['confirmed_by_profile'] as Record<string, unknown> | null;
+  const disputedByProfile = row['disputed_by_profile'] as Record<string, unknown> | null;
   const confirmedAt = row['confirmed_at'] as string | null;
   const disputedAt = row['disputed_at'] as string | null;
   return {
@@ -41,8 +50,10 @@ function mapTransferRow(row: Record<string, unknown>): BankTransfer {
     createdBy: row['created_by'] as string,
     createdAt: new Date(row['created_at'] as string),
     confirmedBy: row['confirmed_by'] as string | null,
+    confirmedByName: (confirmedByProfile?.['name'] as string | undefined) ?? null,
     confirmedAt: confirmedAt ? new Date(confirmedAt) : null,
     disputedBy: row['disputed_by'] as string | null,
+    disputedByName: (disputedByProfile?.['name'] as string | undefined) ?? null,
     disputedAt: disputedAt ? new Date(disputedAt) : null,
     disputeReason: row['dispute_reason'] as string | null,
   };
