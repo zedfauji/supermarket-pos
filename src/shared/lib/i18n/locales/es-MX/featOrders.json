@@ -191,5 +191,24 @@
     "retryingPrint": "Reintentando impresión ({{attempt}}/{{max}})…",
     "printSucceededAfterRetry": "Recibo impreso",
     "printFailedAfterRetries": "Impresión fallida después de {{max}} intentos — revisa la impresora e intenta de nuevo."
+  },
+  "confirmDisputeTransfer": {
+    "confirmTitle": "Confirmar transferencia bancaria",
+    "confirmDescription": "Ingresa el código de referencia de 7 dígitos que {{name}} te indicó de su comprobante de transferencia.",
+    "confirmButton": "Confirmar transferencia",
+    "codeLabel": "Código de referencia",
+    "codePlaceholder": "0000000",
+    "codeInvalid": "Ese código no es válido — revisa si hay un error de captura.",
+    "confirmSuccess": "Transferencia bancaria de {{amount}} confirmada.",
+    "disputeTitle": "Disputar transferencia bancaria",
+    "disputeDescription": "Describe por qué no se pudo confirmar la transferencia bancaria de {{name}}.",
+    "disputeButton": "Disputar transferencia",
+    "reasonLabel": "Motivo",
+    "reasonPlaceholder": "Ej. El código no coincide con ninguna transferencia recibida…",
+    "reasonRequired": "Se requiere un motivo para disputar esta transferencia.",
+    "disputeSuccess": "Transferencia bancaria disputada.",
+    "authForbidden": "Se requiere la aprobación de un gerente para confirmar o disputar una transferencia bancaria.",
+    "alreadyProcessed": "Esta transferencia bancaria ya fue resuelta.",
+    "genericError": "No se pudo procesar esta transferencia bancaria. Verifica tu conexión e intenta de nuevo."
   }
 }
