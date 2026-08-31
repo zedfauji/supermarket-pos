@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { BankTransfersList } from '@widgets/BankTransfersList';
 import { PaymentPane } from '@widgets/PaymentPane';
 import { RefundsList } from '@widgets/RefundsList';
 import { PageContainer } from '@shared/ui';
@@ -16,12 +17,16 @@ export default function PaymentsPage() {
         <TabsList className="mx-4 mt-2 mb-0 w-fit">
           <TabsTrigger value="payments">{t('payments.tabs.payments')}</TabsTrigger>
           <TabsTrigger value="refunds">{t('payments.tabs.refunds')}</TabsTrigger>
+          <TabsTrigger value="bankTransfers">{t('payments.tabs.bankTransfers')}</TabsTrigger>
         </TabsList>
         <TabsContent value="payments" className="flex flex-1 overflow-hidden">
           <PaymentPane />
         </TabsContent>
         <TabsContent value="refunds" className="flex flex-1 overflow-hidden p-4">
           <RefundsList />
+        </TabsContent>
+        <TabsContent value="bankTransfers" className="flex flex-1 overflow-hidden p-4">
+          <BankTransfersList />
         </TabsContent>
       </Tabs>
     </PageContainer>

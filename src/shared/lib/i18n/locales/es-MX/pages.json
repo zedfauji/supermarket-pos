@@ -26,7 +26,8 @@
     "title": "Pagos",
     "tabs": {
       "payments": "Pagos",
-      "refunds": "Reembolsos"
+      "refunds": "Reembolsos",
+      "bankTransfers": "Transferencias bancarias"
     }
   },
   "rbac": {

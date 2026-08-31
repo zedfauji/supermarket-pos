@@ -26,7 +26,8 @@
     "title": "Payments",
     "tabs": {
       "payments": "Payments",
-      "refunds": "Refunds"
+      "refunds": "Refunds",
+      "bankTransfers": "Bank Transfers"
     }
   },
   "rbac": {

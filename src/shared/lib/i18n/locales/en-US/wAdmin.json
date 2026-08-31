@@ -215,6 +215,29 @@
     "emptyTitle": "No refunds yet",
     "emptyDescription": "Refunds processed on paid orders will appear here."
   },
+  "bankTransfersList": {
+    "columnReference": "Reference code",
+    "columnCustomer": "Customer",
+    "columnAmount": "Amount",
+    "columnElapsed": "Elapsed",
+    "columnStatus": "Status",
+    "columnActions": "Actions",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "disputed": "Disputed"
+    },
+    "filterAll": "All",
+    "confirmAction": "Confirm",
+    "disputeAction": "Dispute",
+    "confirmedBy": "By {{id}}…",
+    "disputedBy": "By {{id}}…",
+    "elapsedMinutes": "{{count}}m",
+    "elapsedHours": "{{count}}h",
+    "elapsedDays": "{{count}}d",
+    "emptyTitle": "No bank transfers yet",
+    "emptyDescription": "Bank-transfer sales awaiting reconciliation will appear here."
+  },
   "refundsRegister": {
     "emptyTitle": "No refunds",
     "emptyDescription": "No refunds issued in this date range.",
