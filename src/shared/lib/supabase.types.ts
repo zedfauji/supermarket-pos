@@ -160,6 +160,77 @@ export type Database = {
           },
         ]
       }
+      bank_transfers: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string
+          customer_phone: string | null
+          dispute_reason: string | null
+          disputed_at: string | null
+          disputed_by: string | null
+          id: string
+          payment_id: string
+          status: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by: string
+          customer_phone?: string | null
+          dispute_reason?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
+          id?: string
+          payment_id: string
+          status?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string
+          customer_phone?: string | null
+          dispute_reason?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
+          id?: string
+          payment_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transfers_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transfers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transfers_disputed_by_fkey"
+            columns: ["disputed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transfers_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caja_entries: {
         Row: {
           amount: number
@@ -1642,11 +1713,49 @@ export type Database = {
           },
         ]
       }
+      terminal_lock_settings: {
+        Row: {
+          lock_timeout_seconds: number
+          terminal_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          lock_timeout_seconds?: number
+          terminal_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          lock_timeout_seconds?: number
+          terminal_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_lock_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      bank_transfer_generate_unique_code: { Args: never; Returns: string }
+      bank_transfer_is_valid_code: {
+        Args: { p_code: string }
+        Returns: boolean
+      }
+      bank_transfer_luhn_check_digit: {
+        Args: { p_payload: string }
+        Returns: number
+      }
       caja_open: {
         Args: {
           p_opened_by: string
@@ -1695,6 +1804,10 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_transfer_payment: {
+        Args: { p_entered_code: string; p_payment_id: string }
+        Returns: Json
+      }
       consume_open_unit: {
         Args: {
           p_allow_negative?: boolean
@@ -1732,6 +1845,10 @@ export type Database = {
           p_order_item_id: string
         }
         Returns: undefined
+      }
+      dispute_transfer_payment: {
+        Args: { p_payment_id: string; p_reason: string }
+        Returns: Json
       }
       edit_paid_tab: {
         Args: {
@@ -1817,6 +1934,7 @@ export type Database = {
           p_amount?: number
           p_caja_session_id: string
           p_customer_name?: string
+          p_customer_phone?: string
           p_discount_amount?: number
           p_discount_scope?: string
           p_discount_type?: string
@@ -1836,6 +1954,7 @@ export type Database = {
       process_payment_atomic: {
         Args: {
           p_amount: number
+          p_customer_phone?: string
           p_discount_amount?: number
           p_discount_scope?: string
           p_discount_type?: string
@@ -1921,7 +2040,12 @@ export type Database = {
     Enums: {
       category_routing: "KITCHEN" | "BAR" | "NONE"
       order_status: "pending" | "served" | "voided"
-      payment_method: "cash" | "card" | "tab_transfer" | "rappi"
+      payment_method:
+        | "cash"
+        | "card"
+        | "tab_transfer"
+        | "rappi"
+        | "bank_transfer"
       tab_status: "open" | "closed" | "paid" | "voided" | "split"
       user_role: "cashier" | "manager" | "admin" | "kitchen"
     }
@@ -2056,7 +2180,13 @@ export const Constants = {
     Enums: {
       category_routing: ["KITCHEN", "BAR", "NONE"],
       order_status: ["pending", "served", "voided"],
-      payment_method: ["cash", "card", "tab_transfer", "rappi"],
+      payment_method: [
+        "cash",
+        "card",
+        "tab_transfer",
+        "rappi",
+        "bank_transfer",
+      ],
       tab_status: ["open", "closed", "paid", "voided", "split"],
       user_role: ["cashier", "manager", "admin", "kitchen"],
     },
