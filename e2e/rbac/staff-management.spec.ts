@@ -27,6 +27,8 @@ const SM9_TARGET_NAME = 'SM9-Reset-Target';
 const SM9_OLD_PIN = '222333';
 const SM9_NEW_PIN = '444555';
 
+const SM11_STAFF_NAME = 'SM11-Inactive-Target';
+
 /**
  * Reads the current browser session's Supabase access token out of
  * localStorage (mirrors 50-direct-sale-checkout.spec.ts's helper of the
@@ -57,6 +59,7 @@ test.describe('Staff Management', () => {
     await deleteTestStaff(SM7_STAFF_NAME).catch(() => undefined);
     await deleteTestStaff(SM8_STAFF_NAME).catch(() => undefined);
     await deleteTestStaff(SM9_TARGET_NAME).catch(() => undefined);
+    await deleteTestStaff(SM11_STAFF_NAME).catch(() => undefined);
   });
 
   test('SM1: /staff page shows staff list with at least one member', async ({ page }) => {
@@ -222,6 +225,118 @@ test.describe('Staff Management', () => {
       .eq('name', SM8_STAFF_NAME)
       .maybeSingle();
     expect(createdProfile).toBeNull();
+
+    await logout(page);
+  });
+
+  test("SM10: cashier and manager callers rejected by admin-reset-pin's admin-only role check (D-01)", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+
+    const supabaseUrl = process.env['VITE_SUPABASE_URL'];
+    const anonKey = process.env['VITE_SUPABASE_ANON_KEY'];
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY');
+    }
+
+    const admin = getServiceClient();
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('id, pin')
+      .eq('role', 'cashier')
+      .limit(1)
+      .maybeSingle();
+    if (!targetProfile) throw new Error('SM10: no cashier fixture profile found to target');
+    const originalPin = targetProfile.pin as string;
+    const targetId = targetProfile.id as string;
+
+    for (const role of ['cashier', 'manager'] as const) {
+      await loginAs(page, role);
+      const token = await getAccessToken(page);
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/admin-reset-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          apikey: anonKey,
+        },
+        body: JSON.stringify({ targetStaffId: targetId, newPin: '999999' }),
+      });
+      expect(res.status).toBe(403);
+
+      const { data: afterAttempt } = await admin
+        .from('profiles')
+        .select('pin')
+        .eq('id', targetId)
+        .maybeSingle();
+      expect(afterAttempt?.pin).toBe(originalPin);
+
+      await logout(page);
+    }
+
+    const unauthedRes = await fetch(`${supabaseUrl}/functions/v1/admin-reset-pin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonKey,
+      },
+      body: JSON.stringify({ targetStaffId: targetId, newPin: '999999' }),
+    });
+    expect(unauthedRes.status).toBe(401);
+
+    const { data: afterUnauthed } = await admin
+      .from('profiles')
+      .select('pin')
+      .eq('id', targetId)
+      .maybeSingle();
+    expect(afterUnauthed?.pin).toBe(originalPin);
+  });
+
+  test('SM11: admin-reset-pin rejects a reset for an inactive target (D-06)', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const supabaseUrl = process.env['VITE_SUPABASE_URL'];
+    const anonKey = process.env['VITE_SUPABASE_ANON_KEY'];
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY');
+    }
+
+    await seedNewStaffMember(SM11_STAFF_NAME, '444555', 'cashier');
+    const admin = getServiceClient();
+    await admin.from('profiles').update({ is_active: false }).eq('name', SM11_STAFF_NAME);
+    const { data: inactiveProfile } = await admin
+      .from('profiles')
+      .select('id, pin')
+      .eq('name', SM11_STAFF_NAME)
+      .maybeSingle();
+    if (!inactiveProfile) throw new Error('SM11: fixture profile not found after seeding');
+    const inactiveId = inactiveProfile.id as string;
+
+    await loginAs(page, 'admin');
+    const token = await getAccessToken(page);
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/admin-reset-pin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        apikey: anonKey,
+      },
+      body: JSON.stringify({ targetStaffId: inactiveId, newPin: '777888' }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: string };
+    expect(typeof body.error).toBe('string');
+    expect(body.error?.length).toBeGreaterThan(0);
+
+    const { data: afterAttempt } = await admin
+      .from('profiles')
+      .select('pin')
+      .eq('id', inactiveId)
+      .maybeSingle();
+    expect(afterAttempt?.pin).toBe('444555');
 
     await logout(page);
   });
