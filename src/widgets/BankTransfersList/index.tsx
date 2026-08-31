@@ -7,11 +7,12 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TFunction } from 'i18next';
-import { Landmark } from 'lucide-react';
+import { Download, Landmark } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConfirmTransferDialog, DisputeTransferDialog } from '@features/confirm-dispute-transfer';
+import { useExportBankTransfersCsv } from '@features/export-bank-transfers/model/useExportBankTransfersCsv';
 import { useAllTransfers } from '@entities/bank-transfer';
 import type { BankTransfer, BankTransferStatus } from '@entities/bank-transfer';
 import { useStaffStore } from '@entities/staff/model/store';
@@ -185,6 +186,7 @@ export function BankTransfersList() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending');
   const [confirmTarget, setConfirmTarget] = useState<BankTransfer | null>(null);
   const [disputeTarget, setDisputeTarget] = useState<BankTransfer | null>(null);
+  const { exportBankTransfersCsv, isExporting } = useExportBankTransfersCsv();
 
   const canConfirm = canAccess(role, 'confirm_transfer_payment');
   const canDispute = canAccess(role, 'dispute_transfer_payment');
@@ -194,6 +196,13 @@ export function BankTransfersList() {
     if (statusFilter === 'all') return rows;
     return rows.filter(r => r.status === statusFilter);
   }, [transfers, statusFilter]);
+
+  // Export always covers pending+confirmed regardless of the active toolbar
+  // filter (D-13) — the filter only changes what's on screen.
+  const exportableRows = useMemo(
+    () => (transfers ?? []).filter(r => r.status !== 'disputed'),
+    [transfers]
+  );
 
   const columns = useMemo(
     () =>
@@ -212,20 +221,36 @@ export function BankTransfersList() {
   );
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
-      {STATUS_FILTERS.map(filter => (
-        <Button
-          key={filter}
-          type="button"
-          size="sm"
-          variant={statusFilter === filter ? 'default' : 'outline'}
-          onClick={() => {
-            setStatusFilter(filter);
-          }}
-        >
-          {filter === 'all' ? t('bankTransfersList.filterAll') : t(`bankTransfersList.status.${filter}`)}
-        </Button>
-      ))}
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {STATUS_FILTERS.map(filter => (
+          <Button
+            key={filter}
+            type="button"
+            size="sm"
+            variant={statusFilter === filter ? 'default' : 'outline'}
+            onClick={() => {
+              setStatusFilter(filter);
+            }}
+          >
+            {filter === 'all'
+              ? t('bankTransfersList.filterAll')
+              : t(`bankTransfersList.status.${filter}`)}
+          </Button>
+        ))}
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={exportableRows.length === 0 || isExporting}
+        onClick={() => {
+          void exportBankTransfersCsv(exportableRows);
+        }}
+      >
+        <Download className="mr-1.5 size-4" />
+        {t('bankTransfersList.exportCsvButton')}
+      </Button>
     </div>
   );
 
