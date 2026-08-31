@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { AuditActionSchema } from '../audit-actions';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
+const FUNCTIONS_DIR = join(process.cwd(), 'supabase', 'functions');
 const VALID_ACTIONS = new Set<string>(AuditActionSchema.options);
 
 // Phase 14-02: RPC-coverage scaffold (VALIDATION.md Wave 0 requirement).
@@ -106,4 +107,34 @@ describe('audit-actions enforcement', () => {
       ).toBe(true);
     }
   );
+
+  // Phase 22-01 (Pitfall 2 closure): the assertion above only scans SQL
+  // migrations for `PERFORM record_audit(...)` — it never covered TypeScript
+  // edge functions calling `recordAudit(...)` directly (supabase/functions/).
+  // That gap let 'permission.admin_pin_reset' ship inside admin-reset-pin
+  // without any CI backstop. This sibling test closes it.
+  it('every recordAudit() call in edge functions uses an enumerated action', () => {
+    const functionDirs = readdirSync(FUNCTIONS_DIR, { withFileTypes: true })
+      .filter(entry => entry.isDirectory() && entry.name !== '_shared')
+      .map(entry => join(FUNCTIONS_DIR, entry.name));
+
+    const violations: string[] = [];
+
+    for (const dir of functionDirs) {
+      const files = readdirSync(dir).filter(f => f.endsWith('.ts'));
+      const concatenated = files.map(f => readFileSync(join(dir, f), 'utf-8')).join('\n');
+
+      // [^)]*? spans newlines (no /s flag needed — `[^)]` already matches
+      // \n), matching the multi-line `recordAudit(supabaseAdmin, {\n  action: '...'` shape.
+      const matches = concatenated.matchAll(/recordAudit\s*\([^)]*?action:\s*'([^']+)'/g);
+      for (const match of matches) {
+        const action = match[1];
+        if (action !== undefined && !VALID_ACTIONS.has(action)) {
+          violations.push(`${dir}: '${action}' not in AuditActionSchema`);
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
 });

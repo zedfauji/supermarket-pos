@@ -7,15 +7,25 @@
 
 import type { Page } from '@playwright/test';
 import { expect, test } from '../fixtures';
-import { loginAs, loginAsNamed, logout, WHO_ARE_YOU_RE } from '../helpers/auth';
+import { enterPin, loginAs, loginAsNamed, logout, WHO_ARE_YOU_RE } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
-import { deleteTestStaff, getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import {
+  deleteTestStaff,
+  getServiceClient,
+  openCaja,
+  resetTestState,
+  seedNewStaffMember,
+} from '../helpers/supabase';
 
 const TEST_STAFF_NAME = 'E2E-TestStaff';
 const TEST_STAFF_PIN = '111222';
 
 const SM7_STAFF_NAME = 'SM7-Should-Not-Exist';
 const SM8_STAFF_NAME = 'SM8-Should-Not-Exist';
+
+const SM9_TARGET_NAME = 'SM9-Reset-Target';
+const SM9_OLD_PIN = '222333';
+const SM9_NEW_PIN = '444555';
 
 /**
  * Reads the current browser session's Supabase access token out of
@@ -46,6 +56,7 @@ test.describe('Staff Management', () => {
     await deleteTestStaff(TEST_STAFF_NAME).catch(() => undefined);
     await deleteTestStaff(SM7_STAFF_NAME).catch(() => undefined);
     await deleteTestStaff(SM8_STAFF_NAME).catch(() => undefined);
+    await deleteTestStaff(SM9_TARGET_NAME).catch(() => undefined);
   });
 
   test('SM1: /staff page shows staff list with at least one member', async ({ page }) => {
@@ -215,11 +226,68 @@ test.describe('Staff Management', () => {
     await logout(page);
   });
 
+  test("SM9: admin resets a different staff member's PIN via the real Reset PIN dialog, forced PIN change on next login (D-01/D-02/D-03/D-04/D-05 full loop)", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    await seedNewStaffMember(SM9_TARGET_NAME, SM9_OLD_PIN, 'cashier');
+
+    await loginAs(page, 'admin');
+    await page.goto('/staff');
+
+    const staffRow = page.getByRole('row', { name: new RegExp(SM9_TARGET_NAME) });
+    await expect(staffRow).toBeVisible({ timeout: 15_000 });
+    await staffRow.getByRole('button', { name: /reset pin|restablecer pin/i }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+
+    await dialog.getByLabel('New PIN', { exact: true }).fill(SM9_NEW_PIN);
+    await dialog.getByLabel(/confirm new pin/i).fill(SM9_NEW_PIN);
+    await dialog.getByRole('button', { name: /^reset pin$/i }).click();
+
+    const confirmGate = page.getByRole('alertdialog');
+    await expect(confirmGate).toBeVisible({ timeout: 10_000 });
+    const adminPin = process.env['E2E_ADMIN_PIN'];
+    if (!adminPin) throw new Error('Missing E2E_ADMIN_PIN');
+    await enterPin(page, adminPin);
+
+    await expect(page.getByText(/pin reset for/i)).toBeVisible({ timeout: 15_000 });
+
+    await logout(page);
+
+    // The reset target must be forced through PIN change on first login with
+    // the admin-set PIN (must_change_pin: true, D-04) — mirrors SM2's exact
+    // assertion shape.
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { name: WHO_ARE_YOU_RE })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByRole('button', { name: new RegExp(SM9_TARGET_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })
+      .click();
+    await expect(
+      page.getByRole('heading', {
+        name: new RegExp(`^${SM9_TARGET_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+      })
+    ).toBeVisible({ timeout: 15_000 });
+
+    await enterPin(page, SM9_NEW_PIN);
+
+    await expect(
+      page.getByRole('heading', { name: /set a new pin|establece un nuevo pin/i })
+    ).toBeVisible({ timeout: 10_000 });
+
+    await logout(page).catch(() => undefined);
+
+    await deleteTestStaff(SM9_TARGET_NAME).catch(() => undefined);
+  });
+
   test('SM3: login as E2E-TestStaff succeeds', async ({ page }) => {
     test.setTimeout(90_000);
 
     // Seed the staff member via DB if not already present
-    const { seedNewStaffMember } = await import('../helpers/supabase');
     await seedNewStaffMember(TEST_STAFF_NAME, TEST_STAFF_PIN, 'cashier').catch(() => undefined);
 
     await loginAsNamed(page, TEST_STAFF_NAME, TEST_STAFF_PIN);
