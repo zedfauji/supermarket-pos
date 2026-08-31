@@ -11,8 +11,9 @@ tags: [supabase, migrations, edge-functions, ops, sanity-check, document-only]
 
 # Spike 006: Local ↔ Remote Supabase Delta (Sanity Check)
 
-Document-only spike. No code changed. Purpose: know exactly what differs between the local
-dev/test Supabase stack and the live remote project before shipping new features remote.
+Started as a document-only audit. Both 🔴 findings below were then remediated directly (user
+instruction: "no need for plan, do it from here") — this doc now also records what was applied
+and verified live, in addition to the original delta findings.
 
 ## What This Validates
 
@@ -132,6 +133,17 @@ other.
 Cloud dashboard/Management API and are not tracked in this repo at all. This is expected — flagging
 so no one assumes `config.toml` is the source of truth for remote Auth, and lists finding #7's
 `auth_leaked_password_protection` as the one concretely known remote-only Auth gap.
+
+## Remediation Applied (2026-08-31, same session)
+
+Both 🔴 findings closed directly against `mkvinyekkyennyegfoxq`, verified live:
+
+1. **Stale placeholder repaired first** (blocked `db push` otherwise): `supabase migration repair --status reverted 20260831001057 --linked` — ledger-only, no SQL executed.
+2. **Migration deployed**: `supabase db push --linked` applied `20260831000001_clear_must_change_pin_sync_pin_column.sql`. Verified via `pg_get_function_arguments`: remote `clear_must_change_pin` now has exactly one overload, `(p_new_pin text, p_terminal_id text DEFAULT NULL)` — old 1-arg version confirmed gone (`DROP ... IF EXISTS` NOTICE showed it was already absent, i.e., no ambiguous-overload risk existed either).
+3. **`admin-reset-pin` deployed**: `supabase functions deploy admin-reset-pin --project-ref mkvinyekkyennyegfoxq` — version 1, ACTIVE. No custom secrets needed (function only reads the platform-injected `SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY`). Reachability confirmed: unauthenticated `curl` → `401` (not `404`), matching all 12 sibling functions.
+4. **Post-remediation parity re-verified**: `supabase migration list --linked` now shows every version present in both the `Local` and `Remote` columns, zero blanks. `list_edge_functions` on remote now returns 13/13, matching the local `supabase/functions/` directory exactly.
+
+**Not remediated in this pass (unchanged from the original findings, still open):** the 6 generation-A edge functions deployed from the deleted agent worktree (finding #3) — diffing each against `main` and redeploying was out of scope for this fix-up; `pg_graphql` not installed on remote (finding #6) — no current caller, left as-is; the 9 `function_search_path_mutable` remote-security lints (finding #7) — pre-existing, unrelated to this pass's two fixes.
 
 ## Verdict
 
