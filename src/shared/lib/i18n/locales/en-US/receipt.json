@@ -42,6 +42,8 @@
       "cashSales": "Cash Sales",
       "cardSales": "Card Sales",
       "rappiSales": "Rappi Sales",
+      "bankTransferSales": "Bank Transfer Sales",
+      "bankTransferPending": "Bank Transfer Pending",
       "orderCount": "Order Count",
       "tabCount": "Tab Count",
       "cashReconciliation": "Cash Reconciliation",

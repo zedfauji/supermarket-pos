@@ -77,6 +77,8 @@ function CajaReportDoc({ report, locale }: { report: CajaReport; locale: Locale 
           [tr('pdf.caja.cashSales'), fmt(locale, report.summary.cashSales)],
           [tr('pdf.caja.cardSales'), fmt(locale, report.summary.cardSales)],
           [tr('pdf.caja.rappiSales'), fmt(locale, report.summary.rappiSales)],
+          [tr('pdf.caja.bankTransferSales'), fmt(locale, report.summary.bankTransferSales)],
+          [tr('pdf.caja.bankTransferPending'), fmt(locale, report.summary.bankTransferPending)],
           [tr('pdf.caja.orderCount'), String(report.summary.orderCount)],
           [tr('pdf.caja.tabCount'), String(report.summary.tabCount)],
         ].map(([label, value], i) => (

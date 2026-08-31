@@ -32,6 +32,8 @@ export function cajaReportToWorkbook(report: CajaReport): XLSX.WorkBook {
     ['Cash Sales', report.summary.cashSales],
     ['Card Sales', report.summary.cardSales],
     ['Rappi Sales', report.summary.rappiSales],
+    ['Bank Transfer Sales', report.summary.bankTransferSales],
+    ['Bank Transfer Pending', report.summary.bankTransferPending],
     ['Order Count', report.summary.orderCount],
     ['Tab Count', report.summary.tabCount],
     ['Total Expenses', report.summary.totalExpenses],
@@ -43,9 +45,11 @@ export function cajaReportToWorkbook(report: CajaReport): XLSX.WorkBook {
   wsSummary['B3'] = moneyCell(report.summary.cashSales);
   wsSummary['B4'] = moneyCell(report.summary.cardSales);
   wsSummary['B5'] = moneyCell(report.summary.rappiSales);
-  wsSummary['B8'] = moneyCell(report.summary.totalExpenses);
-  wsSummary['B9'] = moneyCell(report.summary.totalIncome);
-  wsSummary['B10'] = moneyCell(report.summary.netBalance);
+  wsSummary['B6'] = moneyCell(report.summary.bankTransferSales);
+  wsSummary['B7'] = moneyCell(report.summary.bankTransferPending);
+  wsSummary['B10'] = moneyCell(report.summary.totalExpenses);
+  wsSummary['B11'] = moneyCell(report.summary.totalIncome);
+  wsSummary['B12'] = moneyCell(report.summary.netBalance);
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
   const productRows = [
