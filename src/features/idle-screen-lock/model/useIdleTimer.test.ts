@@ -14,7 +14,9 @@ describe('useIdleTimer', () => {
 
   it('does not fire before timeoutMs elapses with no activity', () => {
     const onIdle = vi.fn();
-    renderHook(() => useIdleTimer(1000, onIdle, true));
+    renderHook(() => {
+      useIdleTimer(1000, onIdle, true);
+    });
 
     vi.advanceTimersByTime(999);
 
@@ -23,7 +25,9 @@ describe('useIdleTimer', () => {
 
   it('fires exactly once after timeoutMs of silence', () => {
     const onIdle = vi.fn();
-    renderHook(() => useIdleTimer(1000, onIdle, true));
+    renderHook(() => {
+      useIdleTimer(1000, onIdle, true);
+    });
 
     vi.advanceTimersByTime(1000);
     expect(onIdle).toHaveBeenCalledTimes(1);
@@ -34,7 +38,9 @@ describe('useIdleTimer', () => {
 
   it('resets the pending timeout on a qualifying activity event (keydown)', () => {
     const onIdle = vi.fn();
-    renderHook(() => useIdleTimer(1000, onIdle, true));
+    renderHook(() => {
+      useIdleTimer(1000, onIdle, true);
+    });
 
     vi.advanceTimersByTime(700);
     window.dispatchEvent(new KeyboardEvent('keydown'));
@@ -47,7 +53,9 @@ describe('useIdleTimer', () => {
 
   it('never fires when enabled=false', () => {
     const onIdle = vi.fn();
-    renderHook(() => useIdleTimer(1000, onIdle, false));
+    renderHook(() => {
+      useIdleTimer(1000, onIdle, false);
+    });
 
     vi.advanceTimersByTime(5000);
 
@@ -56,7 +64,9 @@ describe('useIdleTimer', () => {
 
   it('clears its pending timeout on unmount', () => {
     const onIdle = vi.fn();
-    const { unmount } = renderHook(() => useIdleTimer(1000, onIdle, true));
+    const { unmount } = renderHook(() => {
+      useIdleTimer(1000, onIdle, true);
+    });
 
     vi.advanceTimersByTime(700);
     unmount();

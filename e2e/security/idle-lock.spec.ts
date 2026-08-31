@@ -65,9 +65,11 @@ test.describe('Idle Screen Lock', () => {
 
     // LCK-03/D-04: a DIFFERENT staff member's (manager) correct PIN unlocks it;
     // the active session's identity is unchanged.
-    await enterPin(page, process.env.E2E_MANAGER_PIN!);
+    const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+    const bartenderName = process.env['E2E_BARTENDER_NAME'] ?? '';
+    const managerName = process.env['E2E_MANAGER_NAME'] ?? '';
+    await enterPin(page, managerPin);
     await expect(overlay).not.toBeVisible({ timeout: 10_000 });
-    const bartenderName = process.env.E2E_BARTENDER_NAME!;
     await expect(
       page.getByText(new RegExp(bartenderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
     ).toBeVisible({ timeout: 10_000 });
@@ -82,7 +84,7 @@ test.describe('Idle Screen Lock', () => {
     const { data: managerProfile } = await admin
       .from('profiles')
       .select('id')
-      .eq('name', process.env.E2E_MANAGER_NAME!)
+      .eq('name', managerName)
       .maybeSingle();
     if (!cashierProfile || !managerProfile) {
       throw new Error('idle-lock.spec: could not resolve cashier/manager profile ids');
@@ -96,7 +98,7 @@ test.describe('Idle Screen Lock', () => {
       .order('created_at', { ascending: false })
       .limit(2);
     if (auditErr) throw new Error(`idle-lock.spec: audit_logs query failed - ${auditErr.message}`);
-    const rows = (recentAudit ?? []) as { action: string; after: Record<string, unknown> | null }[];
+    const rows = recentAudit as { action: string; after: Record<string, unknown> | null }[];
     const unlockRow = rows.find(r => r.action === 'screen.unlock');
     const lockRow = rows.find(r => r.action === 'screen.lock');
     expect(lockRow?.after?.['sessionOwnerStaffId']).toBe(cashierProfile.id);

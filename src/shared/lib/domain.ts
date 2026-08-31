@@ -858,6 +858,16 @@ export const ReceiptSettingsSchema = z.object({
 export type ReceiptSettings = z.infer<typeof ReceiptSettingsSchema>;
 
 // ============================================================================
+// TERMINAL LOCK SETTINGS
+// ============================================================================
+
+export const TerminalLockSettingsSchema = z.object({
+  lockTimeoutSeconds: z.number().int().min(15).max(600).default(60),
+});
+
+export type TerminalLockSettings = z.infer<typeof TerminalLockSettingsSchema>;
+
+// ============================================================================
 // CAJA SESSION
 // ============================================================================
 
@@ -1213,6 +1223,7 @@ export const domain = {
     ReceiptSettings: ReceiptSettingsSchema,
     SettingsBackupSummary: SettingsBackupSummarySchema,
     NearExpirySettings: NearExpirySettingsSchema,
+    TerminalLockSettings: TerminalLockSettingsSchema,
 
     CajaStatus: CajaStatusSchema,
     CajaSession: CajaSessionSchema,

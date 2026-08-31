@@ -6,6 +6,7 @@ export {
   PaymentMethodLabelsSchema,
   ReceiptSettingsSchema,
   SettingsBackupSummarySchema,
+  TerminalLockSettingsSchema,
 } from '@shared/lib/domain';
 
 export type {
@@ -17,4 +18,5 @@ export type {
   ReceiptSettings,
   SettingsBackupSummary,
   SettingsKey,
+  TerminalLockSettings,
 } from '@shared/lib/domain';
