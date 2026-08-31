@@ -28,7 +28,7 @@ export function luhnCheckDigit(payloadDigits: string): number {
 
 export function generateCode(randomFn: () => number = Math.random): string {
   let payload = '';
-  for (let i = 0; i < 6; i++) payload += Math.floor(randomFn() * 10);
+  for (let i = 0; i < 6; i++) payload += String(Math.floor(randomFn() * 10));
   return payload + String(luhnCheckDigit(payload));
 }
 

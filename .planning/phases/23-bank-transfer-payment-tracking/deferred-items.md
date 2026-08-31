@@ -24,3 +24,22 @@ plan's code changes.
 **Action:** Not fixed (scope boundary — deviation rules only authorize auto-fixing issues directly
 caused by the current task's changes). Logged here for whoever next touches
 `close-tab`/`staff/clock` test coverage or the local test-DB isolation strategy.
+
+## Pre-existing repo-wide `npm run lint` failures observed during 23-03 execution
+
+`npm run lint` (full `src` tree, `--max-warnings 0`) fails with 5 `@typescript-eslint/no-floating-promises`
+errors in two files this plan never touched:
+
+- `src/widgets/HomeDashboard/ui/HomeDashboard.tsx` (lines 112, 120, 200)
+- `src/widgets/PINLoginForm/PINLoginForm.tsx` (lines 66, 175)
+
+**Why out of scope:** `git log -1 -- <file>` shows both files were last modified by an unrelated
+prior commit (`1310663 chore: sync planning graph, spike 002 research, PIN reset migration
+cleanup`), before this plan's worktree was created; `git status --short` shows zero diff against
+HEAD for either file. This plan's own files (`src/shared/lib/bank-transfer-code.ts`,
+`src/entities/bank-transfer/`, `src/features/confirm-dispute-transfer/`) lint clean in isolation
+(`npx eslint <those paths>` — 0 errors).
+
+**Action:** Not fixed (scope boundary). Task 3's acceptance criterion "`npm run lint` passes with
+zero warnings" is satisfied for this plan's own diff; the two pre-existing failures block a
+repo-wide zero-warnings run and should be fixed by whoever next touches those two widgets.

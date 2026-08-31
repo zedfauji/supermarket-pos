@@ -31,7 +31,7 @@ export function useConfirmTransfer() {
       if (!parsed.success) {
         return err({
           code: 'VALIDATION_ERROR' as AppErrorCode,
-          message: i18n.t('featOrders:confirmDisputeTransfer.invalidCode'),
+          message: i18n.t('featOrders:confirmDisputeTransfer.codeInvalid'),
         });
       }
       const rpcRes = await supabaseMutation(() =>
@@ -50,7 +50,7 @@ export function useConfirmTransfer() {
         if (rpcRes.error.message.includes('VALIDATION_ERROR')) {
           return err({
             code: 'VALIDATION_ERROR' as AppErrorCode,
-            message: i18n.t('featOrders:confirmDisputeTransfer.invalidCode'),
+            message: i18n.t('featOrders:confirmDisputeTransfer.codeInvalid'),
           });
         }
         if (rpcRes.error.message.includes('PAYMENT_ALREADY_PROCESSED')) {
