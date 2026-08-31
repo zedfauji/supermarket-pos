@@ -215,6 +215,29 @@
     "emptyTitle": "Aún no hay reembolsos",
     "emptyDescription": "Los reembolsos procesados sobre pedidos pagados aparecerán aquí."
   },
+  "bankTransfersList": {
+    "columnReference": "Código de referencia",
+    "columnCustomer": "Cliente",
+    "columnAmount": "Monto",
+    "columnElapsed": "Transcurrido",
+    "columnStatus": "Estado",
+    "columnActions": "Acciones",
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "disputed": "Disputada"
+    },
+    "filterAll": "Todas",
+    "confirmAction": "Confirmar",
+    "disputeAction": "Disputar",
+    "confirmedBy": "Por {{id}}…",
+    "disputedBy": "Por {{id}}…",
+    "elapsedMinutes": "{{count}}m",
+    "elapsedHours": "{{count}}h",
+    "elapsedDays": "{{count}}d",
+    "emptyTitle": "Aún no hay transferencias bancarias",
+    "emptyDescription": "Las ventas por transferencia bancaria pendientes de conciliar aparecerán aquí."
+  },
   "refundsRegister": {
     "emptyTitle": "Sin reembolsos",
     "emptyDescription": "No se emitieron reembolsos en este rango de fechas.",

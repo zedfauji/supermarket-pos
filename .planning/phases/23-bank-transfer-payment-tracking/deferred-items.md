@@ -43,3 +43,25 @@ HEAD for either file. This plan's own files (`src/shared/lib/bank-transfer-code.
 **Action:** Not fixed (scope boundary). Task 3's acceptance criterion "`npm run lint` passes with
 zero warnings" is satisfied for this plan's own diff; the two pre-existing failures block a
 repo-wide zero-warnings run and should be fixed by whoever next touches those two widgets.
+
+## Pre-existing repo-wide `npm run typecheck` failure observed during 23-04 execution
+
+`npm run typecheck` (`tsc --noEmit`) fails with one error in a file this plan never touched:
+
+```
+src/app/router.tsx(36,20): error TS2322: Type '{ children: Element[]; future: {
+  v7_startTransition: boolean; v7_relativeSplatPath: boolean; }; }' is not assignable to type
+  'IntrinsicAttributes & BrowserRouterProps'.
+  Property 'future' does not exist on type 'IntrinsicAttributes & BrowserRouterProps'.
+```
+
+**Why out of scope:** `git diff HEAD -- src/app/router.tsx` shows zero diff — this plan's files
+(`src/widgets/BankTransfersList/index.tsx`, `src/pages/payments/index.tsx`, the four touched locale
+files, `e2e/payments/bank-transfers-tab.spec.ts`) all typecheck clean in isolation; the only error
+`npx tsc --noEmit` reports anywhere in the repo is this one pre-existing `router.tsx` mismatch
+(likely a `react-router-dom` major-version drift between the installed package and its `future`-flag
+typings, unrelated to this phase).
+
+**Action:** Not fixed (scope boundary). This plan's own diff typechecks clean; the repo-wide
+`npm run typecheck` failure blocks a fully green CI run and should be fixed by whoever next
+reconciles `react-router-dom`'s installed version against its type definitions.
