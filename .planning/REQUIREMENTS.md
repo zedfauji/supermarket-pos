@@ -162,6 +162,27 @@ inactivity — a physically unattended till should never sit open. Captured via 
   which staff member was the active session owner and, for unlock, which staff member's PIN unlocked
   it (may differ from the session owner).
 
+## v1.8 Requirements — Admin PIN Reset (Server-Side Recovery Path)
+
+Milestone goal: a manager/admin can reset a staff member's PIN from the Staff page even when that
+staff member has genuinely forgotten it and cannot log in at all — closing a real recovery gap with
+no in-app path today (`force_pin_change` requires the staff member to already know their current
+PIN to log in first). Captured via `/gsd-explore` 2026-08-31 after two real PIN-sync production
+incidents on the Vinty Owner account (see `.planning/notes/vinty-owner-login-outage-rca.md`).
+Requirement IDs formalized from `.planning/phases/22-admin-pin-reset-server-side-recovery-path/22-CONTEXT.md`'s
+locked decisions D-01..D-08 during `/gsd-plan-phase 22` — no formal SPEC.md exists for this phase.
+
+### Admin PIN Reset
+
+- [ ] **PINRST-01**: Only a staff member with role `admin` can call the PIN-reset edge function; the admin can target any staff member, including other admins. A non-admin caller (or an unauthenticated request) is rejected server-side before any credential write happens.
+- [ ] **PINRST-02**: The admin enters a specific new 6-digit PIN for the target staff member in the reset dialog — the system never generates the PIN itself, matching the existing Add Staff flow's PIN-entry UX.
+- [ ] **PINRST-03**: The acting admin must re-enter their own PIN (via the reused `ManagerPinDialog`) immediately before the reset fires, in addition to their existing admin session — a confirm-before-fire gate on this privileged cross-account write.
+- [ ] **PINRST-04**: A successful reset always sets `profiles.must_change_pin = true`; the staff member logs in once with the admin-set PIN, then is forced through the existing forced-change screen to pick their own PIN, matching `create-staff`/`force-pin-change` precedent.
+- [ ] **PINRST-05**: "Force PIN Change" stays an unmodified, separate action; "Reset PIN" is a new, additional action on the Staff page for the case where the staff member cannot log in at all.
+- [ ] **PINRST-06**: Reset is rejected server-side for a target whose `profiles.is_active` is `false`, independent of whether the current UI can produce that row.
+- [ ] **PINRST-07**: The reset dialog shows a non-blocking warning when the entered PIN matches another active staff member's current PIN — advisory only, never blocking submit.
+- [ ] **PINRST-08**: An admin can use Reset PIN on their own staff row with no special-case block — the same code path applies whether the target is the caller or any other staff member.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -248,6 +269,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LCK-02 | Not yet roadmapped (v1.7) | Complete |
 | LCK-03 | Not yet roadmapped (v1.7) | Complete |
 | LCK-04 | Not yet roadmapped (v1.7) | Complete |
+| PINRST-01 | Phase 22 (v1.8) | Pending |
+| PINRST-02 | Phase 22 (v1.8) | Pending |
+| PINRST-03 | Phase 22 (v1.8) | Pending |
+| PINRST-04 | Phase 22 (v1.8) | Pending |
+| PINRST-05 | Phase 22 (v1.8) | Pending |
+| PINRST-06 | Phase 22 (v1.8) | Pending |
+| PINRST-07 | Phase 22 (v1.8) | Pending |
+| PINRST-08 | Phase 22 (v1.8) | Pending |
 
 **Coverage:**
 
@@ -257,7 +286,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.5 proposed requirements: 7 total, 7/7 mapped to Phase 19
 - v1.6 proposed requirements: 4 total, 4/4 mapped to Phase 20
 - v1.7 proposed requirements: 4 total, 0/4 mapped (not yet roadmapped)
+- v1.8 requirements: 8 total, 8/8 mapped to Phase 22 (PINRST-01..08)
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*
-*Last updated: 2026-08-26 — Phase 17 (E2E Suite Overhaul) complete: TEST-01..04 all closed (17-01..17-17), traceability mapped 13/13*
+*Last updated: 2026-08-31 — Phase 22 (Admin PIN Reset) requirements formalized during `/gsd-plan-phase 22` from CONTEXT.md D-01..D-08 (no formal SPEC.md for this phase); PINRST-01..08 added, traceability mapped 8/8*
