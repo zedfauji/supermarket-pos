@@ -183,6 +183,29 @@ locked decisions D-01..D-08 during `/gsd-plan-phase 22` — no formal SPEC.md ex
 - [ ] **PINRST-07**: The reset dialog shows a non-blocking warning when the entered PIN matches another active staff member's current PIN — advisory only, never blocking submit.
 - [ ] **PINRST-08**: An admin can use Reset PIN on their own staff row with no special-case block — the same code path applies whether the target is the caller or any other staff member.
 
+## v1.9 Requirements — Bank Transfer Payment Tracking
+
+Milestone goal: cashier marks a completed sale as awaiting bank transfer with a system-generated
+reference code; admin/manager manually confirms or disputes it against their own banking app on
+the `/payments` page — replacing the current hand-written two-copy paper name+phone slip with a
+fully audited state machine. Explored via `/gsd-spike` sessions 002-005 (idea key
+`bank-transfer-payment-tracking`, `.planning/spikes/`) 2026-08-31. Requirement IDs formalized from
+`.planning/phases/23-bank-transfer-payment-tracking/23-CONTEXT.md`'s locked decisions D-01..D-17
+during `/gsd-plan-phase 23` — no formal SPEC.md exists for this phase.
+
+### Bank Transfer Payment Tracking
+
+- [ ] **BTP-01**: The POS generates a 7-digit reference code (6-digit payload + Luhn mod-10 check digit) per pending-transfer sale, unique among the store's currently-open pending codes. Targets SPEI's Banxico-standard `referencia numerica` field.
+- [ ] **BTP-02**: Cashier can select "bank transfer" as the payment method at checkout only; the sale finalizes normally (receipt prints, inventory decrements, tab reaches `paid`) with the generated code shown/printed for the customer to use as their transfer reference. No retroactive conversion of an already-completed cash/card sale.
+- [ ] **BTP-03**: Manager or admin can confirm a pending transfer by entering the reference code; the code is Luhn-validated before being compared to the sale's real code, and a mismatch is rejected without silently matching the wrong sale.
+- [ ] **BTP-04**: Manager or admin can dispute a pending transfer, with a required, audit-logged reason — no dispute with an empty reason.
+- [ ] **BTP-05**: No auto-confirm path exists anywhere in the system — every confirm/dispute is an explicit manager+/admin action, even when a match looks unambiguous (e.g. only one pending sale at that amount).
+- [ ] **BTP-06**: Every state transition (mark pending / confirm / dispute) is written to `audit_logs` via `record_audit()`, with the new action strings registered in `AuditActionSchema` before use.
+- [ ] **BTP-07**: A "Bank Transfers" tab is added to the existing `/payments` page (not a new route), listing every pending/confirmed/disputed sale oldest-first with reference code, customer name/phone, elapsed time, and status badge; a pending sale past ~8h (hardcoded) is visually flagged as stale.
+- [ ] **BTP-08**: Admin can export the pending+confirmed list to CSV for end-of-day reconciliation, reusing the existing `rowsToCsv`/CWE-1236-safe exporter and Tauri-native save dialog (not a browser Blob download).
+- [ ] **BTP-09**: A cashier-role account is denied `confirm_transfer_payment`/`dispute_transfer_payment` server-side (RPC role re-check), independent of any client-side gating.
+- [ ] **BTP-10**: Bank statement data is never imported into or synced with the POS in this phase — no CSV import, no bank API pull, no PSP webhook. A pending/disputed bank-transfer sale still counts toward `get_caja_report`/`get_payment_methods_report` revenue totals immediately at checkout (same treatment as cash/card), with an additional "pending bank transfer" breakout so admin can see how much of today's revenue is still unconfirmed.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -277,6 +300,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PINRST-06 | Phase 22 (v1.8) | Gaps Found |
 | PINRST-07 | Phase 22 (v1.8) | Gaps Found |
 | PINRST-08 | Phase 22 (v1.8) | Gaps Found |
+| BTP-01 | Phase 23 (v1.9) | Not Started |
+| BTP-02 | Phase 23 (v1.9) | Not Started |
+| BTP-03 | Phase 23 (v1.9) | Not Started |
+| BTP-04 | Phase 23 (v1.9) | Not Started |
+| BTP-05 | Phase 23 (v1.9) | Not Started |
+| BTP-06 | Phase 23 (v1.9) | Not Started |
+| BTP-07 | Phase 23 (v1.9) | Not Started |
+| BTP-08 | Phase 23 (v1.9) | Not Started |
+| BTP-09 | Phase 23 (v1.9) | Not Started |
+| BTP-10 | Phase 23 (v1.9) | Not Started |
 
 **Coverage:**
 
@@ -287,7 +320,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.6 proposed requirements: 4 total, 4/4 mapped to Phase 20
 - v1.7 proposed requirements: 4 total, 0/4 mapped (not yet roadmapped)
 - v1.8 requirements: 8 total, 8/8 mapped to Phase 22 (PINRST-01..08)
+- v1.9 requirements: 10 total, 10/10 mapped to Phase 23 (BTP-01..10)
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*
-*Last updated: 2026-08-31 — Phase 22 (Admin PIN Reset) requirements formalized during `/gsd-plan-phase 22` from CONTEXT.md D-01..D-08 (no formal SPEC.md for this phase); PINRST-01..08 added, traceability mapped 8/8*
+*Last updated: 2026-08-31 — Phase 23 (Bank Transfer Payment Tracking) requirements formalized during `/gsd-plan-phase 23` from CONTEXT.md D-01..D-17 (no formal SPEC.md for this phase; decisions sourced from `/gsd-spike` sessions 002-005, not a live discuss-phase); BTP-01..10 added, traceability mapped 10/10*
