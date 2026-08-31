@@ -134,6 +134,11 @@
     "description": "A manager or admin PIN is required to access this section.",
     "pinLabel": "Enter manager PIN"
   },
+  "idleLock": {
+    "title": "Screen Locked",
+    "description": "Enter any staff member's PIN to unlock.",
+    "incorrectPin": "Incorrect PIN. Try again."
+  },
   "printPrecheque": {
     "barFallback": "Bar",
     "staffFallback": "Staff",

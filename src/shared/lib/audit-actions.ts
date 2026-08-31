@@ -65,4 +65,7 @@ export const AuditActionSchema = z.enum([
   'open_unit.void',
   'open_unit.correct',
   'open_unit.override',
+  // Screen lock (Phase 21)
+  'screen.lock',
+  'screen.unlock',
 ]);

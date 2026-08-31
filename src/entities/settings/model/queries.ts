@@ -36,7 +36,20 @@ import {
   type ReceiptSettings,
   type SettingsBackupSummary,
   type SettingsKey,
+  type TerminalLockSettings,
 } from './types';
+
+// terminal_lock_settings is not yet in generated supabase.types.ts (Phase 21) —
+// scoped `any` per CLAUDE.md's "Missing generated types workaround", mirroring
+// the receipt_settings hooks below.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+const db = supabase as any;
+
+// D-02/RESEARCH.md correction note: the env-var-reading inline TERMINAL_ID
+// pattern (majority precedent, 8 of 11 files) — NOT the hardcoded
+// @shared/config/constants import, which never varies per terminal.
+/* eslint-disable-next-line i18next/no-literal-string -- env fallback literal, not UI copy */
+const TERMINAL_ID = (import.meta.env.VITE_TERMINAL_ID as string | undefined) ?? 'POS-1';
 
 const DEFAULT_GENERAL: GeneralSettings = {
   barName: 'Bola 8',
@@ -101,6 +114,14 @@ const RECEIPT_SETTINGS_SINGLETON_ID = '00000000-0000-0000-0000-000000000001';
 
 const receiptSettingsKeys = {
   all: ['receipt_settings'] as const,
+};
+
+// terminal_lock_settings is genuinely per-terminal (D-02) — keyed by
+// TERMINAL_ID, not a store-wide singleton like receipt_settings.
+const DEFAULT_TERMINAL_LOCK: TerminalLockSettings = { lockTimeoutSeconds: 60 };
+
+const terminalLockSettingsKeys = {
+  all: ['terminal_lock_settings', TERMINAL_ID] as const,
 };
 
 type SettingsRow = Tables<'settings'>;
@@ -362,6 +383,84 @@ export function useMutationUpdateReceiptSettings() {
     onSuccess: result => {
       if (result.ok) {
         void queryClient.invalidateQueries({ queryKey: receiptSettingsKeys.all });
+      }
+    },
+  });
+}
+
+export function useTerminalLockSettings() {
+  const query = useQuery({
+    queryKey: terminalLockSettingsKeys.all,
+    queryFn: async (): Promise<Result<TerminalLockSettings>> => {
+      // Read directly (NOT via supabaseQuery()): an empty terminal_lock_settings
+      // table (before the first admin save) is a legitimate starting state, not
+      // an error — .maybeSingle() lets a null row fall through to the default.
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call,
+         @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- `db`
+         is a scoped `any` cast, see comment above its declaration */
+      const { data, error } = await db
+        .from('terminal_lock_settings')
+        .select('lock_timeout_seconds')
+        .eq('terminal_id', TERMINAL_ID)
+        .maybeSingle();
+
+      if (error) {
+        logger.error('terminal_lock_settings.fetch_failed', { message: error.message, code: error.code });
+        return err(parseSupabaseError(error));
+      }
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call,
+         @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+
+      return ok(
+        data
+          ? { lockTimeoutSeconds: (data as { lock_timeout_seconds: number }).lock_timeout_seconds }
+          : DEFAULT_TERMINAL_LOCK
+      );
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const r = query.data;
+  return {
+    ...query,
+    data: r?.ok ? r.data : undefined,
+    resultError: r && !r.ok ? r.error : undefined,
+    isIdleOrLoading: query.isPending || query.isLoading,
+  };
+}
+
+export function useMutationUpdateTerminalLockSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (lockTimeoutSeconds: number): Promise<Result<void>> => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call,
+         @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- `db`
+         is a scoped `any` cast, see comment above its declaration */
+      const { error } = await db
+        .from('terminal_lock_settings')
+        .upsert(
+          { terminal_id: TERMINAL_ID, lock_timeout_seconds: lockTimeoutSeconds, updated_by: user?.id ?? null },
+          { onConflict: 'terminal_id' }
+        )
+        .select('terminal_id')
+        .single();
+
+      if (error) {
+        logger.error('terminal_lock_settings.update_failed', { message: error.message, code: error.code });
+        return err(parseSupabaseError(error));
+      }
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call,
+         @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+      return ok(undefined);
+    },
+    onSuccess: result => {
+      if (result.ok) {
+        void queryClient.invalidateQueries({ queryKey: terminalLockSettingsKeys.all });
       }
     },
   });

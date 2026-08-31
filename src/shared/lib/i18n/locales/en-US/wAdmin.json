@@ -303,6 +303,13 @@
     "saveButton": "Save alert window",
     "saved": "Near-expiry alert window saved"
   },
+  "lockSettingsTab": {
+    "title": "Auto-Lock Timeout",
+    "thresholdLabel": "Lock after (seconds)",
+    "thresholdHint": "The screen locks automatically after this many seconds of inactivity. Range: 15-600 seconds.",
+    "saveButton": "Save Timeout",
+    "saved": "Auto-lock timeout saved."
+  },
   "permissionMatrix": {
     "updateFailed": "Failed to update permission",
     "permissionEnabled": "Permission enabled",

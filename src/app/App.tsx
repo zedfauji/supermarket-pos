@@ -1,4 +1,5 @@
 import { Toaster } from 'sonner';
+import { IdleLockProvider } from '@features/idle-screen-lock';
 import { ClockDriftBanner } from '@shared/ui/ClockDriftBanner';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
 import { OfflineBanner } from '@shared/ui/OfflineBanner';
@@ -14,7 +15,9 @@ export function App() {
         <Toaster richColors position="top-right" />
         <Providers>
           <ClockDriftBanner />
-          <Router />
+          <IdleLockProvider>
+            <Router />
+          </IdleLockProvider>
         </Providers>
       </AppConfigProvider>
     </ErrorBoundary>
