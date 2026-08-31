@@ -81,6 +81,37 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 22: Admin PIN Reset (Server-Side Recovery Path)
+
+**Goal:** A manager/admin can reset a staff member's PIN from the Staff page even when that staff
+member has genuinely forgotten their current PIN and cannot log in at all — closing a real recovery
+gap discovered 2026-08-30/31 (see `.planning/notes/vinty-owner-login-outage-rca.md`). Today's only
+admin action, "Force PIN Change" (`force_pin_change` RPC), only flags `must_change_pin=true`; it never
+touches the credential, so it requires the staff member to already know and successfully log in with
+their *current* PIN before the forced-change screen ever appears. A genuinely forgotten PIN has no
+in-app recovery path at all right now — the only fix today is someone with direct Supabase
+project/database access resetting `auth.users.encrypted_password` (and `profiles.pin` — see Incident 2/3
+in the RCA note on why both stores must be written atomically) by hand, which doesn't scale past a
+single pilot store with a developer on call.
+
+The fix must not embed the Supabase service-role key in the Tauri client (forbidden pattern, `CLAUDE.md`
+"Service-role key in renderer") — the reset must go through a server-side Supabase Edge Function that
+holds the service-role key, verifies the caller's role from their JWT (manager/admin only), then calls
+`admin.updateUserById(target, { password: newPin })` and syncs `public.profiles.pin` in the same
+operation, audit-logged (`record_audit`, action `permission.admin_pin_reset` or similar). Needs its own
+threat model given it's a privileged cross-account credential write — likely a manager-PIN confirmation
+gate before the reset fires, mirroring the existing `ManagerPinDialog` pattern used elsewhere in this
+app for other privileged actions.
+
+**Requirements**: TBD — derive during `/gsd-plan-phase 22` (or `/gsd-discuss-phase 22` first, given the
+security-sensitive surface)
+**Depends on:** Nothing (independent auth/security surface; does not depend on Phase 21's idle-lock UI)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 22 to break down)
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.

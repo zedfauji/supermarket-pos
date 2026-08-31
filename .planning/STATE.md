@@ -2,19 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 20
-status: completed
-stopped_at: Phase 18 complete — all phases complete
-last_updated: "2026-08-30T21:16:41.863Z"
+current_phase: 21
+current_phase_name: idle-screen-lock
+status: executing
+stopped_at: Phase 21 UI-SPEC approved
+last_updated: "2026-08-31T00:24:47.112Z"
 last_activity: 2026-08-30
 last_activity_desc: Phase 20 marked complete
-state_head: 87dccec969ea25794f977bd029eba3cd8522d646
+state_head: 0556b5b3283393ba69aa31b2e71f291eca7419b2
 progress:
-  total_phases: 3
+  total_phases: 5
   completed_phases: 3
-  total_plans: 12
+  total_plans: 14
   completed_plans: 12
-  percent: 100
+  percent: 60
 ---
 
 # Project State
@@ -28,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 ## Current Position
 
-Phase: 20 — COMPLETE
+Phase: 21 (idle-screen-lock) — READY TO EXECUTE
 Plan: 2 of 2
-Status: Phase 20 complete
+Status: Ready to execute
 Last activity: 2026-08-30 — Phase 20 marked complete
 
 ## Performance Metrics
@@ -112,6 +113,12 @@ Last activity: 2026-08-30 — Phase 20 marked complete
   staff PIN with session identity unchanged; lock+unlock both audit-logged. Requirements LCK-01..04
   captured via `/gsd-explore` 2026-08-30.
 
+- Phase 22 added: Admin PIN Reset (Server-Side Recovery Path) — Edge Function-backed admin PIN
+  reset for a staff member who has genuinely forgotten their PIN (no in-app recovery exists today;
+  `force_pin_change` requires knowing the current PIN to log in first). Independent of Phase 21.
+  Captured via `/gsd-explore` 2026-08-31 after live-debugging two real PIN-sync production
+  incidents on the Vinty Owner account — see `.planning/notes/vinty-owner-login-outage-rca.md`.
+
 - Phase 19 added: Store-Local Durable Printing Service — LAN/VPN-only Windows broker, durable
   acceptance before workflow success, restart-surviving queue, named-printer routing, correlated
   error propagation, and auditable command/event history.
@@ -183,9 +190,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-27T03:44:13.716Z
-Stopped at: Phase 18 complete — all phases complete
-Resume file: D:/Projects/Code/supermarket-pos/.planning/phases/19-store-local-durable-printing-service/19-UI-SPEC.md
+Last session: 2026-08-30T23:40:58.144Z
+Stopped at: Phase 21 UI-SPEC approved
+Resume file: D:/Projects/Code/supermarket-pos/.planning/phases/21-idle-screen-lock/21-UI-SPEC.md
 
 ## Operator Next Steps
 
