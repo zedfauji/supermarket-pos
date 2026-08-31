@@ -68,11 +68,18 @@ per-terminal timeout migration + Settings UI (`manage_settings`-gated), audit_lo
 Playwright E2E coverage per this repo's no-manual-UAT policy.
 **Requirements**: LCK-01, LCK-02, LCK-03, LCK-04
 **Depends on:** Phase 20
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 21 to break down)
+- [ ] 21-01-PLAN.md — Tracer: terminal_lock_settings schema+push, audit actions, idle-detect -> overlay -> cross-staff PIN-unlock -> audit_logs end-to-end, then LockSettingsTab admin-only Settings UI (LCK-01..04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 21-02-PLAN.md — Hardening: Pitfall 3 barcode-scanner bypass close + D-01 mid-transaction no-exemption E2E
+
+**UI hint**: yes
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
