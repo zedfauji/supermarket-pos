@@ -204,7 +204,7 @@ BEGIN
       'tabCount',            v_tab_count,
       'totalExpenses',       v_total_expenses,
       'totalIncome',         v_total_income,
-      'netBalance',          v_cash_sales + v_card_sales + v_rappi_sales + v_total_income - v_total_expenses
+      'netBalance',          v_cash_sales + v_card_sales + v_rappi_sales + v_bank_transfer_sales + v_total_income - v_total_expenses
     ),
     'cashReconciliation', json_build_object(
       'openingCash',  v_caja.opening_cash,
