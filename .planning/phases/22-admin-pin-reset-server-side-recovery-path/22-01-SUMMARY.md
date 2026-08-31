@@ -238,6 +238,18 @@ None — no external service configuration required. (The local Supabase edge-ru
 - `.planning/REQUIREMENTS.md` should be updated marking PINRST-01..08 complete (done by this same executor run, see below).
 - No blockers for the next phase (14, Inventory Analytics Reports, per STATE.md's Operator Next Steps) — this phase was independent per ROADMAP.md.
 
+## Self-Check: PASSED
+
+- FOUND: `supabase/functions/admin-reset-pin/index.ts`
+- FOUND: `src/features/admin-reset-pin/ui/AdminResetPinDialog.tsx`
+- FOUND: `src/features/admin-reset-pin/model/useAdminResetPin.ts`
+- FOUND: `.planning/phases/22-admin-pin-reset-server-side-recovery-path/22-01-SUMMARY.md`
+- FOUND commit `3836c4f` (test: RED)
+- FOUND commit `e54b6df` (feat: GREEN)
+- FOUND commit `b33f0c4` (test: SM10/SM11)
+- FOUND commit `f5b0662` (test: SM12)
+- FOUND commit `0843dfb` (docs: complete plan)
+
 ---
 *Phase: 22-admin-pin-reset-server-side-recovery-path*
 *Completed: 2026-08-31*
