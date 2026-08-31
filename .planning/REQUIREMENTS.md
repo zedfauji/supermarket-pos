@@ -146,19 +146,19 @@ inactivity — a physically unattended till should never sit open. Captured via 
 
 ### Idle Lock
 
-- [ ] **LCK-01**: An idle-lock overlay engages after a configurable inactivity timeout (default 60s)
+- [x] **LCK-01**: An idle-lock overlay engages after a configurable inactivity timeout (default 60s)
   on every screen, for every role including admin, with no exemption for in-progress transactions
   (open cart, payment modal, etc.) — the overlay blocks all interaction until unlocked.
 
-- [ ] **LCK-02**: The inactivity timeout is configurable per-terminal (same storage pattern as
+- [x] **LCK-02**: The inactivity timeout is configurable per-terminal (same storage pattern as
   `receipt_settings` — one row per terminal, not a single global value), editable only by
   `manage_settings`-gated roles.
 
-- [ ] **LCK-03**: The overlay unlocks on any valid staff PIN — not necessarily the PIN of the staff
+- [x] **LCK-03**: The overlay unlocks on any valid staff PIN — not necessarily the PIN of the staff
   member who was active before idling. The active session's identity does not change on unlock; this
   is a screen lock, not a re-login or role switch.
 
-- [ ] **LCK-04**: Both the lock event and the unlock event are written to `audit_logs`, each recording
+- [x] **LCK-04**: Both the lock event and the unlock event are written to `audit_logs`, each recording
   which staff member was the active session owner and, for unlock, which staff member's PIN unlocked
   it (may differ from the session owner).
 
@@ -244,10 +244,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEP-02 | Phase 20 (v1.6) | Complete |
 | DEP-03 | Phase 20 (v1.6) | Complete |
 | DEP-04 | Phase 20 (v1.6) | Complete |
-| LCK-01 | Not yet roadmapped (v1.7) | Pending |
-| LCK-02 | Not yet roadmapped (v1.7) | Pending |
-| LCK-03 | Not yet roadmapped (v1.7) | Pending |
-| LCK-04 | Not yet roadmapped (v1.7) | Pending |
+| LCK-01 | Not yet roadmapped (v1.7) | Complete |
+| LCK-02 | Not yet roadmapped (v1.7) | Complete |
+| LCK-03 | Not yet roadmapped (v1.7) | Complete |
+| LCK-04 | Not yet roadmapped (v1.7) | Complete |
 
 **Coverage:**
 
