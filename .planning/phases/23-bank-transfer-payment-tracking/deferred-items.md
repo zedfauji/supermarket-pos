@@ -65,3 +65,35 @@ typings, unrelated to this phase).
 **Action:** Not fixed (scope boundary). This plan's own diff typechecks clean; the repo-wide
 `npm run typecheck` failure blocks a fully green CI run and should be fixed by whoever next
 reconciles `react-router-dom`'s installed version against its type definitions.
+
+## Pre-existing test failures observed during 23-05 execution (broader regression check)
+
+While running `npm run test` as a broader regression check after completing plan 23-05 (not
+required by the plan's own `<verification>` block, which only names `typecheck`/`lint`), 5 tests in
+3 files unrelated to this plan's diff failed:
+
+- `src/shared/lib/rbac.test.ts` — `manager may confirm_transfer_payment iff matrix allows`,
+  `manager may dispute_transfer_payment iff matrix allows`. **Root cause identified:** the test
+  file's own `ALLOWED` mirror-matrix (a hand-maintained `Record<StaffRole, Set<string>>` fixture,
+  see the file's own header comment "Mirror of product rules — kept in sync with rbac.ts sets")
+  was never updated when Plan 01 added `'confirm_transfer_payment'`/`'dispute_transfer_payment'` to
+  `MANAGER_EXTRA` in `rbac.ts` — the manager `Set` literal in `rbac.test.ts` (lines 21-36) is
+  missing both strings, so the mirror disagrees with the real implementation `canAccess()` returns
+  the correct `true` for manager on both actions; the test fixture is wrong, not the RBAC logic.
+  One-line fix for whoever next touches `rbac.test.ts`: add `'confirm_transfer_payment',
+  'dispute_transfer_payment'` to the `manager` Set.
+- `src/entities/staff/model/queries.clock.test.ts` and
+  `src/features/close-tab/tests/useCloseTab.test.ts` — same 3 tests already documented above under
+  "Pre-existing / out-of-scope test failures observed during 23-02 execution" (environmental,
+  shared-local-DB fixture cross-talk); reconfirmed still failing, unchanged by this plan.
+
+**Why out of scope:** This plan's diff (`useExportBankTransfersCsv.ts`, `BankTransfersList/index.tsx`,
+the migration, `domain.ts`'s `CajaReportSummarySchema`, `CajaReportPanel.tsx`, the 2 locale-file
+pairs, and the 4 pre-existing test fixtures updated only to satisfy the 2 new required
+`CajaReportSummary` fields) never touches `rbac.ts`, `rbac.test.ts`, `queries.clock.test.ts`, or
+`useCloseTab.test.ts` — `git diff` confirms zero changes to any of them beyond the 4 fixture files
+already covered by this plan's own commits.
+
+**Action:** Not fixed (scope boundary). All 4 tests directly exercising this plan's own new fields
+(`pdf.test.ts`, `excel.test.ts`, `ExportButtons.test.tsx`, `useExportReport.test.ts` — 33 tests)
+pass; `npm run typecheck && npm run lint` (this plan's own files) are clean.
