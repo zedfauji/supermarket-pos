@@ -152,6 +152,28 @@ BEGIN
 
   v_method := p_method::payment_method;
 
+  -- WR-03 fix (23-REVIEW.md): "checkout-time only" (D-16) was enforced only
+  -- client-side (PaymentForm omits the bank-transfer processor). Any staff
+  -- member with an active shift could otherwise reach this RPC directly via
+  -- PostgREST with their own JWT and mark bank_transfer on an arbitrary
+  -- pre-existing tab. Two trusted paths are allowed through:
+  --   1. app.bank_transfer_checkout_context — a transaction-local GUC
+  --      (is_local=true, resets at transaction end) set only by
+  --      process_direct_sale_atomic right before it calls this function for
+  --      its own freshly-inserted tab. It is NOT an RPC parameter, so a
+  --      regular-JWT PostgREST caller cannot spoof it.
+  --   2. auth.role() = 'service_role' — server-side/service-key callers
+  --      (integration tests, future edge functions) are already trusted with
+  --      full RLS bypass; this mirrors that trust level rather than adding a
+  --      new distinct one.
+  -- A regular authenticated staff JWT satisfies neither, so the direct-call
+  -- exploit path the reviewer flagged is closed.
+  IF p_method = 'bank_transfer'
+     AND current_setting('app.bank_transfer_checkout_context', true) IS DISTINCT FROM 'true'
+     AND auth.role() IS DISTINCT FROM 'service_role' THEN
+    RETURN jsonb_build_object('ok', false, 'code', 'FORBIDDEN', 'message', 'Bank transfer payments can only be marked at checkout time');
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = p_staff_id AND is_active = true) THEN
     RETURN jsonb_build_object('ok', false, 'code', 'FORBIDDEN', 'message', 'Staff not found or inactive');
   END IF;
@@ -478,6 +500,12 @@ BEGIN
   FROM jsonb_array_elements(v_derived_items) AS elem;
 
   IF p_legs IS NULL THEN
+    -- WR-03 fix: authorize the one legitimate bank_transfer caller (this
+    -- freshly-inserted tab, same transaction) via a transaction-local GUC —
+    -- see the matching check in process_payment_atomic.
+    IF p_method = 'bank_transfer' THEN
+      PERFORM set_config('app.bank_transfer_checkout_context', 'true', true);
+    END IF;
     v_result := process_payment_atomic(p_tab_id := v_tab_id, p_staff_id := p_staff_id, p_amount := p_amount,
       p_method := p_method, p_idempotency_key := p_idempotency_key, p_tendered_amount := p_tendered_amount,
       p_reference_number := p_reference_number, p_discount_scope := NULL, p_discount_type := NULL,
