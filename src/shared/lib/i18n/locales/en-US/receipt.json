@@ -12,7 +12,8 @@
     "method": {
       "cash": "Cash",
       "card": "Card (BBVA Terminal)",
-      "rappi": "Rappi"
+      "rappi": "Rappi",
+      "bankTransfer": "Bank Transfer"
     },
     "category": {
       "other": "Other"

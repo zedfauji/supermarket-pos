@@ -12,7 +12,8 @@
     "method": {
       "cash": "Efectivo",
       "card": "Tarjeta (Terminal BBVA)",
-      "rappi": "Rappi"
+      "rappi": "Rappi",
+      "bankTransfer": "Transferencia bancaria"
     },
     "category": {
       "other": "Otros"

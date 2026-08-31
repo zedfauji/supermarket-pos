@@ -74,6 +74,23 @@ describe('buildThermalReceiptText', () => {
     expect(text).toContain('Rappi');
   });
 
+  it('labels bank_transfer payment as "Transferencia bancaria", not Rappi', () => {
+    const text = buildThermalReceiptText(
+      baseReceipt({
+        paymentMethod: 'bank_transfer',
+        total: 90,
+        tenderedAmount: null,
+        changeAmount: null,
+        terminalReference: '1234567',
+      }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
+    expect(text).toContain('Transferencia bancaria');
+    expect(text).not.toContain('Rappi');
+    expect(text).toContain('1234567');
+  });
+
   it('shows tendered and change for cash when tenderedAmount set', () => {
     const text = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings());
     expect(text).toContain('Entregado');
