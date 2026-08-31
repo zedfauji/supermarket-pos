@@ -10,10 +10,6 @@ jobs:
     permissions:
       contents: write
     runs-on: [self-hosted, windows]
-    defaults:
-      run:
-        working-directory: supermarket-pos
-
     steps:
       - uses: actions/checkout@v4
 
@@ -22,7 +18,7 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-          cache-dependency-path: supermarket-pos/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: install Rust stable
         shell: pwsh
@@ -53,5 +49,5 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
-          projectPath: supermarket-pos
+          projectPath: .
           args: '--config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}'
