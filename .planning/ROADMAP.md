@@ -114,6 +114,23 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 23: Bank Transfer Payment Tracking
+
+**Goal:** Cashier marks a completed sale as awaiting bank transfer with a system-generated reference code; admin/manager manually confirms or disputes it against their own banking app on the `/payments` page. Replaces the paper name+phone reconciliation slip with a fully audited state machine — no auto-confirm path anywhere.
+**Requirements**: TBD (derive from `.planning/spikes/MANIFEST.md` idea `bank-transfer-payment-tracking` Requirements list during discuss/plan)
+**Depends on:** Nothing (independent payments/RBAC surface — does not depend on Phase 22's admin-PIN-reset work)
+**Plans:** 0 plans
+
+Validated via spikes 002–005 (`.planning/spikes/`, idea key `bank-transfer-payment-tracking`):
+- Reference code: 6-digit payload + Luhn check digit (7 digits total), targets SPEI's Banxico-standard `referencia numerica` field.
+- State machine: cashier marks `pending` → manager+/admin `confirmed`/`disputed`, mirrors the existing `process_refund` RBAC-gate + audit-log pattern. Always a manual tap — no auto-confirm, even for unambiguous matches.
+- UI: "Bank Transfers" tab on the existing `/payments` page, listing pending/confirmed/disputed sales with a CSV export for end-of-day reconciliation.
+- Explicitly out of scope for this phase: bank statement import (never happens), and PSP auto-reconciliation (Conekta/Clip) — flagged in Spike 002 as a viable future phase, not this one.
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 23 to break down)
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.

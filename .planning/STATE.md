@@ -117,6 +117,11 @@ Last activity: 2026-08-30 — Phase 21 complete, transitioned to Phase 22
 - Phase 22 added: Admin PIN Reset (Server-Side Recovery Path) — Edge Function-backed admin PIN
   reset for a staff member who has genuinely forgotten their PIN (no in-app recovery exists today;
   `force_pin_change` requires knowing the current PIN to log in first). Independent of Phase 21.
+
+- Phase 23 added: Bank Transfer Payment Tracking — cashier marks a sale awaiting bank transfer
+  with a system-generated reference code, admin/manager manually confirms/disputes on `/payments`,
+  no auto-confirm path. Independent of Phase 22. Design validated via spikes 002-005
+  (`.planning/spikes/`, idea key `bank-transfer-payment-tracking`) 2026-08-31.
   Captured via `/gsd-explore` 2026-08-31 after live-debugging two real PIN-sync production
   incidents on the Vinty Owner account — see `.planning/notes/vinty-owner-login-outage-rca.md`.
 
