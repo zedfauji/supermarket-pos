@@ -615,7 +615,7 @@ export const ProcessDirectSaleRequestSchema = z
     shiftId: UuidSchema,
     cajaSessionId: UuidSchema,
     idempotencyKey: z.string().min(1).max(255),
-    method: z.enum(['cash', 'card']).optional(),
+    method: z.enum(['cash', 'card', 'bank_transfer']).optional(),
     amount: MoneySchema.optional(),
     tenderedAmount: MoneySchema.nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
@@ -637,6 +637,7 @@ export const ProcessDirectSaleRequestSchema = z
     discountValue: z.number().nonnegative().optional(),
     discountAmount: MoneySchema.optional(),
     customerName: z.string().min(1).max(100).optional(),
+    customerPhone: z.string().min(1).max(30).optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
@@ -651,6 +652,13 @@ export const ProcessDirectSaleRequestSchema = z
         code: 'custom',
         message: 'tenderedAmount is required for cash',
         path: ['tenderedAmount'],
+      });
+    }
+    if (data.method === 'bank_transfer' && !data.customerPhone?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'customerPhone is required for bank_transfer',
+        path: ['customerPhone'],
       });
     }
   });

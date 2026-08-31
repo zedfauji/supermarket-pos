@@ -233,4 +233,59 @@ describe('useCheckoutSale', () => {
       expect(res.error).toEqual({ code: 'SUPABASE_ERROR', message: 'boom' });
     }
   });
+
+  it('processBankTransferPayment returns ok with paymentId/referenceCode/receiptData on success', async () => {
+    mockCallProcessDirectSale.mockResolvedValue({
+      ok: true,
+      data: {
+        tabId: 'tab-1',
+        paymentId: 'p1',
+        receiptData: { paymentMethod: 'bank_transfer', terminalReference: '4829016' },
+      },
+    });
+    const { result } = renderHook(() => useCheckoutSale());
+
+    const res = await result.current.processors.processBankTransferPayment(
+      'tab-1',
+      10,
+      'Ana Cliente',
+      '5512345678'
+    );
+
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.data).toEqual({
+        paymentId: 'p1',
+        referenceCode: '4829016',
+        receiptData: { paymentMethod: 'bank_transfer', terminalReference: '4829016' },
+      });
+    }
+  });
+
+  it('processBankTransferPayment forwards customerName/customerPhone into the request', async () => {
+    mockCallProcessDirectSale.mockResolvedValue({
+      ok: true,
+      data: {
+        tabId: 'tab-1',
+        paymentId: 'p1',
+        receiptData: { paymentMethod: 'bank_transfer', terminalReference: '4829016' },
+      },
+    });
+    const { result } = renderHook(() => useCheckoutSale());
+
+    await result.current.processors.processBankTransferPayment(
+      'tab-1',
+      10,
+      'Ana Cliente',
+      '5512345678'
+    );
+
+    expect(mockCallProcessDirectSale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'bank_transfer',
+        customerName: 'Ana Cliente',
+        customerPhone: '5512345678',
+      })
+    );
+  });
 });

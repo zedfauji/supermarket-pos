@@ -22,7 +22,7 @@ const BodySchema = z
     shiftId: z.string().uuid(),
     cajaSessionId: z.string().uuid(),
     idempotencyKey: z.string().min(1).max(255),
-    method: z.enum(['cash', 'card']).optional(),
+    method: z.enum(['cash', 'card', 'bank_transfer']).optional(),
     amount: z.number().nonnegative().multipleOf(0.01).optional(),
     tenderedAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
     referenceNumber: z.string().max(64).nullable().optional(),
@@ -33,6 +33,7 @@ const BodySchema = z
     discountValue: z.number().nonnegative().optional(),
     discountAmount: z.number().nonnegative().multipleOf(0.01).optional(),
     customerName: z.string().min(1).max(100).optional(),
+    customerPhone: z.string().min(1).max(30).optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
@@ -43,6 +44,12 @@ const BodySchema = z
     }
     if (data.method === 'cash' && data.tenderedAmount == null) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'tenderedAmount is required for cash' });
+    }
+    if (data.method === 'bank_transfer' && !data.customerPhone?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'customerPhone is required for bank_transfer',
+      });
     }
   });
 
@@ -71,7 +78,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 type SaleReceiptPayment = {
   amount: number;
-  method: 'cash' | 'card';
+  method: 'cash' | 'card' | 'bank_transfer';
   processed_at: string;
   tendered_amount: number | null;
   reference_number: string | null;
@@ -281,6 +288,7 @@ Deno.serve(async (req: Request) => {
     p_discount_value: body.data.discountValue ?? null,
     p_discount_amount: body.data.discountAmount ?? null,
     p_customer_name: body.data.customerName ?? 'Walk-in',
+    p_customer_phone: body.data.customerPhone ?? null,
   });
   if (error)
     return jsonResponse(
