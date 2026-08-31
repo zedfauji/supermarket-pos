@@ -220,6 +220,13 @@ None - no external service configuration required.
 - Plan 21-02 (per the phase objective) hardens the remaining D-01 edge cases and closes the global-listener bypass risk flagged as `T-21-06` in the threat register (deferred here since it requires this plan's `locked` state to exist first).
 - No blockers for 21-02.
 
+## Self-Check: PASSED
+
+- All 13 created files verified present and tracked in git (`git ls-files`).
+- All 5 task commits (`6235b70`, `976e45d`, `dd3dab6`, `9b4c8ab`, `6f6a07f`) verified present in `git log --oneline --all`.
+- Re-ran the plan-level `<verification>` block in full: both E2E specs (`idle-lock.spec.ts`, `lock-timeout.spec.ts`) pass; all 3 Vitest test files (11 tests) pass; `npm run typecheck` and `npm run lint` pass; `supabase migration list` shows `20260830000002` applied on Local and Remote.
+- Full unit suite (`npm run test`) re-run for regressions: 135 test files passed, 1254 tests passed, no failures.
+
 ---
 *Phase: 21-idle-screen-lock*
 *Completed: 2026-08-31*
