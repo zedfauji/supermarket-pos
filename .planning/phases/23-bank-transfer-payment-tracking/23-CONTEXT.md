@@ -68,16 +68,32 @@ statement/PSP auto-reconciliation integration (Conekta/Clip) is explicitly a sep
   style modal, consistent with the rest of the app (a spike draft used native `prompt()` for the
   dispute reason and this was corrected before shipping the spike demo).
 
+### Resolved after research (2026-08-31, gsd-phase-researcher's Open Questions 1-3)
+- **D-15 (revenue accounting):** A `bank_transfer` sale counts toward `get_caja_report`/
+  `get_payment_methods_report` revenue totals immediately at checkout, same as cash/card — do
+  **not** touch the 5 existing summing call sites. Additionally, add a distinct "pending bank
+  transfer" breakout metric to the caja/payment-methods report so admin can see how much of
+  today's revenue is still unconfirmed, without excluding it from the total. Rationale: matches
+  the existing precedent that card settlement also lags real cash-in-hand yet still counts as
+  revenue at sale time; avoids the churn Pitfall 2/3 describe from adding a 3rd revenue-exclusion
+  category; still gives admin the visibility they'd actually want.
+- **D-16 (checkout-time only):** `markPendingTransfer` is reachable only from the checkout flow
+  (`PaymentForm`/`checkout-sale`) when the cashier picks "bank transfer" as the payment method at
+  time of sale. No retroactive "convert an already-completed cash/card sale to pending-transfer"
+  action in this phase — CONTEXT's "sometimes at checkout, sometimes later" describes when the
+  *transfer* lands, not when the *payment-method choice* is made.
+- **D-17 (stale threshold hardcoded):** The ~8h stale-pending visual flag is a hardcoded named
+  constant for this phase, not a new Settings-tab configurable value. Add a Settings toggle only
+  if requested in review — avoids over-building Claude's Discretion into unrequested scope.
+
 ### Claude's Discretion
 - Exact copy/wording for empty states, tab labels beyond "Bank Transfers", and i18n key naming
-  within the existing `wPanels`/`featOrders` namespace convention.
-- Whether "stale" pending threshold (spike used 8h as an illustrative default) is hardcoded or a
-  configurable setting — follow whatever pattern `receipt_settings`/near-expiry-alert config
-  already uses for similar "configurable threshold" values in this codebase.
-- Exact DB column names/types for the new pending-transfer fields (spike used
-  `referenceCode, amount, customerName, customerPhone, status, createdAt, createdBy, confirmedBy,
-  confirmedAt, disputeReason` — real migration should follow existing `payments`/`tabs` table
-  naming conventions in this codebase, not necessarily these exact names).
+  within the existing `wPanels`/`featOrders`/`pages` namespace convention (research found the
+  existing `payments.tabs.*` labels live in `pages.json`, not `wPanels.json`).
+- Exact DB column/table names (research recommends a new sibling table `bank_transfers` FK'd 1:1
+  to `payments.id`, mirroring the existing `refunds` table shape, storing the reference code in
+  `payments.reference_number` — an existing free-text column already used for card auth codes,
+  not a new column). Not a locked decision; the planner may adjust naming.
 
 </decisions>
 
