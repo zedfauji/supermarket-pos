@@ -385,6 +385,104 @@ export async function callCreateStaff(
 }
 
 // ============================================================================
+// ADMIN RESET PIN (Phase 22, PINRST-01..08)
+// ============================================================================
+
+export const AdminResetPinRequestSchema = z.object({
+  targetStaffId: UuidSchema,
+  newPin: PinSchema,
+});
+
+export type AdminResetPinRequest = z.infer<typeof AdminResetPinRequestSchema>;
+
+export const AdminResetPinSuccessSchema = z.object({
+  id: UuidSchema,
+  name: z.string(),
+});
+
+export type AdminResetPinSuccess = z.infer<typeof AdminResetPinSuccessSchema>;
+
+/**
+ * admin-reset-pin/index.ts's flat error envelope: `{ error: string }` (same
+ * shape as create-staff, not process-payment's nested `{error:{code,message}}`).
+ * Exported (unlike mapCreateStaffEdgeError) so it's directly unit-testable —
+ * the PARTIAL_FAILURE branch (Pitfall 1's dual-write divergence) is the one
+ * genuinely new risk this phase introduces and needs its own coverage.
+ */
+export function mapAdminResetPinEdgeError(status: number, message: string): AppError {
+  if (message.startsWith('PARTIAL_FAILURE')) return { code: 'PIN_RESET_PARTIAL_FAILURE', message };
+  if (status === 401) return { code: 'AUTH_REQUIRED', message };
+  if (status === 403) return { code: 'AUTH_FORBIDDEN', message };
+  if (status === 404) return { code: 'NOT_FOUND', message };
+  return { code: 'SUPABASE_ERROR', message };
+}
+
+/**
+ * Calls the admin-reset-pin edge function.
+ *
+ * @returns Unwrapped success payload or structured {@link AppError}.
+ */
+export async function callAdminResetPin(
+  request: AdminResetPinRequest
+): Promise<Result<AdminResetPinSuccess, AppError>> {
+  try {
+    const validatedRequest = AdminResetPinRequestSchema.parse(request);
+
+    const accessToken = getCachedAccessToken();
+    if (!accessToken) {
+      return err({ code: 'AUTH_REQUIRED', message: 'Not authenticated' });
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/admin-reset-pin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify(validatedRequest),
+    });
+
+    const data: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const edgeMessage =
+        data !== null && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+          ? data.error
+          : `Could not reset PIN (${String(response.status)})`;
+      return err(mapAdminResetPinEdgeError(response.status, edgeMessage));
+    }
+
+    const success = AdminResetPinSuccessSchema.safeParse(data);
+    if (!success.success) {
+      return err({
+        code: 'VALIDATION_ERROR',
+        message: 'Unexpected response from staff service',
+        details: success.error.message,
+      });
+    }
+
+    return ok(success.data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return err({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid request data',
+        details: error.message,
+      });
+    }
+
+    return err({
+      code: 'UNKNOWN_ERROR',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    });
+  }
+}
+
+// ============================================================================
 // AGENT PROXY (Phase 06, SEC-01)
 // ============================================================================
 

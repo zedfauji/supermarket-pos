@@ -48,6 +48,7 @@ export const AuditActionSchema = z.enum([
   // Permissions
   'permission.toggle',
   'permission.force_pin_change',
+  'permission.admin_pin_reset',
   // Staff
   'staff.role_change',
   'staff.create',

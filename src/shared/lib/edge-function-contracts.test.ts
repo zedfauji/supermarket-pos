@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   type ReceiptData,
+  AdminResetPinRequestSchema,
+  AdminResetPinSuccessSchema,
+  mapAdminResetPinEdgeError,
   AgentProxyRequestSchema,
   ProcessPaymentRequestSchema,
   ReceiptDataSchema,
@@ -330,4 +333,53 @@ describe('SendReceiptEmailRequestSchema', () => {
 // These require the Deno Edge Runtime (npx supabase functions serve) to be running.
 describe.skip('callSendReceiptEmail — requires edge runtime', () => {
   it.todo('move to e2e/08-settings-receipt.spec.ts');
+});
+
+describe('AdminResetPinRequestSchema / AdminResetPinSuccessSchema / mapAdminResetPinEdgeError', () => {
+  const validUuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+  it('accepts a valid targetStaffId + 6-digit newPin', () => {
+    const r = AdminResetPinRequestSchema.safeParse({ targetStaffId: validUuid, newPin: '123456' });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects a non-uuid targetStaffId', () => {
+    const r = AdminResetPinRequestSchema.safeParse({ targetStaffId: 'not-a-uuid', newPin: '123456' });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects a non-6-digit newPin', () => {
+    const r = AdminResetPinRequestSchema.safeParse({ targetStaffId: validUuid, newPin: '12345' });
+    expect(r.success).toBe(false);
+  });
+
+  it('accepts a valid id + name success payload', () => {
+    const r = AdminResetPinSuccessSchema.safeParse({ id: validUuid, name: 'Alex' });
+    expect(r.success).toBe(true);
+  });
+
+  it('maps 401 to AUTH_REQUIRED', () => {
+    expect(mapAdminResetPinEdgeError(401, 'Missing bearer token').code).toBe('AUTH_REQUIRED');
+  });
+
+  it('maps 403 to AUTH_FORBIDDEN', () => {
+    expect(mapAdminResetPinEdgeError(403, 'Insufficient role').code).toBe('AUTH_FORBIDDEN');
+  });
+
+  it('maps 404 to NOT_FOUND', () => {
+    expect(mapAdminResetPinEdgeError(404, 'Staff member not found').code).toBe('NOT_FOUND');
+  });
+
+  it('maps a PARTIAL_FAILURE-prefixed message to PIN_RESET_PARTIAL_FAILURE regardless of status', () => {
+    expect(
+      mapAdminResetPinEdgeError(
+        500,
+        'PARTIAL_FAILURE: credential changed but staff record failed to sync'
+      ).code
+    ).toBe('PIN_RESET_PARTIAL_FAILURE');
+  });
+
+  it('maps a plain 500 (not PARTIAL_FAILURE-prefixed) to SUPABASE_ERROR — proves the prefix match is not a blanket 500 catch', () => {
+    expect(mapAdminResetPinEdgeError(500, 'some other db error').code).toBe('SUPABASE_ERROR');
+  });
 });

@@ -174,14 +174,14 @@ locked decisions D-01..D-08 during `/gsd-plan-phase 22` — no formal SPEC.md ex
 
 ### Admin PIN Reset
 
-- [ ] **PINRST-01**: Only a staff member with role `admin` can call the PIN-reset edge function; the admin can target any staff member, including other admins. A non-admin caller (or an unauthenticated request) is rejected server-side before any credential write happens.
-- [ ] **PINRST-02**: The admin enters a specific new 6-digit PIN for the target staff member in the reset dialog — the system never generates the PIN itself, matching the existing Add Staff flow's PIN-entry UX.
-- [ ] **PINRST-03**: The acting admin must re-enter their own PIN (via the reused `ManagerPinDialog`) immediately before the reset fires, in addition to their existing admin session — a confirm-before-fire gate on this privileged cross-account write.
-- [ ] **PINRST-04**: A successful reset always sets `profiles.must_change_pin = true`; the staff member logs in once with the admin-set PIN, then is forced through the existing forced-change screen to pick their own PIN, matching `create-staff`/`force-pin-change` precedent.
-- [ ] **PINRST-05**: "Force PIN Change" stays an unmodified, separate action; "Reset PIN" is a new, additional action on the Staff page for the case where the staff member cannot log in at all.
-- [ ] **PINRST-06**: Reset is rejected server-side for a target whose `profiles.is_active` is `false`, independent of whether the current UI can produce that row.
-- [ ] **PINRST-07**: The reset dialog shows a non-blocking warning when the entered PIN matches another active staff member's current PIN — advisory only, never blocking submit.
-- [ ] **PINRST-08**: An admin can use Reset PIN on their own staff row with no special-case block — the same code path applies whether the target is the caller or any other staff member.
+- [x] **PINRST-01**: Only a staff member with role `admin` can call the PIN-reset edge function; the admin can target any staff member, including other admins. A non-admin caller (or an unauthenticated request) is rejected server-side before any credential write happens.
+- [x] **PINRST-02**: The admin enters a specific new 6-digit PIN for the target staff member in the reset dialog — the system never generates the PIN itself, matching the existing Add Staff flow's PIN-entry UX.
+- [x] **PINRST-03**: The acting admin must re-enter their own PIN (via the reused `ManagerPinDialog`) immediately before the reset fires, in addition to their existing admin session — a confirm-before-fire gate on this privileged cross-account write.
+- [x] **PINRST-04**: A successful reset always sets `profiles.must_change_pin = true`; the staff member logs in once with the admin-set PIN, then is forced through the existing forced-change screen to pick their own PIN, matching `create-staff`/`force-pin-change` precedent.
+- [x] **PINRST-05**: "Force PIN Change" stays an unmodified, separate action; "Reset PIN" is a new, additional action on the Staff page for the case where the staff member cannot log in at all.
+- [x] **PINRST-06**: Reset is rejected server-side for a target whose `profiles.is_active` is `false`, independent of whether the current UI can produce that row.
+- [x] **PINRST-07**: The reset dialog shows a non-blocking warning when the entered PIN matches another active staff member's current PIN — advisory only, never blocking submit.
+- [x] **PINRST-08**: An admin can use Reset PIN on their own staff row with no special-case block — the same code path applies whether the target is the caller or any other staff member.
 
 ## v2 Requirements
 
@@ -269,14 +269,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LCK-02 | Not yet roadmapped (v1.7) | Complete |
 | LCK-03 | Not yet roadmapped (v1.7) | Complete |
 | LCK-04 | Not yet roadmapped (v1.7) | Complete |
-| PINRST-01 | Phase 22 (v1.8) | Pending |
-| PINRST-02 | Phase 22 (v1.8) | Pending |
-| PINRST-03 | Phase 22 (v1.8) | Pending |
-| PINRST-04 | Phase 22 (v1.8) | Pending |
-| PINRST-05 | Phase 22 (v1.8) | Pending |
-| PINRST-06 | Phase 22 (v1.8) | Pending |
-| PINRST-07 | Phase 22 (v1.8) | Pending |
-| PINRST-08 | Phase 22 (v1.8) | Pending |
+| PINRST-01 | Phase 22 (v1.8) | Complete |
+| PINRST-02 | Phase 22 (v1.8) | Complete |
+| PINRST-03 | Phase 22 (v1.8) | Complete |
+| PINRST-04 | Phase 22 (v1.8) | Complete |
+| PINRST-05 | Phase 22 (v1.8) | Complete |
+| PINRST-06 | Phase 22 (v1.8) | Complete |
+| PINRST-07 | Phase 22 (v1.8) | Complete |
+| PINRST-08 | Phase 22 (v1.8) | Complete |
 
 **Coverage:**
 
