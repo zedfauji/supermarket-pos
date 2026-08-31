@@ -119,7 +119,7 @@ Plans:
 **Goal:** Cashier marks a completed sale as awaiting bank transfer with a system-generated reference code; admin/manager manually confirms or disputes it against their own banking app on the `/payments` page. Replaces the paper name+phone reconciliation slip with a fully audited state machine — no auto-confirm path anywhere.
 **Requirements**: BTP-01, BTP-02, BTP-03, BTP-04, BTP-05, BTP-06, BTP-07, BTP-08, BTP-09, BTP-10
 **Depends on:** Nothing (independent payments/RBAC surface — does not depend on Phase 22's admin-PIN-reset work)
-**Plans:** 2/5 plans executed
+**Plans:** 5/5 plans complete
 
 Validated via spikes 002–005 (`.planning/spikes/`, idea key `bank-transfer-payment-tracking`):
 
@@ -139,15 +139,15 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion — shares featOrders.json)*
 
-- [ ] 23-03-PLAN.md — Confirm/dispute business logic: client Luhn util, useConfirmTransfer/useDisputeTransfer hooks, entity query hooks, ConfirmTransferDialog/DisputeTransferDialog (BTP-01, BTP-03, BTP-04)
+- [x] 23-03-PLAN.md — Confirm/dispute business logic: client Luhn util, useConfirmTransfer/useDisputeTransfer hooks, entity query hooks, ConfirmTransferDialog/DisputeTransferDialog (BTP-01, BTP-03, BTP-04)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 23-04-PLAN.md — BankTransfersList widget + Bank Transfers tab on /payments + the phase's core tracer E2E (checkout mark-pending → manager confirm, plus dispute/Luhn-mismatch/RBAC-denial coverage) (BTP-03, BTP-04, BTP-05, BTP-07, BTP-09)
+- [x] 23-04-PLAN.md — BankTransfersList widget + Bank Transfers tab on /payments + the phase's core tracer E2E (checkout mark-pending → manager confirm, plus dispute/Luhn-mismatch/RBAC-denial coverage) (BTP-03, BTP-04, BTP-05, BTP-07, BTP-09)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 23-05-PLAN.md — CSV export (Tauri-native, rowsToCsv) + get_caja_report bank-transfer revenue breakout (BTP-08, BTP-10)
+- [x] 23-05-PLAN.md — CSV export (Tauri-native, rowsToCsv) + get_caja_report bank-transfer revenue breakout (BTP-08, BTP-10)
 
 **UI hint**: yes
 
