@@ -48,6 +48,32 @@ question requires otherwise.
   ledger directly to confirm durable state, then relaunch to prove restart recovery — all real,
   not simulated.
 
+## Structure (Node/logic spikes)
+
+- Standalone Node scripts in a spike folder must use `.cjs`, not `.js` — the project root
+  `package.json` sets `"type": "module"`, so a plain `.js` file run with `node` fails with
+  `ReferenceError: module is not defined in ES module scope`.
+- A spike that needs a runnable self-check uses a `require.main === module` guarded `demo()`
+  block with `assert` — no test framework — printing a pass/fail summary plus key metrics (e.g.
+  catch-rate percentages), not just "it works."
+
+## Structure (Web/UI spikes)
+
+- A single static `.html` file with inline `<style>`/`<script>`, no bundler — matches
+  CONVENTIONS' "hardcode everything" rule. Cross-spike logic (e.g. a validation algorithm) is
+  ported inline into the HTML rather than shared via a `<script src>`, since spikes are meant to
+  stand alone.
+- `file://` URLs are blocked by the Chrome automation extension's permission model. To verify a
+  static-HTML spike via browser automation, serve it first: `python -m http.server <port>` from
+  the spike's directory, then navigate to `http://127.0.0.1:<port>/<file>.html`.
+- Never use native `alert()`/`confirm()`/`prompt()` in a spike's UI — they freeze the Chrome
+  automation session (hard rule) and don't match this app's `ConfirmDialog`-style modal pattern
+  anyway. Use a custom `<dialog>` element instead, even in a throwaway spike.
+- Per CLAUDE.md's UAT policy, drive interactive UI spikes yourself via the Chrome automation
+  extension (click through every state, verify with screenshots/console) rather than asking the
+  user to click through and report back — this applies to spike verification, not just the
+  shipped app.
+
 ## Tools & Libraries
 
 - `nssm` (via `winget`) — Windows Service wrapper for spike-speed service installs. Not a
