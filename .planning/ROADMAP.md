@@ -68,7 +68,7 @@ per-terminal timeout migration + Settings UI (`manage_settings`-gated), audit_lo
 Playwright E2E coverage per this repo's no-manual-UAT policy.
 **Requirements**: LCK-01, LCK-02, LCK-03, LCK-04
 **Depends on:** Phase 20
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 
 Plans:
 **Wave 1**
@@ -77,7 +77,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 21-02-PLAN.md — Hardening: Pitfall 3 barcode-scanner bypass close + D-01 mid-transaction no-exemption E2E
+- [x] 21-02-PLAN.md — Hardening: Pitfall 3 barcode-scanner bypass close + D-01 mid-transaction no-exemption E2E
 
 **UI hint**: yes
 
