@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { AdminResetPinDialog } from '@features/admin-reset-pin';
 import { ClockInModal } from '@features/clock-in-staff';
 import { ClockOutDialog } from '@features/clock-out-staff';
 import { CreateStaffDialog } from '@features/create-staff';
@@ -54,6 +55,7 @@ export function StaffDashboard() {
   const [clockInStaff, setClockInStaff] = useState<Staff | null>(null);
   const [clockOutTarget, setClockOutTarget] = useState<{ staff: Staff; shift: Shift } | null>(null);
   const [forcePinTarget, setForcePinTarget] = useState<Staff | null>(null);
+  const [resetPinTarget, setResetPinTarget] = useState<Staff | null>(null);
   const [localeTarget, setLocaleTarget] = useState<Staff | null>(null);
   const [addStaffOpen, setAddStaffOpen] = useState(false);
 
@@ -173,6 +175,18 @@ export function StaffDashboard() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
+                    setResetPinTarget(staff);
+                  }}
+                >
+                  {t('actions.resetPin')}
+                </POSButton>
+              </ProtectedAction>
+              <ProtectedAction action="manage_staff" currentRole={currentRole}>
+                <POSButton
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
                     setLocaleTarget(staff);
                   }}
                 >
@@ -261,6 +275,14 @@ export function StaffDashboard() {
         open={forcePinTarget !== null}
         onOpenChange={next => {
           if (!next) setForcePinTarget(null);
+        }}
+      />
+
+      <AdminResetPinDialog
+        staff={resetPinTarget}
+        open={resetPinTarget !== null}
+        onOpenChange={next => {
+          if (!next) setResetPinTarget(null);
         }}
       />
 

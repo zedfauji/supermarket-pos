@@ -9,7 +9,8 @@
   "actions": {
     "clockIn": "Marcar entrada",
     "clockOut": "Marcar salida",
-    "forcePinChange": "Forzar cambio de PIN"
+    "forcePinChange": "Forzar cambio de PIN",
+    "resetPin": "Restablecer PIN"
   },
   "section": {
     "title": "Personal",
@@ -37,5 +38,18 @@
     "creating": "Creando…",
     "successToast": "{{name}} agregado — se le pedirá establecer un PIN nuevo en su primer inicio de sesión",
     "genericFailure": "Algo salió mal. Inténtalo de nuevo o pide ayuda a un gerente."
+  },
+  "resetPin": {
+    "dialogTitle": "Restablecer PIN de {{name}}",
+    "dialogDescription": "Establece un PIN nuevo de 6 dígitos para este miembro del personal. Se le pedirá cambiarlo en su próximo inicio de sesión.",
+    "newPinLabel": "PIN nuevo",
+    "confirmPinLabel": "Confirmar PIN nuevo",
+    "submit": "Restablecer PIN",
+    "submitting": "Restableciendo…",
+    "pinMismatch": "Los PIN no coinciden — vuelve a ingresar ambos campos.",
+    "collisionWarning": "Este PIN ya está en uso por {{name}}. Puedes continuar, pero considera elegir un PIN diferente.",
+    "successToast": "PIN restablecido para {{name}}. Se le pedirá establecer un PIN nuevo en su próximo inicio de sesión.",
+    "genericFailure": "No se pudo restablecer el PIN. Inténtalo de nuevo.",
+    "partialFailureToast": "El restablecimiento del PIN falló parcialmente — la credencial cambió pero el registro del personal no se sincronizó. Contacta a soporte antes de que este miembro del personal intente iniciar sesión."
   }
 }

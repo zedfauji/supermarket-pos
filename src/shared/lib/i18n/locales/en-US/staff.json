@@ -9,7 +9,8 @@
   "actions": {
     "clockIn": "Clock In",
     "clockOut": "Clock Out",
-    "forcePinChange": "Force PIN Change"
+    "forcePinChange": "Force PIN Change",
+    "resetPin": "Reset PIN"
   },
   "section": {
     "title": "Staff",
@@ -37,5 +38,18 @@
     "creating": "Creating…",
     "successToast": "{{name}} added — they'll be asked to set a new PIN on first login",
     "genericFailure": "Something went wrong. Please try again or ask a manager for help."
+  },
+  "resetPin": {
+    "dialogTitle": "Reset PIN for {{name}}",
+    "dialogDescription": "Set a new 6-digit PIN for this staff member. They'll be required to change it on their next login.",
+    "newPinLabel": "New PIN",
+    "confirmPinLabel": "Confirm New PIN",
+    "submit": "Reset PIN",
+    "submitting": "Resetting…",
+    "pinMismatch": "PINs don't match — re-enter both fields.",
+    "collisionWarning": "This PIN is already in use by {{name}}. You can still continue, but consider choosing a different PIN.",
+    "successToast": "PIN reset for {{name}}. They'll be asked to set a new PIN at next login.",
+    "genericFailure": "Couldn't reset the PIN. Try again.",
+    "partialFailureToast": "PIN reset partially failed — the credential changed but the staff record didn't sync. Contact support before this staff member tries to log in."
   }
 }
