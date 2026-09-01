@@ -338,7 +338,12 @@ Deno.serve(async (req: Request) => {
   const taxInclusive = billing?.taxInclusive ?? true;
 
   const receipts = (paymentRows as PaymentLegRow[]).map(legRow => {
-    const { subtotal, taxAmount, total } = decomposeTax(Number(legRow.amount), taxRatePercent, taxInclusive);
+    // Rappi tax is collected/remitted externally, not by this POS — mirror
+    // PaymentForm.tsx's `method === 'rappi'` zero-tax display (WR-01).
+    const { subtotal, taxAmount, total } =
+      legRow.method === 'rappi'
+        ? { subtotal: Number(legRow.amount), taxAmount: 0, total: Number(legRow.amount) }
+        : decomposeTax(Number(legRow.amount), taxRatePercent, taxInclusive);
     const tendered = legRow.tendered_amount != null ? Number(legRow.tendered_amount) : null;
     const changeAmount = tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
     const ref = legRow.reference_number;
