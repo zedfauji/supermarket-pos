@@ -816,6 +816,8 @@ export const BillingSettingsSchema = z.object({
     rappi: true,
   }),
   firstHourMode: z.enum(['full', 'prorated']).default('prorated'),
+  // D-01: defaults ON — store's shelf prices already include tax.
+  taxInclusive: z.boolean().default(true),
 });
 
 export type BillingSettings = z.infer<typeof BillingSettingsSchema>;

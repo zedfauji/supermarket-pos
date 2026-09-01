@@ -38,3 +38,31 @@ describe('BillingSettingsSchema firstHourMode', () => {
     ).toThrow();
   });
 });
+
+describe('BillingSettingsSchema taxInclusive', () => {
+  it('defaults taxInclusive to true (D-01)', () => {
+    const result = BillingSettingsSchema.parse({
+      taxRatePercent: 16,
+      paymentMethods: { cash: true, bbvaCard: true, rappi: true },
+    });
+    expect(result.taxInclusive).toBe(true);
+  });
+
+  it('round-trips taxInclusive: false', () => {
+    const result = BillingSettingsSchema.parse({
+      taxRatePercent: 16,
+      paymentMethods: { cash: true, bbvaCard: true, rappi: true },
+      taxInclusive: false,
+    });
+    expect(result.taxInclusive).toBe(false);
+  });
+
+  it('round-trips taxInclusive: true explicitly', () => {
+    const result = BillingSettingsSchema.parse({
+      taxRatePercent: 16,
+      paymentMethods: { cash: true, bbvaCard: true, rappi: true },
+      taxInclusive: true,
+    });
+    expect(result.taxInclusive).toBe(true);
+  });
+});

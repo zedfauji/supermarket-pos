@@ -4,6 +4,7 @@
     "cashier": "Cashier",
     "customer": "Customer",
     "subtotal": "Subtotal",
+    "tax": "Tax",
     "total": "Total",
     "payment": "Payment",
     "tendered": "Tendered",

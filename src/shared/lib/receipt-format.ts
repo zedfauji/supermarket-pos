@@ -221,6 +221,9 @@ export function buildThermalReceiptText(
 
   lines.push(divider(width));
   lines.push(lineLeftRight(tr('receipt.subtotal'), formatMoneyIn(locale, receipt.subtotal), width));
+  if (receipt.taxAmount != null) {
+    lines.push(lineLeftRight(tr('receipt.tax'), formatMoneyIn(locale, receipt.taxAmount), width));
+  }
   lines.push(lineLeftRight(tr('receipt.total'), formatMoneyIn(locale, receipt.total), width));
 
   // A split sale (more than one tender leg) prints one concise line per

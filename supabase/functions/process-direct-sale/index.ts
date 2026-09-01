@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
 
+import { decomposeTax } from '../_shared/tax.ts';
+
 const itemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().positive().max(99),
@@ -188,10 +190,24 @@ async function buildSaleReceipt(
   // The sale total is computed once from every persisted tender leg, never
   // from a single payment row -- this is the fix for CR-03 (a split sale
   // previously showed one leg's amount as the whole sale's total).
-  const subtotal = Math.round(legs.reduce((sum, leg) => sum + Number(leg.amount), 0) * 100) / 100;
+  const chargedAmount = Math.round(legs.reduce((sum, leg) => sum + Number(leg.amount), 0) * 100) / 100;
   // legs.length > 0 is guaranteed by the payments.length===0 guard above.
   const firstLeg = legs[0]!;
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
+
+  // Phase 24 (TAX-05): decompose the charged amount into subtotal/tax using
+  // the same settings.billing row process_direct_sale_atomic already read
+  // server-side — receiptData.subtotal was never actually a pre-tax figure
+  // before this (Pitfall 2), it was set equal to `total`.
+  const { data: billingRow } = await admin
+    .from('settings')
+    .select('value')
+    .eq('key', 'billing')
+    .maybeSingle();
+  const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+  const taxRatePercent = billing?.taxRatePercent ?? 16;
+  const taxInclusive = billing?.taxInclusive ?? true;
+  const { subtotal, taxAmount, total } = decomposeTax(chargedAmount, taxRatePercent, taxInclusive);
 
   return {
     receiptNumber: tabId.slice(0, 8).toUpperCase(),
@@ -199,7 +215,10 @@ async function buildSaleReceipt(
     customerName: tab.customer_name ?? 'Walk-in',
     items,
     subtotal,
-    total: subtotal,
+    taxAmount,
+    taxRatePercent,
+    taxInclusive,
+    total,
     // Single-tender-compatible fields, derived from the sole tender leg when
     // there is exactly one; the `tenders` array below is authoritative for
     // split sales.

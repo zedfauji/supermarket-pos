@@ -68,6 +68,10 @@ export const ReceiptDataSchema = z.object({
   ),
   subtotal: MoneySchema,
   total: MoneySchema,
+  /** Phase 24 (TAX-05): decomposed tax line — optional so pre-migration/other-flow receipts without it still parse. */
+  taxAmount: MoneySchema.optional(),
+  taxRatePercent: z.number().optional(),
+  taxInclusive: z.boolean().optional(),
   paymentMethod: PaymentMethodSchema,
   processedAt: TimestampSchema,
   squareReceiptUrl: z.string().nullable(),

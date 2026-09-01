@@ -177,6 +177,7 @@ export function PaymentForm({
   const settings = receiptSettings ?? ReceiptSettingsSchema.parse({});
   const enabledMethods = appSettings?.billing.paymentMethods ?? DEFAULT_ENABLED_METHODS;
   const taxRatePercent = appSettings?.billing.taxRatePercent ?? DEFAULT_TAX_RATE_PERCENT;
+  const taxInclusive = appSettings?.billing.taxInclusive ?? true;
   const paymentLabels = appSettings?.paymentLabels ?? {
     cash: t('paymentForm.defaultLabelCash'),
     card: t('paymentForm.defaultLabelCard'),
@@ -285,9 +286,19 @@ export function PaymentForm({
   const afterDiscount = Math.round((baseSubtotal - discountAmount) * 100) / 100;
   const taxAmount = useMemo(() => {
     if (method === 'rappi') return 0;
+    if (taxInclusive) {
+      // Inclusive mode (TAX-02): afterDiscount already IS the total — decompose
+      // subtotal by division first, then derive tax by subtraction (never
+      // re-derive independently — avoids a 1-cent drift vs. the total).
+      const decomposedSubtotal = Math.round((afterDiscount / (1 + taxRatePercent / 100)) * 100) / 100;
+      return Math.round((afterDiscount - decomposedSubtotal) * 100) / 100;
+    }
+    // Exclusive mode (TAX-03): unchanged additive math.
     return Math.round(afterDiscount * (taxRatePercent / 100) * 100) / 100;
-  }, [afterDiscount, method, taxRatePercent]);
-  const subtotalWithTax = Math.round((afterDiscount + taxAmount) * 100) / 100;
+  }, [afterDiscount, method, taxRatePercent, taxInclusive]);
+  const subtotalWithTax = taxInclusive
+    ? afterDiscount
+    : Math.round((afterDiscount + taxAmount) * 100) / 100;
   const runningTotal = subtotalWithTax;
   const changeDue = Math.max(0, Math.round((tenderedAmount - runningTotal) * 100) / 100);
   const effectiveCardAmount = cardChargeOverride ?? runningTotal;
@@ -767,12 +778,15 @@ export function PaymentForm({
               </>
             )}
             {method !== 'rappi' && (
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm" data-testid="tax-row">
                 <span>{t('paymentForm.taxLabel', { rate: taxRatePercent })}</span>
                 <MoneyDisplay amount={taxAmount} size="sm" />
               </div>
             )}
-            <div className="flex items-center justify-between border-t pt-2 text-lg font-semibold">
+            <div
+              className="flex items-center justify-between border-t pt-2 text-lg font-semibold"
+              data-testid="total-row"
+            >
               <span>{t('paymentForm.total')}</span>
               <MoneyDisplay amount={runningTotal} size="lg" />
             </div>

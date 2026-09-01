@@ -5,14 +5,16 @@
  * visibility/behavior, canSubmit guard, and processCardPayment call args.
  */
 
-import { screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fc from 'fast-check';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Tab } from '@entities/tab/model/types';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
+import { formatMoney } from '@shared/lib/format';
 import type * as PosPrinter from '@shared/lib/pos-printer';
 import { openCashDrawer, printReceipt } from '@shared/lib/pos-printer';
 import { err, ok } from '@shared/lib/result';
@@ -38,17 +40,29 @@ vi.mock('@shared/lib/pos-printer', async importOriginal => {
   };
 });
 
-// taxRatePercent=0 keeps assertions simple — no tax arithmetic needed.
-vi.mock('@entities/settings', () => {
-  const stableSettings = {
-    billing: {
-      taxRatePercent: 0,
-      paymentMethods: { cash: true, bbvaCard: true, rappi: true },
-    },
-    paymentLabels: { cash: 'Efectivo', card: 'Terminal BBVA', rappi: 'Rappi' },
+// taxRatePercent=0 (default) keeps most assertions simple — no tax
+// arithmetic needed. mockSettings is mutable (via vi.hoisted) so the new
+// "tax modes" describe block below can set a nonzero rate/taxInclusive
+// per test without a full module remock; beforeEach resets it back to the
+// degenerate default so every other pre-existing test is unaffected.
+const { mockSettings, DEFAULT_MOCK_BILLING } = vi.hoisted(() => {
+  const DEFAULT_MOCK_BILLING = {
+    taxRatePercent: 0,
+    taxInclusive: true,
+    paymentMethods: { cash: true, bbvaCard: true, rappi: true },
   };
   return {
-    useSettings: () => ({ data: stableSettings }),
+    DEFAULT_MOCK_BILLING,
+    mockSettings: {
+      billing: { ...DEFAULT_MOCK_BILLING },
+      paymentLabels: { cash: 'Efectivo', card: 'Terminal BBVA', rappi: 'Rappi' },
+    },
+  };
+});
+
+vi.mock('@entities/settings', () => {
+  return {
+    useSettings: () => ({ data: mockSettings }),
     useReceiptSettings: () => ({ data: undefined }),
   };
 });
@@ -151,6 +165,7 @@ async function selectCardMethod(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockSettings.billing = { ...DEFAULT_MOCK_BILLING };
   useStaffStore.setState({
     currentStaff: {
       id: staffId,
@@ -662,5 +677,54 @@ describe('PaymentForm — split mode', () => {
       expect(processors.processCashPayment).toHaveBeenCalled();
     });
     expect(processors.processSplitPayment).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 24 — Tax Configuration (Inclusive/Exclusive Toggle)
+// ---------------------------------------------------------------------------
+
+describe('PaymentForm — tax modes (Phase 24)', () => {
+  it('exclusive mode (taxInclusive: false): unchanged additive math at a nonzero rate (TAX-03)', () => {
+    mockSettings.billing = { ...DEFAULT_MOCK_BILLING, taxRatePercent: 16, taxInclusive: false };
+    renderForm();
+
+    // testTab: itemsSubtotal=$20, no discount -> afterDiscount=$20
+    const expectedTax = Math.round(20 * 0.16 * 100) / 100; // 3.20
+    const expectedTotal = Math.round((20 + expectedTax) * 100) / 100; // 23.20
+
+    expect(screen.getByTestId('tax-row')).toHaveTextContent(formatMoney(expectedTax));
+    expect(screen.getByTestId('total-row')).toHaveTextContent(formatMoney(expectedTotal));
+  });
+
+  it('inclusive mode (taxInclusive: true): total unchanged, tax decomposed backward at a nonzero rate (TAX-02)', () => {
+    mockSettings.billing = { ...DEFAULT_MOCK_BILLING, taxRatePercent: 16, taxInclusive: true };
+    renderForm();
+
+    // testTab: itemsSubtotal=$20, no discount -> afterDiscount=$20 (already tax-inclusive)
+    const decomposedSubtotal = Math.round((20 / 1.16) * 100) / 100; // 17.24
+    const expectedTax = Math.round((20 - decomposedSubtotal) * 100) / 100; // 2.76 (subtraction, not re-derived)
+
+    expect(screen.getByTestId('tax-row')).toHaveTextContent(formatMoney(expectedTax));
+    // Total unchanged from the catalog sum — no addition on top (TAX-02).
+    expect(screen.getByTestId('total-row')).toHaveTextContent(formatMoney(20));
+  });
+
+  it('property: displayed subtotal + tax === total to the cent, across rates in both modes (Open Question 2)', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 100 }), fc.boolean(), (taxRatePercent, taxInclusive) => {
+        cleanup();
+        mockSettings.billing = { ...DEFAULT_MOCK_BILLING, taxRatePercent, taxInclusive };
+        renderForm();
+
+        const parseMoney = (text: string): number => Number(text.replace(/[^0-9.-]/g, ''));
+        const total = parseMoney(screen.getByTestId('total-row').textContent ?? '');
+        const taxAmount = parseMoney(screen.getByTestId('tax-row').textContent ?? '');
+        const subtotal = Math.round((total - taxAmount) * 100) / 100;
+
+        expect(Math.round((subtotal + taxAmount) * 100)).toBe(Math.round(total * 100));
+      }),
+      { numRuns: 20 }
+    );
   });
 });

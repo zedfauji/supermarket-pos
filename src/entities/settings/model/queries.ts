@@ -64,6 +64,7 @@ const DEFAULT_BILLING: BillingSettings = {
   taxRatePercent: 16,
   paymentMethods: { cash: true, bbvaCard: true, rappi: true },
   firstHourMode: 'prorated',
+  taxInclusive: true,
 };
 
 const DEFAULT_EMAIL_RECEIPTS: EmailReceiptSettings = {

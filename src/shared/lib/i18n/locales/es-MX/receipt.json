@@ -4,6 +4,7 @@
     "cashier": "Cajero",
     "customer": "Cliente",
     "subtotal": "Subtotal",
+    "tax": "Impuesto",
     "total": "Total",
     "payment": "Pago",
     "tendered": "Entregado",
