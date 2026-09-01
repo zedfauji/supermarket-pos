@@ -51,10 +51,12 @@ INSERT INTO public.products (id, name, category_id, base_price, sku, barcode, is
   ('20000027-0000-0000-0000-000000000027', 'Haldiram''s Kaju Katli 250g', '10000009-0000-0000-0000-000000000009', 300, 'SWT-003', '8901030800027', true, false, 15, NULL, NULL);
 
 INSERT INTO public.modifiers (id, name, price_delta) VALUES
-  ('30000001-0000-0000-0000-000000000001', 'Extra Spicy', 0);
+  ('30000001-0000-0000-0000-000000000001', 'Extra Spicy', 0),
+  ('30000002-0000-0000-0000-000000000002', 'Gift Wrap', 15);
 
 INSERT INTO public.product_modifiers (product_id, modifier_id) VALUES
-  ('20000007-0000-0000-0000-000000000007', '30000001-0000-0000-0000-000000000001');
+  ('20000007-0000-0000-0000-000000000007', '30000001-0000-0000-0000-000000000001'),
+  ('20000001-0000-0000-0000-000000000001', '30000002-0000-0000-0000-000000000002');
 
 INSERT INTO public.inventory (product_id, quantity_on_hand, low_stock_threshold, cost_price, expiry_date) VALUES
   ('20000001-0000-0000-0000-000000000001', 100, 15, 65, CURRENT_DATE + INTERVAL '180 days'),

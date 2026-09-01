@@ -386,16 +386,17 @@ test.describe('Direct-sale checkout', () => {
     const { data: product, error: productError } = await admin
       .from('products')
       .select('id, base_price')
-      .eq('name', 'Margarita')
+      .eq('name', 'MDH Garam Masala 100g')
       .single();
-    if (productError || !product) throw new Error(productError?.message ?? 'Margarita not found');
+    if (productError || !product)
+      throw new Error(productError?.message ?? 'MDH Garam Masala 100g not found');
     const { data: modifier, error: modifierError } = await admin
       .from('modifiers')
       .select('id')
-      .eq('name', 'Extra Lime')
+      .eq('name', 'Gift Wrap')
       .single();
     if (modifierError || !modifier)
-      throw new Error(modifierError?.message ?? 'Extra Lime modifier not found');
+      throw new Error(modifierError?.message ?? 'Gift Wrap modifier not found');
     const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
     // Totals the sale as if the modifier were free, forging a zero delta on
     // the item itself -- the server must still derive the real, non-zero
@@ -443,10 +444,10 @@ test.describe('Direct-sale checkout', () => {
     const { data: modifier, error: modifierError } = await admin
       .from('modifiers')
       .select('id')
-      .eq('name', 'Double Shot')
+      .eq('name', 'Gift Wrap')
       .single();
     if (modifierError || !modifier)
-      throw new Error(modifierError?.message ?? 'Double Shot modifier not found');
+      throw new Error(modifierError?.message ?? 'Gift Wrap modifier not found');
 
     const [{ count: paymentsBefore }, { count: tabsBefore }] = await Promise.all([
       admin.from('payments').select('id', { count: 'exact', head: true }),
