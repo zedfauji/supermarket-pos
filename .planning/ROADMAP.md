@@ -185,6 +185,26 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 25: E2E Receipt Print-Mock Consolidation
+
+**Goal:** Extract the duplicated `__TAURI_INTERNALS__` print mock in `e2e/receipts/reprint.spec.ts`,
+`pdf-delivery.spec.ts`, and `print-retry-resilience.spec.ts` into one shared
+`e2e/helpers/tauriPrintMock.ts`, mirroring `e2e/helpers/tauriPeekMock.ts`'s existing precedent — and
+add the `__TAURI_EVENT_PLUGIN_INTERNALS__.unregisterListener` shim that `tauriPeekMock.ts` already
+carries but these three hand-rolled copies don't. That gap causes an uncaught `Cannot read
+properties of undefined (reading 'unregisterListener')` page error that currently fails 4 tests:
+reprint's split-payment-receipt test, pdf-delivery's Download PDF test, and print-retry-resilience's
+RCP-02/RCP-04 tests. Root cause and fix are already confirmed, not open questions — see Phase 24's
+`deferred-items.md` and the identical shim already applied once before to fix a broker-submission E2E
+mock. This phase is mechanical extraction plus a proven 5-line addition, not new investigation.
+**Requirements**: none (test-infra debt, not a product requirement)
+**Depends on:** Nothing (isolated to `e2e/receipts/` and `e2e/helpers/`)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 25 to break down)
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.
