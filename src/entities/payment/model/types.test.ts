@@ -36,6 +36,16 @@ describe('PaymentSchema', () => {
     });
     expect(r.success).toBe(false);
   });
+
+  // Regression guard (Phase 24 Plan 03, Rule 1): method previously hand-rolled
+  // z.enum(['cash','card','rappi']), missing 'bank_transfer' — any bank_transfer
+  // row among the most recent 100 payments threw inside usePayments()'s .map(),
+  // silently blanking the whole /payments page. method now reuses domain.ts's
+  // PaymentMethodSchema as the single source of truth (CLAUDE.md).
+  it('accepts bank_transfer method', () => {
+    const r = PaymentSchema.safeParse({ ...validPayment, method: 'bank_transfer' });
+    expect(r.success).toBe(true);
+  });
 });
 
 describe('CreatePaymentSchema', () => {
