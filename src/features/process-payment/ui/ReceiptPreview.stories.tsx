@@ -15,7 +15,13 @@ const base: ReceiptData = {
   barName: 'Bola 8 Cantina',
   barAddress: 'Av. Insurgentes 123, CDMX',
   items: baseItems,
-  subtotal: 210,
+  // Inclusive-mode sale (D-01 default): the $210 catalog-price sum IS the
+  // charged total; subtotal is decomposed backward at 16% (Pitfall 4/5/6 —
+  // not a degenerate subtotal===total fixture).
+  subtotal: 181.03,
+  taxAmount: 28.97,
+  taxRatePercent: 16,
+  taxInclusive: true,
   total: 210,
   paymentMethod: 'cash',
   processedAt: new Date('2026-04-17T14:30:00'),
@@ -59,7 +65,11 @@ export const Rappi: Story = {
     receipt: {
       ...base,
       paymentMethod: 'rappi',
+      // Rappi orders are zero-tax (PaymentForm.tsx: method === 'rappi' short-
+      // circuits to taxAmount 0), so subtotal === total here, unlike base.
+      subtotal: 210,
       total: 210,
+      taxAmount: 0,
       tenderedAmount: undefined,
       changeAmount: undefined,
     },

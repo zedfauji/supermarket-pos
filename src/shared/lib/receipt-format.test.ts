@@ -92,7 +92,14 @@ describe('buildThermalReceiptText', () => {
   });
 
   it('shows tendered and change for cash when tenderedAmount set', () => {
-    const text = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings());
+    // Inclusive-mode sale (D-01 default): subtotal decomposed backward from
+    // the unchanged $90 total at 16% (Pitfall 4 — not a degenerate
+    // subtotal===total fixture).
+    const text = buildThermalReceiptText(
+      baseReceipt({ subtotal: 77.59, taxAmount: 12.41, total: 90 }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
     expect(text).toContain('Entregado');
     expect(text).toContain('Cambio');
     expect(text).toContain('$200.00');
@@ -119,10 +126,13 @@ describe('buildThermalReceiptText', () => {
   // ---------------------------------------------------------------------
 
   it('renders one line per tender leg for a split sale, without repeating the single-payment line', () => {
+    // Exclusive-mode sale (TAX-03, additive): subtotal 100 + 16% tax = 116
+    // total — not a degenerate subtotal===total fixture (Pitfall 4).
     const text = buildThermalReceiptText(
       baseReceipt({
         subtotal: 100,
-        total: 100,
+        taxAmount: 16,
+        total: 116,
         tenderedAmount: null,
         changeAmount: null,
         tenders: [
@@ -199,11 +209,44 @@ describe('buildThermalReceiptText', () => {
   });
 
   // ---------------------------------------------------------------------
+  // Tax line rendering (Phase 24, TAX-05 / Pitfall 4)
+  // ---------------------------------------------------------------------
+
+  it('renders the tax line between subtotal and total when receipt.taxAmount is set', () => {
+    const text = buildThermalReceiptText(
+      baseReceipt({ subtotal: 100, taxAmount: 16, total: 116 }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
+    const lines = text.split('\n');
+    const subtotalIndex = lines.findIndex(l => l.includes('Subtotal'));
+    const taxIndex = lines.findIndex(l => l.includes('$16.00'));
+    const totalIndex = lines.findIndex(l => l.includes('Total') && !l.includes('Subtotal'));
+    expect(subtotalIndex).toBeGreaterThanOrEqual(0);
+    expect(taxIndex).toBeGreaterThan(subtotalIndex);
+    expect(totalIndex).toBeGreaterThan(taxIndex);
+  });
+
+  it('omits the tax line entirely when receipt.taxAmount is null/undefined (schema-legal, unrelated fixtures)', () => {
+    const text = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings());
+    const lines = text.split('\n');
+    const subtotalIndex = lines.findIndex(l => l.includes('Subtotal'));
+    const totalIndex = lines.findIndex(l => l.includes('Total') && !l.includes('Subtotal'));
+    expect(totalIndex).toBe(subtotalIndex + 1);
+  });
+
+  // ---------------------------------------------------------------------
   // Locale-awareness (21-05, D-06)
   // ---------------------------------------------------------------------
 
   it('es-MX output uses real Spanish labels (Impeccable critique i18n fix)', () => {
-    const text = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings());
+    // Inclusive-mode sale (D-01 default) — same real decomposition as the
+    // "shows tendered and change" fixture above, not subtotal===total.
+    const text = buildThermalReceiptText(
+      baseReceipt({ subtotal: 77.59, taxAmount: 12.41, total: 90 }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
     expect(text).toContain('Fecha');
     expect(text).toContain('Cajero');
     expect(text).toContain('Cliente');

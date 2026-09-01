@@ -258,10 +258,20 @@ test.describe.serial('Full-day soak', () => {
 
     const barcode = `990${String(Date.now()).slice(-10)}`;
     await admin.from('products').update({ barcode }).eq('id', saleProduct.id);
+    // The product list is a 5-minute-staleTime TanStack Query cache with no
+    // realtime subscription (useProducts()) — a direct admin-client barcode
+    // write is invisible to the already-mounted page until it refetches, so
+    // reload via gotoAuthed first (same pattern used below for the
+    // sold_by_weight toggle). A scan also only ever populates the search box
+    // (CheckoutPanel.tsx: "never adds to the cart by itself") — it never
+    // auto-adds, so the product still needs an explicit Select click.
+    await gotoAuthed(page, '/pos');
+    await expect(page.getByPlaceholder(/search products/i)).toBeVisible({ timeout: 15_000 });
     await scanBarcode(page, barcode);
     await expect(
-      page.locator('aside').getByText('MDH Garam Masala 100g', { exact: true })
+      page.getByRole('button', { name: /select mdh garam masala 100g/i })
     ).toBeVisible();
+    await page.getByRole('button', { name: /select mdh garam masala 100g/i }).click();
     let cashBeforeCheckout = await cashSalesForCaja(admin);
     await payCash(page);
     totalCashCollected += (await cashSalesForCaja(admin)) - cashBeforeCheckout;

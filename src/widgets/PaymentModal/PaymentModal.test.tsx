@@ -33,6 +33,7 @@ vi.mock('@entities/settings', () => {
   const stableSettings = {
     billing: {
       taxRatePercent: 0,
+      taxInclusive: true,
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
     },
   };
