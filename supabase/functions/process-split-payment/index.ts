@@ -5,6 +5,7 @@
 // then assembles one ReceiptData per leg (D-09).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
+import { decomposeTax } from '../_shared/tax.ts';
 
 const legSchema = z
   .object({
@@ -331,9 +332,13 @@ Deno.serve(async (req: Request) => {
   const customerName = tabRow.customer_name ?? 'Guest';
   const cashierName = cashierRow?.name ?? 'Staff';
 
+  const { data: billingRow } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
+  const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+  const taxRatePercent = billing?.taxRatePercent ?? 16;
+  const taxInclusive = billing?.taxInclusive ?? true;
+
   const receipts = (paymentRows as PaymentLegRow[]).map(legRow => {
-    const subtotal = Number(legRow.amount);
-    const total = subtotal;
+    const { subtotal, taxAmount, total } = decomposeTax(Number(legRow.amount), taxRatePercent, taxInclusive);
     const tendered = legRow.tendered_amount != null ? Number(legRow.tendered_amount) : null;
     const changeAmount = tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
     const ref = legRow.reference_number;
@@ -345,6 +350,9 @@ Deno.serve(async (req: Request) => {
       items,
       subtotal,
       total,
+      taxAmount,
+      taxRatePercent,
+      taxInclusive,
       paymentMethod: legRow.method,
       processedAt: legRow.processed_at,
       squareReceiptUrl: null as string | null,

@@ -51,30 +51,40 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from '../fixtures';
 import { gotoAuthed, loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
-import { getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { findRoleStaffId, getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
 
 let cajaSessionId = '';
 
 /**
  * Reads the live `billing` settings row the same way process_direct_sale_atomic
- * does (`settings.value->>'taxRatePercent'`), falling back to 16 to match the
- * migration's own COALESCE default when no row exists yet.
- * Copied verbatim from e2e/checkout/happy-path.spec.ts.
+ * does (`settings.value->>'taxRatePercent'`/`->>'taxInclusive'`), falling back
+ * to 16/true to match the migration's own COALESCE defaults when no row
+ * exists yet (Plan 24-01's `taxInclusive` default is `true`).
  */
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
+async function getBillingTaxConfig(
+  admin: SupabaseClient
+): Promise<{ taxRatePercent: number; taxInclusive: boolean }> {
   const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
+  const v = data?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+  return {
+    taxRatePercent: typeof v?.taxRatePercent === 'number' ? v.taxRatePercent : 16,
+    taxInclusive: typeof v?.taxInclusive === 'boolean' ? v.taxInclusive : true,
+  };
 }
 
 /**
- * Mirrors process_direct_sale_atomic's two-step rounding (tax rounded first,
- * then added to the subtotal) so amounts computed here land within the RPC's
- * one-cent authority tolerance instead of drifting from a single-step
- * (subtotal * (1 + rate)) computation.
- * Copied verbatim from e2e/checkout/happy-path.spec.ts.
+ * Mode-aware authoritative-total computation matching process_direct_sale_atomic's
+ * server-side branch (Plan 24-01): when taxInclusive, the seeded p_amount must
+ * equal the catalog subtotal unchanged (TAX-02); when not, mirrors the RPC's
+ * two-step rounding (tax rounded first, then added to the subtotal) so amounts
+ * land within the RPC's one-cent authority tolerance (TAX-03).
  */
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
+function computeAuthoritativeTotal(
+  subtotal: number,
+  taxRatePercent: number,
+  taxInclusive: boolean
+): number {
+  if (taxInclusive) return subtotal;
   const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
   return Math.round((subtotal + tax) * 100) / 100;
 }
@@ -143,11 +153,11 @@ async function seedPaidTabViaDirectSale(): Promise<SeededPaidTab> {
     throw new Error(`seedPaidTabViaDirectSale: active product not found - ${productError?.message ?? 'none'}`);
   }
 
-  const taxRatePercent = await getTaxRatePercent(admin);
+  const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
   // unit_price must match the catalog base_price within 0.01 — process_direct_sale_atomic's
   // own PRICE_MISMATCH check.
   const unitPrice = Number(product.base_price);
-  const amount = computeAuthoritativeTotal(unitPrice, taxRatePercent);
+  const amount = computeAuthoritativeTotal(unitPrice, taxRatePercent, taxInclusive);
 
   const { data, error } = await admin.rpc('process_direct_sale_atomic', {
     p_staff_id: shiftStaffId,
@@ -280,6 +290,93 @@ test.describe('Reopen Closed Ticket', () => {
         await expect(row.getByRole('button', { name: /reopen ticket|reabrir cuenta/i })).not.toBeVisible({
           timeout: 10_000,
         });
+      },
+    );
+
+    // ========================================================================
+    // Phase 24 Plan 03: repay a reopened tab — process-payment's receipt must
+    // carry the same decomposed subtotal+tax+total shape as a fresh
+    // direct-sale receipt (TAX-05), proven by intercepting the edge
+    // function's real JSON response.
+    // ========================================================================
+    test(
+      'manager reopens a closed/paid tab and repays it — process-payment\'s receipt shows a ' +
+        'decomposed subtotal+tax+total shape',
+      async ({ page }) => {
+        test.setTimeout(90_000);
+
+        // useTabs() (backs "tabs waiting for payment") is shift-scoped — the
+        // reopened tab only shows up in the UI list if it shares shift_id
+        // with the manager's CURRENT shift. Open a shift for the manager
+        // profile up front so seedPaidTabViaDirectSale's "reuse an existing
+        // open shift" lookup (and PINLoginForm's own existing-shift check on
+        // loginAs below) both resolve to this same shift, instead of
+        // seedPaidTabViaDirectSale falling back to a fresh admin-owned shift.
+        const admin = getServiceClient();
+        const managerStaffId = await findRoleStaffId(admin, 'manager');
+        await admin.from('shifts').insert({ staff_id: managerStaffId, opening_cash: 0 });
+
+        const seeded = await seedPaidTabViaDirectSale();
+        const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+
+        await loginAs(page, 'manager');
+        await gotoAuthed(page, '/payments');
+
+        const row = page.getByTestId(`payment-row-${seeded.paymentId}`);
+        await expect(row).toBeVisible({ timeout: 20_000 });
+        await row.getByRole('button', { name: /reopen ticket|reabrir cuenta/i }).click();
+
+        const reopenDialog = page.getByRole('dialog', { name: /reopen ticket|reabrir cuenta/i });
+        await expect(reopenDialog).toBeVisible({ timeout: 10_000 });
+        await reopenDialog.locator('#reopen-tab-reason').fill('E2E reopen for repay-receipt test');
+        await reopenDialog.getByRole('button', { name: /request approval|solicitar aprobación/i }).click();
+
+        const reopenPinDialog = page.getByRole('alertdialog');
+        await expect(reopenPinDialog).toBeVisible({ timeout: 8_000 });
+        await enterManagerPin(page, managerPin);
+
+        await expect(page.getByText(/ticket reopened successfully|cuenta reabierta correctamente/i)).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(reopenDialog).not.toBeVisible({ timeout: 5_000 });
+
+        // Tab flipped back to 'open' (workers: 1, resetTestState in
+        // beforeEach voided every other open tab, so this is the only card).
+        const list = page.getByTestId('tabs-waiting-for-payment');
+        await expect(list).toBeVisible({ timeout: 20_000 });
+        await list.getByRole('button').first().click();
+        await page.getByRole('button', { name: /verify pin to process payment|verificar pin/i }).click();
+
+        const payPinDialog = page.getByRole('alertdialog', {
+          name: /manager access required|se requiere acceso de gerente/i,
+        });
+        await expect(payPinDialog).toBeVisible({ timeout: 10_000 });
+        await enterManagerPin(page, managerPin);
+        await expect(payPinDialog).not.toBeVisible({ timeout: 10_000 });
+
+        await expect(page.getByTestId('payment-btn-cash')).toBeVisible({ timeout: 15_000 });
+        await page.getByTestId('payment-btn-cash').click();
+        await page.getByLabel(/amount tendered/i).fill('500');
+
+        const responsePromise = page.waitForResponse(
+          resp => resp.url().includes('/functions/v1/process-payment') && resp.status() === 200
+        );
+        await page.getByRole('button', { name: /process payment/i }).click();
+        const response = await responsePromise;
+        const body = (await response.json()) as {
+          receiptData?: { subtotal: number; taxAmount?: number; total: number };
+        };
+        const receiptData = body.receiptData;
+        if (!receiptData) throw new Error('process-payment response had no receiptData');
+
+        expect(receiptData.subtotal).toBeDefined();
+        expect(receiptData.taxAmount ?? -1).toBeGreaterThanOrEqual(0);
+        expect(Math.round((receiptData.subtotal + (receiptData.taxAmount ?? 0)) * 100)).toBe(
+          Math.round(receiptData.total * 100)
+        );
+
+        await expect(page.getByRole('heading', { name: 'Receipt' })).toBeVisible({ timeout: 90_000 });
+        await page.getByRole('button', { name: 'Done' }).click();
       },
     );
 

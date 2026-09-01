@@ -193,7 +193,25 @@ test.describe('Split Payment', () => {
     await expect(modal.getByText('Fully allocated ✓')).toBeVisible({ timeout: 5_000 });
     const submitBtn = modal.getByRole('button', { name: 'Process split payment' });
     await expect(submitBtn).toBeEnabled();
+
+    // Phase 24 Plan 03 (TAX-05): process-split-payment's per-leg receipts must
+    // carry the same decomposed subtotal+tax+total shape as a fresh
+    // direct-sale receipt — intercept the edge function's real JSON response.
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/functions/v1/process-split-payment') && resp.status() === 200
+    );
     await submitBtn.click();
+    const response = await responsePromise;
+    const body = (await response.json()) as {
+      receipts?: { subtotal: number; taxAmount?: number; total: number }[];
+    };
+    const firstReceipt = body.receipts?.[0];
+    if (!firstReceipt) throw new Error('process-split-payment response had no receipts');
+    expect(firstReceipt.subtotal).toBeDefined();
+    expect(firstReceipt.taxAmount ?? -1).toBeGreaterThanOrEqual(0);
+    expect(Math.round((firstReceipt.subtotal + (firstReceipt.taxAmount ?? 0)) * 100)).toBe(
+      Math.round(firstReceipt.total * 100)
+    );
 
     // PaymentForm.tsx's handleSplitPrimary only ever surfaces the FIRST leg's
     // receipt on screen ("the first receipt is what's shown on screen, and
