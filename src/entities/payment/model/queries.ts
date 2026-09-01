@@ -14,6 +14,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import { ReceiptDataSchema, type ReceiptData } from '@shared/lib/edge-function-contracts';
 import { supabase } from '@shared/lib/supabase';
+// decomposeTax has zero imports of its own, so it's importable directly from
+// src/ despite living under supabase/functions/ — same pattern already used
+// by src/shared/lib/__tests__/edge-tax.test.ts (CR-01).
+import { decomposeTax } from '../../../../supabase/functions/_shared/tax.ts';
 import { PaymentSchema } from './types';
 import type { Payment } from './types';
 
@@ -109,7 +113,7 @@ type ReceiptPaymentRow = {
  * (Pitfall 4 / CR-03) — never builds ReceiptData from a single leg.
  */
 export async function fetchReceiptDataForPayment(tabId: string): Promise<ReceiptData> {
-  const [{ data: tab }, { data: payments }, { data: orders }, { data: settingsRow }] =
+  const [{ data: tab }, { data: payments }, { data: orders }, { data: settingsRow }, { data: billingRow }] =
     await Promise.all([
       db.from('tabs').select('customer_name, staff_id').eq('id', tabId).maybeSingle(),
       db
@@ -124,6 +128,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
         )
         .eq('tab_id', tabId),
       db.from('settings').select('value').eq('key', 'general').maybeSingle(),
+      db.from('settings').select('value').eq('key', 'billing').maybeSingle(),
     ]);
 
   if (!tab || !payments || (payments as unknown[]).length === 0 || !orders) {
@@ -163,7 +168,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     };
   });
 
-  const subtotal = round2(legs.reduce((sum, leg) => sum + leg.amount, 0));
+  const chargedAmount = round2(legs.reduce((sum, leg) => sum + leg.amount, 0));
   const firstLeg = legs[0];
   if (!firstLeg) {
     throw new Error(`fetchReceiptDataForPayment: no payment legs for tab ${tabId}`);
@@ -171,6 +176,10 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
 
   const general = settingsRow?.value as { barName?: string; address?: string } | null;
+  const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+  const taxRatePercent = billing?.taxRatePercent ?? 16;
+  const taxInclusive = billing?.taxInclusive ?? true;
+  const { subtotal, taxAmount, total } = decomposeTax(chargedAmount, taxRatePercent, taxInclusive);
 
   return ReceiptDataSchema.parse({
     receiptNumber: tabId.slice(0, 8).toUpperCase(),
@@ -178,7 +187,10 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     customerName: (tab as { customer_name: string | null }).customer_name ?? 'Walk-in',
     items,
     subtotal,
-    total: subtotal,
+    total,
+    taxAmount,
+    taxRatePercent,
+    taxInclusive,
     paymentMethod: firstLeg.method,
     processedAt: firstLeg.processed_at,
     squareReceiptUrl: null,
