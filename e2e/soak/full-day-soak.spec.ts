@@ -141,7 +141,7 @@ test.describe.serial('Full-day soak', () => {
     if (shiftError || !shift) throw new Error(shiftError?.message ?? 'Open shift not found');
     const { data: saleProduct, error: saleProductError } = await admin
       .from('products')
-      .select('id, base_price')
+      .select('id, base_price, barcode')
       .eq('name', 'MDH Garam Masala 100g')
       .single();
     if (saleProductError || !saleProduct)
@@ -275,7 +275,11 @@ test.describe.serial('Full-day soak', () => {
     let cashBeforeCheckout = await cashSalesForCaja(admin);
     await payCash(page);
     totalCashCollected += (await cashSalesForCaja(admin)) - cashBeforeCheckout;
-    await admin.from('products').update({ barcode: null }).eq('id', saleProduct.id);
+    // Restore the product's real seeded barcode (Rule 1 fix — this used to
+    // null it out permanently instead, corrupting any other spec file that
+    // relies on this shared seed product's barcode being set, e.g.
+    // e2e/checkout/peek-window.spec.ts).
+    await admin.from('products').update({ barcode: saleProduct.barcode }).eq('id', saleProduct.id);
 
     await page.getByPlaceholder(/search products/i).fill('Parle-G Biscuits 200g');
     await page.getByRole('button', { name: /select parle-g biscuits 200g/i }).click();

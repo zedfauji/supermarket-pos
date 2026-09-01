@@ -99,25 +99,37 @@ rule, logged rather than fixed.
 Indian-catalog fixture names these two tests can use, or rewrite the tests to pick an existing
 seeded product + modifier pair dynamically instead of a hardcoded bar-pos name.
 
-## Pre-existing `unregisterListener` pageerror flake in `reprint.spec.ts` (found during 24-04 Task 1)
+## Pre-existing `unregisterListener` pageerror flake, whole `e2e/receipts/` Tauri-mock harness (found during 24-04 Task 1 + Task 3)
 
 **Discovered:** 2026-09-01, during 24-04 Task 1's live Playwright run of
-`e2e/receipts/reprint.spec.ts`.
+`e2e/receipts/reprint.spec.ts`; blast radius confirmed wider during Task 3's full-folder
+`e2e/receipts/` run.
 
-**Symptom:** `reprinting a split sale prints one receipt with both tender legs, not one leg's
-amount` fails with an uncaught page error: `Cannot read properties of undefined (reading
-'unregisterListener')`, thrown twice per run.
+**Symptom:** the same uncaught page error — `Cannot read properties of undefined (reading
+'unregisterListener')`, thrown from `_unlisten` in the Tauri event-listener shim — fails 4 tests
+across 3 spec files that each independently reimplement the same `window.__TAURI__` +
+`window.__TAURI_INTERNALS__.invoke`/`transformCallback` mock pattern:
+- `e2e/receipts/reprint.spec.ts` — `reprinting a split sale prints one receipt with both tender
+  legs, not one leg's amount` (`injectPrintMock`)
+- `e2e/receipts/pdf-delivery.spec.ts` — `Download PDF triggers the native save dialog with real
+  receipt bytes`
+- `e2e/receipts/print-retry-resilience.spec.ts` — `a transient printer failure is retried and the
+  sale still completes (RCP-04)`, `a printer that stays offline through all retries never blocks
+  the completed sale (RCP-02)`
 
-**Root cause:** confirmed pre-existing via `git stash` + re-run against clean HEAD (`8eb89cb`)
-— the identical failure reproduces before any of this plan's changes. Looks like a Tauri
-event-listener teardown race in the injected `__TAURI_INTERNALS__` print mock
-(`injectPrintMock`), unrelated to tax math or receipt content.
+**Root cause:** confirmed pre-existing — none of the 3 spec files were modified by any commit in
+this plan except `reprint.spec.ts`'s single `* 1.16` tax-literal fix at line 70 (25ec052), which
+this session re-verified in isolation does not touch the mock/teardown code path at all. All 3
+files independently hand-roll the same `__TAURI_INTERNALS__` mock shape (no shared helper), so the
+same Tauri event-listener teardown race exists in all three copies. Confirmed by running each spec
+in isolation — the identical `unregisterListener` pageerror reproduces every time, unrelated to
+tax math or receipt content.
 
-**Why this is out of scope for 24-04:** the failure is a page-level uncaught exception from the
-print-mock harness, not an assertion about tax/subtotal/total values. This plan's tax-formula fix
-in this file (the `* 1.16` literal at line 70) is unaffected — confirmed by re-running just the
-line-70 fix in isolation once the pageerror is set aside.
+**Why this is out of scope for 24-04:** the failure is a page-level uncaught exception from each
+file's own duplicated print-mock harness, not an assertion about tax/subtotal/total values — none
+of this plan's tax-formula/fixture changes touch any of these 3 files' mock setup.
 
-**Suggested fix (for whoever picks this up):** investigate `injectPrintMock`'s
-`unregisterCallback`/`transformCallback` mock shape in `e2e/receipts/reprint.spec.ts` for a
-teardown-order race against the real Tauri IPC bridge.
+**Suggested fix (for whoever picks this up):** extract the duplicated `__TAURI_INTERNALS__` mock
+into one shared `e2e/helpers/tauriPrintMock.ts` (mirroring `e2e/helpers/tauriPeekMock.ts`'s
+existing precedent) and fix the `unregisterCallback`/`transformCallback` teardown-order race
+against the real Tauri IPC bridge once, instead of 3 times.
