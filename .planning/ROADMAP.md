@@ -160,7 +160,7 @@ added on top, fixing the live overcharge bug; when off, today's additive math is
 the client, and every receipt (thermal/PDF/email) shows a real decomposed subtotal+tax+total.
 **Requirements**: TAX-01, TAX-02, TAX-03, TAX-04, TAX-05
 **Depends on:** Phase 23
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -179,7 +179,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 1/2 completion)*
 
-- [ ] 24-04-PLAN.md — e2e/helpers/tax.ts extraction + re-point 8 hardcoded-additive-formula specs
+- [x] 24-04-PLAN.md — e2e/helpers/tax.ts extraction + re-point 8 hardcoded-additive-formula specs
   (2 more than RESEARCH.md's original list), unit-test fixture hardening, full-suite phase-gate proof
   (TAX-02, TAX-03, TAX-04, TAX-05)
 
