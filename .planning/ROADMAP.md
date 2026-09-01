@@ -160,7 +160,7 @@ added on top, fixing the live overcharge bug; when off, today's additive math is
 the client, and every receipt (thermal/PDF/email) shows a real decomposed subtotal+tax+total.
 **Requirements**: TAX-01, TAX-02, TAX-03, TAX-04, TAX-05
 **Depends on:** Phase 23
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 **Wave 1**
@@ -172,7 +172,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 24-02-PLAN.md — BillingSettingsTab admin toggle for taxInclusive, persistence-tested (TAX-01)
+- [x] 24-02-PLAN.md — BillingSettingsTab admin toggle for taxInclusive, persistence-tested (TAX-01)
 - [ ] 24-03-PLAN.md — process-payment/process-split-payment edge functions wired to the shared
   decomposeTax helper, closing the reopen-tab/split-payment receipt-consistency gap (TAX-03, TAX-04,
   TAX-05)

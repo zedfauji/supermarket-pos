@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 24
 current_phase_name: Tax Configuration (Inclusive/Exclusive Toggle)
 status: executing
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-09-01T03:43:53.730Z"
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-09-01T03:51:27.642Z"
 last_activity: 2026-08-31
 last_activity_desc: Phase 24 execution started
-state_head: f86fd6558b182fa55829255c125df609ff807078
+state_head: f8d654e1b4bc9aacdccf9f2554b9f47c796ed317
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
   percent: 71
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 24 (Tax Configuration (Inclusive/Exclusive Toggle)) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-31 — Phase 24 execution started
 
@@ -106,6 +106,7 @@ Last activity: 2026-08-31 — Phase 24 execution started
 | Phase 17-e2e-suite-overhaul P03 | 12min | 3 tasks | 4 files |
 | Phase 17 P04 | 28m | 2 tasks | 5 files |
 | Phase 24 P01 | 55min | 2 tasks | 15 files |
+| Phase 24 P02 | 20min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Checkout E2E uses the Indian catalog and keeps category filtering keyboard-safe.
 - [Phase 24]: Fixed a zero-row COALESCE gap in process_direct_sale_atomic's v_tax_inclusive read (Rule 1) so a missing settings row defaults to taxInclusive=true per D-01, matching the pre-existing v_tax_rate fallback pattern
 - [Phase 24]: PaymentForm.test.tsx's static useSettings mock converted to a vi.hoisted mutable object for per-test tax-mode overrides; reusable pattern for Plan 02/03
+- [Phase 24]: Billing Settings taxInclusive toggle placed inside the same grid cell as the tax-rate input, stacked below it
 
 ### Pending Todos
 
@@ -207,8 +209,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-01T03:43:53.235Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-09-01T03:51:27.189Z
+Stopped at: Completed 24-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

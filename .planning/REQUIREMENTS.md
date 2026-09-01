@@ -218,7 +218,7 @@ exclusive mode is still needed) are deferred to discuss-phase for Phase 24, not 
 
 ### Tax Configuration
 
-- [ ] **TAX-01**: Billing settings gains a `taxInclusive` boolean toggle (admin-only, `manage_settings`), alongside the existing `taxRatePercent`.
+- [x] **TAX-01**: Billing settings gains a `taxInclusive` boolean toggle (admin-only, `manage_settings`), alongside the existing `taxRatePercent`.
 - [ ] **TAX-02**: When `taxInclusive` is on, checkout total equals the sum of item prices unchanged; tax is decomposed backward for display (`subtotal = total / (1 + rate/100)`, `tax = total - subtotal`) rather than added on top.
 - [ ] **TAX-03**: When `taxInclusive` is off, checkout keeps today's additive math (`tax = subtotal * rate/100`, `total = subtotal + tax`) for stores whose shelf prices exclude tax.
 - [ ] **TAX-04**: The server-side `process_direct_sale_atomic` RPC (and its cost-snapshot variant) recomputes tax using the same mode-aware formula as the client and validates the client-submitted total against it — the anti-tamper total-match guard must not reject valid inclusive-mode sales.
@@ -328,7 +328,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BTP-08 | Phase 23 (v1.9) | Not Started |
 | BTP-09 | Phase 23 (v1.9) | Not Started |
 | BTP-10 | Phase 23 (v1.9) | Not Started |
-| TAX-01 | Phase 24 (v1.10) | Not Started |
+| TAX-01 | Phase 24 (v1.10) | Complete |
 | TAX-02 | Phase 24 (v1.10) | Not Started |
 | TAX-03 | Phase 24 (v1.10) | Not Started |
 | TAX-04 | Phase 24 (v1.10) | Not Started |
