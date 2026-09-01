@@ -109,7 +109,7 @@ export function HomeDashboard() {
 
   function handleItemClick(item: DashboardItem) {
     if (!item.requiredAction || can(item.requiredAction)) {
-      navigate(item.path);
+      void navigate(item.path);
     } else {
       setGatedTarget({ action: item.requiredAction, path: item.path });
     }
@@ -117,7 +117,7 @@ export function HomeDashboard() {
 
   function handleLogout() {
     logout();
-    navigate('/login');
+    void navigate('/login');
   }
 
   return (
@@ -197,7 +197,7 @@ export function HomeDashboard() {
           grantManagerActions([gatedTarget.action]);
           const path = gatedTarget.path;
           setGatedTarget(null);
-          navigate(path);
+          void navigate(path);
         }}
       />
     </div>
