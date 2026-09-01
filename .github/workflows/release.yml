@@ -34,7 +34,17 @@ jobs:
         id: gencert
         shell: pwsh
         run: |
-          $thumbprint = powershell -File scripts/generate-build-cert.ps1
+          # `powershell -File` (external process) merges Write-Host output into
+          # captured stdout on this non-interactive host, so $output can contain
+          # the script's "OK: ..." progress lines ahead of the real thumbprint.
+          # The script's own contract (see its header doc) guarantees the LAST
+          # line is always the bare `Write-Output $cert.Thumbprint` value.
+          $output = powershell -File scripts/generate-build-cert.ps1
+          $thumbprint = ($output | Select-Object -Last 1).ToString().Trim()
+          if ($thumbprint -notmatch '^[0-9A-Fa-f]{40}$') {
+            Write-Host "FAILED: unexpected thumbprint output: '$thumbprint'" -ForegroundColor Red
+            exit 1
+          }
           echo "thumbprint=$thumbprint" >> $env:GITHUB_OUTPUT
 
       - uses: tauri-apps/tauri-action@v0.6.2
@@ -44,7 +54,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
-          releaseName: 'Bar POS v__VERSION__'
+          releaseName: 'Supermarket POS v__VERSION__'
           releaseBody: 'See CHANGELOG.md for release notes.'
           releaseDraft: true
           prerelease: false
