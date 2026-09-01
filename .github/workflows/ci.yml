@@ -9,10 +9,7 @@ on:
 jobs:
   quality:
     name: Typecheck / Lint / Test / Audit
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: supermarket-pos
+    runs-on: [self-hosted, windows, x64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +19,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: supermarket-pos/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -41,11 +38,8 @@ jobs:
         continue-on-error: false
 
   tauri-build:
-    name: Tauri Native Build (Linux)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: supermarket-pos
+    name: Tauri Native Build (Windows)
+    runs-on: [self-hosted, windows, x64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,7 +49,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: supermarket-pos/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -63,28 +57,13 @@ jobs:
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: supermarket-pos/src-tauri
-
-      - name: Install Tauri Linux deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            pkg-config
+          workspaces: src-tauri
 
       - name: Install dependencies
         run: npm ci
 
       - name: Rust unit tests
-        working-directory: supermarket-pos/src-tauri
+        working-directory: src-tauri
         run: cargo test
 
       - name: Tauri native build
