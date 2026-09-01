@@ -1,0 +1,113 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.3 — Receipt Designer + Inventory Management Expansion",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Strip & Rebrand",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Core Direct-Sale Checkout",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Supplier, Receiving & Expiry Tracking",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Reports & Hardening",
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Delete void-order feature",
+      "status": "complete"
+    },
+    {
+      "number": "6",
+      "name": "Security hardening",
+      "status": "complete"
+    },
+    {
+      "number": "7",
+      "name": "Backend data integrity",
+      "status": "complete"
+    },
+    {
+      "number": "8",
+      "name": "Sale/payment workflow wiring + cleanup",
+      "status": "complete"
+    },
+    {
+      "number": "9",
+      "name": "Reopen-and-edit a completed sale",
+      "status": "complete"
+    },
+    {
+      "number": "10",
+      "name": "Quality debt & ops documentation",
+      "status": "complete"
+    },
+    {
+      "number": "11",
+      "name": "Security Hardening (Server-Side Secrets & Cost Guardrails)",
+      "status": "pending"
+    },
+    {
+      "number": "12",
+      "name": "Checkout Verification (Scan & Search Confirmation)",
+      "status": "in_progress"
+    },
+    {
+      "number": "13",
+      "name": "Receipt Delivery & Resilience (Print, Reprint, Retry, PDF)",
+      "status": "complete"
+    },
+    {
+      "number": "14",
+      "name": "Inventory Analytics Reports",
+      "status": "complete"
+    },
+    {
+      "number": "15",
+      "name": "Receipt Designer (Layout, Branding & Logo Printing)",
+      "status": "complete"
+    },
+    {
+      "number": "16",
+      "name": "Purchase Orders & Reordering",
+      "status": "complete"
+    },
+    {
+      "number": "17",
+      "name": "E2E Suite Overhaul",
+      "status": "in_progress"
+    },
+    {
+      "number": "18",
+      "name": "Barcode Scan Product Peek Window",
+      "status": "in_progress"
+    },
+    {
+      "number": "19",
+      "name": "Store-Local Durable Printing Service",
+      "status": "pending"
+    },
+    {
+      "number": "20",
+      "name": "Store Deployment: Signed Elevated Installer",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (plan phase 25)",
+    "reason": "Phase 25 of 8 — needs a plan"
+  },
+  "updated_at": "2026-09-01T22:45:26.793Z"
+}
