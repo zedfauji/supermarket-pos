@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 24
 current_phase_name: Tax Configuration (Inclusive/Exclusive Toggle)
 status: executing
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-09-01T03:51:27.642Z"
+stopped_at: Completed 24-03-PLAN.md
+last_updated: "2026-09-01T04:36:48.576Z"
 last_activity: 2026-08-31
 last_activity_desc: Phase 24 execution started
-state_head: f8d654e1b4bc9aacdccf9f2554b9f47c796ed317
+state_head: 45fd404e0806af0e915b6b28f228acfcb2e0faf9
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
   percent: 71
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 24 (Tax Configuration (Inclusive/Exclusive Toggle)) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-31 — Phase 24 execution started
 
@@ -107,6 +107,7 @@ Last activity: 2026-08-31 — Phase 24 execution started
 | Phase 17 P04 | 28m | 2 tasks | 5 files |
 | Phase 24 P01 | 55min | 2 tasks | 15 files |
 | Phase 24 P02 | 20min | 2 tasks | 4 files |
+| Phase 24 P03 | 30min+25min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,8 @@ Recent decisions affecting current work:
 - [Phase 24]: Fixed a zero-row COALESCE gap in process_direct_sale_atomic's v_tax_inclusive read (Rule 1) so a missing settings row defaults to taxInclusive=true per D-01, matching the pre-existing v_tax_rate fallback pattern
 - [Phase 24]: PaymentForm.test.tsx's static useSettings mock converted to a vi.hoisted mutable object for per-test tax-mode overrides; reusable pattern for Plan 02/03
 - [Phase 24]: Billing Settings taxInclusive toggle placed inside the same grid cell as the tax-rate input, stacked below it
+- [Phase 24]: [Phase 24] process-payment/process-split-payment receipts now decompose tax via shared decomposeTax(), closing the receipt-consistency gap for reopened/split-payment sales
+- [Phase 24]: [Phase 24] PaymentSchema.method now reuses domain.ts's PaymentMethodSchema instead of a hand-rolled enum, fixing a bank_transfer-triggered /payments page blank-out bug
 
 ### Pending Todos
 
@@ -209,8 +212,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-01T03:51:27.189Z
-Stopped at: Completed 24-02-PLAN.md
+Last session: 2026-09-01T04:36:48.114Z
+Stopped at: Completed 24-03-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
