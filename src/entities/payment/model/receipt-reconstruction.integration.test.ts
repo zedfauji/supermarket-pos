@@ -7,6 +7,7 @@ import { createElement, type ReactNode } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { supabase } from '@shared/lib/supabase';
 import { testDb } from '@shared/lib/supabase-test-client';
+import { decomposeTax } from '../../../../supabase/functions/_shared/tax.ts';
 import { useReceiptDataForPayment } from './queries';
 
 // Manager Test — a seeded manager account present in this environment's local
@@ -212,6 +213,10 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
     expect(receipt.tenderedAmount).toBe(20);
     expect(receipt.changeAmount).toBe(0);
     expect(receipt.tenders).toHaveLength(1);
+    // CR-01: reprint receipts must carry a real decomposed tax split, not
+    // the pre-fix `subtotal === total` with no taxAmount at all.
+    expect(receipt.taxAmount).toBeDefined();
+    expect(receipt.subtotal + receipt.taxAmount!).toBeCloseTo(receipt.total, 2);
 
     qc.clear();
   });
@@ -233,9 +238,18 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
     expect(receipt.tenders).toHaveLength(2);
     const methods = new Set(receipt.tenders?.map(t => t.method));
     expect(methods).toEqual(new Set(['cash', 'card']));
-    // Sum of BOTH legs (30 + 20), never a single leg's amount alone.
-    expect(receipt.subtotal).toBe(50);
+
+    // Sum of BOTH legs (30 + 20), never a single leg's amount alone — total
+    // is always the charged amount; subtotal is decomposed per the store's
+    // live billing settings (CR-01), so derive the expectation the same way
+    // fetchReceiptDataForPayment does rather than hardcoding a pre-tax-split
+    // value.
+    const { data: billingRow } = await testDb.from('settings').select('value').eq('key', 'billing').maybeSingle();
+    const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+    const expected = decomposeTax(50, billing?.taxRatePercent ?? 16, billing?.taxInclusive ?? true);
     expect(receipt.total).toBe(50);
+    expect(receipt.subtotal).toBe(expected.subtotal);
+    expect(receipt.taxAmount).toBe(expected.taxAmount);
 
     qc.clear();
   });
