@@ -2,21 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { expect, test, type Page } from '../fixtures';
 import { gotoAuthed, loginAs, logout } from '../helpers/auth';
 import { getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 let cajaSessionId = '';
-
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
-  const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
-  return Math.round((subtotal + tax) * 100) / 100;
-}
-
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
-  const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
-}
 
 async function scanBarcode(page: Page, barcode: string): Promise<void> {
   await page.evaluate(code => {
@@ -132,7 +122,7 @@ test.describe.serial('Full-day soak', () => {
         process.env['E2E_BARTENDER_NAME'] ?? '',
         process.env['E2E_MANAGER_NAME'] ?? '',
       ]);
-    const taxRatePercent = await getTaxRatePercent(admin);
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
     let totalCashCollected = 0;
 
     await page.goto('/');
@@ -156,7 +146,11 @@ test.describe.serial('Full-day soak', () => {
       .single();
     if (saleProductError || !saleProduct)
       throw new Error(saleProductError?.message ?? 'MDH Garam Masala 100g not found');
-    const bulkAmount = computeAuthoritativeTotal(Number(saleProduct.base_price), taxRatePercent);
+    const bulkAmount = computeAuthoritativeTotal(
+      Number(saleProduct.base_price),
+      taxRatePercent,
+      taxInclusive
+    );
 
     for (let index = 0; index < 70; index += 1) {
       const result = await admin.rpc('process_direct_sale_atomic', {

@@ -14,6 +14,7 @@ import { expect, test, type Page } from '../fixtures';
 import { loginAs } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { getServiceClient, openCaja, resetTestState, seedClosedTab } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 
 async function injectPrintMock(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -67,7 +68,8 @@ test.describe('Reprint receipt (RCP-01)', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (error || !product) throw new Error(error?.message ?? 'Product not found');
-    const total = Math.round(Number(product.base_price) * 1.16 * 100) / 100;
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     const cashAmount = Math.round((total / 2) * 100) / 100;
     const cardAmount = Math.round((total - cashAmount) * 100) / 100;
 

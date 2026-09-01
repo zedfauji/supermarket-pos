@@ -8,33 +8,12 @@ import {
   resetTestState,
   seedNewStaffMember,
 } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { randomUUID } from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 let cajaSessionId = '';
-
-/**
- * Reads the live `billing` settings row the same way the RPC does
- * (`settings.value->>'taxRatePercent'`), falling back to 16 to match the
- * migration's own COALESCE default when no row exists yet.
- */
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
-  const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
-}
-
-/**
- * Mirrors process_direct_sale_atomic's two-step rounding (tax rounded first,
- * then added to the subtotal) so adversarial amounts computed here land
- * within the RPC's one-cent authority tolerance instead of drifting from a
- * single-step (subtotal * (1 + rate)) computation.
- */
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
-  const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
-  return Math.round((subtotal + tax) * 100) / 100;
-}
 
 /**
  * Reads the current browser session's Supabase access token out of
@@ -120,7 +99,8 @@ test.describe('Direct-sale checkout', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (error || !product) throw new Error(error?.message ?? 'Product not found');
-    const total = Math.round(Number(product.base_price) * 1.16 * 100) / 100;
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     const cashAmount = Math.round((total / 2) * 100) / 100;
     const cardAmount = Math.round((total - cashAmount) * 100) / 100;
 
@@ -164,8 +144,8 @@ test.describe('Direct-sale checkout', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (productError || !product) throw new Error(productError?.message ?? 'Product not found');
-    const taxRatePercent = await getTaxRatePercent(admin);
-    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent);
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     return {
       admin,
       total,
@@ -416,13 +396,14 @@ test.describe('Direct-sale checkout', () => {
       .single();
     if (modifierError || !modifier)
       throw new Error(modifierError?.message ?? 'Extra Lime modifier not found');
-    const taxRatePercent = await getTaxRatePercent(admin);
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
     // Totals the sale as if the modifier were free, forging a zero delta on
     // the item itself -- the server must still derive the real, non-zero
     // delta from product_modifiers/modifiers and reject the undercounted total.
     const totalIgnoringModifier = computeAuthoritativeTotal(
       Number(product.base_price),
-      taxRatePercent
+      taxRatePercent,
+      taxInclusive
     );
 
     const [{ count: paymentsBefore }, { count: tabsBefore }] = await Promise.all([
@@ -641,7 +622,8 @@ test.describe('Direct-sale checkout', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (error || !product) throw new Error(error?.message ?? 'Product not found');
-    const total = Math.round(Number(product.base_price) * 1.16 * 100) / 100;
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     const cashAmount = Math.round((total / 2) * 100) / 100;
     const cardAmount = Math.round((total - cashAmount) * 100) / 100;
 
@@ -672,6 +654,7 @@ test.describe('Direct-sale checkout', () => {
       receiptData?: {
         items: { quantity: number }[];
         subtotal: number;
+        total: number;
         tenders?: { method: string; amount: number }[];
       };
     };
@@ -682,10 +665,12 @@ test.describe('Direct-sale checkout', () => {
     // The basket appears exactly once — not once per tender leg (CR-03).
     expect(body.receiptData?.items).toHaveLength(1);
     expect(body.receiptData?.items[0]?.quantity).toBe(1);
-    // Every tender leg is present and its amounts sum to the sale subtotal.
+    // Every tender leg is present and its amounts sum to what was actually
+    // charged (`total`) — under taxInclusive mode `subtotal` is the
+    // decomposed pre-tax amount and no longer equals the sum of tenders.
     expect(body.receiptData?.tenders).toHaveLength(2);
     const tenderSum = (body.receiptData?.tenders ?? []).reduce((sum, t) => sum + t.amount, 0);
-    expect(Math.round(tenderSum * 100) / 100).toBeCloseTo(body.receiptData?.subtotal ?? 0, 2);
+    expect(Math.round(tenderSum * 100) / 100).toBeCloseTo(body.receiptData?.total ?? 0, 2);
     expect(new Set(body.receiptData?.tenders?.map(t => t.method))).toEqual(
       new Set(['cash', 'card'])
     );

@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures';
 import { loginAs } from '../helpers/auth';
 import { assertPaymentRecorded, assertStockMovement } from '../helpers/db-assertions';
 import { getInventoryQty, getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 
 let cajaSessionId = '';
@@ -46,7 +47,8 @@ test.describe('Direct-sale checkout', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (productError || !product) throw new Error(productError?.message ?? 'Product not found');
-    const expectedTotal = Math.round(Number(product.base_price) * 1.16 * 100) / 100;
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const expectedTotal = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     const { data: tabs, error: tabsError } = await admin
       .from('tabs')
       .select('id, status')
@@ -208,7 +210,8 @@ test.describe('Direct-sale checkout', () => {
       .eq('name', "Haldiram's Aloo Bhujia 200g")
       .single();
     if (error || !product) throw new Error(error?.message ?? 'Product not found');
-    const total = Math.round(Number(product.base_price) * 1.16 * 100) / 100;
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(Number(product.base_price), taxRatePercent, taxInclusive);
     const cashAmount = Math.round((total / 2) * 100) / 100;
     const cardAmount = Math.round((total - cashAmount) * 100) / 100;
 

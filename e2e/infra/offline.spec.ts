@@ -26,25 +26,13 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { Locator, Page } from '@playwright/test';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from '../fixtures';
 import { gotoAuthed, loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { getOrderCount, getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 
 let cajaSessionId = '';
-
-/** Copied from e2e/checkout/atomic-rpc-guards.spec.ts's convention (house pattern). */
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
-  const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
-}
-
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
-  const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
-  return Math.round((subtotal + tax) * 100) / 100;
-}
 
 interface SeededPaidTab {
   tabId: string;
@@ -99,9 +87,9 @@ async function seedPaidTabViaDirectSale(): Promise<SeededPaidTab> {
     throw new Error(`seed: active product not found - ${productError?.message ?? 'none'}`);
   }
 
-  const taxRatePercent = await getTaxRatePercent(admin);
+  const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
   const unitPrice = Number(product.base_price);
-  const amount = computeAuthoritativeTotal(unitPrice, taxRatePercent);
+  const amount = computeAuthoritativeTotal(unitPrice, taxRatePercent, taxInclusive);
 
   const { data, error } = await admin.rpc('process_direct_sale_atomic', {
     p_staff_id: shiftStaffId,

@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { expect, test, type Page } from '../fixtures';
 import { loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { getServiceClient, openCaja, resetTestState, seedOpenTab } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 
 /** Stable, always-seeded Indian-catalog fixture product (Sweets category,
  * scripts/seed-dev-data.ts / supabase/seed.sql, guaranteed to have a real
@@ -416,30 +416,6 @@ function formatNegativeUsd(amount: number): string {
   return `−$${formatted}`;
 }
 
-/**
- * Reads the live `billing` settings row the same way process_direct_sale_atomic
- * does (`settings.value->>'taxRatePercent'`), falling back to 16 to match the
- * migration's own COALESCE default when no row exists yet.
- * Copied verbatim from e2e/48-reopen-closed-ticket.spec.ts.
- */
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
-  const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
-}
-
-/**
- * Mirrors process_direct_sale_atomic's two-step rounding (tax rounded first,
- * then added to the subtotal) so amounts computed here land within the RPC's
- * one-cent authority tolerance instead of drifting from a single-step
- * (subtotal * (1 + rate)) computation.
- * Copied verbatim from e2e/48-reopen-closed-ticket.spec.ts.
- */
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
-  const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
-  return Math.round((subtotal + tax) * 100) / 100;
-}
-
 interface SeededPaidTab {
   tabId: string;
   paymentId: string;
@@ -505,14 +481,14 @@ async function seedPaidTabWithTwoItems(cajaSessionId: string): Promise<SeededPai
     );
   }
 
-  const taxRatePercent = await getTaxRatePercent(admin);
+  const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
   const items = products.map(p => ({
     product_id: (p as { id: string }).id,
     quantity: 1,
     unit_price: Number((p as { base_price: number }).base_price),
   }));
   const subtotal = items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
-  const amount = computeAuthoritativeTotal(subtotal, taxRatePercent);
+  const amount = computeAuthoritativeTotal(subtotal, taxRatePercent, taxInclusive);
 
   const { data, error } = await admin.rpc('process_direct_sale_atomic', {
     p_staff_id: shiftStaffId,

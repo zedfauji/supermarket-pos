@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { expect, test } from '../fixtures';
 import { loginAs } from '../helpers/auth';
 import { getInventoryQty, getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { getBillingTaxConfig, computeAuthoritativeTotal } from '../helpers/tax';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 // D-05 (17-e2e-suite-overhaul): this spec's loose-weight/hold-sale mechanics
 // don't need Indian-catalog fixtures — it needs two simple, always-present
@@ -94,32 +94,6 @@ async function ensureLooseWeightFixtures(): Promise<void> {
   }
 }
 
-/**
- * Reads the live `billing` settings row the same way
- * process_direct_sale_atomic does (`settings.value->>'taxRatePercent'`),
- * falling back to 16 to match the migration's own COALESCE default when no
- * row exists yet. Mirrors e2e/checkout/*.spec.ts's helper of the same name.
- */
-async function getTaxRatePercent(admin: SupabaseClient): Promise<number> {
-  const { data } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
-  const rate = (data?.value as { taxRatePercent?: number } | null)?.taxRatePercent;
-  return typeof rate === 'number' ? rate : 16;
-}
-
-/**
- * Mirrors process_direct_sale_atomic's two-step rounding (tax rounded
- * first, then added to the subtotal) so the tendered amount computed here
- * lands within the RPC's one-cent authority tolerance instead of drifting
- * from a single-step (subtotal * (1 + rate)) computation. As of 02-06, the
- * RPC rejects any p_amount that disagrees with the tax-inclusive derived
- * total by more than one cent — the pre-tax subtotal alone is no longer
- * accepted.
- */
-function computeAuthoritativeTotal(subtotal: number, taxRatePercent: number): number {
-  const tax = Math.round(subtotal * (taxRatePercent / 100) * 100) / 100;
-  return Math.round((subtotal + tax) * 100) / 100;
-}
-
 test.describe('Loose-weight checkout', () => {
   let cajaSessionId = '';
 
@@ -170,8 +144,8 @@ test.describe('Loose-weight checkout', () => {
     // Matches process_direct_sale_atomic's ROUND(catalog_price * (grams / 1000.0), 2)
     // line-price derivation exactly.
     const expectedPrice = Math.round(Number(product.base_price) * (weightGrams / 1000) * 100) / 100;
-    const taxRatePercent = await getTaxRatePercent(admin);
-    const total = computeAuthoritativeTotal(expectedPrice, taxRatePercent);
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const total = computeAuthoritativeTotal(expectedPrice, taxRatePercent, taxInclusive);
 
     return {
       admin,

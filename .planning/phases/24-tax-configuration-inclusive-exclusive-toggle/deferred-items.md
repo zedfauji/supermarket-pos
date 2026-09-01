@@ -71,3 +71,53 @@ failures in files unrelated to the current task are logged, not fixed.
 
 **Suggested fix (for whoever picks this up):** wrap each flagged async call with `void` or
 `.catch(...)` per the rule's own guidance.
+
+## Pre-existing bar-pos-era fixture gaps in `atomic-rpc-guards.spec.ts` (found during 24-04 Task 1)
+
+**Discovered:** 2026-09-01, during 24-04 Task 1's live Playwright run of
+`e2e/checkout/atomic-rpc-guards.spec.ts`.
+
+**Symptom:** 2 test failures, both throwing `Cannot coerce the result to a single JSON object`
+(a Supabase `.single()` zero-row error):
+- `rejects a forged zero modifier delta that undercounts the total and writes no rows` — looks up
+  a product named `'Margarita'`, not found.
+- `rejects a modifier not linked to the item product and writes no rows` — looks up a modifier
+  named `'Double Shot'`, not found.
+
+**Root cause (confirmed, not speculative):** both fixture names (`Margarita`, `Double Shot`) are
+bar/pool-parlour-era product/modifier names from before Phase 1's rebrand to the Indian-grocery
+catalog — they don't exist in the current seed data at all. Confirmed pre-existing via
+`git stash` + re-run against clean HEAD (`8eb89cb`): both tests fail identically before any of
+this plan's changes.
+
+**Why this is out of scope for 24-04:** neither the `modifiers` table content nor these two
+tests' fixture lookups involve tax math — they're unrelated stale-fixture bugs in a file this
+plan otherwise touches only for its tax-formula de-duplication (Task 1). Per the scope-boundary
+rule, logged rather than fixed.
+
+**Suggested fix (for whoever picks this up):** either reseed `products`/`modifiers` with real
+Indian-catalog fixture names these two tests can use, or rewrite the tests to pick an existing
+seeded product + modifier pair dynamically instead of a hardcoded bar-pos name.
+
+## Pre-existing `unregisterListener` pageerror flake in `reprint.spec.ts` (found during 24-04 Task 1)
+
+**Discovered:** 2026-09-01, during 24-04 Task 1's live Playwright run of
+`e2e/receipts/reprint.spec.ts`.
+
+**Symptom:** `reprinting a split sale prints one receipt with both tender legs, not one leg's
+amount` fails with an uncaught page error: `Cannot read properties of undefined (reading
+'unregisterListener')`, thrown twice per run.
+
+**Root cause:** confirmed pre-existing via `git stash` + re-run against clean HEAD (`8eb89cb`)
+— the identical failure reproduces before any of this plan's changes. Looks like a Tauri
+event-listener teardown race in the injected `__TAURI_INTERNALS__` print mock
+(`injectPrintMock`), unrelated to tax math or receipt content.
+
+**Why this is out of scope for 24-04:** the failure is a page-level uncaught exception from the
+print-mock harness, not an assertion about tax/subtotal/total values. This plan's tax-formula fix
+in this file (the `* 1.16` literal at line 70) is unaffected — confirmed by re-running just the
+line-70 fix in isolation once the pageerror is set aside.
+
+**Suggested fix (for whoever picks this up):** investigate `injectPrintMock`'s
+`unregisterCallback`/`transformCallback` mock shape in `e2e/receipts/reprint.spec.ts` for a
+teardown-order race against the real Tauri IPC bridge.
