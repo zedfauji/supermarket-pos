@@ -160,7 +160,7 @@ added on top, fixing the live overcharge bug; when off, today's additive math is
 the client, and every receipt (thermal/PDF/email) shows a real decomposed subtotal+tax+total.
 **Requirements**: TAX-01, TAX-02, TAX-03, TAX-04, TAX-05
 **Depends on:** Phase 23
-**Plans:** 4/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1**
