@@ -18,12 +18,14 @@ type BillingForm = {
     rappi: boolean;
   };
   firstHourMode: 'full' | 'prorated';
+  taxInclusive: boolean;
 };
 
 const DEFAULT_FORM: BillingForm = {
   taxRatePercent: '16',
   paymentMethods: { cash: true, bbvaCard: true, rappi: true },
   firstHourMode: 'prorated',
+  taxInclusive: true,
 };
 
 const DEFAULT_LABELS: PaymentMethodLabels = {
@@ -53,6 +55,7 @@ export function BillingSettingsTab({ currentRole }: Props) {
           rappi: data.billing.paymentMethods.rappi,
         },
         firstHourMode: data.billing.firstHourMode,
+        taxInclusive: data.billing.taxInclusive,
       });
     }
     if (!labelsDirty) {
@@ -84,6 +87,7 @@ export function BillingSettingsTab({ currentRole }: Props) {
         taxRatePercent,
         paymentMethods: form.paymentMethods,
         firstHourMode: form.firstHourMode,
+        taxInclusive: form.taxInclusive,
       },
     });
     if (!result.ok) {
@@ -113,6 +117,27 @@ export function BillingSettingsTab({ currentRole }: Props) {
                 setForm(current => ({ ...current, taxRatePercent: event.target.value }));
               }}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('billingSettingsTab.taxInclusiveLabel')}</Label>
+            <POSButton
+              type="button"
+              touchSize="large"
+              variant={form.taxInclusive ? 'default' : 'outline'}
+              onClick={() => {
+                setDirty(true);
+                setForm(current => ({ ...current, taxInclusive: !current.taxInclusive }));
+              }}
+            >
+              {t(
+                form.taxInclusive
+                  ? 'billingSettingsTab.taxInclusiveOnLabel'
+                  : 'billingSettingsTab.taxInclusiveOffLabel'
+              )}
+            </POSButton>
+            <p className="text-xs text-muted-foreground">
+              {t('billingSettingsTab.taxInclusiveDescription')}
+            </p>
           </div>
         </div>
 
