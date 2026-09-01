@@ -1,6 +1,7 @@
 // Supabase Edge Function — process-payment (Deno)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
+import { decomposeTax } from '../_shared/tax.ts';
 
 const BodySchema = z
   .object({
@@ -311,8 +312,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const subtotal = body.amount;
-  const total = subtotal;
+  const { data: billingRow } = await admin.from('settings').select('value').eq('key', 'billing').maybeSingle();
+  const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
+  const taxRatePercent = billing?.taxRatePercent ?? 16;
+  const taxInclusive = billing?.taxInclusive ?? true;
+  const { subtotal, taxAmount, total } = decomposeTax(body.amount, taxRatePercent, taxInclusive);
   const tendered = paymentRow.tendered_amount != null ? Number(paymentRow.tendered_amount) : null;
   const changeAmount =
     tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
@@ -326,6 +330,9 @@ Deno.serve(async (req: Request) => {
     items,
     subtotal,
     total,
+    taxAmount,
+    taxRatePercent,
+    taxInclusive,
     paymentMethod: paymentRow.method,
     processedAt: paymentRow.processed_at,
     squareReceiptUrl: null as string | null,
