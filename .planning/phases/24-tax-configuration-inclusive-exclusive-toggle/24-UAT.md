@@ -3,7 +3,7 @@ status: complete
 phase: 24-tax-configuration-inclusive-exclusive-toggle
 source: [24-01-SUMMARY.md, 24-02-SUMMARY.md, 24-03-SUMMARY.md, 24-04-SUMMARY.md]
 started: 2026-09-01T21:03:28Z
-updated: 2026-09-01T21:03:28Z
+updated: 2026-09-01T21:37:00Z
 ---
 
 ## Current Test
@@ -12,12 +12,13 @@ updated: 2026-09-01T21:03:28Z
 
 ## Tests
 
-<!-- All 16 deliverables across the 4 SUMMARYs carry structured coverage: blocks,
-     all_auto_covered:true, present:[] — zero human-judgment checkpoints exist.
-     Per repo policy (CLAUDE.md "UAT / Verification: automate it, never ask the
-     user to click through"), no manual checkpoint was presented; every result
-     below is re-confirmed live in this session, not merely copied from SUMMARY
-     frontmatter. -->
+<!-- Tests 1-16 (24-01..24-04 SUMMARYs) + 18 (cold start) carry structured coverage:
+     blocks, all_auto_covered:true, present:[] — zero human-judgment checkpoints exist.
+     Tests 17a-17c were added after code review (24-REVIEW.md/24-REVIEW-FIX.md) found
+     and fixed CR-01/WR-01/WR-03. Per repo policy (CLAUDE.md "UAT / Verification:
+     automate it, never ask the user to click through"), no manual checkpoint was
+     presented; every result below is re-confirmed live in this session, not merely
+     copied from SUMMARY frontmatter. -->
 
 ### 1. BillingSettingsSchema taxInclusive field (D-01, defaults true)
 expected: "BillingSettingsSchema gains taxInclusive boolean, defaults true (D-01), threaded through DEFAULT_BILLING"
@@ -123,7 +124,25 @@ source: automated
 coverage_id: 24-04/D4
 reverified: "npm run typecheck — clean. npm run lint — clean, 0 errors. npm run test — 1306 passed, 0 failed. Live run 2026-09-01."
 
-### 17. Cold Start Smoke Test
+### 17a. Reprint receipts carry decomposed tax (code-review CR-01 fix)
+expected: "fetchReceiptDataForPayment (reprint path) fetches the billing settings row and runs decomposeTax, so a reprinted receipt shows the same subtotal/taxAmount/total split as the original sale receipt, not subtotal===total"
+result: pass
+source: automated
+reverified: "npx vitest run src/entities/payment/model/receipt-reconstruction.integration.test.ts — 4/4 pass live against local Supabase, 2026-09-01. e2e/receipts/reprint.spec.ts's split-tender test still hits the same pre-existing Tauri unregisterListener mock flake documented in deferred-items.md (confirmed pre-existing, not a regression from this fix) — 6/7 other e2e/receipts + e2e/settings tests pass live."
+
+### 17b. Rappi payments show zero tax on receipt, matching payment screen (code-review WR-01 fix)
+expected: "process-payment/process-split-payment skip tax decomposition for rappi method via shared decomposeTaxForMethod helper, matching PaymentForm.tsx's own zero-tax display for rappi"
+result: pass
+source: automated
+coverage_id: unit:src/shared/lib/__tests__/edge-tax.test.ts
+
+### 17c. taxInclusive toggle requires confirmation before save (code-review WR-03 fix)
+expected: "Changing taxInclusive in Billing Settings and clicking Save Billing shows a ConfirmDialog explaining the store-wide price-reinterpretation effect; mutation only fires on confirm, not on cancel; unchanged taxInclusive saves immediately with no dialog"
+result: pass
+source: automated
+coverage_id: unit:src/widgets/SettingsTabsPanel/tabs/BillingSettingsTab.test.tsx
+
+### 18. Cold Start Smoke Test
 expected: "Kill any running server/service. Clear ephemeral state. Start the application from scratch. Server boots without errors, migration 20260831000005_tax_inclusive_mode.sql completes, and a primary query returns live data."
 result: pass
 source: automated
@@ -131,8 +150,8 @@ reason: "Not re-run as a literal kill/restart (would disrupt the user's running 
 
 ## Summary
 
-total: 17
-passed: 17
+total: 20
+passed: 20
 issues: 0
 pending: 0
 skipped: 0
