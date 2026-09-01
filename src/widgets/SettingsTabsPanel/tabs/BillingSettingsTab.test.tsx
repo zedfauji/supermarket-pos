@@ -12,6 +12,7 @@ const { mutateAsyncMock, toastErrorMock, toastSuccessMock, mockSettingsData } = 
       taxRatePercent: 16,
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
       firstHourMode: 'prorated' as const,
+      taxInclusive: true,
     },
     paymentLabels: { cash: 'Efectivo', card: 'Terminal BBVA', rappi: 'Rappi' },
   },
@@ -65,6 +66,47 @@ describe('BillingSettingsTab', () => {
 
     expect(screen.getByRole('button', { name: /Prorated/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Full Hour/i })).toBeInTheDocument();
+  });
+
+  it('renders a taxInclusive toggle reflecting the live settings value', () => {
+    render(<BillingSettingsTab currentRole="manager" />);
+
+    expect(screen.getByRole('button', { name: /Included|Tax included/i })).toBeInTheDocument();
+  });
+
+  it('clicking the taxInclusive toggle then Save Billing calls mutation with taxInclusive: false', async () => {
+    mutateAsyncMock.mockResolvedValueOnce({ ok: true });
+    const user = userEvent.setup();
+
+    render(<BillingSettingsTab currentRole="manager" />);
+
+    await user.click(screen.getByRole('button', { name: /Included/i }));
+    await user.click(screen.getByRole('button', { name: 'Save Billing' }));
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: 'billing',
+        value: expect.objectContaining({ taxInclusive: false }),
+      })
+    );
+  });
+
+  it('toggling taxInclusive on, off, then on again then saving calls mutation with taxInclusive: true', async () => {
+    mutateAsyncMock.mockResolvedValueOnce({ ok: true });
+    const user = userEvent.setup();
+
+    render(<BillingSettingsTab currentRole="manager" />);
+
+    await user.click(screen.getByRole('button', { name: /Included/i }));
+    await user.click(screen.getByRole('button', { name: /Added at checkout/i }));
+    await user.click(screen.getByRole('button', { name: 'Save Billing' }));
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: 'billing',
+        value: expect.objectContaining({ taxInclusive: true }),
+      })
+    );
   });
 
   it('clicking Full Hour button then Save Billing calls mutation with firstHourMode: full', async () => {
