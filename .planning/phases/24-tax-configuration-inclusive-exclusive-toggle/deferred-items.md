@@ -21,6 +21,39 @@ confirmed pre-existing to Phase 24):
 
 ## Not yet fixed — tracked as Phase 25
 
+## `process-split-payment`'s per-leg tax decomposition compounds the pre-existing "full basket, partial total" receipt mismatch (found during 24-REVIEW.md fix pass, WR-02)
+
+**Discovered:** 2026-09-01, `/gsd-code-review --fix` pass over `24-REVIEW.md`.
+
+**Symptom:** `process-split-payment/index.ts` renders the tab's *entire* `items[]` array on
+every leg's receipt (pre-existing "D-09" quirk, predates Phase 24 — see the file's own header
+comment), while `subtotal`/`taxAmount`/`total` are now decomposed from that single leg's amount
+only (Phase 24's `decomposeTax` addition). Example: a $100 sale split 50/50 cash+card shows the
+full $100 worth of item lines on *both* receipts, but each receipt's decomposed
+subtotal+tax only adds up to $50 — the printed items and the printed subtotal/tax/total no
+longer reconcile with each other on a per-leg receipt.
+
+**Why this is deferred rather than fixed in this pass:** REVIEW.md's own two proposed fixes both
+require a design decision beyond a mechanical fix:
+- (a) scale `items[]` down to the leg's proportional share (changes what a customer sees printed
+  as line items — a customer-facing behavior change, not a pure bug fix), or
+- (b) keep the full item list but source `subtotal`/`taxAmount`/`total` from the tab's full
+  charged amount and add a new, distinct "amount collected on this tender" field (a schema/contract
+  change to `ReceiptData` and every receipt-rendering consumer: thermal print, PDF export, email).
+
+Both are correctness-improving but neither is a same-shape, low-risk mechanical fix appropriate for
+an automated fix pass — they change what's printed on a customer-facing receipt and/or the
+`ReceiptData` contract. The underlying "full items, partial total" mismatch is pre-existing to
+Phase 24 (documented in the file's own D-09 comment); Phase 24's tax-decomposition change made the
+mismatch more visible (a plausible-looking Subtotal+Tax+Total block now sits next to it) but did
+not introduce the root inconsistency.
+
+**Suggested fix (for whoever picks this up):** pick option (a) or (b) above as a deliberate product
+decision (probably (b), since it doesn't reprint different item lines depending on which tender the
+customer is holding), then update `process-split-payment/index.ts`'s per-leg receipt construction,
+the `ReceiptData` contract, and every renderer that reads `subtotal`/`total` off a split-payment
+receipt.
+
 ## Pre-existing `unregisterListener` pageerror flake, whole `e2e/receipts/` Tauri-mock harness (found during 24-04 Task 1 + Task 3)
 
 **Discovered:** 2026-09-01, during 24-04 Task 1's live Playwright run of
