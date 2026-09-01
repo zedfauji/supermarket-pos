@@ -116,7 +116,14 @@ BEGIN
   v_subtotal := ROUND(v_subtotal, 2);
   SELECT COALESCE((value->>'taxRatePercent')::numeric, 16), COALESCE((value->>'taxInclusive')::boolean, true)
     INTO v_tax_rate, v_tax_inclusive FROM settings WHERE key = 'billing';
+  -- No 'billing' row at all (zero rows, distinct from a row missing the
+  -- taxInclusive key -- the inline COALESCE above only fires when a row is
+  -- returned) leaves both v_tax_rate/v_tax_inclusive NULL after SELECT INTO.
+  -- v_tax_rate already had this exact fallback; v_tax_inclusive needs the
+  -- same one so a pre-existing/missing settings row never silently resolves
+  -- to exclusive mode (D-01).
   v_tax_rate := COALESCE(v_tax_rate, 16);
+  v_tax_inclusive := COALESCE(v_tax_inclusive, true);
   IF v_tax_inclusive THEN
     v_derived_total := v_subtotal;
     v_tax := ROUND(v_subtotal - ROUND(v_subtotal / (1 + v_tax_rate / 100.0), 2), 2);
