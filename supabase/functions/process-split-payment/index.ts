@@ -5,7 +5,7 @@
 // then assembles one ReceiptData per leg (D-09).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
-import { decomposeTax } from '../_shared/tax.ts';
+import { decomposeTaxForMethod } from '../_shared/tax.ts';
 
 const legSchema = z
   .object({
@@ -338,12 +338,12 @@ Deno.serve(async (req: Request) => {
   const taxInclusive = billing?.taxInclusive ?? true;
 
   const receipts = (paymentRows as PaymentLegRow[]).map(legRow => {
-    // Rappi tax is collected/remitted externally, not by this POS — mirror
-    // PaymentForm.tsx's `method === 'rappi'` zero-tax display (WR-01).
-    const { subtotal, taxAmount, total } =
-      legRow.method === 'rappi'
-        ? { subtotal: Number(legRow.amount), taxAmount: 0, total: Number(legRow.amount) }
-        : decomposeTax(Number(legRow.amount), taxRatePercent, taxInclusive);
+    const { subtotal, taxAmount, total } = decomposeTaxForMethod(
+      legRow.method,
+      Number(legRow.amount),
+      taxRatePercent,
+      taxInclusive
+    );
     const tendered = legRow.tendered_amount != null ? Number(legRow.tendered_amount) : null;
     const changeAmount = tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
     const ref = legRow.reference_number;

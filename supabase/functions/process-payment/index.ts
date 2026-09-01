@@ -1,7 +1,7 @@
 // Supabase Edge Function — process-payment (Deno)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
-import { decomposeTax } from '../_shared/tax.ts';
+import { decomposeTaxForMethod } from '../_shared/tax.ts';
 
 const BodySchema = z
   .object({
@@ -316,12 +316,12 @@ Deno.serve(async (req: Request) => {
   const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
   const taxRatePercent = billing?.taxRatePercent ?? 16;
   const taxInclusive = billing?.taxInclusive ?? true;
-  // Rappi tax is collected/remitted externally, not by this POS — mirror
-  // PaymentForm.tsx's `method === 'rappi'` zero-tax display (WR-01).
-  const { subtotal, taxAmount, total } =
-    body.method === 'rappi'
-      ? { subtotal: body.amount, taxAmount: 0, total: body.amount }
-      : decomposeTax(body.amount, taxRatePercent, taxInclusive);
+  const { subtotal, taxAmount, total } = decomposeTaxForMethod(
+    body.method,
+    body.amount,
+    taxRatePercent,
+    taxInclusive
+  );
   const tendered = paymentRow.tendered_amount != null ? Number(paymentRow.tendered_amount) : null;
   const changeAmount =
     tendered != null ? Math.round((tendered - total) * 100) / 100 : null;
