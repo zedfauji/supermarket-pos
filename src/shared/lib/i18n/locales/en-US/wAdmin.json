@@ -407,6 +407,8 @@
     "taxInclusiveDescription": "Turn this on if catalog prices already include tax (recommended).",
     "taxInclusiveOnLabel": "Included",
     "taxInclusiveOffLabel": "Added at checkout",
+    "taxInclusiveConfirmTitle": "Change how tax applies to every price?",
+    "taxInclusiveConfirmDescription": "This reinterprets every existing catalog price store-wide, starting with the next sale. Product prices themselves are not edited — only whether tax is treated as already included or added at checkout.",
     "saving": "Saving...",
     "saveBilling": "Save Billing",
     "paymentButtonLabelsTitle": "Payment button labels",

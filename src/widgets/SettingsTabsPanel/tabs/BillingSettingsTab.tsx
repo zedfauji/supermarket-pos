@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useMutationUpdateSetting, useSettings } from '@entities/settings';
 import type { PaymentMethodLabels } from '@entities/settings';
 import type { UserRole } from '@shared/lib/domain';
-import { Input, Label, POSButton, ProtectedAction } from '@shared/ui';
+import { ConfirmDialog, Input, Label, POSButton, ProtectedAction } from '@shared/ui';
 
 type Props = {
   currentRole: UserRole | null;
@@ -36,12 +36,18 @@ const DEFAULT_LABELS: PaymentMethodLabels = {
 
 export function BillingSettingsTab({ currentRole }: Props) {
   const { t } = useTranslation('wAdmin');
+  const { t: tCommon } = useTranslation('common');
   const { data } = useSettings();
   const updateSetting = useMutationUpdateSetting();
   const [form, setForm] = useState<BillingForm>(DEFAULT_FORM);
   const [dirty, setDirty] = useState(false);
   const [labels, setLabels] = useState<PaymentMethodLabels>(DEFAULT_LABELS);
   const [labelsDirty, setLabelsDirty] = useState(false);
+  // WR-03: taxInclusive reinterprets every catalog price store-wide the
+  // moment it's saved — gate the save behind a confirmation whenever it
+  // differs from the last-loaded value, mirroring PINLoginForm.tsx's
+  // opening-cash ConfirmDialog gate.
+  const [confirmingTaxInclusiveChange, setConfirmingTaxInclusiveChange] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -213,11 +219,31 @@ export function BillingSettingsTab({ currentRole }: Props) {
           touchSize="large"
           disabled={!dirty || updateSetting.isPending}
           onClick={() => {
+            if (data && form.taxInclusive !== data.billing.taxInclusive) {
+              setConfirmingTaxInclusiveChange(true);
+              return;
+            }
             void save();
           }}
         >
           {updateSetting.isPending ? t('billingSettingsTab.saving') : t('billingSettingsTab.saveBilling')}
         </POSButton>
+
+        <ConfirmDialog
+          open={confirmingTaxInclusiveChange}
+          title={t('billingSettingsTab.taxInclusiveConfirmTitle')}
+          description={t('billingSettingsTab.taxInclusiveConfirmDescription')}
+          confirmLabel={tCommon('actions.confirm')}
+          cancelLabel={tCommon('actions.cancel')}
+          isLoading={updateSetting.isPending}
+          onConfirm={() => {
+            setConfirmingTaxInclusiveChange(false);
+            void save();
+          }}
+          onCancel={() => {
+            setConfirmingTaxInclusiveChange(false);
+          }}
+        />
 
         <div className="space-y-3 rounded-lg border p-4">
           <h3 className="font-medium">{t('billingSettingsTab.paymentButtonLabelsTitle')}</h3>

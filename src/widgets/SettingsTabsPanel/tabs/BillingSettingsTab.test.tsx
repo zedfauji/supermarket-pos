@@ -74,7 +74,7 @@ describe('BillingSettingsTab', () => {
     expect(screen.getByRole('button', { name: /Included|Tax included/i })).toBeInTheDocument();
   });
 
-  it('clicking the taxInclusive toggle then Save Billing calls mutation with taxInclusive: false', async () => {
+  it('clicking the taxInclusive toggle then Save Billing shows a confirmation before saving (WR-03)', async () => {
     mutateAsyncMock.mockResolvedValueOnce({ ok: true });
     const user = userEvent.setup();
 
@@ -83,12 +83,33 @@ describe('BillingSettingsTab', () => {
     await user.click(screen.getByRole('button', { name: /Included/i }));
     await user.click(screen.getByRole('button', { name: 'Save Billing' }));
 
+    // Changing taxInclusive is a store-wide price reinterpretation — the
+    // mutation must NOT fire until the confirmation is accepted.
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('Change how tax applies to every price?')
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
     expect(mutateAsyncMock).toHaveBeenCalledWith(
       expect.objectContaining({
         key: 'billing',
         value: expect.objectContaining({ taxInclusive: false }),
       })
     );
+  });
+
+  it('cancelling the taxInclusive confirmation dialog does not save', async () => {
+    const user = userEvent.setup();
+
+    render(<BillingSettingsTab currentRole="manager" />);
+
+    await user.click(screen.getByRole('button', { name: /Included/i }));
+    await user.click(screen.getByRole('button', { name: 'Save Billing' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('toggling taxInclusive on, off, then on again then saving calls mutation with taxInclusive: true', async () => {

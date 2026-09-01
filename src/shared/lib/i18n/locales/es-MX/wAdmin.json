@@ -407,6 +407,8 @@
     "taxInclusiveDescription": "Activa esto si los precios en el catálogo ya incluyen el IVA (recomendado).",
     "taxInclusiveOnLabel": "Incluido",
     "taxInclusiveOffLabel": "Se agrega al pagar",
+    "taxInclusiveConfirmTitle": "¿Cambiar cómo se aplica el impuesto a todos los precios?",
+    "taxInclusiveConfirmDescription": "Esto reinterpreta todos los precios del catálogo en toda la tienda, a partir de la próxima venta. Los precios de los productos no se editan — solo si el impuesto se trata como ya incluido o agregado al pagar.",
     "saving": "Guardando...",
     "saveBilling": "Guardar facturación",
     "paymentButtonLabelsTitle": "Etiquetas de botones de pago",
