@@ -153,14 +153,37 @@ Plans:
 
 ### Phase 24: Tax Configuration (Inclusive/Exclusive Toggle)
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Checkout and every server-side/receipt tax calculation are mode-aware — when `taxInclusive`
+is on (the new default), tax is decomposed backward from already-inclusive catalog prices instead of
+added on top, fixing the live overcharge bug; when off, today's additive math is unchanged. Both
+`process_direct_sale_atomic` and all three payment-completing edge functions apply the same formula as
+the client, and every receipt (thermal/PDF/email) shows a real decomposed subtotal+tax+total.
+**Requirements**: TAX-01, TAX-02, TAX-03, TAX-04, TAX-05
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 24 to break down)
+- [ ] 24-01-PLAN.md — Tracer: taxInclusive schema field, mode-aware process_direct_sale_atomic
+  migration (17-arg signature preserved), mode-aware PaymentForm.tsx calc, _shared/tax.ts +
+  process-direct-sale receipt fix, ReceiptDataSchema/receipt-format.ts tax line, proven via a real
+  E2E checkout (TAX-01..05)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 24-02-PLAN.md — BillingSettingsTab admin toggle for taxInclusive, persistence-tested (TAX-01)
+- [ ] 24-03-PLAN.md — process-payment/process-split-payment edge functions wired to the shared
+  decomposeTax helper, closing the reopen-tab/split-payment receipt-consistency gap (TAX-03, TAX-04,
+  TAX-05)
+
+**Wave 3** *(blocked on Wave 1/2 completion)*
+
+- [ ] 24-04-PLAN.md — e2e/helpers/tax.ts extraction + re-point 8 hardcoded-additive-formula specs
+  (2 more than RESEARCH.md's original list), unit-test fixture hardening, full-suite phase-gate proof
+  (TAX-02, TAX-03, TAX-04, TAX-05)
+
+**UI hint**: yes
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
