@@ -160,12 +160,12 @@ added on top, fixing the live overcharge bug; when off, today's additive math is
 the client, and every receipt (thermal/PDF/email) shows a real decomposed subtotal+tax+total.
 **Requirements**: TAX-01, TAX-02, TAX-03, TAX-04, TAX-05
 **Depends on:** Phase 23
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 24-01-PLAN.md — Tracer: taxInclusive schema field, mode-aware process_direct_sale_atomic
+- [x] 24-01-PLAN.md — Tracer: taxInclusive schema field, mode-aware process_direct_sale_atomic
   migration (17-arg signature preserved), mode-aware PaymentForm.tsx calc, _shared/tax.ts +
   process-direct-sale receipt fix, ReceiptDataSchema/receipt-format.ts tax line, proven via a real
   E2E checkout (TAX-01..05)

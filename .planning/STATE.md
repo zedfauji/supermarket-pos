@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 24
 current_phase_name: Tax Configuration (Inclusive/Exclusive Toggle)
 status: executing
-stopped_at: Phase 23 complete, ready to plan Phase 24
-last_updated: "2026-09-01T03:19:34.858Z"
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-09-01T03:43:53.730Z"
 last_activity: 2026-08-31
-last_activity_desc: Phase 23 complete, transitioned to Phase 24
-state_head: 87d9449ec5c6f6ba8b126ab87df9739dcdf801c3
+last_activity_desc: Phase 24 execution started
+state_head: f86fd6558b182fa55829255c125df609ff807078
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 24
-  completed_plans: 20
+  completed_plans: 21
   percent: 71
 ---
 
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 23 — Bank Transfer Payment Tracking
+**Current focus:** Phase 24 — Tax Configuration (Inclusive/Exclusive Toggle)
 
 ## Current Position
 
-Phase: 24 (Tax Configuration (Inclusive/Exclusive Toggle)) — READY TO EXECUTE
-Plan: Not started
+Phase: 24 (Tax Configuration (Inclusive/Exclusive Toggle)) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-31 — Phase 23 complete, transitioned to Phase 24
+Last activity: 2026-08-31 — Phase 24 execution started
 
 ## Performance Metrics
 
@@ -105,6 +105,7 @@ Last activity: 2026-08-31 — Phase 23 complete, transitioned to Phase 24
 | Phase 17-e2e-suite-overhaul P02 | 6min | 2 tasks | 2 files |
 | Phase 17-e2e-suite-overhaul P03 | 12min | 3 tasks | 4 files |
 | Phase 17 P04 | 28m | 2 tasks | 5 files |
+| Phase 24 P01 | 55min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -168,6 +169,8 @@ Recent decisions affecting current work:
 - [Phase ?]: RLS-denial clients always use an anon-key sign-in and isolated storage key.
 - [Phase ?]: Playwright report grouping is derived from spec folders, not filename prefixes.
 - [Phase ?]: Checkout E2E uses the Indian catalog and keeps category filtering keyboard-safe.
+- [Phase 24]: Fixed a zero-row COALESCE gap in process_direct_sale_atomic's v_tax_inclusive read (Rule 1) so a missing settings row defaults to taxInclusive=true per D-01, matching the pre-existing v_tax_rate fallback pattern
+- [Phase 24]: PaymentForm.test.tsx's static useSettings mock converted to a vi.hoisted mutable object for per-test tax-mode overrides; reusable pattern for Plan 02/03
 
 ### Pending Todos
 
@@ -184,6 +187,7 @@ None yet.
 - Phase 16 planning must ensure the reorder-suggestion query rounds to `supplier_products` pack/case size (not base units) and flags products with missing pack-size data — research Pitfall 4.
 - v1.2 (Phases 11-13) is paused after Phase 11 reached discussion stage — requirements/roadmap remain valid for resumption via a dedicated resume flow; see PROJECT.md Active section for full context.
 - v1.0/v1.1 blockers/concerns log (Docker Compose stack switch, pool_tables strip fragility, idempotency gap, Phase 9 wiring question, etc.) archived — all resolved prior to their respective ships.
+- Pre-existing local-DB auth credential drift on alex@barpos.dev breaks 3 unrelated unit tests (queries.clock.test.ts, useCloseTab.test.ts) — see .planning/phases/24-tax-configuration-inclusive-exclusive-toggle/deferred-items.md
 
 ## Deferred Items
 
@@ -203,9 +207,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-31T21:07:39.796Z
-Stopped at: Phase 23 complete, ready to plan Phase 24
-Resume file: .planning/phases/24-tax-configuration-inclusive-exclusive-toggle/24-CONTEXT.md
+Last session: 2026-09-01T03:43:53.235Z
+Stopped at: Completed 24-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
