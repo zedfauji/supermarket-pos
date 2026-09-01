@@ -22,10 +22,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-19)
+See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 24 — Tax Configuration (Inclusive/Exclusive Toggle)
+**Current focus:** Phase 25 — E2E Receipt Print-Mock Consolidation
 
 ## Current Position
 
@@ -176,7 +176,8 @@ Recent decisions affecting current work:
 - [Phase 24]: PaymentForm.test.tsx's static useSettings mock converted to a vi.hoisted mutable object for per-test tax-mode overrides; reusable pattern for Plan 02/03
 - [Phase 24]: Billing Settings taxInclusive toggle placed inside the same grid cell as the tax-rate input, stacked below it
 - [Phase 24]: [Phase 24] process-payment/process-split-payment receipts now decompose tax via shared decomposeTax(), closing the receipt-consistency gap for reopened/split-payment sales
-- [Phase 24]: [Phase 24] PaymentSchema.method now reuses domain.ts's PaymentMethodSchema instead of a hand-rolled enum, fixing a bank_transfer-triggered /payments page blank-out bug
+- [Phase 24]: PaymentSchema.method now reuses domain.ts's PaymentMethodSchema instead of a hand-rolled enum, fixing a bank_transfer-triggered /payments page blank-out bug
+- [Phase 24]: Phase-close code review (24-REVIEW.md) found a real gap the phase's own plans missed — the `/payments` reprint path (`fetchReceiptDataForPayment`) never got the tax-decompose treatment, contradicting TAX-05 and shipping untested. Fixed in-phase (929406c) rather than deferred, plus a Rappi-tax fix (WR-01, shared `decomposeTaxForMethod` helper) and a taxInclusive-toggle confirmation dialog (WR-03). One item (split-payment per-leg receipts vs. full item list, WR-02) deliberately deferred — pre-existing to Phase 24, needs a receipt-contract design decision.
 
 ### Pending Todos
 
@@ -193,7 +194,8 @@ None yet.
 - Phase 16 planning must ensure the reorder-suggestion query rounds to `supplier_products` pack/case size (not base units) and flags products with missing pack-size data — research Pitfall 4.
 - v1.2 (Phases 11-13) is paused after Phase 11 reached discussion stage — requirements/roadmap remain valid for resumption via a dedicated resume flow; see PROJECT.md Active section for full context.
 - v1.0/v1.1 blockers/concerns log (Docker Compose stack switch, pool_tables strip fragility, idempotency gap, Phase 9 wiring question, etc.) archived — all resolved prior to their respective ships.
-- Pre-existing local-DB auth credential drift on alex@barpos.dev breaks 3 unrelated unit tests (queries.clock.test.ts, useCloseTab.test.ts) — see .planning/phases/24-tax-configuration-inclusive-exclusive-toggle/deferred-items.md
+- Phase 25 (E2E Receipt Print-Mock Consolidation) not yet planned — 4 e2e/receipts/ specs each independently hand-roll a `__TAURI_INTERNALS__` mock missing `__TAURI_EVENT_PLUGIN_INTERNALS__.unregisterListener`, causing a page-level uncaught-exception flake unrelated to tax/receipt content. Root-caused during Phase 24, fix scoped (extract shared `e2e/helpers/tauriPrintMock.ts` mirroring the Phase 18 `tauriPeekMock.ts` precedent) but not applied.
+- `e2e/checkout/barcode-scan-search.spec.ts`'s "category tabs compose with search" test times out waiting for a category-filter button — confirmed pre-existing (untouched since Phase 18, zero Phase 24 file ownership), root cause not yet diagnosed, no phase assigned.
 
 ## Deferred Items
 
@@ -219,4 +221,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Run `/gsd-plan-phase 14` to plan Inventory Analytics Reports (Valuation, Shrinkage/Waste, Expiry-Loss, Turnover).
+- Run `/gsd-plan-phase 25` to plan E2E Receipt Print-Mock Consolidation (extract the shared `__TAURI_INTERNALS__` mock helper — see Blockers/Concerns above).
