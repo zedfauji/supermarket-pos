@@ -50,7 +50,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQwOEVGOTAxRTk4MDkwNwpSV1FIQ1pnZWtPOElEZGptSmNUczZ0ZGFOSzBpanplYnNlYTFFbk9POHdoblZBUWZFSGNZaURNSAo=",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFQzc3NzNCM0MyRkUwMEIKUldRTDRDODhPM2ZIYnFnR21FVDVNdW1ZOHVYdXVrWUE2WDZIeGR6SXV1MjNLUVVybWdPWE42cnoK",
       "endpoints": ["https://github.com/zedfauji/supermarket-pos/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "passive"
