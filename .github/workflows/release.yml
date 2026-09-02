@@ -77,15 +77,26 @@ jobs:
           Write-Host "OK: .env.production materialized for ${{ matrix.customer.name }}'s build window." -ForegroundColor Green
 
       - name: Mirror-push to customer repo
-        shell: bash
+        # shell: bash resolves to WSL's bash.exe shim (C:\WINDOWS\system32\bash.EXE)
+        # on this self-hosted Windows runner, not Git Bash — WSL has no configured
+        # distro here, so it fails with "execvpe(/bin/bash) failed". pwsh is this
+        # repo's standard shell on Windows runners (every other step already uses
+        # it); rewritten as PowerShell to avoid the WSL shell-resolution pitfall.
+        shell: pwsh
         env:
           CUSTOMER_PAT: ${{ secrets.CUSTOMER_MIRROR_PAT }}
           CUSTOMER_REPO: ${{ matrix.customer.repo }}
         run: |
-          set -euo pipefail
-          git remote add customer "https://x-access-token:${CUSTOMER_PAT}@github.com/${CUSTOMER_REPO}.git" || \
-            git remote set-url customer "https://x-access-token:${CUSTOMER_PAT}@github.com/${CUSTOMER_REPO}.git"
+          $customerUrl = "https://x-access-token:$env:CUSTOMER_PAT@github.com/$env:CUSTOMER_REPO.git"
+          git remote add customer $customerUrl 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            git remote set-url customer $customerUrl
+          }
           git push --mirror customer
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "FAILED: git push --mirror to customer repo failed (exit $LASTEXITCODE)." -ForegroundColor Red
+            exit 1
+          }
           git remote remove customer
 
       - name: Assert customer override exists (D-08)
