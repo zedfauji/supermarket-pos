@@ -291,7 +291,7 @@ planning should not anchor on.
 
 **Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
 **Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
-**Plans:** 3/7 plans executed
+**Plans:** 4/7 plans executed
 
 Plans:
 **Wave 1**
@@ -307,7 +307,7 @@ Plans:
   rate settings field (PROMO-01, PROMO-02)
 - [x] 27-03-PLAN.md — Live scan-time discount display across every add-to-cart path + cart-line
   discount badge (PROMO-03)
-- [ ] 27-04-PLAN.md — Payment screen: PIN-gated ad-hoc discount (retiring `pool_only`/
+- [x] 27-04-PLAN.md — Payment screen: PIN-gated ad-hoc discount (retiring `pool_only`/
   `consumptions_only`), "Apply Promotion" selector, below-cost override retry (PROMO-05, PROMO-07)
 
 **Wave 3** *(blocked on Wave 2 completion)*

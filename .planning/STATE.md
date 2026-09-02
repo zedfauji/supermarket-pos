@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
 status: executing
-stopped_at: Completed 27-03-PLAN.md
-last_updated: "2026-09-02T16:38:42.228Z"
+stopped_at: Completed 27-04-PLAN.md
+last_updated: "2026-09-02T21:06:44.407Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: 22cc50898f0e1c36467cbcd67717e387d8038faa
+state_head: 061d44f8209a011325ff892ae1a932d911445aaa
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 28
+  completed_plans: 29
   percent: 60
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-09-02 — Phase 27 execution started
 
@@ -113,6 +113,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 27 P01 | 20min | 3 tasks | 20 files |
 | Phase 27 P02 | 25min | 3 tasks | 21 files |
 | Phase 27 P03 | 27min | 3 tasks | 12 files |
+| Phase 27 P04 | 40min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -202,6 +203,8 @@ Recent decisions affecting current work:
 - [Phase 27]: Plan 27-02: pages/promotions/index.tsx built as a minimal Task-1 shell then fully replaced by Task-2's wired DataTable+dialog (both real, independently-verifying diffs).
 - [Phase 27]: Plan 27-02: added useMutationDeletePromotion + wPanels.json/common.json i18n keys not in the plan's files_modified list — required by the task's own action text and by the actual namespaces HomeDashboard.tsx/StatusBadge.tsx read from.
 - [Phase 27]: 27-03: Fixed useCheckoutSale RPC unit_price submission to use raw catalog price instead of discounted display price (Rule 1 bug caused by Task 1's own promotion-pricing wiring).
+- [Phase 27]: Fixed process_payment_atomic/process_split_payment_atomic's tab-closing coverage check to account for ad-hoc discounts (Rule 1 bug, pre-existing gap first exposed by Plan 04's PIN-gated ad-hoc discount)
+- [Phase 27]: Apply Promotion selector is a client-side UX preview only — process_direct_sale_atomic always independently recomputes the authoritative best-price-wins promotion server-side
 
 ### Pending Todos
 
@@ -239,8 +242,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T16:38:41.570Z
-Stopped at: Completed 27-03-PLAN.md
+Last session: 2026-09-02T21:06:43.807Z
+Stopped at: Completed 27-04-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
