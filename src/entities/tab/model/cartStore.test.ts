@@ -98,6 +98,33 @@ describe('cartStore', () => {
         { weightGrams: 1_500, lineTotal: 18 },
       ]);
     });
+
+    it('addWeightedItem with pricePerKgOverride stores that per-kg price, not product.basePrice', () => {
+      useCartStore.getState().addWeightedItem(mockProduct, 500, 8);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.unitPrice).toBe(8);
+      expect(item.lineTotal).toBe(4); // 8 * 0.5kg
+    });
+
+    it('addWeightedItem without pricePerKgOverride falls back to product.basePrice', () => {
+      useCartStore.getState().addWeightedItem(mockProduct, 500);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.unitPrice).toBe(mockProduct.basePrice);
+    });
+
+    it('updateWeightedItem reprices off the line\'s resolved unitPrice, preserving a promotion discount', () => {
+      const { addWeightedItem, updateWeightedItem } = useCartStore.getState();
+      addWeightedItem(mockProduct, 500, 8); // discounted per-kg price
+      const tempId = useCartStore.getState().items[0]!.tempId;
+
+      updateWeightedItem(tempId, 1_000);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.unitPrice).toBe(8);
+      expect(item.lineTotal).toBe(8); // 8 * 1kg, not basePrice (12) * 1kg
+    });
   });
 
   describe('removeItem', () => {

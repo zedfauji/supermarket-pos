@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PaymentForm } from '@widgets/PaymentModal/ui/PaymentForm';
@@ -14,10 +14,14 @@ import {
   ensurePeekWindowShown,
 } from '@features/open-product-peek-window/model/useProductPeekWindow';
 import type { AddToCartPayload } from '@features/open-product-peek-window/model/useProductPeekWindow';
+import { useNearExpiryAlerts } from '@entities/inventory';
 import { useCategories, useProducts } from '@entities/product';
+import { evaluateBestPromotion, usePromotions } from '@entities/promotion';
+import { useSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff';
 import { useCartStore } from '@entities/tab/model/cartStore';
 import { CartItem } from '@entities/tab/ui/CartItem';
+import type { Product } from '@shared/lib/domain';
 import { formatMoney } from '@shared/lib/format';
 import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { isTauri } from '@shared/lib/pos-printer';
@@ -55,6 +59,34 @@ export function CheckoutPanel() {
   });
   useProducts();
   useCategories();
+  const { data: activePromotions } = usePromotions();
+  const { data: nearExpiryAlerts } = useNearExpiryAlerts();
+  const { data: appSettings } = useSettings();
+  // Resolves the live, promotion-discounted unit price for a product at
+  // scan/select time (PROMO-03, display only — process_direct_sale_atomic
+  // remains the sole price authority at checkout). Returns undefined when
+  // no promotion/expiry-trigger qualifies, so callers fall back to
+  // cartStore's own product.basePrice default.
+  const resolveUnitPrice = (product: Product): number | undefined => {
+    if (!activePromotions || !appSettings) return undefined;
+    const daysUntilExpiry =
+      nearExpiryAlerts?.find(alert => alert.productId === product.id)?.daysUntilExpiry ?? null;
+    const match = evaluateBestPromotion(
+      { productId: product.id, categoryId: product.categoryId, basePrice: product.basePrice },
+      activePromotions,
+      new Date(),
+      appSettings.nearExpiry.discountPercent,
+      daysUntilExpiry,
+      appSettings.nearExpiry.thresholdDays
+    );
+    return match?.discountedUnitPrice;
+  };
+  // The ADD_TO_CART_EVENT listener below is registered once on mount
+  // ([] deps, Tauri global event) — a plain closure over resolveUnitPrice
+  // would go stale the moment promotions/settings finish loading after
+  // mount. Route through a ref updated every render instead.
+  const resolveUnitPriceRef = useRef(resolveUnitPrice);
+  resolveUnitPriceRef.current = resolveUnitPrice;
   const items = useCartStore(state => state.items);
   const total = useCartStore(state => state.totalAmount());
   const addItem = useCartStore(state => state.addItem);
@@ -85,12 +117,13 @@ export function CheckoutPanel() {
     });
     const unlistenAddToCart = listen<AddToCartPayload>(ADD_TO_CART_EVENT, event => {
       const { product, qty, weightGrams } = event.payload;
+      const resolvedPrice = resolveUnitPriceRef.current(product);
       if (weightGrams != null) {
-        addWeightedItem(product, weightGrams);
+        addWeightedItem(product, weightGrams, resolvedPrice);
       } else {
         const times = qty ?? 1;
         for (let i = 0; i < times; i += 1) {
-          addItem(product, []);
+          addItem(product, [], resolvedPrice);
         }
       }
     });
@@ -136,7 +169,7 @@ export function CheckoutPanel() {
         search={search}
         onSearchChange={setSearch}
         onSelect={product => {
-          addItem(product, []);
+          addItem(product, [], resolveUnitPrice(product));
         }}
       />
       <aside className="flex min-h-0 flex-col rounded-xl border bg-card p-4">

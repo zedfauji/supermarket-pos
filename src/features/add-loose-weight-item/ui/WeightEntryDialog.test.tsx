@@ -97,10 +97,30 @@ describe('WeightEntryDialog', () => {
     });
 
     expect(mockAddWeightedItem).toHaveBeenCalledTimes(1);
-    expect(mockAddWeightedItem).toHaveBeenCalledWith(mockProduct, 500);
+    expect(mockAddWeightedItem).toHaveBeenCalledWith(mockProduct, 500, undefined);
     expect(mockUpdateWeightedItem).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('mode=add, no onConfirm, pricePerKgOverride set: threads it through to addWeightedItem', () => {
+    const onOpenChange = vi.fn();
+    render(
+      <WeightEntryDialog
+        open
+        product={mockProduct}
+        mode="add"
+        onOpenChange={onOpenChange}
+        pricePerKgOverride={80}
+      />
+    );
+
+    typeHalfKilo();
+    act(() => {
+      screen.getByRole('button', { name: /add to cart/i }).click();
+    });
+
+    expect(mockAddWeightedItem).toHaveBeenCalledWith(mockProduct, 500, 80);
   });
 
   it('mode=edit + tempId, no onConfirm: calls updateWeightedItem, never addWeightedItem or onConfirm', () => {

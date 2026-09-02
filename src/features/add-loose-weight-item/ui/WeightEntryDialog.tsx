@@ -19,6 +19,13 @@ export interface WeightEntryDialogProps {
   /** Overrides the default cartStore.addWeightedItem/updateWeightedItem call.
    *  Used by the peek window (D-04: no direct cart-store access there). */
   onConfirm?: (weightGrams: number) => void;
+  /**
+   * Resolved per-kg price (e.g. a promotion-discounted rate) to use instead
+   * of product.basePrice — for both the helper-text preview and the default
+   * (no onConfirm) addWeightedItem call. The dialog stays a presentation
+   * component: the caller resolves this value, not the dialog itself.
+   */
+  pricePerKgOverride?: number;
 }
 
 const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
@@ -36,6 +43,7 @@ export function WeightEntryDialog({
   initialWeightGrams,
   tempId,
   onConfirm,
+  pricePerKgOverride,
 }: WeightEntryDialogProps) {
   const { t } = useTranslation('featOrders');
   const addWeightedItem = useCartStore(state => state.addWeightedItem);
@@ -46,6 +54,7 @@ export function WeightEntryDialog({
   const weightGrams = gramsFromKg(value);
   const isValid = weightGrams > 0 && weightGrams <= 50_000;
   const locked = useLockStateStore(s => s.locked);
+  const pricePerKg = pricePerKgOverride ?? product.basePrice;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -76,7 +85,7 @@ export function WeightEntryDialog({
     if (!isValid) return;
     if (onConfirm) onConfirm(weightGrams);
     else if (mode === 'edit' && tempId) updateWeightedItem(tempId, weightGrams);
-    else addWeightedItem(product, weightGrams);
+    else addWeightedItem(product, weightGrams, pricePerKgOverride);
     onOpenChange(false);
   };
 
@@ -95,7 +104,7 @@ export function WeightEntryDialog({
           </div>
           <p className="text-center text-sm text-muted-foreground">
             {t('weightEntry.helperText', {
-              total: formatMoney(calcWeightedLineTotal(product.basePrice, weightGrams)),
+              total: formatMoney(calcWeightedLineTotal(pricePerKg, weightGrams)),
             })}
           </p>
           <div className="grid grid-cols-3 gap-2">

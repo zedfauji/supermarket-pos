@@ -20,8 +20,13 @@ interface CartActions {
    */
   addItem: (product: Product, modifiers: Modifier[], unitPrice?: number) => void;
 
-  /** Adds a distinct gram-priced line; weighted products never merge. */
-  addWeightedItem: (product: Product, weightGrams: number) => void;
+  /**
+   * Adds a distinct gram-priced line; weighted products never merge.
+   * Pass pricePerKgOverride to use a resolved price-per-kg (e.g. a
+   * promotion-discounted rate) instead of product.basePrice — mirrors
+   * addItem's unitPrice override above.
+   */
+  addWeightedItem: (product: Product, weightGrams: number, pricePerKgOverride?: number) => void;
 
   /** Reprices one weighted line without changing its position in the cart. */
   updateWeightedItem: (tempId: string, weightGrams: number) => void;
@@ -150,16 +155,17 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      addWeightedItem: (product, weightGrams) => {
+      addWeightedItem: (product, weightGrams, pricePerKgOverride?) => {
+        const resolvedPricePerKg = pricePerKgOverride ?? product.basePrice;
         const newItem: CartItem = {
           tempId: crypto.randomUUID(),
           product,
           quantity: 1,
           weightGrams,
           selectedModifiers: [],
-          unitPrice: product.basePrice,
+          unitPrice: resolvedPricePerKg,
           notes: '',
-          lineTotal: calcWeightedLineTotal(product.basePrice, weightGrams),
+          lineTotal: calcWeightedLineTotal(resolvedPricePerKg, weightGrams),
         };
         logger.debug('cart.weighted_item.added', {
           tempId: newItem.tempId,
@@ -176,7 +182,13 @@ export const useCartStore = create<CartStore>()(
               ? {
                   ...item,
                   weightGrams,
-                  lineTotal: calcWeightedLineTotal(item.product.basePrice, weightGrams),
+                  // Reprice off the line's own already-resolved unitPrice, not
+                  // product.basePrice — a discounted (promotion) weighted line
+                  // must not silently lose its discount when the cashier edits
+                  // the weight (Rule 1 fix: this divergence only became
+                  // observable once addWeightedItem could produce a
+                  // discounted unitPrice via pricePerKgOverride above).
+                  lineTotal: calcWeightedLineTotal(item.unitPrice, weightGrams),
                 }
               : item
           ),
