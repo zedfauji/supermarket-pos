@@ -291,11 +291,38 @@ planning should not anchor on.
 
 **Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
 **Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
-**Plans:** 0 plans
+**Plans:** 7 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run `/gsd-plan-phase 27` to break down)
+- [ ] 27-01-PLAN.md — Tracer: `promotions` schema+RLS+RBAC+order_items snapshot cols+audit trigger,
+  `process_direct_sale_atomic` extension (best-price-wins recompute, expiry-proximity trigger, floor
+  guard, ad-hoc discount unlock), `entities/promotion` model layer, proven via a real RPC integration
+  test (PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-07)
+
+**Wave 2** *(blocked on Wave 1 completion — no file overlap between 02/03/04, parallel)*
+
+- [ ] 27-02-PLAN.md — Admin `/promotions` CRUD page, route guard, Home dashboard tile, expiry-discount
+  rate settings field (PROMO-01, PROMO-02)
+- [ ] 27-03-PLAN.md — Live scan-time discount display across every add-to-cart path + cart-line
+  discount badge (PROMO-03)
+- [ ] 27-04-PLAN.md — Payment screen: PIN-gated ad-hoc discount (retiring `pool_only`/
+  `consumptions_only`), "Apply Promotion" selector, below-cost override retry (PROMO-05, PROMO-07)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 27-05-PLAN.md — Snapshot survives refund/reopen/promotion-deletion; margin report proven
+  correct against discounted price with zero report-code changes (PROMO-06)
+- [ ] 27-06-PLAN.md — Offline promotion-conflict flag: cart-line snapshot + reconnect re-evaluation,
+  never silently re-priced (PROMO-08)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 27-07-PLAN.md — Full `e2e/promotions/` scenario matrix (scope overlap, timezone boundary,
+  promotion-deleted-mid-cart, loose-weight/open-unit) + phase-gate full suite run (PROMO-09)
+
+**UI hint**: yes
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
