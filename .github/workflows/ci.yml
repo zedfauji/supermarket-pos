@@ -10,6 +10,12 @@ jobs:
   quality:
     name: Typecheck / Lint / Test / Audit
     runs-on: [self-hosted, windows, x64]
+    env:
+      # Isolate CI's npm cache from the runner machine's interactive user npm-cache
+      # (both share the same Windows account) — actions/setup-node's cache-save step
+      # was hanging on `tar: Permission denied` against npm-cache/_logs/*.log files
+      # locked by concurrently-running interactive node/npm processes on this box.
+      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,6 +46,9 @@ jobs:
   tauri-build:
     name: Tauri Native Build (Windows)
     runs-on: [self-hosted, windows, x64]
+    env:
+      # See the `quality` job's identical env block for why this is isolated.
+      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
