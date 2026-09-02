@@ -227,6 +227,7 @@ export function CheckoutPanel() {
         weightEntry={weightEntry}
         search={search}
         onSearchChange={setSearch}
+        resolvePromotionMatch={resolvePromotionMatch}
         onSelect={product => {
           const match = resolvePromotionMatch(product);
           addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);

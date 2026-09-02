@@ -26,6 +26,8 @@ export interface WeightEntryDialogProps {
    * component: the caller resolves this value, not the dialog itself.
    */
   pricePerKgOverride?: number;
+  /** The promotion whose discount produced pricePerKgOverride, if any (PROMO-08 cart-line snapshot). Only used by the default (no onConfirm) addWeightedItem call. */
+  promotionId?: string | null;
 }
 
 const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
@@ -44,6 +46,7 @@ export function WeightEntryDialog({
   tempId,
   onConfirm,
   pricePerKgOverride,
+  promotionId,
 }: WeightEntryDialogProps) {
   const { t } = useTranslation('featOrders');
   const addWeightedItem = useCartStore(state => state.addWeightedItem);
@@ -85,7 +88,7 @@ export function WeightEntryDialog({
     if (!isValid) return;
     if (onConfirm) onConfirm(weightGrams);
     else if (mode === 'edit' && tempId) updateWeightedItem(tempId, weightGrams);
-    else addWeightedItem(product, weightGrams, pricePerKgOverride);
+    else addWeightedItem(product, weightGrams, pricePerKgOverride, promotionId);
     onOpenChange(false);
   };
 

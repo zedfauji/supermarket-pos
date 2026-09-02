@@ -7,6 +7,7 @@ import { getProductRiskFlag } from '@entities/product/model/productRiskFlag';
 import { useConfirmRiskyAdd } from '@entities/product/model/useConfirmRiskyAdd';
 import { CategoryTabs } from '@entities/product/ui/CategoryTabs';
 import { ProductCard } from '@entities/product/ui/ProductCard';
+import type { PromotionMatch } from '@entities/promotion';
 import type { Category, Product } from '@shared/lib/domain';
 import { ProductGridSkeleton } from '@shared/ui';
 import { Input } from '@shared/ui/input';
@@ -16,11 +17,19 @@ export function ProductGrid({
   weightEntry,
   search,
   onSearchChange,
+  resolvePromotionMatch,
 }: {
   onSelect: (product: Product) => void;
   weightEntry: ReturnType<typeof useAddLooseWeightItem>;
   search: string;
   onSearchChange: (value: string) => void;
+  /**
+   * Resolves the live promotion/expiry-triggered price for a product
+   * (PROMO-03/PROMO-09) — used for the grid's own loose-weight
+   * WeightEntryDialog (mode="add"), the one direct-select path CheckoutPanel's
+   * own onSelect prop never sees for weighted products.
+   */
+  resolvePromotionMatch: (product: Product) => PromotionMatch | null | undefined;
 }) {
   const { t } = useTranslation('wPanels');
   const confirmRiskyAdd = useConfirmRiskyAdd();
@@ -122,6 +131,12 @@ export function ProductGrid({
           }}
           product={weightEntry.product}
           mode="add"
+          {...(() => {
+            const match = resolvePromotionMatch(weightEntry.product);
+            return match
+              ? { pricePerKgOverride: match.discountedUnitPrice, promotionId: match.promotionId }
+              : {};
+          })()}
         />
       )}
     </section>
