@@ -115,6 +115,8 @@ export const ProcessPaymentRequestSchema = z
     discountType: DiscountTypeSchema.optional(),
     discountValue: z.number().nonnegative().optional(),
     discountAmount: MoneySchema.optional(),
+    /** Phase 27 (PROMO-05/07): manager-PIN authorization carried alongside the ad-hoc discount fields. Unused by the generic tab RPC today — present for call-shape parity with ProcessDirectSaleRequestSchema. */
+    managerOverride: z.boolean().optional(),
     /** Phase 15 gap-closure (D-02): cached tab.version for optimistic-concurrency guard. */
     expectedVersion: z.number().int().nonnegative().optional(),
   })
@@ -193,6 +195,13 @@ function mapProcessPaymentEdgeError(code: string | undefined, message: string): 
       return { code: 'AUTH_FORBIDDEN', message };
     case 'UNAUTHORIZED':
       return { code: 'AUTH_REQUIRED', message };
+    // Phase 27 (PROMO-05/07): process_direct_sale_atomic's manager-override codes.
+    case 'BELOW_COST_REQUIRES_OVERRIDE':
+      return { code: 'BELOW_COST_REQUIRES_OVERRIDE', message };
+    case 'DISCOUNT_REQUIRES_MANAGER':
+      return { code: 'DISCOUNT_REQUIRES_MANAGER', message };
+    case 'INVALID_DISCOUNT_SCOPE':
+      return { code: 'VALIDATION_ERROR', message };
     default:
       return { code: 'SUPABASE_ERROR', message, details: code ?? '' };
   }
@@ -865,6 +874,8 @@ export const ProcessSplitPaymentRequestSchema = z
     discountType: DiscountTypeSchema.optional(),
     discountValue: z.number().nonnegative().optional(),
     discountAmount: MoneySchema.optional(),
+    /** Phase 27 (PROMO-05/07): call-shape parity with ProcessDirectSaleRequestSchema — unused by the generic split-payment RPC today. */
+    managerOverride: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     const legsTotal = data.legs.reduce((sum, leg) => sum + leg.amount, 0);

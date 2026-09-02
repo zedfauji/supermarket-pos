@@ -205,6 +205,8 @@ export type AppErrorCode =
   | 'TOOL_EXECUTION_ERROR'
   | 'STALE_VERSION' // row was updated by another terminal since last read
   | 'NOT_FOUND_VERSIONED' // row missing under FOR UPDATE in versioned RPC
+  | 'BELOW_COST_REQUIRES_OVERRIDE' // Phase 27 (PROMO-07): combined discounts would sell below cost; needs manager PIN override
+  | 'DISCOUNT_REQUIRES_MANAGER' // Phase 27 (PROMO-05): ad-hoc discount submitted without manager authorization
   | 'UNKNOWN_ERROR';
 
 /**

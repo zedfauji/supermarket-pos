@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createElement } from 'react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStaffStore } from '@entities/staff/model/store';
@@ -14,6 +15,20 @@ import { PaymentModal, type PaymentProcessors } from './index';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+// Stub exposing a "grant" control instead of the real PIN keypad/staff-list
+// fetch (Phase 27, PROMO-05/07's discount-section PIN gate) — same pattern
+// as PaymentForm.test.tsx and CorrectOpenUnitDialog.test.tsx.
+vi.mock('@features/manager-pin-gate', () => ({
+  ManagerPinDialog: (props: { open: boolean; requiredAction: string; onSuccess: () => void }) =>
+    props.open
+      ? createElement(
+          'button',
+          { onClick: props.onSuccess, 'data-required-action': props.requiredAction },
+          'Grant PIN'
+        )
+      : null,
 }));
 
 vi.mock('@shared/lib/pos-printer', async importOriginal => {
@@ -554,6 +569,7 @@ describe('PaymentModal', () => {
       renderModal(tabNoPool);
       const dialog = screen.getByRole('dialog');
       await user.click(within(dialog).getByRole('switch', { name: 'Discount' }));
+      await user.click(within(dialog).getByText(/grant pin/i));
       await user.click(within(dialog).getByTestId('discount-type-fixed'));
       expect(within(dialog).getByLabelText('Discount amount')).toBeInTheDocument();
     });
@@ -563,8 +579,9 @@ describe('PaymentModal', () => {
       renderModal(tabNoPool);
       const dialog = screen.getByRole('dialog');
 
-      // discount is progressively disclosed — expand it first
+      // discount is progressively disclosed behind a manager PIN — expand it first
       await user.click(within(dialog).getByRole('switch', { name: 'Discount' }));
+      await user.click(within(dialog).getByText(/grant pin/i));
 
       // Default is percent type — label is "Discount %"
       const discountInput = within(dialog).getByLabelText('Discount %');
@@ -583,8 +600,9 @@ describe('PaymentModal', () => {
       renderModal(tabNoPool);
       const dialog = screen.getByRole('dialog');
 
-      // discount is progressively disclosed — expand it first
+      // discount is progressively disclosed behind a manager PIN — expand it first
       await user.click(within(dialog).getByRole('switch', { name: 'Discount' }));
+      await user.click(within(dialog).getByText(/grant pin/i));
       await user.click(within(dialog).getByTestId('discount-type-fixed'));
       const discountInput = within(dialog).getByLabelText('Discount amount');
       await user.clear(discountInput);
@@ -602,8 +620,9 @@ describe('PaymentModal', () => {
       renderModal(tabNoPool);
       const dialog = screen.getByRole('dialog');
 
-      // discount is progressively disclosed — expand it first
+      // discount is progressively disclosed behind a manager PIN — expand it first
       await user.click(within(dialog).getByRole('switch', { name: 'Discount' }));
+      await user.click(within(dialog).getByText(/grant pin/i));
       const discountInput = within(dialog).getByLabelText('Discount %');
       await user.clear(discountInput);
       await user.type(discountInput, '10');

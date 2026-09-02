@@ -19,6 +19,8 @@ export interface DiscountInfo {
   type: DiscountType;
   value: number;
   amount: number;
+  /** Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc discount and/or the below-cost floor-guard override. */
+  managerOverride: boolean;
 }
 
 export type CashPaymentResult = {
@@ -56,6 +58,7 @@ export async function processCashPayment(
     discountType: discountInfo?.type,
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
+    managerOverride: discountInfo?.managerOverride,
     expectedVersion,
   });
 
@@ -91,6 +94,7 @@ export async function processCardPayment(
     discountType: discountInfo?.type,
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
+    managerOverride: discountInfo?.managerOverride,
     expectedVersion,
   });
 
@@ -135,6 +139,7 @@ export async function processSplitPayment(
     discountType: discountInfo?.type,
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
+    managerOverride: discountInfo?.managerOverride,
   });
 
   if (!result.ok) {

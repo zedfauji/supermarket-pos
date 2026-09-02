@@ -275,6 +275,7 @@ describe('payment-processor', () => {
         type: 'percent',
         value: 10,
         amount: 1.25,
+        managerOverride: true,
       });
 
       const tuple = spy.mock.calls[0];
@@ -284,6 +285,7 @@ describe('payment-processor', () => {
         discountType: 'percent',
         discountValue: 10,
         discountAmount: 1.25,
+        managerOverride: true,
       });
     });
 

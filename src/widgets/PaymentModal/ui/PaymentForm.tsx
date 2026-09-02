@@ -7,11 +7,12 @@ import { AlertCircle, Copy, Loader2, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ManagerPinDialog } from '@features/manager-pin-gate';
 import { ReceiptPreview } from '@features/process-payment/ui/ReceiptPreview';
 import { useReceiptSettings, useSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Tab } from '@entities/tab/model/types';
-import { ReceiptSettingsSchema, type DiscountScope, type DiscountType } from '@shared/lib/domain';
+import { ReceiptSettingsSchema, type DiscountType } from '@shared/lib/domain';
 import {
   getDiscountBase,
   calculateDiscountAmount,
@@ -192,10 +193,17 @@ export function PaymentForm({
   const [cardChargeOverride, setCardChargeOverride] = useState<number | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [discountScope, setDiscountScope] = useState<DiscountScope>('all');
   const [discountType, setDiscountType] = useState<DiscountType>('percent');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountExpanded, setDiscountExpanded] = useState(false);
+  // Phase 27 (PROMO-05/07): managerOverride authorizes both the ad-hoc
+  // discount (once the section is PIN-gated open) AND a below-cost
+  // floor-guard retry — "one manager PIN entry covers the whole sale"
+  // (D-07). pinPurpose tracks which flow requested the dialog so onSuccess
+  // knows what to do next.
+  const [managerOverride, setManagerOverride] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinPurpose, setPinPurpose] = useState<'discount' | 'below_cost' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showOfflineDialog, setShowOfflineDialog] = useState(false);
@@ -224,10 +232,12 @@ export function PaymentForm({
     setCardChargeOverride(null);
     setCustomerName('');
     setCustomerPhone('');
-    setDiscountScope('all');
     setDiscountType('percent');
     setDiscountValue(0);
     setDiscountExpanded(false);
+    setManagerOverride(false);
+    setPinDialogOpen(false);
+    setPinPurpose(null);
     setIsSplitMode(false);
     idempotencyKeyRef.current = null;
     /* eslint-enable react-hooks/set-state-in-effect */
@@ -276,8 +286,8 @@ export function PaymentForm({
   const poolChargesTotal = 0;
   const baseSubtotal = itemsSubtotal + poolChargesTotal;
   const discountBase = useMemo(
-    () => getDiscountBase(itemsSubtotal, poolChargesTotal, discountScope),
-    [itemsSubtotal, discountScope]
+    () => getDiscountBase(itemsSubtotal, poolChargesTotal, 'all'),
+    [itemsSubtotal]
   );
   const discountAmount = useMemo(
     () => calculateDiscountAmount(discountBase, discountType, discountValue),
@@ -336,16 +346,34 @@ export function PaymentForm({
 
   const groupedItems = useMemo(() => groupOrderItems(tab.items), [tab.items]);
 
-  const runPayment = async (): Promise<
-    Result<{ receiptData: ReceiptData }, { message: string; code?: AppErrorCode }>
-  > => {
+  const runPayment = async (
+    /**
+     * Overrides `managerOverride` state for this one attempt — passed
+     * explicitly (rather than read from state) so a below-cost PIN retry
+     * that fires `onSuccess` -> `setManagerOverride(true)` -> re-submit in
+     * the same tick doesn't read the stale pre-update state value.
+     */
+    overrideManagerOverride?: boolean
+  ): Promise<Result<{ receiptData: ReceiptData }, { message: string; code?: AppErrorCode }>> => {
     if (!staffId) {
       return { ok: false, error: { message: t('paymentForm.notSignedIn') } };
     }
 
+    const effectiveManagerOverride = overrideManagerOverride ?? managerOverride;
+    // Present whenever there's an ad-hoc discount OR a manager override is in
+    // effect — the latter must reach the RPC even with discountAmount=0 (a
+    // below-cost retry triggered purely by an auto-applied promotion, no
+    // ad-hoc discount at all).
     const discountInfoArg =
-      discountAmount > 0
-        ? { scope: discountScope, type: discountType, value: discountValue, amount: discountAmount }
+      discountAmount > 0 || effectiveManagerOverride
+        ? {
+            // eslint-disable-next-line i18next/no-literal-string -- DiscountScope's sole enum member, not UI copy
+            scope: 'all' as const,
+            type: discountType,
+            value: discountValue,
+            amount: discountAmount,
+            managerOverride: effectiveManagerOverride,
+          }
         : undefined;
 
     if (method === 'cash') {
@@ -431,15 +459,21 @@ export function PaymentForm({
     return { ok: true, data: { receiptData: r.data.receiptData } };
   };
 
-  const handlePrimary = async () => {
+  const handlePrimary = async (overrideManagerOverride?: boolean) => {
     setErrorMessage(null);
     setIsProcessing(true);
-    const result = await runPayment();
+    const result = await runPayment(overrideManagerOverride);
     setIsProcessing(false);
 
     if (!result.ok) {
       if (result.error.code === 'NETWORK_OFFLINE') {
         setShowOfflineDialog(true);
+        return;
+      }
+      if (result.error.code === 'BELOW_COST_REQUIRES_OVERRIDE') {
+        toast.error(t('featOrders:belowCostOverride.message'));
+        setPinPurpose('below_cost');
+        setPinDialogOpen(true);
         return;
       }
       setErrorMessage(result.error.message);
@@ -478,13 +512,21 @@ export function PaymentForm({
     })();
   };
 
-  const handleSplitPrimary = async () => {
+  const handleSplitPrimary = async (overrideManagerOverride?: boolean) => {
     setErrorMessage(null);
     setIsProcessing(true);
 
+    const effectiveManagerOverride = overrideManagerOverride ?? managerOverride;
     const discountInfoArg =
-      discountAmount > 0
-        ? { scope: discountScope, type: discountType, value: discountValue, amount: discountAmount }
+      discountAmount > 0 || effectiveManagerOverride
+        ? {
+            // eslint-disable-next-line i18next/no-literal-string -- DiscountScope's sole enum member, not UI copy
+            scope: 'all' as const,
+            type: discountType,
+            value: discountValue,
+            amount: discountAmount,
+            managerOverride: effectiveManagerOverride,
+          }
         : undefined;
 
     const legs: SplitPaymentLegInput[] = splitRows.map(row => ({
@@ -511,6 +553,12 @@ export function PaymentForm({
     if (!result.ok) {
       if (result.error.code === 'NETWORK_OFFLINE') {
         setShowOfflineDialog(true);
+        return;
+      }
+      if (result.error.code === 'BELOW_COST_REQUIRES_OVERRIDE') {
+        toast.error(t('featOrders:belowCostOverride.message'));
+        setPinPurpose('below_cost');
+        setPinDialogOpen(true);
         return;
       }
       setErrorMessage(t('paymentForm.splitPaymentFailed'));
@@ -666,7 +714,20 @@ export function PaymentForm({
                   id="discount-toggle"
                   checked={discountExpanded}
                   disabled={isProcessing}
-                  onCheckedChange={setDiscountExpanded}
+                  onCheckedChange={checked => {
+                    if (checked) {
+                      // Phase 27 (PROMO-05): expanding the ad-hoc discount
+                      // section now requires a manager PIN first — the
+                      // Switch itself stays visually off until onSuccess
+                      // flips discountExpanded (a fresh PIN entry is
+                      // required every time the section is re-expanded).
+                      setPinPurpose('discount');
+                      setPinDialogOpen(true);
+                    } else {
+                      setDiscountExpanded(false);
+                      setManagerOverride(false);
+                    }
+                  }}
                 />
               </div>
               <div
@@ -678,22 +739,14 @@ export function PaymentForm({
                   <div className="space-y-2 pt-2">
                     <div className="flex gap-2">
                       {/* Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired —
-                          'all' is DiscountScope's only remaining member, so this is a single
-                          fixed button rather than a scope picker. Full retirement (dropping
-                          discountScope state entirely) is Plan 27-04. */}
-                      <POSButton
-                        type="button"
-                        touchSize="large"
-                        variant="default"
-                        disabled={isProcessing}
+                          'all' is DiscountScope's only remaining member, so this is a
+                          non-interactive label rather than a scope picker. */}
+                      <div
                         data-testid="discount-scope-all"
-                        onClick={() => {
-                          setDiscountScope('all');
-                        }}
-                        className="flex-1 text-xs"
+                        className="flex-1 rounded-md border bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
                       >
                         {t('paymentForm.discountScopeAll')}
-                      </POSButton>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {/* eslint-disable-next-line i18next/no-literal-string -- fixed discount-type enum identifiers, not UI copy */}
@@ -1209,6 +1262,27 @@ export function PaymentForm({
         }}
         onCancel={() => {
           setShowOfflineDialog(false);
+        }}
+      />
+      <ManagerPinDialog
+        open={pinDialogOpen}
+        onOpenChange={open => {
+          setPinDialogOpen(open);
+          if (!open) setPinPurpose(null);
+        }}
+        requiredAction="apply_custom_discount"
+        onSuccess={() => {
+          setPinDialogOpen(false);
+          setManagerOverride(true);
+          if (pinPurpose === 'discount') {
+            setDiscountExpanded(true);
+          } else if (pinPurpose === 'below_cost') {
+            // Resubmit the SAME payment attempt (idempotencyKeyRef is
+            // untouched on a failed attempt) with managerOverride: true —
+            // a retry, not a new sale.
+            void (isSplitMode ? handleSplitPrimary(true) : handlePrimary(true));
+          }
+          setPinPurpose(null);
         }}
       />
     </>

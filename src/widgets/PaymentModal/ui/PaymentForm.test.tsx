@@ -8,6 +8,7 @@
 import { cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fc from 'fast-check';
+import { createElement } from 'react';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,6 +30,20 @@ import { PaymentForm } from './PaymentForm';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+// Stub exposing a "grant" control instead of the real PIN keypad/staff-list
+// fetch — mirrors CorrectOpenUnitDialog.test.tsx's pattern. Lets tests drive
+// the PIN-gate transition (Phase 27, PROMO-05/07) without a real staff list.
+vi.mock('@features/manager-pin-gate', () => ({
+  ManagerPinDialog: (props: { open: boolean; requiredAction: string; onSuccess: () => void }) =>
+    props.open
+      ? createElement(
+          'button',
+          { onClick: props.onSuccess, 'data-required-action': props.requiredAction },
+          'Grant PIN'
+        )
+      : null,
 }));
 
 vi.mock('@shared/lib/pos-printer', async importOriginal => {
@@ -191,11 +206,77 @@ beforeEach(() => {
 // Sprint 2 — Discount section
 // ---------------------------------------------------------------------------
 
+/** Expands the discount section by clicking the toggle then granting the (mocked) manager PIN. */
+async function expandDiscountSection(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('switch', { name: 'Discount' }));
+  await user.click(screen.getByText(/grant pin/i));
+}
+
 describe('PaymentForm — discount section', () => {
   it('renders discount section for cash payment', () => {
     renderForm();
     // Default method is cash (non-rappi tab); discount section should be present
     expect(screen.getByTestId('discount-section')).toBeInTheDocument();
+  });
+
+  it('discount section stays collapsed until the manager PIN dialog reports success', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(screen.getByRole('switch', { name: 'Discount' }));
+
+    // PIN not granted yet — the section's expanded state (discountExpanded)
+    // must not have flipped on.
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+    expect(screen.getByText(/grant pin/i)).toHaveAttribute(
+      'data-required-action',
+      'apply_custom_discount'
+    );
+
+    await user.click(screen.getByText(/grant pin/i));
+
+    // Only after a successful PIN does the section actually expand.
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+  });
+
+  it('the pool_only/consumptions_only scope buttons no longer exist — only a fixed "all" label renders', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await expandDiscountSection(user);
+
+    expect(screen.queryByTestId('discount-scope-pool_only')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('discount-scope-consumptions_only')).not.toBeInTheDocument();
+    expect(screen.getByTestId('discount-scope-all')).toBeInTheDocument();
+    // Non-interactive: it's a div, not a button.
+    expect(screen.getByTestId('discount-scope-all').tagName).not.toBe('BUTTON');
+  });
+
+  it('collapsing the discount section resets manager authorization — re-expanding prompts the PIN dialog again', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await expandDiscountSection(user);
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute('aria-checked', 'true');
+
+    // Collapse.
+    await user.click(screen.getByRole('switch', { name: 'Discount' }));
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+
+    // Re-expand — PIN dialog must appear again, not skip straight to fields.
+    await user.click(screen.getByRole('switch', { name: 'Discount' }));
+    expect(screen.getByText(/grant pin/i)).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
   });
 
   it('discount section not shown for Rappi payment', () => {
@@ -220,10 +301,10 @@ describe('PaymentForm — discount section', () => {
     const user = userEvent.setup();
     renderForm();
 
-    // discount is progressively disclosed — expand it first
-    await user.click(screen.getByRole('switch', { name: 'Discount' }));
+    // discount is progressively disclosed behind a manager PIN — expand it first
+    await expandDiscountSection(user);
 
-    // scope defaults to 'all'; change discount value to 10
+    // scope is fixed to 'all'; change discount value to 10
     const discountInput = screen.getByLabelText('Discount %');
     await user.clear(discountInput);
     await user.type(discountInput, '10');
@@ -237,8 +318,8 @@ describe('PaymentForm — discount section', () => {
     const user = userEvent.setup();
     renderForm();
 
-    // discount is progressively disclosed — expand it first
-    await user.click(screen.getByRole('switch', { name: 'Discount' }));
+    // discount is progressively disclosed behind a manager PIN — expand it first
+    await expandDiscountSection(user);
     await user.click(screen.getByTestId('discount-type-fixed'));
 
     const discountInput = screen.getByLabelText('Discount amount');
@@ -387,6 +468,57 @@ describe('PaymentForm — card charge override', () => {
       undefined,
       expect.any(String)
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 27 — below-cost floor-guard override retry (PROMO-05/PROMO-07)
+// ---------------------------------------------------------------------------
+
+describe('PaymentForm — below-cost override retry', () => {
+  it('BELOW_COST_REQUIRES_OVERRIDE opens the manager PIN dialog; a successful PIN resubmits with managerOverride: true, reusing the same idempotency key', async () => {
+    const user = userEvent.setup();
+    const receipt = makeReceipt();
+    const processCardPayment = vi
+      .fn()
+      .mockResolvedValueOnce(
+        err({
+          code: 'BELOW_COST_REQUIRES_OVERRIDE',
+          message: 'This combination of discounts would sell below cost',
+        })
+      )
+      .mockResolvedValueOnce(ok({ paymentId: 'p-card', receiptData: receipt }));
+    const processors = makeProcessors({ processCardPayment });
+    renderForm(processors);
+    await selectCardMethod(user);
+
+    await user.click(screen.getByRole('button', { name: /confirm card payment/i }));
+
+    await waitFor(() => {
+      expect(processCardPayment).toHaveBeenCalledTimes(1);
+    });
+    expect(toast.error).toHaveBeenCalled();
+    expect(screen.getByText(/grant pin/i)).toHaveAttribute(
+      'data-required-action',
+      'apply_custom_discount'
+    );
+
+    await user.click(screen.getByText(/grant pin/i));
+
+    await waitFor(() => {
+      expect(processCardPayment).toHaveBeenCalledTimes(2);
+    });
+    const [firstCall, secondCall] = processCardPayment.mock.calls;
+    expect(firstCall).toBeDefined();
+    expect(secondCall).toBeDefined();
+    // Same idempotency key on both attempts (index 5) — a retry, not a new sale.
+    expect(secondCall![5]).toBe(firstCall![5]);
+    // managerOverride: true on the retry (index 3 = discountInfo).
+    expect(secondCall![3]).toMatchObject({ managerOverride: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Receipt' })).toBeInTheDocument();
+    });
   });
 });
 
