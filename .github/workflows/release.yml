@@ -36,6 +36,12 @@ jobs:
     runs-on: [self-hosted, windows]
     steps:
       - uses: actions/checkout@v4
+        with:
+          # git push --mirror needs full history — actions/checkout defaults to
+          # a shallow (depth=1) fetch, which produces an incomplete object pack
+          # that the remote rejects ("did not receive expected object" /
+          # "index-pack failed"). D-01/D-02 require a full mirror of every ref.
+          fetch-depth: 0
 
       # Isolate CI's npm cache from the runner machine's interactive user npm-cache
       # (both share the same Windows account) — actions/setup-node's cache-save step
