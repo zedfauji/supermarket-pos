@@ -127,6 +127,19 @@ Last activity: 2026-09-01 — Phase 24 complete, transitioned to Phase 25
   Billing settings, fixing a live bug where checkout and the server-side
   `process_direct_sale_atomic` RPC always apply tax additively even though store prices already
   include tax (every sale currently overcharged by the tax amount). Requirements TAX-01..05
+
+- Phase 26 added: Multi-Customer Deployment — ship this codebase to multiple customers, each with
+  an isolated Supabase project and their own release/updater channel. Scoped from spikes 007–010
+  (`.planning/spikes/MANIFEST.md`, idea key `multi-customer-deployment`), triggered by CI run
+  33587195680 failing with leftover `bar-pos v1.2.0` branding and the discovery that
+  `tauri.conf.json`/`.env.production` hardcode one customer (Taj House of Spices) today. Branching
+  decision (user-confirmed): core repo stays the single source of truth; each customer gets a thin
+  repo for Actions+Releases only, synced from core — a shared repo's `/releases/latest` is proven
+  repo-wide, not per-customer (Spike 007), which breaks Tauri's updater across customers. Depends on
+  two filed todos: `fix-ci-tauri-build-broker-order.md` (unrelated CI bug blocking `tauri-build`
+  today) and `migrate-env-production-to-github-environment.md` (interim Environment-secret migration
+  for the existing customer, ahead of the full N-customer machinery). Captured via `/gsd-explore`
+  2026-09-01.
   captured via `/gsd-explore` 2026-08-31. Grey areas deferred to discuss-phase.
 
 - Phase 23 added: Bank Transfer Payment Tracking — cashier marks a sale awaiting bank transfer
