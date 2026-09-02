@@ -77,7 +77,7 @@ const DEFAULT_PAYMENT_LABELS: PaymentMethodLabels = {
   rappi: 'Rappi',
 };
 
-const DEFAULT_NEAR_EXPIRY: NearExpirySettings = { thresholdDays: 14 };
+const DEFAULT_NEAR_EXPIRY: NearExpirySettings = { thresholdDays: 14, discountPercent: 15 };
 
 const DEFAULT_RECEIPT: ReceiptSettings = {
   paperWidthChars: 32,

@@ -31,6 +31,8 @@ export const STAFF_ACTIONS = [
   'reopen_tab',
   'confirm_transfer_payment',
   'dispute_transfer_payment',
+  'manage_promotions',
+  'apply_custom_discount',
 ] as const;
 
 export type StaffAction = (typeof STAFF_ACTIONS)[number];
@@ -56,6 +58,7 @@ const MANAGER_EXTRA: ReadonlySet<StaffAction> = new Set([
   'reopen_tab', // reopen a closed/paid tab — manager+ only (D-04)
   'confirm_transfer_payment', // confirm a pending bank-transfer sale — manager+ only (Phase 23, D-07)
   'dispute_transfer_payment', // dispute a pending bank-transfer sale — manager+ only (Phase 23, D-07)
+  'apply_custom_discount', // ad-hoc discount + below-cost floor-guard override — manager+ only (Phase 27, PROMO-05/07)
 ]);
 
 const KITCHEN_ACTIONS: ReadonlySet<StaffAction> = new Set(['clock_in', 'clock_out']);
@@ -65,6 +68,7 @@ const ADMIN_EXTRA: ReadonlySet<StaffAction> = new Set([
   'manage_settings',
   'delete_tab',
   'view_all_shifts',
+  'manage_promotions', // admin-only, PROMO-01
 ]);
 
 const MANAGER_ACTIONS: ReadonlySet<StaffAction> = new Set([...CASHIER_ACTIONS, ...MANAGER_EXTRA]);

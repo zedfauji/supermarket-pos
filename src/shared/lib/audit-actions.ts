@@ -62,6 +62,9 @@ export const AuditActionSchema = z.enum([
   'tip_distribution.compute',
   // Promotions
   'promotion.apply',
+  'promotion.create',
+  'promotion.update',
+  'promotion.deactivate',
   // Open units
   'open_unit.open',
   'open_unit.deplete',

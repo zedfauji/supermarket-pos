@@ -145,22 +145,18 @@ export function getCurrentTime(): string {
 }
 
 /**
- * Returns the portion of the bill that a discount applies to, based on scope.
+ * Returns the portion of the bill that a discount applies to.
+ *
+ * Phase 27 (PROMO-05): pool_only/consumptions_only scopes were retired —
+ * 'all' (itemsSubtotal + poolTotal) is the only remaining scope, kept as a
+ * parameter for call-site stability rather than dropped outright.
  */
 export function getDiscountBase(
   itemsSubtotal: number,
   poolTotal: number,
-  scope: DiscountScope
+  _scope: DiscountScope
 ): number {
-  switch (scope) {
-    case 'pool_only':
-      return poolTotal;
-    case 'consumptions_only':
-      return itemsSubtotal;
-    case 'all':
-    default:
-      return Math.round((itemsSubtotal + poolTotal) * 100) / 100;
-  }
+  return Math.round((itemsSubtotal + poolTotal) * 100) / 100;
 }
 
 /**

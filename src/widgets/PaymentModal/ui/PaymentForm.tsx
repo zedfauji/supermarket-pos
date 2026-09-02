@@ -271,8 +271,8 @@ export function PaymentForm({
     [tab.items]
   );
   // Pool tables were removed (Phase 1 strip-rebrand) — pool charges are
-  // permanently 0. DiscountScope's 'pool_only' branch is kept but
-  // unreachable in practice (same deferral as DiscountScopeSchema itself).
+  // permanently 0. DiscountScopeSchema's pool_only/consumptions_only members
+  // were retired in Phase 27 (PROMO-05); 'all' is the only scope now.
   const poolChargesTotal = 0;
   const baseSubtotal = itemsSubtotal + poolChargesTotal;
   const discountBase = useMemo(
@@ -677,27 +677,23 @@ export function PaymentForm({
                 <div className="overflow-hidden">
                   <div className="space-y-2 pt-2">
                     <div className="flex gap-2">
-                      {/* eslint-disable-next-line i18next/no-literal-string -- fixed discount-scope enum identifiers, not UI copy */}
-                      {(['all', 'pool_only', 'consumptions_only'] as const).map(scope => (
-                        <POSButton
-                          key={scope}
-                          type="button"
-                          touchSize="large"
-                          variant={discountScope === scope ? 'default' : 'outline'}
-                          disabled={isProcessing}
-                          data-testid={`discount-scope-${scope}`}
-                          onClick={() => {
-                            setDiscountScope(scope);
-                          }}
-                          className="flex-1 text-xs"
-                        >
-                          {scope === 'all'
-                            ? t('paymentForm.discountScopeAll')
-                            : scope === 'pool_only'
-                              ? t('paymentForm.discountScopePool')
-                              : t('paymentForm.discountScopeConsumptions')}
-                        </POSButton>
-                      ))}
+                      {/* Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired —
+                          'all' is DiscountScope's only remaining member, so this is a single
+                          fixed button rather than a scope picker. Full retirement (dropping
+                          discountScope state entirely) is Plan 27-04. */}
+                      <POSButton
+                        type="button"
+                        touchSize="large"
+                        variant="default"
+                        disabled={isProcessing}
+                        data-testid="discount-scope-all"
+                        onClick={() => {
+                          setDiscountScope('all');
+                        }}
+                        className="flex-1 text-xs"
+                      >
+                        {t('paymentForm.discountScopeAll')}
+                      </POSButton>
                     </div>
                     <div className="flex gap-2">
                       {/* eslint-disable-next-line i18next/no-literal-string -- fixed discount-type enum identifiers, not UI copy */}

@@ -331,16 +331,10 @@ describe('generateIdempotencyKey', () => {
 // ---------------------------------------------------------------------------
 
 describe('getDiscountBase', () => {
+  // Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired — 'all'
+  // is the only remaining DiscountScope member.
   it("scope 'all' returns itemsSubtotal + poolTotal", () => {
     expect(getDiscountBase(80, 20, 'all')).toBe(100);
-  });
-
-  it("scope 'pool_only' returns only poolTotal", () => {
-    expect(getDiscountBase(80, 20, 'pool_only')).toBe(20);
-  });
-
-  it("scope 'consumptions_only' returns only itemsSubtotal", () => {
-    expect(getDiscountBase(80, 20, 'consumptions_only')).toBe(80);
   });
 });
 

@@ -145,11 +145,12 @@ export const StockMovementReason = {
 } as const;
 export type StockMovementReason = z.infer<typeof StockMovementReasonSchema>;
 
-export const DiscountScopeSchema = z.enum(['all', 'pool_only', 'consumptions_only']);
+// Phase 27 (PROMO-05): pool_only/consumptions_only retired — pool tables and
+// bar-pos tab-scoped "consumptions" no longer exist in this supermarket app.
+// 'all' is the sole remaining ad-hoc-discount scope.
+export const DiscountScopeSchema = z.enum(['all']);
 export const DiscountScope = {
   ALL: 'all',
-  POOL_ONLY: 'pool_only',
-  CONSUMPTIONS_ONLY: 'consumptions_only',
 } as const;
 export type DiscountScope = z.infer<typeof DiscountScopeSchema>;
 
@@ -342,6 +343,12 @@ export const OrderItemSchema = z.object({
   modifierIds: z.array(UuidSchema).default([]),
   modifierPriceDelta: MoneySchema.default(0),
   costPriceSnapshot: MoneySchema.nullable().optional(),
+  /** Phase 27 (PROMO-06): winning promotion's id, or null for the expiry-trigger candidate / no discount. */
+  promotionId: UuidSchema.nullable().optional(),
+  /** Phase 27 (PROMO-06): winning candidate's discount_value/expiryDiscountPercent snapshot, null when no discount. */
+  discountRate: z.number().nullable().optional(),
+  /** Phase 27 (PROMO-06): computed discount amount snapshot, null when no discount. */
+  discountAmount: MoneySchema.nullable().optional(),
   notes: z.string().max(200).nullable(),
   product: ProductSchema.optional(),
   modifiers: z.array(ModifierSchema).default([]),
@@ -830,6 +837,8 @@ export type EmailReceiptSettings = z.infer<typeof EmailReceiptSettingsSchema>;
 
 export const NearExpirySettingsSchema = z.object({
   thresholdDays: z.number().int().min(1).max(365).default(14),
+  /** Phase 27 (PROMO-02/D-04): flat expiry-proximity auto-discount rate. */
+  discountPercent: z.number().min(0).max(100).default(15),
 });
 
 export type NearExpirySettings = z.infer<typeof NearExpirySettingsSchema>;
@@ -1627,3 +1636,33 @@ export const OfflineActionSchema = z.object({
   retryCount: z.number().int().min(0),
 });
 export type OfflineAction = z.infer<typeof OfflineActionSchema>;
+
+// ============================================================================
+// PROMOTIONS (Phase 27 — Promotions & Discount Management)
+// ============================================================================
+
+export const PromotionScopeTypeSchema = z.enum(['product', 'category']);
+export type PromotionScopeType = z.infer<typeof PromotionScopeTypeSchema>;
+
+export const PromotionSchema = z.object({
+  id: UuidSchema,
+  name: z.string().min(1).max(100),
+  scopeType: PromotionScopeTypeSchema,
+  /** Exactly one of productId/categoryId is set — enforced by the DB CHECK constraint. */
+  productId: UuidSchema.nullable(),
+  categoryId: UuidSchema.nullable(),
+  discountType: DiscountTypeSchema,
+  discountValue: z.number().positive(),
+  startsAt: TimestampSchema,
+  endsAt: TimestampSchema,
+  active: z.boolean().default(true),
+  createdAt: TimestampSchema,
+  createdBy: UuidSchema.nullable(),
+});
+
+export const PromotionCreateSchema = PromotionSchema.omit({ id: true, createdAt: true });
+export const PromotionUpdateSchema = PromotionSchema.partial().required({ id: true });
+
+export type Promotion = z.infer<typeof PromotionSchema>;
+export type PromotionCreate = z.infer<typeof PromotionCreateSchema>;
+export type PromotionUpdate = z.infer<typeof PromotionUpdateSchema>;

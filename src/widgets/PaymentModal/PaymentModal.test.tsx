@@ -537,17 +537,16 @@ describe('PaymentModal', () => {
       expect(within(dialog).getByTestId('discount-section')).toBeInTheDocument();
     });
 
-    it('selecting Pool Only scope button is reflected in the UI', async () => {
+    it('discount-scope-all button is the only scope option (Phase 27, PROMO-05 retirement)', async () => {
       const user = userEvent.setup();
       renderModal(tabNoPool);
       const dialog = screen.getByRole('dialog');
       // discount is progressively disclosed — expand it first
       await user.click(within(dialog).getByRole('switch', { name: 'Discount' }));
-      const poolOnlyBtn = within(dialog).getByTestId('discount-scope-pool_only');
-      await user.click(poolOnlyBtn);
-      expect(poolOnlyBtn.className).toContain('bg-primary');
       const allBtn = within(dialog).getByTestId('discount-scope-all');
-      expect(allBtn.className).not.toContain('bg-primary');
+      expect(allBtn).toBeInTheDocument();
+      expect(within(dialog).queryByTestId('discount-scope-pool_only')).not.toBeInTheDocument();
+      expect(within(dialog).queryByTestId('discount-scope-consumptions_only')).not.toBeInTheDocument();
     });
 
     it('selecting Fixed type button changes the discount label to "Discount amount"', async () => {

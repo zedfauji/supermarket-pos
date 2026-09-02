@@ -36,6 +36,9 @@ const BodySchema = z
     discountAmount: z.number().nonnegative().multipleOf(0.01).optional(),
     customerName: z.string().min(1).max(100).optional(),
     customerPhone: z.string().min(1).max(30).optional(),
+    // Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc
+    // discount and/or the below-cost floor-guard override.
+    managerOverride: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
@@ -308,6 +311,7 @@ Deno.serve(async (req: Request) => {
     p_discount_amount: body.data.discountAmount ?? null,
     p_customer_name: body.data.customerName ?? 'Walk-in',
     p_customer_phone: body.data.customerPhone ?? null,
+    p_manager_override: body.data.managerOverride ?? false,
   });
   if (error)
     return jsonResponse(

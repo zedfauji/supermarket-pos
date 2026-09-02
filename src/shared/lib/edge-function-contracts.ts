@@ -642,6 +642,8 @@ export const ProcessDirectSaleRequestSchema = z
     discountAmount: MoneySchema.optional(),
     customerName: z.string().min(1).max(100).optional(),
     customerPhone: z.string().min(1).max(30).optional(),
+    /** Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc discount and/or the below-cost floor-guard override. */
+    managerOverride: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
