@@ -6,18 +6,48 @@ on:
       - 'v*'
 
 jobs:
-  publish-tauri:
-    permissions:
-      contents: write
+  read-manifest:
     runs-on: [self-hosted, windows]
+    outputs:
+      active_customers: ${{ steps.filter.outputs.active_customers }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read active customers from manifest
+        id: filter
+        shell: pwsh
+        run: |
+          . scripts/lib/customer-manifest.ps1
+          $active = @(Get-ActiveCustomers -ManifestPath 'customers/customers.json')
+          $json = $active | ConvertTo-Json -Compress -AsArray
+          echo "active_customers=$json" >> $env:GITHUB_OUTPUT
+          Write-Host "OK: $($active.Count) active customer(s): $($active.name -join ', ')" -ForegroundColor Green
+
+  sync-customers:
+    needs: [read-manifest]
+    if: needs.read-manifest.outputs.active_customers != '[]'
+    strategy:
+      matrix:
+        customer: ${{ fromJson(needs.read-manifest.outputs.active_customers) }}
+    permissions:
+      contents: write
+    environment:
+      name: ${{ matrix.customer.github_environment }}
+    runs-on: [self-hosted, windows]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # git push --mirror needs full history — actions/checkout defaults to
+          # a shallow (depth=1) fetch, which produces an incomplete object pack
+          # that the remote rejects ("did not receive expected object" /
+          # "index-pack failed"). D-01/D-02 require a full mirror of every ref.
+          fetch-depth: 0
+
       # Isolate CI's npm cache from the runner machine's interactive user npm-cache
       # (both share the same Windows account) — actions/setup-node's cache-save step
-      # hangs indefinitely on `tar: Permission denied` against npm-cache/_logs/*.log
-      # files locked by concurrently-running interactive node/npm processes on this
-      # box. `runner.temp` is only valid in step-level (not job-level) env.
+      # was hanging on `tar: Permission denied` against npm-cache/_logs/*.log files
+      # locked by concurrently-running interactive node/npm processes on this box.
+      # `runner.temp` is only valid in step-level (not job-level) `env:`.
       - name: setup node
         uses: actions/setup-node@v4
         env:
@@ -38,6 +68,144 @@ jobs:
         env:
           NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
         run: npm ci
+
+      - name: Materialize .env.production from Environment secrets
+        shell: pwsh
+        run: |
+          # Values are sourced from this customer's own GitHub Environment (this
+          # job's `environment:` binding above scopes secret resolution to exactly
+          # this customer's Environment). Never echo the values themselves.
+          $supabaseUrl = "https://${{ matrix.customer.supabase_project_ref }}.supabase.co"
+          @"
+          VITE_SUPABASE_URL=$supabaseUrl
+          VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          "@ | Set-Content -Path .env.production -Encoding utf8 -NoNewline
+          Write-Host "OK: .env.production materialized for ${{ matrix.customer.name }}'s build window." -ForegroundColor Green
+
+      - name: Mirror-push to customer repo
+        # shell: bash resolves to WSL's bash.exe shim (C:\WINDOWS\system32\bash.EXE)
+        # on this self-hosted Windows runner, not Git Bash — WSL has no configured
+        # distro here, so it fails with "execvpe(/bin/bash) failed". pwsh is this
+        # repo's standard shell on Windows runners (every other step already uses
+        # it); rewritten as PowerShell to avoid the WSL shell-resolution pitfall.
+        shell: pwsh
+        env:
+          CUSTOMER_PAT: ${{ secrets.CUSTOMER_MIRROR_PAT }}
+          CUSTOMER_REPO: ${{ matrix.customer.repo }}
+        run: |
+          # actions/checkout@v4 sets http.https://github.com/.extraheader (an
+          # Authorization header carrying GITHUB_TOKEN) scoped to github.com
+          # generically, not just the origin repo. libcurl sends that header on
+          # EVERY github.com request in this job, overriding any URL-embedded
+          # credentials below — so without unsetting it here, this push would
+          # silently run as GITHUB_TOKEN (no access to the customer repo) and
+          # fail with a misleading "Repository not found" instead of using
+          # CUSTOMER_PAT. actions/checkout's own post-job cleanup unsets the
+          # same header; we just need it gone before this step, not only after.
+          git config --local --unset-all http.https://github.com/.extraheader 2>$null
+          $customerUrl = "https://x-access-token:$env:CUSTOMER_PAT@github.com/$env:CUSTOMER_REPO.git"
+          git remote add customer $customerUrl 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            git remote set-url customer $customerUrl
+          }
+          git push --mirror customer
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "FAILED: git push --mirror to customer repo failed (exit $LASTEXITCODE)." -ForegroundColor Red
+            exit 1
+          }
+          git remote remove customer
+
+      - name: Assert customer override exists (D-08)
+        shell: pwsh
+        run: |
+          $overridePath = "customers/${{ matrix.customer.name }}/tauri.override.json"
+          if (-not (Test-Path -LiteralPath $overridePath)) {
+            Write-Host "FAILED: missing override file '$overridePath' for customer '${{ matrix.customer.name }}' - refusing to build with core defaults (D-08)." -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "OK: override file '$overridePath' present." -ForegroundColor Green
+
+      - name: generate build cert (Phase 20, DEP-01)
+        id: gencert
+        shell: pwsh
+        run: |
+          $output = powershell -File scripts/generate-build-cert.ps1
+          $thumbprint = ($output | Select-Object -Last 1).ToString().Trim()
+          if ($thumbprint -notmatch '^[0-9A-Fa-f]{40}$') {
+            Write-Host "FAILED: unexpected thumbprint output: '$thumbprint'" -ForegroundColor Red
+            exit 1
+          }
+          echo "thumbprint=$thumbprint" >> $env:GITHUB_OUTPUT
+
+      - uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'Supermarket POS v__VERSION__'
+          releaseBody: 'See CHANGELOG.md for release notes.'
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          projectPath: .
+          args: >-
+            --config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}
+            --config customers/${{ matrix.customer.name }}/tauri.override.json
+
+      - name: Clean up materialized secrets
+        if: always()
+        shell: pwsh
+        run: |
+          Remove-Item -Path .env.production -Force -ErrorAction SilentlyContinue
+          git remote remove customer 2>$null
+          exit 0
+
+  publish-tauri:
+    permissions:
+      contents: write
+    environment:
+      name: taj-house-of-spices
+    runs-on: [self-hosted, windows]
+    steps:
+      - uses: actions/checkout@v4
+
+      # See the sync-customers job's identical step-level env for why this is
+      # isolated (`runner.temp` is only valid in step-level, not job-level, `env:`).
+      - name: setup node
+        uses: actions/setup-node@v4
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: install Rust stable
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup show
+
+      - name: install frontend dependencies
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
+        run: npm ci
+
+      - name: Materialize .env.production from Environment secrets
+        shell: pwsh
+        run: |
+          # Values are sourced from the taj-house-of-spices GitHub Environment
+          # (this job's `environment:` binding above scopes secret resolution to
+          # exactly this Environment — GitHub's own secret-scoping primitive).
+          # Never echo the values themselves, only confirm the file was written.
+          @"
+          VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          "@ | Set-Content -Path .env.production -Encoding utf8 -NoNewline
+          Write-Host "OK: .env.production materialized for this build window." -ForegroundColor Green
 
       - name: generate build cert (Phase 20, DEP-01)
         id: gencert
@@ -70,3 +238,8 @@ jobs:
           includeUpdaterJson: true
           projectPath: .
           args: '--config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}'
+
+      - name: Remove materialized .env.production
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Path .env.production -Force -ErrorAction SilentlyContinue
