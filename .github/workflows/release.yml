@@ -13,8 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Isolate CI's npm cache from the runner machine's interactive user npm-cache
+      # (both share the same Windows account) — actions/setup-node's cache-save step
+      # hangs indefinitely on `tar: Permission denied` against npm-cache/_logs/*.log
+      # files locked by concurrently-running interactive node/npm processes on this
+      # box. `runner.temp` is only valid in step-level (not job-level) env.
       - name: setup node
         uses: actions/setup-node@v4
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
         with:
           node-version: lts/*
           cache: npm
@@ -28,6 +35,8 @@ jobs:
           rustup show
 
       - name: install frontend dependencies
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
         run: npm ci
 
       - name: generate build cert (Phase 20, DEP-01)
