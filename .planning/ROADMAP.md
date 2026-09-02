@@ -291,12 +291,12 @@ planning should not anchor on.
 
 **Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
 **Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
-**Plans:** 7 plans
+**Plans:** 1/7 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 27-01-PLAN.md — Tracer: `promotions` schema+RLS+RBAC+order_items snapshot cols+audit trigger,
+- [x] 27-01-PLAN.md — Tracer: `promotions` schema+RLS+RBAC+order_items snapshot cols+audit trigger,
   `process_direct_sale_atomic` extension (best-price-wins recompute, expiry-proximity trigger, floor
   guard, ad-hoc discount unlock), `entities/promotion` model layer, proven via a real RPC integration
   test (PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-07)

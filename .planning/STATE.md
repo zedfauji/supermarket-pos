@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
 status: executing
-stopped_at: Phase 27 UI-SPEC approved
-last_updated: "2026-09-02T15:08:57.813Z"
+stopped_at: Completed 27-01-PLAN.md
+last_updated: "2026-09-02T15:36:49.576Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: 0b6993f5c49214e84fb9c64fee1db0d61b54771b
+state_head: aeb5b38ae86bc7b56906d9f97fe6d8df6a476d54
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 24
+  completed_plans: 26
   percent: 60
 ---
 
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 27
+Plan: 2 of 7
+Status: Ready to execute
 Last activity: 2026-09-02 — Phase 27 execution started
 
 ## Performance Metrics
@@ -110,6 +110,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 24 P02 | 20min | 2 tasks | 4 files |
 | Phase 24 P03 | 30min+25min | 2 tasks | 6 files |
 | Phase 26 P01 | 15m | 2 tasks | 2 files |
+| Phase 27 P01 | 20min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,9 @@ Recent decisions affecting current work:
 - [Phase 24]: PaymentSchema.method now reuses domain.ts's PaymentMethodSchema instead of a hand-rolled enum, fixing a bank_transfer-triggered /payments page blank-out bug
 - [Phase 24]: Phase-close code review (24-REVIEW.md) found a real gap the phase's own plans missed — the `/payments` reprint path (`fetchReceiptDataForPayment`) never got the tax-decompose treatment, contradicting TAX-05 and shipping untested. Fixed in-phase (929406c) rather than deferred, plus a Rappi-tax fix (WR-01, shared `decomposeTaxForMethod` helper) and a taxInclusive-toggle confirmation dialog (WR-03). One item (split-payment per-leg receipts vs. full item list, WR-02) deliberately deferred — pre-existing to Phase 24, needs a receipt-contract design decision.
 - [Phase 26]: Phase 26 Plan 01: fixed ci.yml tauri-build broker-build ordering and migrated Taj's .env.production into the taj-house-of-spices GitHub Environment (release.yml now materializes it at build time, deletes at job end); local .env.production deleted after operator confirmed Environment secrets set
+- [Phase 27]: Promotions/floor-guard manager-override role re-check fires whenever p_manager_override=true is claimed, not only alongside ad-hoc discount params — closes the below-cost bypass path for T-27-02.
+- [Phase 27]: Best-price-wins promotion candidate selection uses one SQL query across all matching active product/category promotions (not a fixed 2-candidate assumption) — handles multiple overlapping promotions on the same target correctly.
+- [Phase 27]: DiscountScopeSchema narrowed to 'all' (PROMO-05); PaymentForm.tsx/domain-helpers.ts kept minimally compiling (single fixed button) — full retirement/PIN-gating stays with Plan 27-04 as planned.
 
 ### Pending Todos
 
@@ -230,9 +234,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T06:04:00.000Z
-Stopped at: Phase 27 planned and verified (7 plans, 4 waves, commit cdc3ce1) — ready for `/gsd-execute-phase 27`
-Resume file: .planning/phases/27-promotions-discount-management/27-01-PLAN.md
+Last session: 2026-09-02T15:36:49.017Z
+Stopped at: Completed 27-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 

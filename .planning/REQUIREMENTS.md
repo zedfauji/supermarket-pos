@@ -236,13 +236,13 @@ Phase 1 and was combo/pool-coupled — not reusable) and no batch/lot-level expi
 
 ### Promotions & Discounts
 
-- [ ] **PROMO-01**: A promotion/discount rule can be scoped to a specific product, a category, or a subcategory (a category row with `parentId` set), with `percent` or `fixed` discount type and an active date range in store-local time. Managing promotions requires a new `manage_promotions` RBAC action, granted **admin-only**.
-- [ ] **PROMO-02**: A promotion can auto-trigger off a product's proximity to its `expiry_date`, using a configurable `days_threshold → discount_%` tier table, reusing the existing near-expiry-alert threshold setting rather than introducing a second one.
-- [ ] **PROMO-03**: A qualifying product shows its discounted price live in the cart the moment it's scanned or added (client display). `process_direct_sale_atomic` is extended to recompute qualifying promotions server-side and remains the sole price authority — the client-displayed discount is never trusted as-is at checkout.
-- [ ] **PROMO-04**: When more than one promotion qualifies for the same line item, the single largest-discount promotion applies (best-price-wins); others are ignored for that line.
+- [x] **PROMO-01**: A promotion/discount rule can be scoped to a specific product, a category, or a subcategory (a category row with `parentId` set), with `percent` or `fixed` discount type and an active date range in store-local time. Managing promotions requires a new `manage_promotions` RBAC action, granted **admin-only**.
+- [x] **PROMO-02**: A promotion can auto-trigger off a product's proximity to its `expiry_date`, using a configurable `days_threshold → discount_%` tier table, reusing the existing near-expiry-alert threshold setting rather than introducing a second one.
+- [x] **PROMO-03**: A qualifying product shows its discounted price live in the cart the moment it's scanned or added (client display). `process_direct_sale_atomic` is extended to recompute qualifying promotions server-side and remains the sole price authority — the client-displayed discount is never trusted as-is at checkout.
+- [x] **PROMO-04**: When more than one promotion qualifies for the same line item, the single largest-discount promotion applies (best-price-wins); others are ignored for that line.
 - [ ] **PROMO-05**: At the payment screen, a cashier can apply an existing active promotion to the sale. Applying an ad-hoc/custom discount not tied to an existing promotion requires a manager PIN, mirroring the existing refund manager-PIN gate. The bar-pos-only `discountScope` values (`pool_only`, `consumptions_only`) on `PaymentSchema` are retired.
 - [ ] **PROMO-06**: Every applied promotion/discount is snapshotted per line item at sale time (promotion id, rate, computed discount amount) on `order_items`, mirroring the existing cost-price snapshot pattern — a later refund or reopened sale restores the exact historical discount even if the promotion has since changed or been deleted, and the existing margin report computes against the discounted price, not list price.
-- [ ] **PROMO-07**: No combination of discounts can drop a line item's final price below its recorded cost — an explicit floor guard rejects or caps the discount rather than allowing a below-cost sale.
+- [x] **PROMO-07**: No combination of discounts can drop a line item's final price below its recorded cost — an explicit floor guard rejects or caps the discount rather than allowing a below-cost sale.
 - [ ] **PROMO-08**: A discount computed while offline is snapshotted at add-to-cart time; if the underlying promotion changed before reconnect/sync, the conflict is flagged for review rather than silently re-priced.
 - [ ] **PROMO-09**: Automated Playwright E2E coverage (per this repo's mandatory-automated-testing policy) proves: product/category scope overlap resolution, store-local timezone date-range boundaries, a promotion deleted mid-cart, refund/reopen restoring the exact historical discount, the below-cost floor guard, interaction with loose-weight and case→piece (open-unit) items, and the offline-then-changed-promotion conflict flag.
 
@@ -355,13 +355,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAX-03 | Phase 24 (v1.10) | Complete |
 | TAX-04 | Phase 24 (v1.10) | Complete |
 | TAX-05 | Phase 24 (v1.10) | Complete |
-| PROMO-01 | Phase 27 (v1.11) | Not Started |
-| PROMO-02 | Phase 27 (v1.11) | Not Started |
-| PROMO-03 | Phase 27 (v1.11) | Not Started |
-| PROMO-04 | Phase 27 (v1.11) | Not Started |
+| PROMO-01 | Phase 27 (v1.11) | Complete |
+| PROMO-02 | Phase 27 (v1.11) | Complete |
+| PROMO-03 | Phase 27 (v1.11) | Complete |
+| PROMO-04 | Phase 27 (v1.11) | Complete |
 | PROMO-05 | Phase 27 (v1.11) | Not Started |
 | PROMO-06 | Phase 27 (v1.11) | Not Started |
-| PROMO-07 | Phase 27 (v1.11) | Not Started |
+| PROMO-07 | Phase 27 (v1.11) | Complete |
 | PROMO-08 | Phase 27 (v1.11) | Not Started |
 | PROMO-09 | Phase 27 (v1.11) | Not Started |
 
