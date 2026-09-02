@@ -188,6 +188,29 @@ test.describe('Promotion discount snapshot survives deletion, refund, and reopen
       seededPromotionIds.length = 0;
     }
     for (const { productId, categoryId } of seededProductIds) {
+      // Every test in this file completes a real sale (and test (b) a real
+      // refund) against the seeded product, so order_items/refund_items rows
+      // reference it — deleting products/categories without unwinding those
+      // first previously failed silently on the FK constraint (23503,
+      // products_category_id_fkey / order_items_product_id_fkey /
+      // refund_items_order_item_id_fkey — no error check on any of the 3
+      // deletes below let every prior run's fixtures leak permanently; found
+      // via Plan 27-07's full-suite verification, which surfaced 14
+      // accumulated leftover "E2E Promo-Snapshot Category/Product" rows
+      // polluting the shared catalog and tripping an unrelated receipt spec
+      // that picks "any real category" from the live catalog). Unwind in FK
+      // order: refund_items -> order_items -> inventory -> products ->
+      // categories, mirroring e2e/inventory/open-units.spec.ts's own
+      // order_items-first cleanup precedent.
+      const { data: orderItemRows } = await admin
+        .from('order_items')
+        .select('id')
+        .eq('product_id', productId);
+      const orderItemIds = (orderItemRows ?? []).map(row => row.id as string);
+      if (orderItemIds.length > 0) {
+        await admin.from('refund_items').delete().in('order_item_id', orderItemIds);
+      }
+      await admin.from('order_items').delete().eq('product_id', productId);
       await admin.from('inventory').delete().eq('product_id', productId);
       await admin.from('products').delete().eq('id', productId);
       await admin.from('categories').delete().eq('id', categoryId);
