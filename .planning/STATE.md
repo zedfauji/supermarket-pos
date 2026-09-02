@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
 status: executing
-stopped_at: Completed 27-05-PLAN.md
-last_updated: "2026-09-02T21:24:56.583Z"
+stopped_at: Completed 27-06-PLAN.md
+last_updated: "2026-09-02T21:38:44.424Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: eb1095c33801e975a14992278f6cf3313bc05c59
+state_head: 04349335ec2ddfdd58864513e48a655e2af380a7
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 30
+  completed_plans: 31
   percent: 60
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-09-02 — Phase 27 execution started
 
@@ -115,6 +115,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 27 P03 | 27min | 3 tasks | 12 files |
 | Phase 27 P04 | 40min | 3 tasks | 12 files |
 | Phase 27 P05 | 15min | 2 tasks | 8 files |
+| Phase 27 P06 | 30min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -208,6 +209,7 @@ Recent decisions affecting current work:
 - [Phase 27]: Apply Promotion selector is a client-side UX preview only — process_direct_sale_atomic always independently recomputes the authoritative best-price-wins promotion server-side
 - [Phase 27]: PROMO-06: historical discount badge sourced from mapOrderItemRow/groupOrderItems, not a cost_price_snapshot-adjacent mapper (that column is unmapped anywhere in the codebase).
 - [Phase 27]: E2E PROMO-06 proof split into 3 independent tests (not one chained scenario) since reopening a sale voids its original payment, making a subsequent refund on the same sale inexpressible in the UI.
+- [Phase 27]: PROMO-08: cart-line promotion snapshot stamped only on real price override; reconnect re-evaluation flags changed/vanished promotion-sourced lines via priceConflict, blocking checkout until cashier review
 
 ### Pending Todos
 
@@ -245,8 +247,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T21:24:56.219Z
-Stopped at: Completed 27-05-PLAN.md
+Last session: 2026-09-02T21:38:44.066Z
+Stopped at: Completed 27-06-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

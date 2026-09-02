@@ -291,7 +291,7 @@ planning should not anchor on.
 
 **Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
 **Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
-**Plans:** 5/7 plans executed
+**Plans:** 6/7 plans executed
 
 Plans:
 **Wave 1**
@@ -314,7 +314,7 @@ Plans:
 
 - [x] 27-05-PLAN.md — Snapshot survives refund/reopen/promotion-deletion; margin report proven
   correct against discounted price with zero report-code changes (PROMO-06)
-- [ ] 27-06-PLAN.md — Offline promotion-conflict flag: cart-line snapshot + reconnect re-evaluation,
+- [x] 27-06-PLAN.md — Offline promotion-conflict flag: cart-line snapshot + reconnect re-evaluation,
   never silently re-priced (PROMO-08)
 
 **Wave 4** *(blocked on Wave 3 completion)*
