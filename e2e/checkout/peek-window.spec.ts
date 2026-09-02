@@ -48,16 +48,58 @@ async function fetchProduct(name: string): Promise<SeedProduct> {
   return product;
 }
 
+// SECONDARY_PRODUCT_NAME's seeded inventory.expiry_date can fall inside the
+// store's near_expiry threshold, silently triggering Phase 27's
+// expiry-proximity auto-discount (PROMO-02) — several tests below assert
+// this fixture's undiscounted list price. Cleared in beforeEach, BEFORE
+// page.goto/login (the main page's near-expiry query is fetched at login
+// time with a 5-minute staleTime, so a later per-test clear wouldn't be
+// picked up by an already-fetched query), and restored in afterEach so this
+// file doesn't leave a permanent side effect on shared seed data.
+let secondaryProductOriginalExpiryDate: string | null | undefined;
+
 test.describe('Barcode scan product peek window (PEEK-01..04)', () => {
   test.beforeEach(async ({ page }) => {
     requireIntegrationEnv();
     await resetTestState();
+    const admin = getServiceClient();
+    const { data: secondaryProduct } = await admin
+      .from('products')
+      .select('id')
+      .eq('name', SECONDARY_PRODUCT_NAME)
+      .single();
+    if (secondaryProduct) {
+      const { data: inv } = await admin
+        .from('inventory')
+        .select('expiry_date')
+        .eq('product_id', secondaryProduct.id)
+        .maybeSingle();
+      secondaryProductOriginalExpiryDate = inv?.expiry_date ?? null;
+      await admin.from('inventory').update({ expiry_date: null }).eq('product_id', secondaryProduct.id);
+    }
     await openCaja(500);
     await injectPeekWindowMock(page);
     await page.goto('/');
     await loginAs(page, 'cashier');
     await page.getByRole('button', { name: /checkout/i }).click();
     await expect(page).toHaveURL(/\/pos$/);
+  });
+
+  test.afterEach(async () => {
+    if (secondaryProductOriginalExpiryDate === undefined) return;
+    const admin = getServiceClient();
+    const { data: secondaryProduct } = await admin
+      .from('products')
+      .select('id')
+      .eq('name', SECONDARY_PRODUCT_NAME)
+      .single();
+    if (secondaryProduct) {
+      await admin
+        .from('inventory')
+        .update({ expiry_date: secondaryProductOriginalExpiryDate })
+        .eq('product_id', secondaryProduct.id);
+    }
+    secondaryProductOriginalExpiryDate = undefined;
   });
 
   test('scanning a barcode and opening the peek window shows full product detail (PEEK-01)', async ({

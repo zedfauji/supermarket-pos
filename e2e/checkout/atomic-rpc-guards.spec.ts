@@ -351,7 +351,13 @@ test.describe('Direct-sale checkout', () => {
     expect(tabsAfter).toBe(tabsBefore);
   });
 
-  test('rejects a non-null direct-sale discount payload and writes no rows', async () => {
+  test('rejects a non-null direct-sale discount payload without manager authorization and writes no rows', async () => {
+    // Phase 27 (Plan 01/04, PROMO-05) replaced the old blanket
+    // DISCOUNT_UNSUPPORTED hard-block with a manager-authorization gate: an
+    // ad-hoc discount is now actually supported, but only with
+    // p_manager_override=true and a manager-role staff member (see
+    // process-direct-sale-atomic-promotions.sql). This request omits both,
+    // so it's rejected as DISCOUNT_REQUIRES_MANAGER — still no rows written.
     const { admin, args } = await directSaleInput();
     const [{ count: paymentsBefore }, { count: tabsBefore }] = await Promise.all([
       admin.from('payments').select('id', { count: 'exact', head: true }),
@@ -365,7 +371,7 @@ test.describe('Direct-sale checkout', () => {
       p_discount_amount: 1,
     });
     expect(result.error).toBeNull();
-    expect(result.data).toMatchObject({ ok: false, code: 'DISCOUNT_UNSUPPORTED' });
+    expect(result.data).toMatchObject({ ok: false, code: 'DISCOUNT_REQUIRES_MANAGER' });
     const [{ count: paymentsAfter }, { count: tabsAfter }] = await Promise.all([
       admin.from('payments').select('id', { count: 'exact', head: true }),
       admin.from('tabs').select('id', { count: 'exact', head: true }),

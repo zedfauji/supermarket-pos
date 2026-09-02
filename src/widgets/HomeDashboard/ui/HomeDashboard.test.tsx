@@ -146,8 +146,9 @@ describe('HomeDashboard', () => {
     renderWithProviders(<HomeDashboard />);
     const lockIcons = screen.getAllByTestId('lock-icon');
     // Reports, Inventory, Suppliers, Purchase Orders, Settings, Roles & Permissions,
-    // Audit Log, Edit History are gated for cashier
-    expect(lockIcons.length).toBe(8);
+    // Audit Log, Edit History, Promotions (Phase 27 Plan 02's admin-gated nav
+    // tile) are gated for cashier
+    expect(lockIcons.length).toBe(9);
   });
 
   it('logout button calls logout and navigates to /login', async () => {

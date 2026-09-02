@@ -192,19 +192,22 @@ test.describe('Phase 13: Permission Matrix', () => {
     // Permission Matrix heading visible
     await expect(page.getByText('Permission Matrix')).toBeVisible({ timeout: 20_000 });
 
-    // Table has 18 action rows — Plan 01-13 (commit 3cc9c7f) pruned 7 orphaned
+    // Table has 22 action rows — Plan 01-13 (commit 3cc9c7f) pruned 7 orphaned
     // STAFF_ACTIONS entries (transfer_tab, start_pool_timer, stop_pool_timer,
     // view_kds, view_kds_bar, produce_prep_batch, manage_waitlist) shrinking
     // STAFF_ACTIONS from 26 to 19; Phase 5 (SALE-01) then removed 'void_order'
-    // (05-01-PLAN.md), shrinking it further from 19 to 18.
+    // (05-01-PLAN.md), shrinking it further from 19 to 18; Phase 23 added
+    // confirm_transfer_payment/dispute_transfer_payment (18 -> 20); Phase 27
+    // (PROMO-01/05, Plan 01) added manage_promotions/apply_custom_discount
+    // (20 -> 22).
     // Each row has an action label in the first column
     await expect(page.getByText('create_order').first()).toBeVisible();
     await expect(page.getByText('manage_staff').first()).toBeVisible();
     await expect(page.getByText('clock_in').first()).toBeVisible();
 
-    // Switch elements present (18 rows × 4 roles = 72 switches)
+    // Switch elements present (22 rows × 4 roles = 88 switches)
     const switches = page.getByRole('switch');
-    await expect(switches).toHaveCount(72);
+    await expect(switches).toHaveCount(88);
 
     expect(consoleErrors).toHaveLength(0);
   });
