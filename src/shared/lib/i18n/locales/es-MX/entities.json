@@ -24,7 +24,8 @@
     "weight": "Peso: {{weight}} kg",
     "editWeight": "Editar",
     "remove": "Quitar {{name}}",
-    "happyHourPrice": "Precio de happy hour",
+    "promotionApplied": "Promoción aplicada",
+    "discountBadge": "{{percent}}% de descuento",
     "notesPlaceholder": "Nota (ej. sin apio)",
     "notesFor": "Nota para {{name}}"
     ,"nearExpiry": "Caduca en {{days}} días"

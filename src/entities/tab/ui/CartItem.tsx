@@ -27,6 +27,14 @@ export function CartItem({
   const { t } = useTranslation('entities');
   const { data: nearExpiryAlerts } = useNearExpiryAlerts();
   const nearExpiry = nearExpiryAlerts?.find(alert => alert.productId === item.product.id);
+  // Detects any discounted line regardless of source (promotion or
+  // expiry-trigger) — ad-hoc/custom discounts never touch cart-line
+  // unitPrice (D-10), only promotions do, so this stays accurate.
+  const isDiscounted = item.unitPrice !== item.product.basePrice;
+  const discountPercent =
+    isDiscounted && item.product.basePrice > 0
+      ? Math.round(((item.product.basePrice - item.unitPrice) / item.product.basePrice) * 100)
+      : null;
   return (
     <div className="flex gap-3 rounded-lg border bg-card p-3">
       <div className="min-w-0 flex-1">
@@ -72,11 +80,16 @@ export function CartItem({
             <QuantityControl value={item.quantity} min={1} max={99} onChange={onQuantitySet} />
           )}
           <div className="flex shrink-0 items-center gap-1">
-            {item.unitPrice !== item.product.basePrice && (
+            {isDiscounted && (
               <Zap
-                className="h-3.5 w-3.5 text-pos-warning"
-                aria-label={t('cartItem.happyHourPrice')}
+                className="h-3.5 w-3.5 text-pos-accent"
+                aria-label={t('cartItem.promotionApplied')}
               />
+            )}
+            {discountPercent !== null && discountPercent > 0 && (
+              <Badge className="bg-pos-accent text-white">
+                {t('cartItem.discountBadge', { percent: discountPercent })}
+              </Badge>
             )}
             <MoneyDisplay amount={item.lineTotal} size="lg" />
           </div>

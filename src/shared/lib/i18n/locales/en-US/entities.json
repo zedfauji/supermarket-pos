@@ -24,7 +24,8 @@
     "weight": "Weight: {{weight}} kg",
     "editWeight": "Edit",
     "remove": "Remove {{name}}",
-    "happyHourPrice": "Happy hour price",
+    "promotionApplied": "Promotion applied",
+    "discountBadge": "{{percent}}% off",
     "notesPlaceholder": "Note (e.g. no celery)",
     "notesFor": "Note for {{name}}"
     ,"nearExpiry": "Expires in {{days}} days"
