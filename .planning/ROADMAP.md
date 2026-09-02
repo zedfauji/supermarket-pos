@@ -9,6 +9,7 @@
 - 🔜 **v1.4 Barcode Scan Product Peek** — Phase 18 (proposed, not started — captured via `/gsd-explore`)
 - ✅ **v1.5 Store-Local Durable Printing** — Phase 19 (8/8 plans complete 2026-08-27; Spike 001 validated)
 - ✅ **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (3/3 plans complete 2026-08-30, incl. gap-closure plan 20-03; DEP-01..04 satisfied)
+- 🔜 **v1.11 Promotions & Discount Management** — Phase 27 (proposed, not started — captured via `/gsd-explore`)
 
 ## Phases
 
@@ -215,6 +216,40 @@ Plans:
 Plans:
 
 - [ ] TBD (run /gsd-plan-phase 26 to break down)
+
+### Phase 27: Promotions & Discount Management
+
+**Goal:** Promotions/discounts can be scoped to a product, a category, or a subcategory (a category
+row with `parentId` set — no new hierarchy needed), multiple can qualify on one line item resolved
+best-price-wins, and one condition type auto-triggers off proximity to a product's expiry date
+(reusing the existing configurable near-expiry threshold, default 14 days). A qualifying item shows
+its discounted price live the moment it's scanned/added to the cart (client display only — the
+existing `process_direct_sale_atomic` RPC remains the sole price authority at checkout, extended to
+recompute promotions server-side rather than trust the client). At the payment screen, a cashier can
+apply an existing active promotion to a sale; an ad-hoc/custom discount requires a manager PIN,
+mirroring the existing refund-PIN pattern. Every applied promotion/discount is snapshotted per line
+item (promotion id, rate, computed amount) at sale time, so a later refund/reopen restores the exact
+historical discount even if the promotion itself has since changed or been deleted, and the existing
+cost-snapshot margin report stays accurate against the discounted price, not list price. A floor guard
+prevents any combination of discounts from dropping the sale price below recorded cost.
+
+Batch/lot-level expiry precision (the literal "this specific shipment's batch expires in 2 weeks") is
+explicitly out of scope — `inventory.expiry_date` is a single column overwritten on each new
+receiving, with no per-lot tracking anywhere in the schema today. This phase's expiry-proximity
+trigger keys off that single per-product expiry date instead; see
+`.planning/seeds/batch-lot-expiry-tracking.md` for the deferred batch-tracking capability. See also
+`.planning/notes/promotions-prior-art-and-dead-fields.md` for why the bar-pos-era promotions engine
+(dropped in Phase 1) should not be reused, and for a stale-dead-field trap in `domain.ts`
+(`happyHourStart`/`happyHourEnd`/`happyHourPrice`, `isCombo`/`comboEligible`/`comboPriceOverride`) that
+planning should not anchor on.
+
+**Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
+**Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run `/gsd-plan-phase 27` to break down)
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 

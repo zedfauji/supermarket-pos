@@ -224,6 +224,28 @@ exclusive mode is still needed) are deferred to discuss-phase for Phase 24, not 
 - [x] **TAX-04**: The server-side `process_direct_sale_atomic` RPC (and its cost-snapshot variant) recomputes tax using the same mode-aware formula as the client and validates the client-submitted total against it — the anti-tamper total-match guard must not reject valid inclusive-mode sales.
 - [x] **TAX-05**: Printed/PDF/email receipts show the decomposed subtotal + tax line matching whichever mode is active, not just a flat tax-on-top line.
 
+## v1.11 Requirements — Promotions & Discount Management
+
+Milestone goal: promotions/discounts scoped to product, category, or subcategory, auto-applied at
+scan time and manually applicable at payment, with best-price-wins resolution when multiple qualify
+and one condition-based trigger (expiry proximity) to start. Explored via `/gsd-explore` 2026-09-01.
+Codebase research confirmed no existing discount/promotion engine (the bar-pos-era one was dropped in
+Phase 1 and was combo/pool-coupled — not reusable) and no batch/lot-level expiry tracking (single
+`expiry_date` per product, overwritten on each receiving) — batch tracking explicitly deferred, see
+`.planning/seeds/batch-lot-expiry-tracking.md`.
+
+### Promotions & Discounts
+
+- [ ] **PROMO-01**: A promotion/discount rule can be scoped to a specific product, a category, or a subcategory (a category row with `parentId` set), with `percent` or `fixed` discount type and an active date range in store-local time. Managing promotions requires a new `manage_promotions` RBAC action, granted **admin-only**.
+- [ ] **PROMO-02**: A promotion can auto-trigger off a product's proximity to its `expiry_date`, using a configurable `days_threshold → discount_%` tier table, reusing the existing near-expiry-alert threshold setting rather than introducing a second one.
+- [ ] **PROMO-03**: A qualifying product shows its discounted price live in the cart the moment it's scanned or added (client display). `process_direct_sale_atomic` is extended to recompute qualifying promotions server-side and remains the sole price authority — the client-displayed discount is never trusted as-is at checkout.
+- [ ] **PROMO-04**: When more than one promotion qualifies for the same line item, the single largest-discount promotion applies (best-price-wins); others are ignored for that line.
+- [ ] **PROMO-05**: At the payment screen, a cashier can apply an existing active promotion to the sale. Applying an ad-hoc/custom discount not tied to an existing promotion requires a manager PIN, mirroring the existing refund manager-PIN gate. The bar-pos-only `discountScope` values (`pool_only`, `consumptions_only`) on `PaymentSchema` are retired.
+- [ ] **PROMO-06**: Every applied promotion/discount is snapshotted per line item at sale time (promotion id, rate, computed discount amount) on `order_items`, mirroring the existing cost-price snapshot pattern — a later refund or reopened sale restores the exact historical discount even if the promotion has since changed or been deleted, and the existing margin report computes against the discounted price, not list price.
+- [ ] **PROMO-07**: No combination of discounts can drop a line item's final price below its recorded cost — an explicit floor guard rejects or caps the discount rather than allowing a below-cost sale.
+- [ ] **PROMO-08**: A discount computed while offline is snapshotted at add-to-cart time; if the underlying promotion changed before reconnect/sync, the conflict is flagged for review rather than silently re-priced.
+- [ ] **PROMO-09**: Automated Playwright E2E coverage (per this repo's mandatory-automated-testing policy) proves: product/category scope overlap resolution, store-local timezone date-range boundaries, a promotion deleted mid-cart, refund/reopen restoring the exact historical discount, the below-cost floor guard, interaction with loose-weight and case→piece (open-unit) items, and the offline-then-changed-promotion conflict flag.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
@@ -333,6 +355,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAX-03 | Phase 24 (v1.10) | Complete |
 | TAX-04 | Phase 24 (v1.10) | Complete |
 | TAX-05 | Phase 24 (v1.10) | Complete |
+| PROMO-01 | Phase 27 (v1.11) | Not Started |
+| PROMO-02 | Phase 27 (v1.11) | Not Started |
+| PROMO-03 | Phase 27 (v1.11) | Not Started |
+| PROMO-04 | Phase 27 (v1.11) | Not Started |
+| PROMO-05 | Phase 27 (v1.11) | Not Started |
+| PROMO-06 | Phase 27 (v1.11) | Not Started |
+| PROMO-07 | Phase 27 (v1.11) | Not Started |
+| PROMO-08 | Phase 27 (v1.11) | Not Started |
+| PROMO-09 | Phase 27 (v1.11) | Not Started |
 
 **Coverage:**
 
@@ -345,9 +376,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.8 requirements: 8 total, 8/8 mapped to Phase 22 (PINRST-01..08)
 - v1.9 requirements: 10 total, 10/10 mapped to Phase 23 (BTP-01..10)
 - v1.10 requirements: 5 total, 5/5 mapped to Phase 24 (TAX-01..05, not yet planned)
+- v1.11 requirements: 9 total, 9/9 mapped to Phase 27 (PROMO-01..09, not yet planned)
 
 ---
 *Requirements defined: 2026-08-19 (v1.2), 2026-08-19 (v1.3)*
 *Last updated: 2026-08-31 — Phase 23 (Bank Transfer Payment Tracking) requirements formalized during `/gsd-plan-phase 23` from CONTEXT.md D-01..D-17 (no formal SPEC.md for this phase; decisions sourced from `/gsd-spike` sessions 002-005, not a live discuss-phase); BTP-01..10 added, traceability mapped 10/10*
 
 *2026-08-31 — Phase 24 (Tax Configuration) added via `/gsd-explore`; TAX-01..05 captured, traceability mapped 5/5; grey areas (default toggle value, receipt copy, report/margin impact, exclusive-mode necessity) left open for discuss-phase, not decided here.*
+
+*2026-09-01 — Phase 27 (Promotions & Discount Management) added via `/gsd-explore`; PROMO-01..09 captured, traceability mapped 9/9. Batch/lot-level expiry tracking explicitly deferred (see `.planning/seeds/batch-lot-expiry-tracking.md`); implementation-level open questions (exact tier table defaults, exact `manage_promotions` UI) left for discuss-phase/plan-phase.*
