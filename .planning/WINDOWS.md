@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 31
+open_count: 32
 waived_count: 0
 fixed_count: 13
-total_count: 44
-last_updated: 2026-08-31T20:23:40.839Z
+total_count: 45
+last_updated: 2026-09-02T16:36:31.595Z
 ---
 
 # Broken Windows Ledger
@@ -59,6 +59,7 @@ last_updated: 2026-08-31T20:23:40.839Z
 | 42 | 20 | deviation | auth.users (mkvinyekkyennyegfoxq), supabase/migrations/20260830000001_auth_users_token_defaults.sql |  | Vinty Owner (the one real production admin account) could not log in, recover password, or receive a magic link -- GoTrue 500 "Scan error ... converting NULL to string is unsupported" on confirmation_token/email_change. Root cause: the account was seeded via a raw SQL INSERT into auth.users (not GoTrue's Admin API), and 4 of that table's token columns have no schema-level DEFAULT ''. Fixed live via COALESCE backfill (confirmed real login succeeded); root-caused and backfill captured in a migration for all environments. Schema-level DEFAULT '' is NOT achievable -- ALTER TABLE auth.users is blocked platform-wide with "must be owner of table users" even via supabase db push and set role supabase_auth_admin. Prevention is procedural: never raw-INSERT into auth.users again, always use the Admin API (as every seed script in this repo already does). | fixed |  | 2026-08-30T23:26:11.780Z | 2026-08-30T23:28:16.369Z |
 | 43 | 23 | lint-warning | src/widgets/HomeDashboard/ui/HomeDashboard.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 112,120,200), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:37.796Z |  |
 | 44 | 23 | lint-warning | src/widgets/PINLoginForm/PINLoginForm.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 66,175), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:40.839Z |  |
+| 45 | 27 | deviation | src/widgets/HomeDashboard/ui/HomeDashboard.test.tsx | 150 | gated buttons lock-icon count assertion expects 8, actual 9 since 27-02 added the /promotions nav tile (pre-existing, not fixed by 27-03 per scope boundary) | open |  | 2026-09-02T16:36:31.595Z |  |
 
 ````json
 [
@@ -588,6 +589,18 @@ last_updated: 2026-08-31T20:23:40.839Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-31T20:23:40.839Z",
+    "resolved_at": null
+  },
+  {
+    "id": 45,
+    "kind": "deviation",
+    "phase": "27",
+    "file": "src/widgets/HomeDashboard/ui/HomeDashboard.test.tsx",
+    "line": 150,
+    "description": "gated buttons lock-icon count assertion expects 8, actual 9 since 27-02 added the /promotions nav tile (pre-existing, not fixed by 27-03 per scope boundary)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-02T16:36:31.595Z",
     "resolved_at": null
   }
 ]
