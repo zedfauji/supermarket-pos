@@ -73,6 +73,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build broker
+        working-directory: broker
+        run: cargo build --release
+
       - name: Rust unit tests
         working-directory: src-tauri
         run: cargo test
