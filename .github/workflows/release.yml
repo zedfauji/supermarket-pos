@@ -9,6 +9,8 @@ jobs:
   publish-tauri:
     permissions:
       contents: write
+    environment:
+      name: taj-house-of-spices
     runs-on: [self-hosted, windows]
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +31,19 @@ jobs:
 
       - name: install frontend dependencies
         run: npm ci
+
+      - name: Materialize .env.production from Environment secrets
+        shell: pwsh
+        run: |
+          # Values are sourced from the taj-house-of-spices GitHub Environment
+          # (this job's `environment:` binding above scopes secret resolution to
+          # exactly this Environment — GitHub's own secret-scoping primitive).
+          # Never echo the values themselves, only confirm the file was written.
+          @"
+          VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          "@ | Set-Content -Path .env.production -Encoding utf8 -NoNewline
+          Write-Host "OK: .env.production materialized for this build window." -ForegroundColor Green
 
       - name: generate build cert (Phase 20, DEP-01)
         id: gencert
@@ -61,3 +76,8 @@ jobs:
           includeUpdaterJson: true
           projectPath: .
           args: '--config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}'
+
+      - name: Remove materialized .env.production
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Path .env.production -Force -ErrorAction SilentlyContinue
