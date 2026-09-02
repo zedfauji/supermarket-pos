@@ -87,6 +87,16 @@ jobs:
           CUSTOMER_PAT: ${{ secrets.CUSTOMER_MIRROR_PAT }}
           CUSTOMER_REPO: ${{ matrix.customer.repo }}
         run: |
+          # actions/checkout@v4 sets http.https://github.com/.extraheader (an
+          # Authorization header carrying GITHUB_TOKEN) scoped to github.com
+          # generically, not just the origin repo. libcurl sends that header on
+          # EVERY github.com request in this job, overriding any URL-embedded
+          # credentials below — so without unsetting it here, this push would
+          # silently run as GITHUB_TOKEN (no access to the customer repo) and
+          # fail with a misleading "Repository not found" instead of using
+          # CUSTOMER_PAT. actions/checkout's own post-job cleanup unsets the
+          # same header; we just need it gone before this step, not only after.
+          git config --local --unset-all http.https://github.com/.extraheader 2>$null
           $customerUrl = "https://x-access-token:$env:CUSTOMER_PAT@github.com/$env:CUSTOMER_REPO.git"
           git remote add customer $customerUrl 2>$null
           if ($LASTEXITCODE -ne 0) {
