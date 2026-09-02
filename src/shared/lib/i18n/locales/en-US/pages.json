@@ -64,5 +64,9 @@
   },
   "purchaseOrders": {
     "title": "Purchase Orders"
+  },
+  "promotions": {
+    "title": "Promotions",
+    "newPromotion": "New Promotion"
   }
 }

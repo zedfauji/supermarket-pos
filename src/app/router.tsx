@@ -5,6 +5,7 @@ import { AgentButton, AgentPanel } from '@features/agent-chat';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AuditRoute } from './audit-route';
 import { EditHistoryRoute } from './edit-history-route';
+import { PromotionsRoute } from './promotions-route';
 import { PurchaseOrdersRoute } from './purchase-orders-route';
 import { RbacRoute } from './rbac-route';
 import { ReportsRoute } from './reports-route';
@@ -22,6 +23,7 @@ const RbacPage = lazy(() => import('../pages/rbac'));
 const AuditPage = lazy(() => import('../pages/audit'));
 const EditHistoryPage = lazy(() => import('../pages/edit-history'));
 const PurchaseOrdersPage = lazy(() => import('../pages/purchase-orders'));
+const PromotionsPage = lazy(() => import('../pages/promotions'));
 
 function LoadingFallback() {
   return (
@@ -144,6 +146,16 @@ export function Router() {
                 <PurchaseOrdersRoute>
                   <PurchaseOrdersPage />
                 </PurchaseOrdersRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/promotions"
+            element={
+              <ProtectedRoute>
+                <PromotionsRoute>
+                  <PromotionsPage />
+                </PromotionsRoute>
               </ProtectedRoute>
             }
           />

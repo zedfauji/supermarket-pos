@@ -7,6 +7,7 @@ import {
   Lock,
   LogOut,
   Package,
+  Percent,
   Settings,
   ShoppingCart,
   Truck,
@@ -70,6 +71,13 @@ const ITEMS: DashboardItem[] = [
     labelKey: 'homeDashboard.tiles.settings',
     icon: Settings,
     requiredAction: 'manage_settings',
+    managerLabelKey: 'homeDashboard.managerLabels.admin',
+  },
+  {
+    path: '/promotions',
+    labelKey: 'homeDashboard.tiles.promotions',
+    icon: Percent,
+    requiredAction: 'manage_promotions',
     managerLabelKey: 'homeDashboard.managerLabels.admin',
   },
   {
