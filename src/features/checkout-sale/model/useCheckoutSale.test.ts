@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CajaSession, CartItem, Shift, Staff } from '@shared/lib/domain';
+import type { CajaSession, CartItem, Product, Shift, Staff } from '@shared/lib/domain';
 
 import { useCheckoutSale } from './useCheckoutSale';
 
@@ -13,6 +13,8 @@ import { useCheckoutSale } from './useCheckoutSale';
 vi.mock('@entities/tab/model/cartStore', () => ({
   useCartStore: (selector: (state: { items: CartItem[] }) => unknown) =>
     selector({ items: cartState.items }),
+  calcWeightedLineTotal: (pricePerKg: number, weightGrams: number) =>
+    Math.round(pricePerKg * (weightGrams / 1000) * 100) / 100,
 }));
 
 vi.mock('@entities/staff', () => ({
@@ -285,6 +287,100 @@ describe('useCheckoutSale', () => {
         method: 'bank_transfer',
         customerName: 'Ana Cliente',
         customerPhone: '5512345678',
+      })
+    );
+  });
+
+  // Rule 1 regression coverage (27-03): process_direct_sale_atomic's
+  // PRICE_MISMATCH check validates unit_price against the product's raw
+  // catalog price — submitting a promotion-discounted cart display price
+  // here breaks checkout for every promoted item.
+  it('submits the product catalog basePrice as unit_price, not a discounted cart display price', async () => {
+    mockCallProcessDirectSale.mockResolvedValue({
+      ok: true,
+      data: { paymentId: 'p1', receiptData: { changeAmount: 0 } },
+    });
+    const promotedProduct: Product = {
+      id: 'prod-1',
+      name: 'Promoted Product',
+      categoryId: 'cat-1',
+      basePrice: 100,
+      happyHourPrice: null,
+      imageUrl: null,
+      isActive: true,
+      soldByWeight: false,
+      sku: null,
+      stock_threshold: null,
+      unitsPerPackage: null,
+      parentProductId: null,
+      comboEligible: false,
+      isCombo: false,
+      modifiers: [],
+    };
+    cartState.items = [
+      {
+        tempId: 'temp-1',
+        product: promotedProduct,
+        quantity: 1,
+        selectedModifiers: [],
+        unitPrice: 80, // discounted display price (PROMO-03)
+        notes: '',
+        lineTotal: 80,
+      },
+    ];
+    const { result } = renderHook(() => useCheckoutSale());
+
+    await result.current.processors.processCashPayment('tab-1', 80, 80);
+
+    expect(mockCallProcessDirectSale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [expect.objectContaining({ productId: 'prod-1', unitPrice: 100 })],
+      })
+    );
+  });
+
+  it('submits the weight-adjusted catalog price for a weighted item, not the discounted lineTotal', async () => {
+    mockCallProcessDirectSale.mockResolvedValue({
+      ok: true,
+      data: { paymentId: 'p1', receiptData: { changeAmount: 0 } },
+    });
+    const weightedProduct: Product = {
+      id: 'prod-2',
+      name: 'Loose Rice',
+      categoryId: 'cat-1',
+      basePrice: 10, // per-kg catalog price
+      happyHourPrice: null,
+      imageUrl: null,
+      isActive: true,
+      soldByWeight: true,
+      sku: null,
+      stock_threshold: null,
+      unitsPerPackage: null,
+      parentProductId: null,
+      comboEligible: false,
+      isCombo: false,
+      modifiers: [],
+    };
+    cartState.items = [
+      {
+        tempId: 'temp-2',
+        product: weightedProduct,
+        quantity: 1,
+        weightGrams: 500,
+        selectedModifiers: [],
+        unitPrice: 8, // discounted per-kg display price (PROMO-03)
+        notes: '',
+        lineTotal: 4, // 8 * 0.5kg
+      },
+    ];
+    const { result } = renderHook(() => useCheckoutSale());
+
+    await result.current.processors.processCashPayment('tab-1', 5, 5);
+
+    expect(mockCallProcessDirectSale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // 10 (catalog price/kg) * 0.5kg = 5, not the discounted lineTotal (4)
+        items: [expect.objectContaining({ productId: 'prod-2', unitPrice: 5 })],
       })
     );
   });

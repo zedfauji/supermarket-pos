@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useCajaStore } from '@entities/caja';
 import { useStaffStore } from '@entities/staff';
-import { useCartStore } from '@entities/tab/model/cartStore';
+import { calcWeightedLineTotal, useCartStore } from '@entities/tab/model/cartStore';
 import { isOnline } from '@shared/lib/connectivity';
 import type { CartItem, Tab } from '@shared/lib/domain';
 import { generateIdempotencyKey } from '@shared/lib/domain-helpers';
@@ -57,7 +57,17 @@ function cartItemsToRpcItems(items: CartItem[]) {
   return items.map(item => ({
     productId: item.product.id,
     quantity: item.quantity,
-    unitPrice: item.weightGrams != null ? item.lineTotal : item.unitPrice,
+    // process_direct_sale_atomic's PRICE_MISMATCH check validates unit_price
+    // against the product's own undiscounted catalog price (products.base_price,
+    // weight-adjusted for soldByWeight items) — never the cart's live-discounted
+    // display price (PROMO-03 is display-only; the RPC independently recomputes
+    // and applies any qualifying promotion server-side, Plan 27-01). Submitting
+    // item.unitPrice/lineTotal here once they can hold a discounted value would
+    // make every promoted-item checkout fail PRICE_MISMATCH.
+    unitPrice:
+      item.weightGrams != null
+        ? calcWeightedLineTotal(item.product.basePrice, item.weightGrams)
+        : item.product.basePrice,
     modifierIds: item.selectedModifiers.map(modifier => modifier.id),
     modifierPriceDelta: item.selectedModifiers.reduce(
       (sum, modifier) => sum + modifier.priceDelta,
