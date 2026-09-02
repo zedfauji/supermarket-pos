@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
 status: executing
-stopped_at: Completed 27-01-PLAN.md
-last_updated: "2026-09-02T15:36:49.576Z"
+stopped_at: Completed 27-02-PLAN.md
+last_updated: "2026-09-02T16:03:13.289Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: aeb5b38ae86bc7b56906d9f97fe6d8df6a476d54
+state_head: 5a66fcadb76ecc040539bdd90d99a68f6ffe67b3
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 26
+  completed_plans: 27
   percent: 60
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-09-02 — Phase 27 execution started
 
@@ -111,6 +111,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 24 P03 | 30min+25min | 2 tasks | 6 files |
 | Phase 26 P01 | 15m | 2 tasks | 2 files |
 | Phase 27 P01 | 20min | 3 tasks | 20 files |
+| Phase 27 P02 | 25min | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -197,6 +198,8 @@ Recent decisions affecting current work:
 - [Phase 27]: Promotions/floor-guard manager-override role re-check fires whenever p_manager_override=true is claimed, not only alongside ad-hoc discount params — closes the below-cost bypass path for T-27-02.
 - [Phase 27]: Best-price-wins promotion candidate selection uses one SQL query across all matching active product/category promotions (not a fixed 2-candidate assumption) — handles multiple overlapping promotions on the same target correctly.
 - [Phase 27]: DiscountScopeSchema narrowed to 'all' (PROMO-05); PaymentForm.tsx/domain-helpers.ts kept minimally compiling (single fixed button) — full retirement/PIN-gating stays with Plan 27-04 as planned.
+- [Phase 27]: Plan 27-02: pages/promotions/index.tsx built as a minimal Task-1 shell then fully replaced by Task-2's wired DataTable+dialog (both real, independently-verifying diffs).
+- [Phase 27]: Plan 27-02: added useMutationDeletePromotion + wPanels.json/common.json i18n keys not in the plan's files_modified list — required by the task's own action text and by the actual namespaces HomeDashboard.tsx/StatusBadge.tsx read from.
 
 ### Pending Todos
 
@@ -234,8 +237,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T15:36:49.017Z
-Stopped at: Completed 27-01-PLAN.md
+Last session: 2026-09-02T16:03:11.344Z
+Stopped at: Completed 27-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
