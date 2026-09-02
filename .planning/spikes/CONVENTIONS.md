@@ -74,6 +74,27 @@ question requires otherwise.
   user to click through and report back — this applies to spike verification, not just the
   shipped app.
 
+## Structure (GitHub Actions/API infra spikes)
+
+- For a spike question that's really "what does GitHub's platform actually do" (Releases scoping,
+  Environments/secrets isolation, Actions behavior), prefer a real throwaway private scratch repo
+  under the user's own `gh` account over docs-only reasoning when the behavior is easy to trigger
+  live (`gh repo create ... --private`, tag a few releases, dispatch a workflow) — confirm with the
+  user first since it's a visible action on their account, and delete it at the end. Requires the
+  `delete_repo` token scope to clean up automatically; if missing, tell the user the repo is still
+  there and give them the URL rather than silently leaving it undisclosed.
+- Never make a workflow step try to reveal a real secret's value, even in a throwaway repo — GitHub
+  masks it anyway. Prove isolation/behavior by comparing the secret against a known expected value
+  and emitting only `MATCH`/`MISMATCH` (or similar non-secret derived output).
+- For a Tauri config-merge question, don't run a full `tauri build --config <file>` if the thing
+  being tested is Rust-side only — `beforeBuildCommand` (a full `npm run build`) re-runs every time
+  and dominates the wall-clock. Use `TAURI_CONFIG='<json>' cargo build` inside `src-tauri/` instead
+  (same merge code path, skips the frontend entirely), and read the result off the compiled binary's
+  real Windows version resource (`(Get-Item exe).VersionInfo`), not a simulated/re-implemented merge.
+- Confirm any resource the build script hard-requires (e.g. this project's bundled `broker.exe`)
+  already exists locally before attempting a build for spike purposes — a missing one fails with an
+  unrelated error that looks like the thing being spiked is broken.
+
 ## Tools & Libraries
 
 - `nssm` (via `winget`) — Windows Service wrapper for spike-speed service installs. Not a
