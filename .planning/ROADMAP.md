@@ -208,14 +208,60 @@ Plans:
 
 ### Phase 26: Multi-Customer Deployment
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 25
-**Plans:** 0 plans
+**Goal:** Ship this same supermarket-pos codebase to multiple customers, each with a fully isolated
+Supabase project and their own genuine `/releases/latest` update channel (a multi-**instance**
+deployment model, not a shared-DB tenant_id retrofit). Core repo stays the single source of truth;
+each customer gets a full-mirror repo (Actions + Releases only), synced from core on every release
+and gated by an active/suspended manifest; per-customer Tauri identity (`identifier`/`publisher`/
+`updater.endpoints`/icon) is merged at build time via a second `tauri-action --config` argument, with
+a fail-loud gate on any missing/malformed override; a scripted + documented onboarding path exists for
+customer N+1; and Taj House of Spices (the one real existing customer) is retrofitted into this model
+via a parallel-run cutover with zero window where their live till has no working update path.
+**Requirements**: D-01 .. D-18 (see `.planning/phases/26-multi-customer-deployment/26-CONTEXT.md`) —
+no formal `REQUIREMENTS.md` REQ-IDs for this phase; this is a CI/CD-only phase (no application
+frontend surface, confirmed by the deterministic `ui.plan-gate` check) traced entirely via
+CONTEXT.md's locked decision IDs, matching the D-number-traceable precedent used when a phase has no
+SPEC.md (Phase 22/23).
+**Depends on:** Phase 25 (also depends on two pre-existing filed todos landing first per D-18:
+`fix-ci-tauri-build-broker-order.md`, `migrate-env-production-to-github-environment.md` — sequenced
+as Plan 26-01)
+**Plans:** 6 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 26 to break down)
+- [ ] 26-01-PLAN.md — Prerequisites (D-18): fix ci.yml's broker build order, migrate Taj's
+  `.env.production` into a GitHub Environment
+
+**Wave 2** *(blocked on Wave 1 — shares release.yml)*
+
+- [ ] 26-02-PLAN.md — Tracer: customers.json manifest + active-customer gating + mirror-push +
+  dual `--config` merge + D-08 fail-loud gate, proven end-to-end against one disposable test
+  customer (D-01..D-08)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 26-03-PLAN.md — scripts/onboard-customer.ps1 (idempotent repo/Environment/PAT/override/manifest
+  setup) + docs/onboarding-new-customer.md runbook (D-09..D-14)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 26-04-PLAN.md — Taj retrofit: byte-identical tauri.override.json + icons, registered active in
+  customers.json, real signed installer built through the new path — old path left untouched (D-15,
+  D-16, D-17)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 26-05-PLAN.md — Real two-hop update-cycle proof: transition release (endpoint-only bump) through
+  the old path, then a follow-up release through the new path — a controlled test client migrates
+  channels with zero manual reinstall (D-16, D-17)
+
+**Wave 6** *(blocked on Wave 5 — cutover completion)*
+
+- [ ] 26-06-PLAN.md — Retirement: strip tauri.conf.json to a generic placeholder, remove the old
+  publish-tauri job, re-verify the D-08 gate against the final placeholder config (D-16, D-17)
+
+**UI hint**: no
 
 ### Phase 27: Promotions & Discount Management
 
