@@ -3,11 +3,11 @@
   "bundle": {
     "publisher": "Test Customer (CI Dry-Run Fixture)",
     "icon": [
-      "customers/test-customer/icons/32x32.png",
-      "customers/test-customer/icons/128x128.png",
-      "customers/test-customer/icons/128x128@2x.png",
-      "customers/test-customer/icons/icon.icns",
-      "customers/test-customer/icons/icon.ico"
+      "../customers/test-customer/icons/32x32.png",
+      "../customers/test-customer/icons/128x128.png",
+      "../customers/test-customer/icons/128x128@2x.png",
+      "../customers/test-customer/icons/icon.icns",
+      "../customers/test-customer/icons/icon.ico"
     ]
   },
   "plugins": {
