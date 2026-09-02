@@ -199,8 +199,16 @@ test.describe('Payment Edge Cases', () => {
     // regression here should fail the test, not silently skip it.
     const discountToggle = page.getByRole('switch', { name: 'Discount' });
     await expect(discountToggle).toBeVisible({ timeout: 10_000 });
-    // Discount is progressively disclosed — expand it first
+    // Discount is progressively disclosed — expand it first. Phase 27
+    // (PROMO-05/D-07): expanding now opens a manager-PIN gate before the
+    // fields render (the toggle itself stays visually off until success).
     await discountToggle.click();
+    const pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+    await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+    const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+    await enterPin(page, managerPin);
+    await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+
     const discountInput = page.getByLabel(/discount %|discount amount/i);
 
     await discountInput.fill('10');

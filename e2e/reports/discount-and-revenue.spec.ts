@@ -136,6 +136,24 @@ async function openPaymentFormWithItem(page: Page, customerName: string): Promis
   await expect(page.getByTestId('payment-btn-cash')).toBeVisible({ timeout: 15_000 });
 }
 
+/**
+ * Phase 27 (PROMO-05/D-07): expanding the ad-hoc discount section now opens
+ * a manager-PIN gate first (the "Discount" switch stays visually off until
+ * a correct PIN is entered) — clicks the switch, clears the PIN dialog, and
+ * leaves the discount fields expanded and ready for input.
+ */
+async function expandDiscountSection(page: Page): Promise<void> {
+  await page.getByRole('switch', { name: 'Discount' }).click();
+  const pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+  await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+  const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+  for (const ch of managerPin) {
+    const label = ch === '0' ? 'Key 0' : `Key ${ch}`;
+    await pinDialog.getByRole('button', { name: label }).click();
+  }
+  await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -162,7 +180,7 @@ test.describe('Discount UI (PaymentForm via /payments)', () => {
     await loginAs(page, 'manager');
     await openPaymentFormWithItem(page, 'Discount D3');
 
-    await page.getByRole('switch', { name: 'Discount' }).click();
+    await expandDiscountSection(page);
     await page.getByTestId('discount-type-fixed').click();
 
     const discountInput = page.getByLabel('Discount amount');
@@ -181,7 +199,7 @@ test.describe('Discount UI (PaymentForm via /payments)', () => {
     await loginAs(page, 'manager');
     await openPaymentFormWithItem(page, 'Discount D4');
 
-    await page.getByRole('switch', { name: 'Discount' }).click();
+    await expandDiscountSection(page);
 
     // Default type is percent — fill discount value
     const discountInput = page.getByLabel('Discount %');
