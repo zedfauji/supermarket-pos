@@ -225,12 +225,12 @@ SPEC.md (Phase 22/23).
 **Depends on:** Phase 25 (also depends on two pre-existing filed todos landing first per D-18:
 `fix-ci-tauri-build-broker-order.md`, `migrate-env-production-to-github-environment.md` — sequenced
 as Plan 26-01)
-**Plans:** 6 plans
+**Plans:** 1/6 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 26-01-PLAN.md — Prerequisites (D-18): fix ci.yml's broker build order, migrate Taj's
+- [x] 26-01-PLAN.md — Prerequisites (D-18): fix ci.yml's broker build order, migrate Taj's
   `.env.production` into a GitHub Environment
 
 **Wave 2** *(blocked on Wave 1 — shares release.yml)*

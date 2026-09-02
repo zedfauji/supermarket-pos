@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 26
-current_phase_name: Multi-Customer Deployment
+current_phase: 27
+current_phase_name: Promotions & Discount Management
 status: executing
 stopped_at: Phase 27 UI-SPEC approved
-last_updated: "2026-09-02T05:55:08.049Z"
-last_activity: 2026-09-01
-last_activity_desc: Phase 26 execution started
-state_head: 2c6da979f1dcce303965f12947fb98e8cb2291c0
+last_updated: "2026-09-02T15:08:57.813Z"
+last_activity: 2026-09-02
+last_activity_desc: Phase 27 execution started
+state_head: 0b6993f5c49214e84fb9c64fee1db0d61b54771b
 progress:
   total_phases: 10
   completed_phases: 6
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 26 — Multi-Customer Deployment
+**Current focus:** Phase 27 — Promotions & Discount Management
 
 ## Current Position
 
-Phase: 26 (Multi-Customer Deployment) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 26
-Last activity: 2026-09-01 — Phase 26 execution started
+Phase: 27 (Promotions & Discount Management) — EXECUTING
+Plan: 1 of 7
+Status: Executing Phase 27
+Last activity: 2026-09-02 — Phase 27 execution started
 
 ## Performance Metrics
 
@@ -109,6 +109,7 @@ Last activity: 2026-09-01 — Phase 26 execution started
 | Phase 24 P01 | 55min | 2 tasks | 15 files |
 | Phase 24 P02 | 20min | 2 tasks | 4 files |
 | Phase 24 P03 | 30min+25min | 2 tasks | 6 files |
+| Phase 26 P01 | 15m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -191,6 +192,7 @@ Recent decisions affecting current work:
 - [Phase 24]: [Phase 24] process-payment/process-split-payment receipts now decompose tax via shared decomposeTax(), closing the receipt-consistency gap for reopened/split-payment sales
 - [Phase 24]: PaymentSchema.method now reuses domain.ts's PaymentMethodSchema instead of a hand-rolled enum, fixing a bank_transfer-triggered /payments page blank-out bug
 - [Phase 24]: Phase-close code review (24-REVIEW.md) found a real gap the phase's own plans missed — the `/payments` reprint path (`fetchReceiptDataForPayment`) never got the tax-decompose treatment, contradicting TAX-05 and shipping untested. Fixed in-phase (929406c) rather than deferred, plus a Rappi-tax fix (WR-01, shared `decomposeTaxForMethod` helper) and a taxInclusive-toggle confirmation dialog (WR-03). One item (split-payment per-leg receipts vs. full item list, WR-02) deliberately deferred — pre-existing to Phase 24, needs a receipt-contract design decision.
+- [Phase 26]: Phase 26 Plan 01: fixed ci.yml tauri-build broker-build ordering and migrated Taj's .env.production into the taj-house-of-spices GitHub Environment (release.yml now materializes it at build time, deletes at job end); local .env.production deleted after operator confirmed Environment secrets set
 
 ### Pending Todos
 
