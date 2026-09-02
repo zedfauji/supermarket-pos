@@ -35,6 +35,7 @@ const ALLOWED: Record<StaffRole, ReadonlySet<string>> = {
     'reopen_tab',
     'confirm_transfer_payment',
     'dispute_transfer_payment',
+    'apply_custom_discount', // Phase 27: manager+ (ad-hoc discount + below-cost override)
   ]),
   admin: new Set(STAFF_ACTIONS),
   kitchen: new Set(['clock_in', 'clock_out']),
