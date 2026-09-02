@@ -1,0 +1,10 @@
+[
+  {
+    "name": "test-customer",
+    "repo": "zedfauji/supermarket-pos-test-customer",
+    "status": "active",
+    "supabase_project_ref": "test-customer-placeholder-ref",
+    "deployment_mode": "cloud",
+    "github_environment": "test-customer"
+  }
+]
