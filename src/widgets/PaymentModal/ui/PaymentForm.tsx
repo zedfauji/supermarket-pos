@@ -9,8 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ManagerPinDialog } from '@features/manager-pin-gate';
 import { ReceiptPreview } from '@features/process-payment/ui/ReceiptPreview';
+import { evaluateBestPromotion, usePromotions } from '@entities/promotion';
 import { useReceiptSettings, useSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff/model/store';
+import { calcWeightedLineTotal } from '@entities/tab/model/cartStore';
 import type { Tab } from '@entities/tab/model/types';
 import { ReceiptSettingsSchema, type DiscountType } from '@shared/lib/domain';
 import {
@@ -43,6 +45,7 @@ import {
 } from '@shared/ui';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 
 type PayMethod = 'cash' | 'card' | 'rappi' | 'bank_transfer';
 
@@ -175,6 +178,10 @@ export function PaymentForm({
   const currentRole = useStaffStore(s => s.currentStaff?.role);
   const { data: appSettings } = useSettings();
   const { data: receiptSettings } = useReceiptSettings();
+  // Phase 27 (PROMO-05): resultError intentionally unread — a promotions
+  // fetch failure never blocks payment (backstop truth); the "Apply
+  // Promotion" section just stays hidden (activePromotionOptions is empty).
+  const { data: allPromotions } = usePromotions();
   const settings = receiptSettings ?? ReceiptSettingsSchema.parse({});
   const enabledMethods = appSettings?.billing.paymentMethods ?? DEFAULT_ENABLED_METHODS;
   const taxRatePercent = appSettings?.billing.taxRatePercent ?? DEFAULT_TAX_RATE_PERCENT;
@@ -204,6 +211,9 @@ export function PaymentForm({
   const [managerOverride, setManagerOverride] = useState(false);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinPurpose, setPinPurpose] = useState<'discount' | 'below_cost' | null>(null);
+  // Phase 27 (PROMO-05): id of the "Apply Promotion" selection — independent
+  // of discountType/discountValue (D-10, coexists, never overwrites).
+  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showOfflineDialog, setShowOfflineDialog] = useState(false);
@@ -238,6 +248,7 @@ export function PaymentForm({
     setManagerOverride(false);
     setPinDialogOpen(false);
     setPinPurpose(null);
+    setSelectedPromotionId(null);
     setIsSplitMode(false);
     idempotencyKeyRef.current = null;
     /* eslint-enable react-hooks/set-state-in-effect */
@@ -276,9 +287,48 @@ export function PaymentForm({
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [enabledMethods.bbvaCard, enabledMethods.cash, enabledMethods.rappi, method]);
 
+  // Phase 27 (PROMO-05): promotions currently within their active date range
+  // — same inclusive-boundary contract as the RPC's `now() BETWEEN starts_at
+  // AND ends_at`. Empty list hides the "Apply Promotion" section entirely.
+  const activePromotionOptions = useMemo(() => {
+    const now = new Date();
+    return (allPromotions ?? []).filter(p => p.active && now >= p.startsAt && now <= p.endsAt);
+  }, [allPromotions]);
+  const selectedPromotion =
+    activePromotionOptions.find(p => p.id === selectedPromotionId) ?? null;
+
+  // Re-evaluates every cart line against the manually-selected promotion,
+  // never worsening a line that already resolved a better price at scan
+  // time (PROMO-03) — reuses evaluateBestPromotion's own per-candidate money
+  // formula (a single-promotion candidate array) rather than re-deriving it.
+  const effectiveItems = useMemo(() => {
+    if (!selectedPromotion) return tab.items;
+    return tab.items.map(item => {
+      if (!item.product) return item;
+      const match = evaluateBestPromotion(
+        { productId: item.product.id, categoryId: item.product.categoryId, basePrice: item.product.basePrice },
+        [selectedPromotion],
+        new Date(),
+        0,
+        null,
+        0
+      );
+      if (!match) return item;
+      const candidateUnitPrice =
+        item.weightGrams != null
+          ? calcWeightedLineTotal(match.discountedUnitPrice, item.weightGrams)
+          : match.discountedUnitPrice;
+      // Lower price === bigger discount off the same fixed basePrice — this
+      // is Math.max on discount amount expressed as Math.min on the
+      // resulting price. Never worsen an already-better-discounted line.
+      if (candidateUnitPrice >= item.unitPrice) return item;
+      return { ...item, unitPrice: candidateUnitPrice };
+    });
+  }, [tab.items, selectedPromotion]);
+
   const itemsSubtotal = useMemo(
-    () => tab.items.reduce((sum, item) => sum + calculateLineTotal(item), 0),
-    [tab.items]
+    () => effectiveItems.reduce((sum, item) => sum + calculateLineTotal(item), 0),
+    [effectiveItems]
   );
   // Pool tables were removed (Phase 1 strip-rebrand) — pool charges are
   // permanently 0. DiscountScopeSchema's pool_only/consumptions_only members
@@ -344,7 +394,7 @@ export function PaymentForm({
     Math.abs(splitRowsSum - subtotalWithTax) <= 0.01 &&
     splitRows.every(perRowMethodValid);
 
-  const groupedItems = useMemo(() => groupOrderItems(tab.items), [tab.items]);
+  const groupedItems = useMemo(() => groupOrderItems(effectiveItems), [effectiveItems]);
 
   const runPayment = async (
     /**
@@ -698,6 +748,35 @@ export function PaymentForm({
               </div>
             </div>
           </section>
+
+          {method !== 'rappi' && activePromotionOptions.length > 0 && (
+            <section className="space-y-2 rounded-lg border p-3" data-testid="apply-promotion-section">
+              <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
+                {t('featOrders:applyPromotion.label')}
+              </Label>
+              <Select
+                value={selectedPromotionId ?? ''}
+                onValueChange={value => {
+                  setSelectedPromotionId(value);
+                }}
+              >
+                <SelectTrigger
+                  id="apply-promotion-select"
+                  data-testid="apply-promotion-select"
+                  disabled={isProcessing}
+                >
+                  <SelectValue placeholder={t('featOrders:applyPromotion.placeholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {activePromotionOptions.map(promo => (
+                    <SelectItem key={promo.id} value={promo.id}>
+                      {promo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </section>
+          )}
 
           {method !== 'rappi' && (
             <section className="space-y-2 rounded-lg border p-3" data-testid="discount-section">

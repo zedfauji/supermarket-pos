@@ -10,10 +10,23 @@ import userEvent from '@testing-library/user-event';
 import fc from 'fast-check';
 import { createElement } from 'react';
 import { toast } from 'sonner';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// ---------------------------------------------------------------------------
+// jsdom polyfills — Radix Select (Phase 27's "Apply Promotion" selector)
+// uses pointer-capture APIs not implemented by jsdom; safe no-ops keep
+// trigger/open/select interactions deterministic.
+// ---------------------------------------------------------------------------
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
+  Element.prototype.releasePointerCapture = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+import type * as PromotionModule from '@entities/promotion';
 import { useStaffStore } from '@entities/staff/model/store';
 import type { Tab } from '@entities/tab/model/types';
+import type { Promotion } from '@shared/lib/domain';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
 import { formatMoney } from '@shared/lib/format';
 import type * as PosPrinter from '@shared/lib/pos-printer';
@@ -45,6 +58,20 @@ vi.mock('@features/manager-pin-gate', () => ({
         )
       : null,
 }));
+
+// Controllable promotions list (Phase 27, PROMO-05's "Apply Promotion"
+// selector) — evaluateBestPromotion stays the real implementation; only
+// usePromotions() is swapped for a plain array the tests can mutate.
+const { mockPromotionsData } = vi.hoisted(() => ({
+  mockPromotionsData: [] as Promotion[],
+}));
+vi.mock('@entities/promotion', async importOriginal => {
+  const actual = await importOriginal<typeof PromotionModule>();
+  return {
+    ...actual,
+    usePromotions: () => ({ data: mockPromotionsData }),
+  };
+});
 
 vi.mock('@shared/lib/pos-printer', async importOriginal => {
   const actual = await importOriginal<typeof PosPrinter>();
@@ -118,6 +145,68 @@ const testTab: Tab = {
   ],
 };
 
+const promotableProductId = 'ffffffff-ffff-ffff-ffff-fffffffffff2';
+const promotableCategoryId = '11111111-1111-1111-1111-111111111111';
+
+/**
+ * Tab with one $10 line whose item.product is populated — required for the
+ * "Apply Promotion" selector's per-line re-evaluation (Phase 27, PROMO-05),
+ * which testTab's items intentionally omit (kept minimal for other suites).
+ */
+const promotableTab: Tab = {
+  ...testTab,
+  id: 'cccccccc-cccc-cccc-cccc-ccccccccccc2',
+  items: [
+    {
+      id: 'dddddddd-dddd-dddd-dddd-dddddddddd02',
+      orderId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+      productId: promotableProductId,
+      quantity: 1,
+      unitPrice: 10,
+      modifierIds: [],
+      modifierPriceDelta: 0,
+      notes: null,
+      modifiers: [],
+      product: {
+        id: promotableProductId,
+        name: 'Promotable Product',
+        categoryId: promotableCategoryId,
+        basePrice: 10,
+        happyHourPrice: null,
+        sku: null,
+        isActive: true,
+        soldByWeight: false,
+        imageUrl: null,
+        stock_threshold: null,
+        unitsPerPackage: null,
+        parentProductId: null,
+        comboEligible: true,
+        isCombo: false,
+        modifiers: [],
+      },
+    },
+  ],
+};
+
+function makePromotion(overrides: Partial<Promotion> = {}): Promotion {
+  const now = new Date();
+  return {
+    id: '99999999-9999-9999-9999-999999999999',
+    name: '10% Off Promotable Product',
+    scopeType: 'product',
+    productId: promotableProductId,
+    categoryId: null,
+    discountType: 'percent',
+    discountValue: 10,
+    startsAt: new Date(now.getTime() - 60 * 60 * 1000),
+    endsAt: new Date(now.getTime() + 60 * 60 * 1000),
+    active: true,
+    createdAt: now,
+    createdBy: null,
+    ...overrides,
+  };
+}
+
 function makeReceipt(): ReceiptData {
   return {
     receiptNumber: 'R001',
@@ -181,6 +270,7 @@ async function selectCardMethod(user: ReturnType<typeof userEvent.setup>) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockSettings.billing = { ...DEFAULT_MOCK_BILLING };
+  mockPromotionsData.length = 0;
   useStaffStore.setState({
     currentStaff: {
       id: staffId,
@@ -858,5 +948,78 @@ describe('PaymentForm — tax modes (Phase 24)', () => {
       }),
       { numRuns: 20 }
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 27 — "Apply Promotion" selector (PROMO-05)
+// ---------------------------------------------------------------------------
+
+describe('PaymentForm — Apply Promotion selector', () => {
+  it('the section is hidden entirely when there are no currently-active promotions', () => {
+    renderForm();
+    expect(screen.queryByTestId('apply-promotion-section')).not.toBeInTheDocument();
+  });
+
+  it('an expired promotion never appears as a selectable option (the section stays hidden)', () => {
+    const now = new Date();
+    mockPromotionsData.push(
+      makePromotion({
+        startsAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+        endsAt: new Date(now.getTime() - 60 * 60 * 1000),
+      })
+    );
+    renderForm();
+    expect(screen.queryByTestId('apply-promotion-section')).not.toBeInTheDocument();
+  });
+
+  it('selecting an active promotion discounts the matching line without opening a PIN dialog', async () => {
+    const user = userEvent.setup();
+    mockPromotionsData.push(makePromotion());
+    renderWithProviders(
+      <PaymentForm
+        tab={promotableTab}
+        staffId={staffId}
+        onPaymentSuccess={vi.fn()}
+        processors={makeProcessors()}
+      />
+    );
+
+    expect(screen.getByTestId('apply-promotion-section')).toBeInTheDocument();
+    // No PIN dialog — this is the non-ad-hoc path PROMO-05 explicitly
+    // distinguishes from the custom-discount gate (Task 1).
+    expect(screen.queryByText(/grant pin/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('apply-promotion-select'));
+    await user.click(screen.getByText('10% Off Promotable Product'));
+
+    expect(screen.queryByText(/grant pin/i)).not.toBeInTheDocument();
+    // $10 line, 10% off -> itemsSubtotal becomes $9.
+    expect(screen.getByTestId('total-row')).toHaveTextContent('9.00');
+  });
+
+  it('never worsens a line that already resolved a better price (Math.max-on-discount semantics)', async () => {
+    const user = userEvent.setup();
+    // A weaker (5%) promotion than the line's already-resolved $10 -> $9
+    // (10% off) price baked into the cart at scan time.
+    mockPromotionsData.push(makePromotion({ discountValue: 5 }));
+    const alreadyDiscountedTab: Tab = {
+      ...promotableTab,
+      items: [{ ...promotableTab.items[0]!, unitPrice: 9 }],
+    };
+    renderWithProviders(
+      <PaymentForm
+        tab={alreadyDiscountedTab}
+        staffId={staffId}
+        onPaymentSuccess={vi.fn()}
+        processors={makeProcessors()}
+      />
+    );
+
+    await user.click(screen.getByTestId('apply-promotion-select'));
+    await user.click(screen.getByText('10% Off Promotable Product'));
+
+    // The weaker 5% candidate ($9.50) never overwrites the already-better $9 line.
+    expect(screen.getByTestId('total-row')).toHaveTextContent('9.00');
   });
 });

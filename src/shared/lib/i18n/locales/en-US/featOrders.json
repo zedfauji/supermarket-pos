@@ -143,6 +143,13 @@
     "description": "A manager or admin PIN is required to access this section.",
     "pinLabel": "Enter manager PIN"
   },
+  "applyPromotion": {
+    "label": "Apply Promotion",
+    "placeholder": "Select a promotion..."
+  },
+  "belowCostOverride": {
+    "message": "This discount would sell below cost. Manager PIN required to continue."
+  },
   "idleLock": {
     "title": "Screen Locked",
     "description": "Enter any staff member's PIN to unlock.",
