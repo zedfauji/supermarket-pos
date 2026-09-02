@@ -18,7 +18,12 @@ interface CartActions {
    * If an identical product+modifier combination already exists, increments quantity instead.
    * Pass unitPrice to override the base price (e.g. happy hour resolved price).
    */
-  addItem: (product: Product, modifiers: Modifier[], unitPrice?: number) => void;
+  addItem: (
+    product: Product,
+    modifiers: Modifier[],
+    unitPrice?: number,
+    promotionId?: string | null
+  ) => void;
 
   /**
    * Adds a distinct gram-priced line; weighted products never merge.
@@ -26,7 +31,12 @@ interface CartActions {
    * promotion-discounted rate) instead of product.basePrice — mirrors
    * addItem's unitPrice override above.
    */
-  addWeightedItem: (product: Product, weightGrams: number, pricePerKgOverride?: number) => void;
+  addWeightedItem: (
+    product: Product,
+    weightGrams: number,
+    pricePerKgOverride?: number,
+    promotionId?: string | null
+  ) => void;
 
   /** Reprices one weighted line without changing its position in the cart. */
   updateWeightedItem: (tempId: string, weightGrams: number) => void;
@@ -45,6 +55,20 @@ interface CartActions {
 
   /** Sets absolute quantity (1–99). Removes the line if quantity is 0 or less. */
   setLineQuantity: (tempId: string, quantity: number) => void;
+
+  /**
+   * Reconnect conflict resolution (PROMO-08): applies a freshly-evaluated
+   * price/promotion to a flagged line and clears priceConflict. Never called
+   * automatically — only in response to the cashier reviewing the line.
+   */
+  resolveConflict: (tempId: string, newUnitPrice: number, newPromotionId: string | null) => void;
+
+  /**
+   * Reconnect conflict detection (PROMO-08): flags a line whose promotion
+   * changed or vanished while offline. Never touches unitPrice/lineTotal —
+   * a stale price is never silently re-applied.
+   */
+  flagPriceConflict: (tempId: string) => void;
 
   /** Empties the cart. */
   clearCart: () => void;
@@ -109,12 +133,20 @@ export const useCartStore = create<CartStore>()(
       items: [],
       heldCart: null,
 
-      addItem: (product, modifiers, unitPrice?) => {
+      addItem: (product, modifiers, unitPrice?, promotionId?) => {
         const state = get();
         const modifierKey = modifiers
           .map(m => m.id)
           .sort()
           .join(',');
+        // A promotion snapshot is stamped only when an unitPrice override is
+        // actually supplied (unitPrice !== undefined) — a plain re-add with
+        // no override must not manufacture a "not promotion-sourced" stamp
+        // out of nothing (PROMO-08).
+        const promotionSnapshot =
+          unitPrice !== undefined
+            ? { promotionId: promotionId ?? null, discountSnapshotAt: Date.now() }
+            : {};
 
         const existingIndex = state.items.findIndex(
           item =>
@@ -136,6 +168,7 @@ export const useCartStore = create<CartStore>()(
             ...existing,
             quantity,
             lineTotal: calcLineTotal(existing.unitPrice, existing.selectedModifiers, quantity),
+            ...promotionSnapshot,
           };
           logger.debug('cart.item.incremented', { tempId: existing.tempId, quantity });
           set({ items: updated });
@@ -149,14 +182,19 @@ export const useCartStore = create<CartStore>()(
             unitPrice: resolvedUnitPrice,
             notes: '',
             lineTotal: calcLineTotal(resolvedUnitPrice, modifiers, 1),
+            ...promotionSnapshot,
           };
           logger.debug('cart.item.added', { tempId: newItem.tempId, productId: product.id });
           set({ items: [...state.items, newItem] });
         }
       },
 
-      addWeightedItem: (product, weightGrams, pricePerKgOverride?) => {
+      addWeightedItem: (product, weightGrams, pricePerKgOverride?, promotionId?) => {
         const resolvedPricePerKg = pricePerKgOverride ?? product.basePrice;
+        const promotionSnapshot =
+          pricePerKgOverride !== undefined
+            ? { promotionId: promotionId ?? null, discountSnapshotAt: Date.now() }
+            : {};
         const newItem: CartItem = {
           tempId: crypto.randomUUID(),
           product,
@@ -166,6 +204,7 @@ export const useCartStore = create<CartStore>()(
           unitPrice: resolvedPricePerKg,
           notes: '',
           lineTotal: calcWeightedLineTotal(resolvedPricePerKg, weightGrams),
+          ...promotionSnapshot,
         };
         logger.debug('cart.weighted_item.added', {
           tempId: newItem.tempId,
@@ -248,6 +287,36 @@ export const useCartStore = create<CartStore>()(
           logger.debug('cart.quantity.set', { tempId, quantity: clamped });
           return { items: updated };
         });
+      },
+
+      resolveConflict: (tempId, newUnitPrice, newPromotionId) => {
+        set(state => ({
+          items: state.items.map(item => {
+            if (item.tempId !== tempId) return item;
+            const lineTotal =
+              item.weightGrams != null
+                ? calcWeightedLineTotal(newUnitPrice, item.weightGrams)
+                : calcLineTotal(newUnitPrice, item.selectedModifiers, item.quantity);
+            return {
+              ...item,
+              unitPrice: newUnitPrice,
+              lineTotal,
+              promotionId: newPromotionId,
+              discountSnapshotAt: Date.now(),
+              priceConflict: false,
+            };
+          }),
+        }));
+        logger.info('cart.item.conflict_resolved', { tempId, newUnitPrice, newPromotionId });
+      },
+
+      flagPriceConflict: tempId => {
+        set(state => ({
+          items: state.items.map(item =>
+            item.tempId === tempId ? { ...item, priceConflict: true } : item
+          ),
+        }));
+        logger.warn('cart.item.price_conflict_flagged', { tempId });
       },
 
       clearCart: () => {

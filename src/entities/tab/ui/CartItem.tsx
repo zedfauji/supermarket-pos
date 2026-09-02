@@ -1,6 +1,9 @@
-import { X, Zap } from 'lucide-react';
+import { AlertTriangle, X, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNearExpiryAlerts } from '@entities/inventory';
+import { evaluateBestPromotion, usePromotions } from '@entities/promotion';
+import { useSettings } from '@entities/settings';
+import { useCartStore } from '@entities/tab/model/cartStore';
 import type { CartItem as CartItemType } from '@shared/lib/domain';
 import { formatMoney } from '@shared/lib/format';
 import { MoneyDisplay } from '@shared/ui/MoneyDisplay';
@@ -31,6 +34,35 @@ export function CartItem({
   // expiry-trigger) — ad-hoc/custom discounts never touch cart-line
   // unitPrice (D-10), only promotions do, so this stays accurate.
   const isDiscounted = item.unitPrice !== item.product.basePrice;
+
+  // PROMO-08: resolves the flagged line to its fresh price/promotion at tap
+  // time (never a stale cached value) and clears priceConflict.
+  const { data: activePromotions } = usePromotions();
+  const { data: appSettings } = useSettings();
+  const resolveConflict = useCartStore(state => state.resolveConflict);
+  const handleResolveConflict = () => {
+    if (!activePromotions || !appSettings) return;
+    const daysUntilExpiry =
+      nearExpiryAlerts?.find(alert => alert.productId === item.product.id)?.daysUntilExpiry ??
+      null;
+    const match = evaluateBestPromotion(
+      {
+        productId: item.product.id,
+        categoryId: item.product.categoryId,
+        basePrice: item.product.basePrice,
+      },
+      activePromotions,
+      new Date(),
+      appSettings.nearExpiry.discountPercent,
+      daysUntilExpiry,
+      appSettings.nearExpiry.thresholdDays
+    );
+    resolveConflict(
+      item.tempId,
+      match?.discountedUnitPrice ?? item.product.basePrice,
+      match?.promotionId ?? null
+    );
+  };
   const discountPercent =
     isDiscounted && item.product.basePrice > 0
       ? Math.round(((item.product.basePrice - item.unitPrice) / item.product.basePrice) * 100)
@@ -54,6 +86,20 @@ export function CartItem({
         </div>
 
         {nearExpiry ? <Badge className="mb-2 bg-pos-warning text-amber-950 dark:text-amber-100">{t('cartItem.nearExpiry', { days: nearExpiry.daysUntilExpiry })}</Badge> : null}
+
+        {item.priceConflict ? (
+          <POSButton
+            type="button"
+            variant="destructive"
+            touchSize="default"
+            size="sm"
+            className="mb-2 gap-1.5"
+            onClick={handleResolveConflict}
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {t('cartItem.priceConflict')}
+          </POSButton>
+        ) : null}
 
         {item.selectedModifiers.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1">

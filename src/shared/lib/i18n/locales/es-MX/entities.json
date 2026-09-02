@@ -29,6 +29,7 @@
     "notesPlaceholder": "Nota (ej. sin apio)",
     "notesFor": "Nota para {{name}}"
     ,"nearExpiry": "Caduca en {{days}} días"
+    ,"priceConflict": "Precio cambió — toca para revisar"
   },
   "categoryTabs": {
     "showAll": "Mostrar todas las categorías",

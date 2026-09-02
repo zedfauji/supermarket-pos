@@ -29,6 +29,7 @@
     "notesPlaceholder": "Note (e.g. no celery)",
     "notesFor": "Note for {{name}}"
     ,"nearExpiry": "Expires in {{days}} days"
+    ,"priceConflict": "Price changed — tap to review"
   },
   "categoryTabs": {
     "showAll": "Show all categories",

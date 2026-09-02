@@ -1122,6 +1122,12 @@ export const CartItemSchema = z.object({
   unitPrice: MoneySchema,
   notes: z.string().max(200).default(''),
   lineTotal: MoneySchema,
+  /** Promotion that produced the current unitPrice, if any (PROMO-08). Null/absent = not promotion-sourced. */
+  promotionId: UuidSchema.nullable().optional(),
+  /** Date.now() ms when unitPrice/promotionId were last stamped — a local freshness marker, never sent to the server. */
+  discountSnapshotAt: z.number().nullable().optional(),
+  /** True when a reconnect re-evaluation found this line's promotion changed/vanished; blocks checkout until reviewed. */
+  priceConflict: z.boolean().optional(),
 });
 
 export const CartItemCreateSchema = CartItemSchema.omit({ tempId: true, lineTotal: true });

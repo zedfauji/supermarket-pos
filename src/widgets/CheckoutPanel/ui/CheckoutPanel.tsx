@@ -21,6 +21,7 @@ import { useSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff';
 import { useCartStore } from '@entities/tab/model/cartStore';
 import { CartItem } from '@entities/tab/ui/CartItem';
+import { useOnlineStatus } from '@shared/lib/connectivity';
 import type { Product } from '@shared/lib/domain';
 import { formatMoney } from '@shared/lib/format';
 import { useLockStateStore } from '@shared/lib/lock-state-store';
@@ -59,19 +60,23 @@ export function CheckoutPanel() {
   });
   useProducts();
   useCategories();
-  const { data: activePromotions } = usePromotions();
-  const { data: nearExpiryAlerts } = useNearExpiryAlerts();
+  const promotionsQuery = usePromotions();
+  const { data: activePromotions } = promotionsQuery;
+  const nearExpiryQuery = useNearExpiryAlerts();
+  const { data: nearExpiryAlerts } = nearExpiryQuery;
   const { data: appSettings } = useSettings();
-  // Resolves the live, promotion-discounted unit price for a product at
+  // Resolves the live, promotion-discounted price match for a product at
   // scan/select time (PROMO-03, display only — process_direct_sale_atomic
   // remains the sole price authority at checkout). Returns undefined when
   // no promotion/expiry-trigger qualifies, so callers fall back to
-  // cartStore's own product.basePrice default.
-  const resolveUnitPrice = (product: Product): number | undefined => {
+  // cartStore's own product.basePrice default. Also carries promotionId
+  // (PROMO-08) so addItem/addWeightedItem can stamp the cart line's
+  // promotion snapshot for later reconnect conflict detection.
+  const resolvePromotionMatch = (product: Product) => {
     if (!activePromotions || !appSettings) return undefined;
     const daysUntilExpiry =
       nearExpiryAlerts?.find(alert => alert.productId === product.id)?.daysUntilExpiry ?? null;
-    const match = evaluateBestPromotion(
+    return evaluateBestPromotion(
       { productId: product.id, categoryId: product.categoryId, basePrice: product.basePrice },
       activePromotions,
       new Date(),
@@ -79,14 +84,14 @@ export function CheckoutPanel() {
       daysUntilExpiry,
       appSettings.nearExpiry.thresholdDays
     );
-    return match?.discountedUnitPrice;
   };
   // The ADD_TO_CART_EVENT listener below is registered once on mount
-  // ([] deps, Tauri global event) — a plain closure over resolveUnitPrice
-  // would go stale the moment promotions/settings finish loading after
-  // mount. Route through a ref updated every render instead.
-  const resolveUnitPriceRef = useRef(resolveUnitPrice);
-  resolveUnitPriceRef.current = resolveUnitPrice;
+  // ([] deps, Tauri global event) — a plain closure over
+  // resolvePromotionMatch would go stale the moment promotions/settings
+  // finish loading after mount. Route through a ref updated every render
+  // instead.
+  const resolvePromotionMatchRef = useRef(resolvePromotionMatch);
+  resolvePromotionMatchRef.current = resolvePromotionMatch;
   const items = useCartStore(state => state.items);
   const total = useCartStore(state => state.totalAmount());
   const addItem = useCartStore(state => state.addItem);
@@ -97,9 +102,63 @@ export function CheckoutPanel() {
   const clearCart = useCartStore(state => state.clearCart);
   const holdCart = useCartStore(state => state.holdCart);
   const isHeld = useCartStore(state => state.heldCart !== null);
+  const flagPriceConflict = useCartStore(state => state.flagPriceConflict);
   const staffId = useStaffStore(state => state.currentStaff?.id ?? '');
   const { syntheticTab, processors, resetIdempotencyKey } = useCheckoutSale();
   const editingWeightItem = items.find(item => item.tempId === editingWeightItemId);
+  const hasPriceConflict = items.some(item => item.priceConflict);
+
+  // PROMO-08: on reconnect, re-evaluate every promotion-sourced cart line
+  // against freshly-refetched promotions/near-expiry data. A stale offline
+  // discount is never silently re-priced or silently trusted — a changed or
+  // vanished result flags the line for the cashier to review (see
+  // OfflineQueueProcessor's wasOnlineRef/transitionedOnline pattern, mirrored
+  // here as a local effect since this only needs this component's own
+  // already-available data, not the tab-offline-queue machinery).
+  const isOnline = useOnlineStatus();
+  const wasOnlineRef = useRef<boolean>(isOnline);
+  useEffect(() => {
+    const previouslyOnline = wasOnlineRef.current;
+    wasOnlineRef.current = isOnline;
+    const transitionedOnline = isOnline && !previouslyOnline;
+    if (!transitionedOnline || !appSettings) return;
+
+    void (async () => {
+      const [promotionsResult, nearExpiryResult] = await Promise.all([
+        promotionsQuery.refetch(),
+        nearExpiryQuery.refetch(),
+      ]);
+      const freshPromotions = promotionsResult.data?.ok ? promotionsResult.data.data : [];
+      const freshNearExpiry = nearExpiryResult.data?.ok ? nearExpiryResult.data.data : [];
+
+      for (const item of useCartStore.getState().items) {
+        if (!item.promotionId) continue;
+        const daysUntilExpiry =
+          freshNearExpiry.find(alert => alert.productId === item.product.id)?.daysUntilExpiry ??
+          null;
+        const match = evaluateBestPromotion(
+          {
+            productId: item.product.id,
+            categoryId: item.product.categoryId,
+            basePrice: item.product.basePrice,
+          },
+          freshPromotions,
+          new Date(),
+          appSettings.nearExpiry.discountPercent,
+          daysUntilExpiry,
+          appSettings.nearExpiry.thresholdDays
+        );
+        const changed =
+          !match ||
+          match.promotionId !== item.promotionId ||
+          match.discountedUnitPrice !== item.unitPrice;
+        if (changed) {
+          flagPriceConflict(item.tempId);
+        }
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run on the online transition itself
+  }, [isOnline]);
 
   // Relays a rescan captured by the peek window (which has OS focus while
   // open) back into this window's own search box, and applies the peek
@@ -117,13 +176,13 @@ export function CheckoutPanel() {
     });
     const unlistenAddToCart = listen<AddToCartPayload>(ADD_TO_CART_EVENT, event => {
       const { product, qty, weightGrams } = event.payload;
-      const resolvedPrice = resolveUnitPriceRef.current(product);
+      const match = resolvePromotionMatchRef.current(product);
       if (weightGrams != null) {
-        addWeightedItem(product, weightGrams, resolvedPrice);
+        addWeightedItem(product, weightGrams, match?.discountedUnitPrice, match?.promotionId ?? null);
       } else {
         const times = qty ?? 1;
         for (let i = 0; i < times; i += 1) {
-          addItem(product, [], resolvedPrice);
+          addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
         }
       }
     });
@@ -169,7 +228,8 @@ export function CheckoutPanel() {
         search={search}
         onSearchChange={setSearch}
         onSelect={product => {
-          addItem(product, [], resolveUnitPrice(product));
+          const match = resolvePromotionMatch(product);
+          addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
         }}
       />
       <aside className="flex min-h-0 flex-col rounded-xl border bg-card p-4">
@@ -225,7 +285,7 @@ export function CheckoutPanel() {
           type="button"
           touchSize="xl"
           className="mt-4 w-full"
-          disabled={items.length === 0 || !staffId}
+          disabled={items.length === 0 || !staffId || hasPriceConflict}
           onClick={() => {
             setPaymentOpen(true);
           }}

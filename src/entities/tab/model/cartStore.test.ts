@@ -437,6 +437,65 @@ describe('cartStore', () => {
     });
   });
 
+  describe('addItem — promotion snapshot (PROMO-08)', () => {
+    it('stamps promotionId/discountSnapshotAt only when unitPrice override is supplied', () => {
+      useCartStore.getState().addItem(mockProduct, [], 9.6, 'promo-1');
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.unitPrice).toBe(9.6);
+      expect(item.promotionId).toBe('promo-1');
+      expect(item.discountSnapshotAt).toEqual(expect.any(Number));
+    });
+
+    it('does not stamp a promotion snapshot when no unitPrice override is passed', () => {
+      useCartStore.getState().addItem(mockProduct, []);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.promotionId).toBeUndefined();
+      expect(item.discountSnapshotAt).toBeUndefined();
+    });
+  });
+
+  describe('flagPriceConflict / resolveConflict (PROMO-08)', () => {
+    it('flagPriceConflict sets priceConflict without touching unitPrice/lineTotal', () => {
+      useCartStore.getState().addItem(mockProduct, [], 9.6, 'promo-1');
+      const tempId = useCartStore.getState().items[0]!.tempId;
+
+      useCartStore.getState().flagPriceConflict(tempId);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.priceConflict).toBe(true);
+      expect(item.unitPrice).toBe(9.6);
+    });
+
+    it('resolveConflict applies the fresh price/promotion and clears priceConflict', () => {
+      useCartStore.getState().addItem(mockProduct, [], 9.6, 'promo-1');
+      const tempId = useCartStore.getState().items[0]!.tempId;
+      useCartStore.getState().flagPriceConflict(tempId);
+
+      useCartStore.getState().resolveConflict(tempId, 10.8, 'promo-2');
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.priceConflict).toBe(false);
+      expect(item.unitPrice).toBe(10.8);
+      expect(item.lineTotal).toBe(10.8);
+      expect(item.promotionId).toBe('promo-2');
+    });
+
+    it('resolveConflict recomputes a weighted line via calcWeightedLineTotal', () => {
+      useCartStore.getState().addWeightedItem(mockProduct, 500, 8, 'promo-1');
+      const tempId = useCartStore.getState().items[0]!.tempId;
+
+      useCartStore.getState().resolveConflict(tempId, 10, null);
+
+      const item = useCartStore.getState().items[0]!;
+      expect(item.unitPrice).toBe(10);
+      expect(item.lineTotal).toBe(5); // 10 * 0.5kg
+      expect(item.promotionId).toBeNull();
+      expect(item.priceConflict).toBe(false);
+    });
+  });
+
   describe('setLineQuantity', () => {
     it('should set absolute quantity and lineTotal', () => {
       useCartStore.getState().addItem(mockProduct, [mockModifier]);

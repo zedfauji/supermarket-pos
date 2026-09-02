@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CartItem as CartItemType, Product } from '@shared/lib/domain';
 import { renderWithProviders } from '@shared/lib/test-utils';
@@ -6,6 +7,19 @@ import { CartItem } from './CartItem';
 
 vi.mock('@entities/inventory', () => ({
   useNearExpiryAlerts: () => ({ data: undefined }),
+}));
+
+const mockResolveConflict = vi.fn();
+vi.mock('@entities/promotion', () => ({
+  usePromotions: () => ({ data: [] }),
+  evaluateBestPromotion: () => null,
+}));
+vi.mock('@entities/settings', () => ({
+  useSettings: () => ({ data: { nearExpiry: { discountPercent: 0, thresholdDays: 0 } } }),
+}));
+vi.mock('@entities/tab/model/cartStore', () => ({
+  useCartStore: (selector: (state: { resolveConflict: typeof mockResolveConflict }) => unknown) =>
+    selector({ resolveConflict: mockResolveConflict }),
 }));
 
 const mockProduct: Product = {
@@ -82,6 +96,24 @@ describe('CartItem', () => {
     );
 
     expect(screen.getByText('33% off')).toBeInTheDocument();
+  });
+
+  it('shows a price-conflict indicator when item.priceConflict is true, and resolves it on tap', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <CartItem
+        item={buildItem({ priceConflict: true })}
+        onQuantitySet={noop}
+        onRemove={noop}
+        onNotesChange={noop}
+      />
+    );
+
+    const indicator = screen.getByText('Price changed — tap to review');
+    expect(indicator).toBeInTheDocument();
+
+    await user.click(indicator);
+    expect(mockResolveConflict).toHaveBeenCalledWith('temp-1', mockProduct.basePrice, null);
   });
 
   it('never renders the promotion name — only the compact percent badge', () => {
