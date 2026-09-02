@@ -327,6 +327,8 @@
     "title": "Near expiry alerts",
     "thresholdLabel": "Alert window (days)",
     "thresholdHint": "Show products expiring within this many days.",
+    "discountLabel": "Near-expiry discount (%)",
+    "discountHint": "Discount applied automatically when a product enters the near-expiry window above.",
     "saveButton": "Save alert window",
     "saved": "Near-expiry alert window saved"
   },

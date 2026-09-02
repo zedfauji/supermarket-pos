@@ -327,6 +327,8 @@
     "title": "Alertas de próxima caducidad",
     "thresholdLabel": "Ventana de alerta (días)",
     "thresholdHint": "Muestra productos que caducan dentro de este número de días.",
+    "discountLabel": "Descuento por próxima caducidad (%)",
+    "discountHint": "Descuento aplicado automáticamente cuando un producto entra en la ventana de próxima caducidad anterior.",
     "saveButton": "Guardar ventana de alerta",
     "saved": "Ventana de alerta de caducidad guardada"
   },
