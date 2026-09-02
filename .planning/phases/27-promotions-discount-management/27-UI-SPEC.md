@@ -33,6 +33,8 @@ Enumerated by `ls src/shared/ui/*.tsx | grep -v -E '\.(test|stories)\.'` — 54 
 
 This is a **non-exhaustive** list of known-good components for this phase — the executor may use anything `src/shared/ui/` exports; checking for a component outside this table is expected, not an exception.
 
+**Visual focal point:** `/promotions` — the `DataTable` (promotions list) is the primary anchor; the "New Promotion" `POSButton` in `PageContainer`'s `actions` slot is the secondary anchor (top-right, standard list-page convention). At payment — the "Apply Promotion" `Select` is a secondary anchor within the existing payment screen, subordinate to the total/pay-button focal point already established by that screen (unchanged this phase).
+
 | Component | Import path | Notes |
 |-----------|-------------|-------|
 | `PageContainer` | `@shared/ui` | `/promotions` page shell — title, `backTo="/home"`, `actions` slot for "New Promotion" CTA (mirrors `src/pages/suppliers/index.tsx` exactly) |
@@ -78,14 +80,12 @@ Exceptions: none. Touch targets on `/promotions` (admin/manager-only, not a till
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium — reused `Label` component default, `font-medium`, unchanged this phase) | 1.2 |
 | Heading | 18px | 600 (semibold) | 1.2 |
 | Display | 24px | 600 (semibold) | 1.2 |
 
-New copy authored for this phase (dialog titles, hint text, badges, empty-state text) sticks to **regular 400** (body/hints) or **semibold 600** (section/dialog headings) — the codebase's 2 dominant weights. `Label`/`Button` render at their own established 500 internally via reused components; this phase does not introduce a new medium-weight text role.
+Two weights declared for this phase's new copy: **regular 400** (body/hints) and **semibold 600** (section/dialog headings). Form field labels reuse the existing `Label` component (`font-medium`/500) unchanged from prior phases — no new decision, so it is not part of this phase's declared scale.
 
 - Body 14px/400: table cell text, hint text (`text-sm`), form descriptions
-- Label 14px/500: form field labels (`<Label>`), reused as-is
 - Heading 18px/600: dialog title (`DialogTitle`), settings sub-section title (mirrors `NearExpirySettingsTab`'s `<h2 className="text-lg font-semibold">`)
 - Display 24px/600: `/promotions` page title (`SectionHeader`'s `<h2 className="font-heading text-2xl font-semibold">`, reused via `PageContainer` — no new decision)
 
