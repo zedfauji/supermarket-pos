@@ -11,6 +11,7 @@ export {
   usePromotions,
   useMutationCreatePromotion,
   useMutationUpdatePromotion,
+  useMutationDeletePromotion,
 } from './model/queries';
 
 export {

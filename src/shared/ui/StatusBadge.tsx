@@ -25,7 +25,11 @@ export type StatusBadgeProps = {
     | TabOpenDurationBadgeStatus
     | InventoryStockBadgeStatus
     | 'po_draft'
-    | 'po_received';
+    | 'po_received'
+    | 'promo_active'
+    | 'promo_scheduled'
+    | 'promo_expired'
+    | 'promo_inactive';
   /** Additional CSS classes */
   className?: string;
 };
@@ -112,6 +116,25 @@ const statusConfig: Record<string, StatusConfig> = {
     labelKey: 'statusBadge.poReceived',
     variant: 'default',
     className: 'bg-primary text-primary-foreground hover:opacity-90',
+  },
+
+  // Promotion lifecycle (derived client-side, not a persisted column)
+  promo_active: {
+    labelKey: 'statusBadge.promoActive',
+    variant: 'default',
+    className: 'bg-pos-accent text-white hover:opacity-90',
+  },
+  promo_scheduled: {
+    labelKey: 'statusBadge.promoScheduled',
+    variant: 'secondary',
+  },
+  promo_expired: {
+    labelKey: 'statusBadge.promoExpired',
+    variant: 'destructive',
+  },
+  promo_inactive: {
+    labelKey: 'statusBadge.promoInactive',
+    variant: 'outline',
   },
 };
 

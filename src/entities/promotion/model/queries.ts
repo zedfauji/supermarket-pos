@@ -178,3 +178,27 @@ export function useMutationUpdatePromotion() {
     },
   });
 }
+
+/**
+ * Real DELETE (not a soft-deactivate — see useMutationUpdatePromotion's doc
+ * comment above). `order_items.promotion_id` is ON DELETE SET NULL (Plan 01),
+ * so a sale that already used this promotion keeps its recorded discount
+ * snapshot after deletion.
+ */
+export function useMutationDeletePromotion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<Result<null>> => {
+      const res = await supabaseMutation(() => supabase.from('promotions').delete().eq('id', id));
+      if (!res.ok) {
+        logger.error('promotions.delete_failed', { message: res.error.message });
+        return res;
+      }
+      return ok(null);
+    },
+    onSuccess: result => {
+      if (result.ok) invalidatePromotionQueries(queryClient);
+    },
+  });
+}

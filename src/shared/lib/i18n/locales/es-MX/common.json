@@ -121,7 +121,11 @@
     "lowStock": "Existencia baja",
     "outOfStock": "Agotado",
     "poDraft": "Borrador",
-    "poReceived": "Recibido"
+    "poReceived": "Recibido",
+    "promoActive": "Activa",
+    "promoScheduled": "Programada",
+    "promoExpired": "Vencida",
+    "promoInactive": "Inactiva"
   },
   "updateAvailableDialog": {
     "titleAvailable": "Actualización disponible",
