@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 32
+open_count: 35
 waived_count: 0
 fixed_count: 13
-total_count: 45
-last_updated: 2026-09-02T16:36:31.595Z
+total_count: 48
+last_updated: 2026-09-02T23:46:02.163Z
 ---
 
 # Broken Windows Ledger
@@ -60,6 +60,9 @@ last_updated: 2026-09-02T16:36:31.595Z
 | 43 | 23 | lint-warning | src/widgets/HomeDashboard/ui/HomeDashboard.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 112,120,200), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:37.796Z |  |
 | 44 | 23 | lint-warning | src/widgets/PINLoginForm/PINLoginForm.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 66,175), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:40.839Z |  |
 | 45 | 27 | deviation | src/widgets/HomeDashboard/ui/HomeDashboard.test.tsx | 150 | gated buttons lock-icon count assertion expects 8, actual 9 since 27-02 added the /promotions nav tile (pre-existing, not fixed by 27-03 per scope boundary) | open |  | 2026-09-02T16:36:31.595Z |  |
+| 46 | 27 | unrun-verify | e2e/receipts/category-grouping.spec.ts |  | SC-2b intermittently fails due to shared-catalog fixture pollution (pickTwoCategoryProducts picks any real category with routing NONE); root cause (Plan 27-05 afterEach leak) fixed in 27-07, but the test's own fixture-selection strategy remains fragile against any other spec's throwaway categories | open |  | 2026-09-02T23:45:56.927Z |  |
+| 47 | 27 | unrun-verify | e2e/products/categories.spec.ts |  | T8 bartender-locale test expects Spanish 'Idioma' tab but the pinned cashier E2E account is documented elsewhere as pinned to en-US; reproduces in full isolation, predates Phase 27, unrelated to promotions | open |  | 2026-09-02T23:46:01.842Z |  |
+| 48 | 27 | unrun-verify | e2e/inventory/near-expiry-alerts.spec.ts |  | admin-saves-threshold-persists-after-reload test reloads immediately after Save with no wait for the write to settle (save/reload race), unrelated to promotions, predates Phase 27 | open |  | 2026-09-02T23:46:02.163Z |  |
 
 ````json
 [
@@ -601,6 +604,42 @@ last_updated: 2026-09-02T16:36:31.595Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-02T16:36:31.595Z",
+    "resolved_at": null
+  },
+  {
+    "id": 46,
+    "kind": "unrun-verify",
+    "phase": "27",
+    "file": "e2e/receipts/category-grouping.spec.ts",
+    "line": null,
+    "description": "SC-2b intermittently fails due to shared-catalog fixture pollution (pickTwoCategoryProducts picks any real category with routing NONE); root cause (Plan 27-05 afterEach leak) fixed in 27-07, but the test's own fixture-selection strategy remains fragile against any other spec's throwaway categories",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-02T23:45:56.927Z",
+    "resolved_at": null
+  },
+  {
+    "id": 47,
+    "kind": "unrun-verify",
+    "phase": "27",
+    "file": "e2e/products/categories.spec.ts",
+    "line": null,
+    "description": "T8 bartender-locale test expects Spanish 'Idioma' tab but the pinned cashier E2E account is documented elsewhere as pinned to en-US; reproduces in full isolation, predates Phase 27, unrelated to promotions",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-02T23:46:01.842Z",
+    "resolved_at": null
+  },
+  {
+    "id": 48,
+    "kind": "unrun-verify",
+    "phase": "27",
+    "file": "e2e/inventory/near-expiry-alerts.spec.ts",
+    "line": null,
+    "description": "admin-saves-threshold-persists-after-reload test reloads immediately after Save with no wait for the write to settle (save/reload race), unrelated to promotions, predates Phase 27",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-02T23:46:02.163Z",
     "resolved_at": null
   }
 ]

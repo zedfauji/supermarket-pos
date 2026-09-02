@@ -4,17 +4,17 @@ milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
-status: executing
-stopped_at: Completed 27-06-PLAN.md
-last_updated: "2026-09-02T21:38:44.424Z"
+status: verifying
+stopped_at: Completed 27-07-PLAN.md — Phase 27 fully executed (7/7 plans)
+last_updated: "2026-09-02T23:48:25.581Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: 04349335ec2ddfdd58864513e48a655e2af380a7
+state_head: 917e5b46b1c5a467694d4f3c4e5b837b6aa28909
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 31
+  completed_plans: 32
   percent: 60
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-02 — Phase 27 execution started
 
 ## Performance Metrics
@@ -116,6 +116,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 27 P04 | 40min | 3 tasks | 12 files |
 | Phase 27 P05 | 15min | 2 tasks | 8 files |
 | Phase 27 P06 | 30min | 2 tasks | 8 files |
+| Phase 27 P07 | 165min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,7 @@ Recent decisions affecting current work:
 - [Phase 27]: PROMO-06: historical discount badge sourced from mapOrderItemRow/groupOrderItems, not a cost_price_snapshot-adjacent mapper (that column is unmapped anywhere in the codebase).
 - [Phase 27]: E2E PROMO-06 proof split into 3 independent tests (not one chained scenario) since reopening a sale voids its original payment, making a subsequent refund on the same sale inexpressible in the UI.
 - [Phase 27]: PROMO-08: cart-line promotion snapshot stamped only on real price override; reconnect re-evaluation flags changed/vanished promotion-sourced lines via priceConflict, blocking checkout until cashier review
+- [Phase 27]: Phase 27 Plan 07: e2e/promotions/ scenario matrix closes PROMO-09 (scope-overlap, timezone-boundary, deleted-mid-cart, loose-weight/open-unit); fixed a real ProductGrid promotion-pricing gap flagged in 27-03, plus 4 genuine Phase-27-caused test regressions and one silently-failing E2E cleanup bug (Plan 27-05) surfaced by the full-suite phase-gate run
 
 ### Pending Todos
 
@@ -247,8 +249,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T21:38:44.066Z
-Stopped at: Completed 27-06-PLAN.md
+Last session: 2026-09-02T23:48:25.228Z
+Stopped at: Completed 27-07-PLAN.md — Phase 27 fully executed (7/7 plans)
 Resume file: None
 
 ## Operator Next Steps
