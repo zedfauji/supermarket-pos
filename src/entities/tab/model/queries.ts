@@ -135,6 +135,13 @@ function mapOrderItemRow(item: OrderItemRow): Result<OrderItem> {
         unitPrice: item.unit_price,
         modifierIds: item.modifier_ids,
         modifierPriceDelta: item.modifier_price_delta,
+        // Phase 27 (PROMO-06): promotion discount snapshot — read-only,
+        // sourced from the stored columns, never re-derived from a live
+        // promotion lookup (a reopened/paid tab must show its historical
+        // discount even if the promotion was since edited or deleted).
+        promotionId: item.promotion_id,
+        discountRate: item.discount_rate,
+        discountAmount: item.discount_amount,
         notes: item.notes,
         modifiers: [],
         product: mapProductRow(item.product ?? undefined),

@@ -632,4 +632,32 @@ describe('PaymentModal', () => {
       });
     });
   });
+
+  describe('historical line-item discount badge (Phase 27, PROMO-06)', () => {
+    it('renders a discount indicator for a reopened line carrying a stored promotion snapshot', () => {
+      const tabWithSnapshot: Tab = {
+        ...tabNoPool,
+        id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa04',
+        items: [
+          {
+            ...tabNoPool.items[0]!,
+            promotionId: 'cccccccc-dddd-eeee-ffff-000000000001',
+            discountRate: 10,
+            discountAmount: 1.3,
+          },
+          tabNoPool.items[1]!,
+        ],
+      };
+      renderModal(tabWithSnapshot);
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByTestId('line-item-discount-badge')).toBeInTheDocument();
+      expect(within(dialog).getByTestId('line-item-discount-badge')).toHaveTextContent('10');
+    });
+
+    it('does not render a discount indicator when discountAmount is null', () => {
+      renderModal(tabNoPool);
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).queryByTestId('line-item-discount-badge')).not.toBeInTheDocument();
+    });
+  });
 });

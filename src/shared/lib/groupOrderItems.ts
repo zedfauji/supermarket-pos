@@ -16,6 +16,10 @@ export type GroupedOrderItem = {
   modifierPriceDelta: number;
   lineTotal: number;
   modifierIds: string[];
+  /** Phase 27 (PROMO-06): summed discount snapshot across merged lines, read-only. */
+  discountAmount: number;
+  /** Phase 27 (PROMO-06): rate from the first merged line carrying a discount, null if none. */
+  discountRate: number | null;
 };
 
 /**
@@ -35,6 +39,9 @@ export function groupOrderItems(items: OrderItem[]): GroupedOrderItem[] {
       existing.lineTotal =
         Math.round((existing.unitPrice + existing.modifierPriceDelta) * existing.quantity * 100) /
         100;
+      existing.discountAmount =
+        Math.round((existing.discountAmount + (item.discountAmount ?? 0)) * 100) / 100;
+      existing.discountRate ??= item.discountRate ?? null;
     } else {
       const unitPrice = item.unitPrice;
       const modifierPriceDelta = item.modifierPriceDelta;
@@ -46,6 +53,8 @@ export function groupOrderItems(items: OrderItem[]): GroupedOrderItem[] {
         modifierPriceDelta,
         lineTotal: Math.round((unitPrice + modifierPriceDelta) * item.quantity * 100) / 100,
         modifierIds: sortedModIds,
+        discountAmount: item.discountAmount ?? 0,
+        discountRate: item.discountRate ?? null,
       });
     }
   }

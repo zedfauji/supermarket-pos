@@ -47,6 +47,8 @@
     "receiptOfLabel": "Receipt {{index}} of {{total}} — {{label}}",
     "itemTypesAndTotal": "{{itemTypeCount}} item type{{plural}} · {{itemCount}} total",
     "itemsSubtotal": "Items subtotal",
+    "lineItemDiscountRate": "{{rate}}% off",
+    "lineItemDiscountAmount": "-{{amount}} off",
     "tableMinLabel": "Table {{tableNumber}} · {{minutes}} min",
     "discount": "Discount",
     "discountDescription": "Apply a percentage or fixed-amount discount to this order",

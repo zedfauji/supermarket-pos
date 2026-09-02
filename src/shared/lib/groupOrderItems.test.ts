@@ -15,6 +15,9 @@ function makeItem(overrides: Partial<OrderItem> & { id: string }): OrderItem {
     modifiers: overrides.modifiers ?? [],
     product: overrides.product,
     lineTotal: overrides.lineTotal,
+    promotionId: overrides.promotionId,
+    discountRate: overrides.discountRate,
+    discountAmount: overrides.discountAmount,
   };
 }
 
@@ -222,5 +225,38 @@ describe('groupOrderItems', () => {
     const items: OrderItem[] = [makeItem({ id: 'i1', productId: 'p1', quantity: 1, unitPrice: 5 })];
     const result = groupOrderItems(items);
     expect(result[0]?.productName).toBe('Menu item');
+  });
+
+  it('carries a promotion discount snapshot through to the grouped row (PROMO-06)', () => {
+    const items: OrderItem[] = [
+      makeItem({
+        id: 'i1',
+        productId: 'p1',
+        quantity: 1,
+        unitPrice: 9,
+        discountRate: 10,
+        discountAmount: 1,
+      }),
+    ];
+    const result = groupOrderItems(items);
+    expect(result[0]?.discountAmount).toBe(1);
+    expect(result[0]?.discountRate).toBe(10);
+  });
+
+  it('defaults discountAmount to 0 and discountRate to null when no snapshot present', () => {
+    const items: OrderItem[] = [makeItem({ id: 'i1', productId: 'p1', quantity: 1, unitPrice: 5 })];
+    const result = groupOrderItems(items);
+    expect(result[0]?.discountAmount).toBe(0);
+    expect(result[0]?.discountRate).toBeNull();
+  });
+
+  it('sums discountAmount across merged lines with the same product/modifiers', () => {
+    const items: OrderItem[] = [
+      makeItem({ id: 'i1', productId: 'p1', quantity: 1, unitPrice: 9, discountAmount: 1 }),
+      makeItem({ id: 'i2', productId: 'p1', quantity: 1, unitPrice: 9, discountAmount: 0.5 }),
+    ];
+    const result = groupOrderItems(items);
+    expect(result).toHaveLength(1);
+    expect(result[0]?.discountAmount).toBe(1.5);
   });
 });

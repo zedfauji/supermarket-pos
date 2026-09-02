@@ -738,6 +738,18 @@ export function PaymentForm({
                       {item.quantity > 1 ? `${String(item.quantity)}× ` : ''}
                       {item.productName}
                     </p>
+                    {item.discountAmount > 0 && (
+                      <p
+                        className="text-xs text-pos-accent"
+                        data-testid="line-item-discount-badge"
+                      >
+                        {item.discountRate != null
+                          ? t('paymentForm.lineItemDiscountRate', { rate: item.discountRate })
+                          : t('paymentForm.lineItemDiscountAmount', {
+                              amount: formatMoney(item.discountAmount),
+                            })}
+                      </p>
+                    )}
                   </div>
                   <MoneyDisplay amount={item.lineTotal} size="sm" />
                 </div>
