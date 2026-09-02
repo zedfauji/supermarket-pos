@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 27
 current_phase_name: Promotions & Discount Management
 status: executing
-stopped_at: Completed 27-04-PLAN.md
-last_updated: "2026-09-02T21:06:44.407Z"
+stopped_at: Completed 27-05-PLAN.md
+last_updated: "2026-09-02T21:24:56.583Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 27 execution started
-state_head: 061d44f8209a011325ff892ae1a932d911445aaa
+state_head: eb1095c33801e975a14992278f6cf3313bc05c59
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 29
+  completed_plans: 30
   percent: 60
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 27 (Promotions & Discount Management) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-09-02 — Phase 27 execution started
 
@@ -114,6 +114,7 @@ Last activity: 2026-09-02 — Phase 27 execution started
 | Phase 27 P02 | 25min | 3 tasks | 21 files |
 | Phase 27 P03 | 27min | 3 tasks | 12 files |
 | Phase 27 P04 | 40min | 3 tasks | 12 files |
+| Phase 27 P05 | 15min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,8 @@ Recent decisions affecting current work:
 - [Phase 27]: 27-03: Fixed useCheckoutSale RPC unit_price submission to use raw catalog price instead of discounted display price (Rule 1 bug caused by Task 1's own promotion-pricing wiring).
 - [Phase 27]: Fixed process_payment_atomic/process_split_payment_atomic's tab-closing coverage check to account for ad-hoc discounts (Rule 1 bug, pre-existing gap first exposed by Plan 04's PIN-gated ad-hoc discount)
 - [Phase 27]: Apply Promotion selector is a client-side UX preview only — process_direct_sale_atomic always independently recomputes the authoritative best-price-wins promotion server-side
+- [Phase 27]: PROMO-06: historical discount badge sourced from mapOrderItemRow/groupOrderItems, not a cost_price_snapshot-adjacent mapper (that column is unmapped anywhere in the codebase).
+- [Phase 27]: E2E PROMO-06 proof split into 3 independent tests (not one chained scenario) since reopening a sale voids its original payment, making a subsequent refund on the same sale inexpressible in the UI.
 
 ### Pending Todos
 
@@ -242,8 +245,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T21:06:43.807Z
-Stopped at: Completed 27-04-PLAN.md
+Last session: 2026-09-02T21:24:56.219Z
+Stopped at: Completed 27-05-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
