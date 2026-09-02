@@ -100,6 +100,12 @@ updater-endpoint are all hardcoded to one customer (Taj House of Spices) today.
   `--project-ref` invocations avoid entirely (Spike 010).
 - `SUPABASE_ACCESS_TOKEN` (account/org-level) can be one shared secret; project-ref and DB password
   are what actually varies per customer (Spike 010).
+- **Branching decision (post-spike, user confirmed):** one private core repo stays the single
+  source of truth for the codebase (current `main`). Each customer gets their own thin repo whose
+  job is only Actions + Releases (or a full mirror), giving each a genuine, uncontaminated
+  `/releases/latest` — not a shared repo with workaround endpoints (Spike 007's alternative was
+  considered and rejected in favor of this). Core fixes reach customer repos via a sync/mirror
+  step, never manual per-customer cherry-picks.
 
 ## Spikes
 
