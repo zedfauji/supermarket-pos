@@ -584,6 +584,8 @@ export type Database = {
           cost_price_snapshot: number | null
           created_at: string
           deleted_at: string | null
+          discount_amount: number | null
+          discount_rate: number | null
           id: string
           is_deleted: boolean
           modifier_ids: string[]
@@ -592,6 +594,7 @@ export type Database = {
           order_id: string
           parent_order_item_id: string | null
           product_id: string
+          promotion_id: string | null
           quantity: number
           unit_price: number
           updated_at: string
@@ -602,6 +605,8 @@ export type Database = {
           cost_price_snapshot?: number | null
           created_at?: string
           deleted_at?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
           id?: string
           is_deleted?: boolean
           modifier_ids?: string[]
@@ -610,6 +615,7 @@ export type Database = {
           order_id: string
           parent_order_item_id?: string | null
           product_id: string
+          promotion_id?: string | null
           quantity?: number
           unit_price: number
           updated_at?: string
@@ -620,6 +626,8 @@ export type Database = {
           cost_price_snapshot?: number | null
           created_at?: string
           deleted_at?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
           id?: string
           is_deleted?: boolean
           modifier_ids?: string[]
@@ -628,6 +636,7 @@ export type Database = {
           order_id?: string
           parent_order_item_id?: string | null
           product_id?: string
+          promotion_id?: string | null
           quantity?: number
           unit_price?: number
           updated_at?: string
@@ -653,6 +662,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
         ]
@@ -1083,6 +1099,76 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      promotions: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          discount_type: string
+          discount_value: number
+          ends_at: string
+          id: string
+          name: string
+          product_id: string | null
+          scope_type: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discount_type: string
+          discount_value: number
+          ends_at: string
+          id?: string
+          name: string
+          product_id?: string | null
+          scope_type: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discount_type?: string
+          discount_value?: number
+          ends_at?: string
+          id?: string
+          name?: string
+          product_id?: string | null
+          scope_type?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_order_items: {
         Row: {
@@ -1943,6 +2029,7 @@ export type Database = {
           p_idempotency_key: string
           p_items: Json
           p_legs?: Json
+          p_manager_override?: boolean
           p_method?: string
           p_reference_number?: string
           p_shift_id: string

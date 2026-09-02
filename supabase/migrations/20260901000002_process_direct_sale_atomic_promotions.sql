@@ -44,7 +44,18 @@
 -- now forward the real p_discount_scope/type/value and the server-computed
 -- v_adhoc_discount instead of today's hardcoded NULLs, so the payments row
 -- finally records the ad-hoc discount.
+--
+-- Pitfall 5 correction: appending a new parameter changes the function's
+-- argument-type identity, so `CREATE OR REPLACE` alone does NOT replace the
+-- live 17-arg function — it registers a second, 18-arg overload alongside
+-- it (verified live: both overloads existed simultaneously after applying
+-- this migration without the DROP below). The 17-arg overload must be
+-- explicitly dropped first, exactly the pattern
+-- 20260703000001_record_audit_terminal_id.sql already used for the same
+-- append-a-parameter situation on record_audit().
 -- =============================================================================
+
+DROP FUNCTION IF EXISTS public.process_direct_sale_atomic(uuid, uuid, uuid, jsonb, text, text, numeric, numeric, text, jsonb, numeric, text, text, numeric, numeric, text, text);
 
 CREATE OR REPLACE FUNCTION public.process_direct_sale_atomic(p_staff_id uuid, p_shift_id uuid, p_caja_session_id uuid, p_items jsonb, p_idempotency_key text, p_method text DEFAULT NULL::text, p_amount numeric DEFAULT NULL::numeric, p_tendered_amount numeric DEFAULT NULL::numeric, p_reference_number text DEFAULT NULL::text, p_legs jsonb DEFAULT NULL::jsonb, p_expected_total numeric DEFAULT NULL::numeric, p_discount_scope text DEFAULT NULL::text, p_discount_type text DEFAULT NULL::text, p_discount_value numeric DEFAULT NULL::numeric, p_discount_amount numeric DEFAULT NULL::numeric, p_customer_name text DEFAULT 'Walk-in'::text, p_customer_phone text DEFAULT NULL::text, p_manager_override boolean DEFAULT false)
  RETURNS jsonb
