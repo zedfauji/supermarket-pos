@@ -12,7 +12,7 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": ["https://github.com/zedfauji/supermarket-pos/releases/latest/download/latest.json"]
+      "endpoints": ["https://github.com/zedfauji/supermarket-pos-taj/releases/latest/download/latest.json"]
     }
   }
 }
