@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 35
+open_count: 36
 waived_count: 0
 fixed_count: 13
-total_count: 48
-last_updated: 2026-09-02T23:46:02.163Z
+total_count: 49
+last_updated: 2026-09-03T02:35:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -63,6 +63,7 @@ last_updated: 2026-09-02T23:46:02.163Z
 | 46 | 27 | unrun-verify | e2e/receipts/category-grouping.spec.ts |  | SC-2b intermittently fails due to shared-catalog fixture pollution (pickTwoCategoryProducts picks any real category with routing NONE); root cause (Plan 27-05 afterEach leak) fixed in 27-07, but the test's own fixture-selection strategy remains fragile against any other spec's throwaway categories | open |  | 2026-09-02T23:45:56.927Z |  |
 | 47 | 27 | unrun-verify | e2e/products/categories.spec.ts |  | T8 bartender-locale test expects Spanish 'Idioma' tab but the pinned cashier E2E account is documented elsewhere as pinned to en-US; reproduces in full isolation, predates Phase 27, unrelated to promotions | open |  | 2026-09-02T23:46:01.842Z |  |
 | 48 | 27 | unrun-verify | e2e/inventory/near-expiry-alerts.spec.ts |  | admin-saves-threshold-persists-after-reload test reloads immediately after Save with no wait for the write to settle (save/reload race), unrelated to promotions, predates Phase 27 | open |  | 2026-09-02T23:46:02.163Z |  |
+| 49 | 26 | deviation | .github/workflows/release.yml |  | When read-manifest's active_customers output is `[]`, sync-customers's job-level `if:` correctly skips the job entirely (no check-run for it, confirmed via GH REST /actions/runs/{id}/jobs on 2 real dispatches — one pre-existing on main before Task 3, one after) — but the overall workflow run's conclusion is still reported "failure" even though every job that actually ran (read-manifest, publish-tauri) succeeded. Reproduced on 2 real runs (33684977414 pre-Task-3 on main, 33708080677 post-Task-3 on this branch), both with the identical signature, so this is a pre-existing GitHub Actions platform quirk with matrix jobs gated to zero elements, not something Task 3 introduced. Not fixed (out of Task 3's scope per SCOPE BOUNDARY — pre-existing); operators dispatching a release with all customers suspended should expect a red X on the run despite nothing being broken. | open |  | 2026-09-03T02:35:00.000Z |  |
 
 ````json
 [
@@ -640,6 +641,18 @@ last_updated: 2026-09-02T23:46:02.163Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-02T23:46:02.163Z",
+    "resolved_at": null
+  },
+  {
+    "id": 49,
+    "kind": "deviation",
+    "phase": "26",
+    "file": ".github/workflows/release.yml",
+    "line": null,
+    "description": "When read-manifest's active_customers output is `[]`, sync-customers's job-level `if:` correctly skips the job entirely (no check-run for it, confirmed via GH REST /actions/runs/{id}/jobs on 2 real dispatches — one pre-existing on main before Task 3, one after) — but the overall workflow run's conclusion is still reported \"failure\" even though every job that actually ran (read-manifest, publish-tauri) succeeded. Reproduced on 2 real runs (33684977414 pre-Task-3 on main, 33708080677 post-Task-3 on this branch), both with the identical signature, so this is a pre-existing GitHub Actions platform quirk with matrix jobs gated to zero elements, not something Task 3 introduced. Not fixed (out of Task 3's scope per SCOPE BOUNDARY — pre-existing); operators dispatching a release with all customers suspended should expect a red X on the run despite nothing being broken.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-03T02:35:00.000Z",
     "resolved_at": null
   }
 ]
