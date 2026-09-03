@@ -225,7 +225,7 @@ SPEC.md (Phase 22/23).
 **Depends on:** Phase 25 (also depends on two pre-existing filed todos landing first per D-18:
 `fix-ci-tauri-build-broker-order.md`, `migrate-env-production-to-github-environment.md` — sequenced
 as Plan 26-01)
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -246,7 +246,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 26-04-PLAN.md — Taj retrofit: byte-identical tauri.override.json + icons, registered active in
+- [x] 26-04-PLAN.md — Taj retrofit: byte-identical tauri.override.json + icons, registered active in
   customers.json, real signed installer built through the new path — old path left untouched (D-15,
   D-16, D-17)
 
