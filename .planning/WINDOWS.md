@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 39
 waived_count: 0
-fixed_count: 13
-total_count: 52
-last_updated: 2026-09-03T16:30:00.000Z
+fixed_count: 14
+total_count: 53
+last_updated: 2026-09-03T16:40:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -59,7 +59,8 @@ last_updated: 2026-09-03T16:30:00.000Z
 | 42 | 20 | deviation | auth.users (mkvinyekkyennyegfoxq), supabase/migrations/20260830000001_auth_users_token_defaults.sql |  | Vinty Owner (the one real production admin account) could not log in, recover password, or receive a magic link -- GoTrue 500 "Scan error ... converting NULL to string is unsupported" on confirmation_token/email_change. Root cause: the account was seeded via a raw SQL INSERT into auth.users (not GoTrue's Admin API), and 4 of that table's token columns have no schema-level DEFAULT ''. Fixed live via COALESCE backfill (confirmed real login succeeded); root-caused and backfill captured in a migration for all environments. Schema-level DEFAULT '' is NOT achievable -- ALTER TABLE auth.users is blocked platform-wide with "must be owner of table users" even via supabase db push and set role supabase_auth_admin. Prevention is procedural: never raw-INSERT into auth.users again, always use the Admin API (as every seed script in this repo already does). | fixed |  | 2026-08-30T23:26:11.780Z | 2026-08-30T23:28:16.369Z |
 | 43 | 23 | lint-warning | src/widgets/HomeDashboard/ui/HomeDashboard.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 112,120,200), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:37.796Z |  |
 | 51 | 26 | deviation | .github/workflows/release.yml | 162 | sync-customers job's tauri-action GitHub-release step publishes to CORE's own repo (zedfauji/supermarket-pos), not the matrix customer's mirror repo -- reproduced 3x in real workflow_dispatch runs (33774546478, 33775917967, 33777389640): after each run, gh api repos/zedfauji/supermarket-pos-taj/releases returned []. Root cause: tauri-action resolves the target repo from GITHUB_TOKEN/GITHUB_REPOSITORY (always core's repo context for any job in this workflow run), not from matrix.customer.repo -- git push --mirror correctly reaches the customer repo's git history, but the actual GitHub Release + installer/latest.json assets never do. Consequence found live: when publish-tauri and sync-customers both target the same tag on core's shared release object, whichever job's upload runs second silently overwrites the first's assets (confirmed: v1.2.1's asset carried sync-customers' override-merged build, not publish-tauri's). Fix requires editing release.yml (out of this task's file scope, which is limited to tauri.conf.json/tauri.override.json per 26-05-PLAN.md) -- e.g. sync-customers' tauri-action step needs to create the release via CUSTOMER_PAT against matrix.customer.repo explicitly, not rely on the ambient GITHUB_TOKEN/GITHUB_REPOSITORY context. Not fixed in 26-05; worked around for the D-17 hop-2 proof via a manual gh release create --repo zedfauji/supermarket-pos-taj using the real, signature-verified artifact (see 26-05-SUMMARY.md). Blocks a truly-automatic new-path release for any future customer until fixed. | open |  | 2026-09-03T16:30:00.000Z |  |
-| 52 | 26 | deviation | customers/customers.json | 1 | zedfauji/supermarket-pos-taj (created gh repo create --private in Plan 26-04) is a PRIVATE repo, but Tauri's updater plugin makes a plain unauthenticated HTTP GET to plugins.updater.endpoints (no auth header configured anywhere in tauri.conf.json/tauri.override.json). Reproduced live: curl -sL https://github.com/zedfauji/supermarket-pos-taj/releases/latest/download/latest.json returns 404 both with and without a valid PAT bearer Authorization header (GitHub's /releases/latest/download/ redirect shortcut does not accept token auth the way api.github.com does for private repos) -- only gh CLI's own authenticated API calls (gh release download / gh api) can reach the asset. This means a real installed Taj till, once migrated to Taj's own endpoint, CANNOT actually complete an automatic update check against a private mirror repo as currently configured -- D-17's hop-2 self-sufficiency claim holds for the build/publish/signature mechanics (proven in 26-05-SUMMARY.md) but NOT for the real unauthenticated client fetch, which is the actual code path useAppUpdater.ts's check() exercises. Needs a product decision before Plan 26-06 retires the old path: either make zedfauji/supermarket-pos-taj (and future customer mirrors) public, or add an authenticated-fetch mechanism to the updater (nontrivial -- embedding a static token in a shipped binary is itself a security anti-pattern, would need a short-lived-token proxy or similar). Not fixed in 26-05 -- both options are architectural/business decisions outside this task's file scope. | open |  | 2026-09-03T16:30:00.000Z |  |
+| 52 | 26 | deviation | customers/customers.json | 1 | zedfauji/supermarket-pos-taj (created gh repo create --private in Plan 26-04) is a PRIVATE repo, but Tauri's updater plugin makes a plain unauthenticated HTTP GET to plugins.updater.endpoints (no auth header configured anywhere in tauri.conf.json/tauri.override.json). Reproduced live: curl -sL https://github.com/zedfauji/supermarket-pos-taj/releases/latest/download/latest.json returned 404 both with and without a valid PAT bearer Authorization header. Fixed by the orchestrator at the Plan 26-06 pre-flight checkpoint: `gh repo edit zedfauji/supermarket-pos-taj --visibility public --accept-visibility-change-consequences` -- re-verified live, curl now returns 200. Accepted per 26-04's own T-26-10 threat disposition (medium/non-blocking exposure of identity strings, not credentials). | fixed |  | 2026-09-03T16:30:00.000Z | 2026-09-03T16:40:00.000Z |
+| 53 | 26 | deviation | scripts/onboard-customer.ps1 |  | scripts/onboard-customer.ps1 (Plan 26-03) hardcodes gh repo create --private for every new customer repo. #52 was fixed one-off for Taj by flipping it public, but the script itself still defaults private -- customer #2 onward will reproduce the identical 404 unless the script defaults to --public or an authenticated-fetch updater mechanism is added first. Not fixed: requires an operator/product decision. | open |  | 2026-09-03T16:40:00.000Z |  |
 | 44 | 23 | lint-warning | src/widgets/PINLoginForm/PINLoginForm.tsx |  | Pre-existing @typescript-eslint/no-floating-promises errors (lines 66,175), unrelated to 23-03's diff | open |  | 2026-08-31T20:23:40.839Z |  |
 | 45 | 27 | deviation | src/widgets/HomeDashboard/ui/HomeDashboard.test.tsx | 150 | gated buttons lock-icon count assertion expects 8, actual 9 since 27-02 added the /promotions nav tile (pre-existing, not fixed by 27-03 per scope boundary) | open |  | 2026-09-02T16:36:31.595Z |  |
 | 46 | 27 | unrun-verify | e2e/receipts/category-grouping.spec.ts |  | SC-2b intermittently fails due to shared-catalog fixture pollution (pickTwoCategoryProducts picks any real category with routing NONE); root cause (Plan 27-05 afterEach leak) fixed in 27-07, but the test's own fixture-selection strategy remains fragile against any other spec's throwaway categories | open |  | 2026-09-02T23:45:56.927Z |  |
@@ -668,6 +669,42 @@ last_updated: 2026-09-03T16:30:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-03T15:35:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 51,
+    "kind": "deviation",
+    "phase": "26",
+    "file": ".github/workflows/release.yml",
+    "line": 162,
+    "description": "sync-customers job's tauri-action GitHub-release step publishes to CORE's own repo (zedfauji/supermarket-pos), not the matrix customer's mirror repo -- reproduced 3x in real workflow_dispatch runs (33774546478, 33775917967, 33777389640): after each run, gh api repos/zedfauji/supermarket-pos-taj/releases returned []. Root cause: tauri-action resolves the target repo from GITHUB_TOKEN/GITHUB_REPOSITORY (always core's repo context for any job in this workflow run), not from matrix.customer.repo -- git push --mirror correctly reaches the customer repo's git history, but the actual GitHub Release + installer/latest.json assets never do. Consequence found live: when publish-tauri and sync-customers both target the same tag on core's shared release object, whichever job's upload runs second silently overwrites the first's assets. Fix requires editing release.yml (out of 26-05's file scope). Not fixed in 26-05; worked around for the D-17 hop-2 proof via a manual gh release create --repo zedfauji/supermarket-pos-taj using the real, signature-verified artifact (see 26-05-SUMMARY.md). Blocks a truly-automatic new-path release for any future customer until fixed.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-03T16:30:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 52,
+    "kind": "deviation",
+    "phase": "26",
+    "file": "customers/customers.json",
+    "line": 1,
+    "description": "zedfauji/supermarket-pos-taj (created gh repo create --private in Plan 26-04) is a PRIVATE repo, but Tauri's updater plugin makes a plain unauthenticated HTTP GET to plugins.updater.endpoints (no auth header configured anywhere in tauri.conf.json/tauri.override.json). Reproduced live: curl -sL https://github.com/zedfauji/supermarket-pos-taj/releases/latest/download/latest.json returned 404 both with and without a valid PAT bearer Authorization header (GitHub's /releases/latest/download/ redirect shortcut does not accept token auth the way api.github.com does for private repos) -- only gh CLI's own authenticated API calls could reach the asset. This meant a real installed Taj till, once migrated to Taj's own endpoint, could not actually complete an automatic update check against a private mirror repo. Fixed by the orchestrator at the Plan 26-06 pre-flight checkpoint: `gh repo edit zedfauji/supermarket-pos-taj --visibility public --accept-visibility-change-consequences` -- re-verified live, curl now returns 200. Accepted per 26-04's own T-26-10 threat disposition (medium/non-blocking exposure of identity strings, not credentials).",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-03T16:30:00.000Z",
+    "resolved_at": "2026-09-03T16:40:00.000Z"
+  },
+  {
+    "id": 53,
+    "kind": "deviation",
+    "phase": "26",
+    "file": "scripts/onboard-customer.ps1",
+    "line": null,
+    "description": "scripts/onboard-customer.ps1 (Plan 26-03) hardcodes `gh repo create $fullRepo --private` for every new customer repo. Ledger #52 found that a private customer mirror 404s against Tauri's unauthenticated updater GET; #52 was fixed one-off for zedfauji/supermarket-pos-taj by flipping it public, but onboard-customer.ps1 itself was not changed -- customer #2 onward, onboarded via this script exactly as documented in docs/onboarding-new-customer.md, will reproduce the identical 404 unless the script defaults to --public or an authenticated-fetch updater mechanism is added first. Not fixed: discovered after Plan 26-03 already shipped; fixing requires either changing onboard-customer.ps1's default (and re-confirming with the operator that customer identity/branding in a public repo is acceptable, per the T-26-10 disposition already accepted for Taj) or a separate updater-auth mechanism.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-03T16:40:00.000Z",
     "resolved_at": null
   }
 ]
