@@ -161,7 +161,17 @@ jobs:
 
       - uses: tauri-apps/tauri-action@v0.6.2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # WINDOWS.md #51: tauri-action resolves its release target repo from
+          # @actions/github's ambient GITHUB_TOKEN/GITHUB_REPOSITORY context,
+          # NOT from matrix.customer.repo — left as the workflow's default
+          # (always core's own repo), this step's release/assets silently land
+          # on zedfauji/supermarket-pos instead of this customer's mirror,
+          # racing and clobbering publish-tauri's own upload for the same tag.
+          # GITHUB_REPOSITORY shadowed to the customer's repo for this step
+          # only; CUSTOMER_MIRROR_PAT already has contents:write there (same
+          # PAT used by the "Mirror-push to customer repo" step above).
+          GITHUB_TOKEN: ${{ secrets.CUSTOMER_MIRROR_PAT }}
+          GITHUB_REPOSITORY: ${{ matrix.customer.repo }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
