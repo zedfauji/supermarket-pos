@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 36
+open_count: 37
 waived_count: 0
 fixed_count: 13
-total_count: 49
-last_updated: 2026-09-03T02:35:00.000Z
+total_count: 50
+last_updated: 2026-09-03T15:35:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -64,6 +64,7 @@ last_updated: 2026-09-03T02:35:00.000Z
 | 47 | 27 | unrun-verify | e2e/products/categories.spec.ts |  | T8 bartender-locale test expects Spanish 'Idioma' tab but the pinned cashier E2E account is documented elsewhere as pinned to en-US; reproduces in full isolation, predates Phase 27, unrelated to promotions | open |  | 2026-09-02T23:46:01.842Z |  |
 | 48 | 27 | unrun-verify | e2e/inventory/near-expiry-alerts.spec.ts |  | admin-saves-threshold-persists-after-reload test reloads immediately after Save with no wait for the write to settle (save/reload race), unrelated to promotions, predates Phase 27 | open |  | 2026-09-02T23:46:02.163Z |  |
 | 49 | 26 | deviation | .github/workflows/release.yml |  | When read-manifest's active_customers output is `[]`, sync-customers's job-level `if:` correctly skips the job entirely (no check-run for it, confirmed via GH REST /actions/runs/{id}/jobs on 2 real dispatches — one pre-existing on main before Task 3, one after) — but the overall workflow run's conclusion is still reported "failure" even though every job that actually ran (read-manifest, publish-tauri) succeeded. Reproduced on 2 real runs (33684977414 pre-Task-3 on main, 33708080677 post-Task-3 on this branch), both with the identical signature, so this is a pre-existing GitHub Actions platform quirk with matrix jobs gated to zero elements, not something Task 3 introduced. Not fixed (out of Task 3's scope per SCOPE BOUNDARY — pre-existing); operators dispatching a release with all customers suspended should expect a red X on the run despite nothing being broken. | open |  | 2026-09-03T02:35:00.000Z |  |
+| 50 | 26 | deviation | .github/workflows/release.yml |  | Real workflow_dispatch run 33771536782 (sync-customers, taj-house-of-spices): git push --mirror pushed a STALE local `main` ref (7a0b8c7, an ancestor of but far behind core's real main 4239f0b) to zedfauji/supermarket-pos-taj's `main` branch. Root cause: the self-hosted runner's persistent workspace (C:\actions-runner\_work\supermarket-pos\supermarket-pos) never refreshes `refs/heads/main` because actions/checkout only updates the ref it explicitly checks out (github.ref for this workflow_dispatch was the dispatched branch, not main) — `refs/remotes/origin/main` in that same workspace was correctly fresh (4239f0b) but `git push --mirror` mirrors local `refs/heads/*`, not `refs/remotes/*`. The dispatched branch itself mirrored byte-identical (`worktree-agent-aa7fe12c0c8086762`: cebbd1d on both core and the taj mirror, confirmed via `gh api .../git/refs/heads/...`), and the installer built in this same job used the correct checked-out content (Check 4's baked remote-ref match confirmed via a real run of the now-6-check verify-installer-integrity.ps1). Only the customer repo's `main`-branch POINTER is stale, not the build artifact. Not fixed: the correct fix (an explicit `git fetch origin main:main --force` or equivalent before the mirror-push) requires modifying release.yml's sync-customers job, which Plan 26-04's own D-17 zero-diff gate on release.yml explicitly forbids touching this task. | open |  | 2026-09-03T15:35:00.000Z |  |
 
 ````json
 [
@@ -653,6 +654,18 @@ last_updated: 2026-09-03T02:35:00.000Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-03T02:35:00.000Z",
+    "resolved_at": null
+  },
+  {
+    "id": 50,
+    "kind": "deviation",
+    "phase": "26",
+    "file": ".github/workflows/release.yml",
+    "line": null,
+    "description": "Real workflow_dispatch run 33771536782 (sync-customers, taj-house-of-spices): git push --mirror pushed a STALE local main ref (7a0b8c7, an ancestor of but far behind core's real main 4239f0b) to zedfauji/supermarket-pos-taj's main branch. Root cause: the self-hosted runner's persistent workspace (C:\\actions-runner\\_work\\supermarket-pos\\supermarket-pos) never refreshes refs/heads/main because actions/checkout only updates the ref it explicitly checks out (github.ref for this workflow_dispatch was the dispatched branch, not main) -- refs/remotes/origin/main in that same workspace was correctly fresh (4239f0b) but git push --mirror mirrors local refs/heads/*, not refs/remotes/*. The dispatched branch itself mirrored byte-identical (worktree-agent-aa7fe12c0c8086762: cebbd1d on both core and the taj mirror, confirmed via gh api .../git/refs/heads/...), and the installer built in this same job used the correct checked-out content (Check 4's baked remote-ref match confirmed via a real run of the now-6-check verify-installer-integrity.ps1). Only the customer repo's main-branch POINTER is stale, not the build artifact. Not fixed: the correct fix (an explicit git fetch origin main:main --force or equivalent before the mirror-push) requires modifying release.yml's sync-customers job, which Plan 26-04's own D-17 zero-diff gate on release.yml explicitly forbids touching this task.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-03T15:35:00.000Z",
     "resolved_at": null
   }
 ]
