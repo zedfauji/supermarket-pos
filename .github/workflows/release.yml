@@ -27,6 +27,7 @@ jobs:
     needs: [read-manifest]
     if: needs.read-manifest.outputs.active_customers != '[]'
     strategy:
+      fail-fast: false
       matrix:
         customer: ${{ fromJson(needs.read-manifest.outputs.active_customers) }}
     permissions:
@@ -35,6 +36,27 @@ jobs:
       name: ${{ matrix.customer.github_environment }}
     runs-on: [self-hosted, windows]
     steps:
+      - name: Validate customer manifest fields (T-26-03)
+        # customers.json is committed/human-edited, but its name/repo fields
+        # become untrusted input the moment they're interpolated into the
+        # git remote add / git push shell commands below. Reject anything
+        # outside a strict allow-list BEFORE any git/gh command runs, so a
+        # malformed or malicious manifest entry fails loudly here instead of
+        # being shelled out.
+        shell: pwsh
+        run: |
+          $name = '${{ matrix.customer.name }}'
+          $repoSlug = ('${{ matrix.customer.repo }}' -split '/')[-1]
+          if ($name -notmatch '^[a-z0-9-]+$') {
+            Write-Host "FAILED: customer.name '$name' contains characters outside the allow-list ^[a-z0-9-]+$ - refusing to proceed (T-26-03)." -ForegroundColor Red
+            exit 1
+          }
+          if ($repoSlug -notmatch '^[a-z0-9-]+$') {
+            Write-Host "FAILED: customer.repo slug '$repoSlug' (from '${{ matrix.customer.repo }}') contains characters outside the allow-list ^[a-z0-9-]+$ - refusing to proceed (T-26-03)." -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "OK: customer.name '$name' and repo slug '$repoSlug' pass allow-list validation." -ForegroundColor Green
+
       - uses: actions/checkout@v4
         with:
           # git push --mirror needs full history — actions/checkout defaults to
