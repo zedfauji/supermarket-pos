@@ -2,12 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 27
-status: completed
-stopped_at: Phase 27 complete — all phases complete
+current_phase: 26
+current_phase_name: Multi-Customer Deployment
+status: executing
+stopped_at: Phase 26 Plan 01 complete, Plan 02 (tracer) proven end-to-end, Plan 02 Task 3 (hardening) outstanding. Phase 27 (Promotions & Discount Management) completed in a concurrent session — verified 16/16 must-haves.
 last_updated: "2026-09-03T01:58:38.344Z"
 last_activity: 2026-09-02
-last_activity_desc: Phase 27 complete
+last_activity_desc: Phase 26 Plan 01 (CI prerequisites) shipped; Plan 02's tracer proven via a real workflow_dispatch run. Phase 27 completed and verified in a concurrent session.
 state_head: 870705f1d1928d84f567b5da0d6fe373cc094842
 progress:
   total_phases: 10
@@ -24,14 +25,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 27 — Promotions & Discount Management
+**Current focus:** Phase 26 — Multi-Customer Deployment (Phase 27 — Promotions & Discount Management completed in a concurrent session)
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-09-02 — Phase 27 complete
+Phase: 26 — Multi-Customer Deployment
+Plan: 2 of 6 (26-02 Task 3 hardening outstanding — fail-fast:false, input-validation regex,
+  D-08 negative-path proof, flip test-customer fixture to suspended)
+Status: Executing
+Last activity: 2026-09-02 — Plan 01 shipped; Plan 02's tracer (manifest-gated mirror-push, dual
+  --config merge, D-08 gate) proven end-to-end via a real workflow_dispatch run
+
+**Also complete (concurrent session):** Phase 27 — Promotions & Discount Management, 7/7 plans,
+verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-management/27-VERIFICATION.md`).
 
 ## Performance Metrics
 
@@ -121,6 +127,19 @@ Last activity: 2026-09-02 — Phase 27 complete
 ## Accumulated Context
 
 ### Roadmap Evolution
+
+- Phase 26 added: Multi-Customer Deployment — ship this codebase to multiple customers, each with
+  an isolated Supabase project and their own release/updater channel. Scoped from spikes 007–010
+  (`.planning/spikes/MANIFEST.md`, idea key `multi-customer-deployment`), triggered by CI run
+  33587195680 failing with leftover `bar-pos v1.2.0` branding and the discovery that
+  `tauri.conf.json`/`.env.production` hardcode one customer (Taj House of Spices) today. Branching
+  decision (user-confirmed): core repo stays the single source of truth; each customer gets a thin
+  repo for Actions+Releases only, synced from core — a shared repo's `/releases/latest` is proven
+  repo-wide, not per-customer (Spike 007), which breaks Tauri's updater across customers. Depends on
+  two filed todos: `fix-ci-tauri-build-broker-order.md` (unrelated CI bug blocking `tauri-build`
+  today) and `migrate-env-production-to-github-environment.md` (interim Environment-secret migration
+  for the existing customer, ahead of the full N-customer machinery). Captured via `/gsd-explore`
+  2026-09-01.
 
 - Phase 21 added: Idle Screen Lock — configurable per-terminal inactivity timeout (default 60s)
   locks every screen for every role incl. admin, no transaction exemption; unlocks on any valid
@@ -215,10 +234,19 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- `rename-cargo-package-bar-pos.md` — Cargo package still named `bar-pos` internally (cosmetic,
+  filed as a low-priority interim todo during Phase 26 discovery, not blocking).
 
 ### Blockers/Concerns
 
+- Phase 26 Plan 02 (Multi-Customer Deployment tracer) is incomplete: Task 3 (hardening — add
+  `fail-fast: false` to `sync-customers`'s strategy block, an allow-list regex input-validation
+  step before any `git`/`gh` command, a real D-08 negative-path proof with the override file
+  temporarily removed, and confirming the `test-customer` fixture is excluded once suspended) was
+  never executed. `customers/customers.json`'s `test-customer` entry has been manually flipped to
+  `suspended` as a safety measure before this push (so it doesn't fire a disposable mirror-push on
+  every real release), but the hardening itself is still outstanding — resume Plan 26-02 to finish
+  Task 3 before Plan 26-03 (onboarding script) or 26-04 (Taj retrofit) proceed.
 - Per project CLAUDE.md: all verification must be automated Playwright E2E/Vitest — no `human_needed` terminal states, no manual UAT checkpoints, for any v1.3 phase.
 - Phase 14 planning must pin one documented cost-basis formula per report (valuation vs. historical-cost-snapshot margin in the existing Product Sales report) before implementation — research PITFALLS.md flags inconsistent cost bases as the top risk for these reports not reconciling with existing pages.
 - Phase 14 planning must resolve the turnover-averaging-method gap (research Gaps to Address): no periodic-snapshot infrastructure exists yet for accurate period-average inventory value; compute from the movement log going forward and document the limitation for pre-feature periods.
@@ -249,12 +277,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-02T23:48:25.228Z
-Stopped at: Phase 27 complete — all phases complete
-Resume file: None
+Last session: 2026-09-03T01:58:38.344Z
+Stopped at: Phase 26 Plan 02 tracer proven end-to-end; Task 3 hardening outstanding. Phase 27 completed and verified (16/16 must-haves) in a concurrent session.
+Resume file: .planning/phases/26-multi-customer-deployment/26-02-PLAN.md
 
 ## Operator Next Steps
 
-- Run `/gsd-execute-phase 27` to execute Phase 27 (Promotions & Discount Management), starting with Wave 1's tracer plan (27-01-PLAN.md).
+- Resume Plan 26-02 to finish Task 3 (hardening: fail-fast:false, input-validation, D-08 negative-path proof) before continuing to Plan 26-03.
 - Run `/gsd-plan-phase 25` to plan E2E Receipt Print-Mock Consolidation (extract the shared `__TAURI_INTERNALS__` mock helper — see Blockers/Concerns above).
-- Phase 26 (Multi-Customer Deployment) execution is in progress in a concurrent session — do not run `/gsd-plan-phase 26` or edit its plans without checking in there first.
+- Phase 27 (Promotions & Discount Management) is complete — see `.planning/phases/27-promotions-discount-management/27-VERIFICATION.md`.
