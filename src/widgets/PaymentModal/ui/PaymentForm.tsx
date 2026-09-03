@@ -294,8 +294,7 @@ export function PaymentForm({
     const now = new Date();
     return (allPromotions ?? []).filter(p => p.active && now >= p.startsAt && now <= p.endsAt);
   }, [allPromotions]);
-  const selectedPromotion =
-    activePromotionOptions.find(p => p.id === selectedPromotionId) ?? null;
+  const selectedPromotion = activePromotionOptions.find(p => p.id === selectedPromotionId) ?? null;
 
   // Re-evaluates every cart line against the manually-selected promotion,
   // never worsening a line that already resolved a better price at scan
@@ -306,7 +305,11 @@ export function PaymentForm({
     return tab.items.map(item => {
       if (!item.product) return item;
       const match = evaluateBestPromotion(
-        { productId: item.product.id, categoryId: item.product.categoryId, basePrice: item.product.basePrice },
+        {
+          productId: item.product.id,
+          categoryId: item.product.categoryId,
+          basePrice: item.product.basePrice,
+        },
         [selectedPromotion],
         new Date(),
         0,
@@ -350,7 +353,8 @@ export function PaymentForm({
       // Inclusive mode (TAX-02): afterDiscount already IS the total — decompose
       // subtotal by division first, then derive tax by subtraction (never
       // re-derive independently — avoids a 1-cent drift vs. the total).
-      const decomposedSubtotal = Math.round((afterDiscount / (1 + taxRatePercent / 100)) * 100) / 100;
+      const decomposedSubtotal =
+        Math.round((afterDiscount / (1 + taxRatePercent / 100)) * 100) / 100;
       return Math.round((afterDiscount - decomposedSubtotal) * 100) / 100;
     }
     // Exclusive mode (TAX-03): unchanged additive math.
@@ -472,7 +476,10 @@ export function PaymentForm({
 
     if (method === 'bank_transfer') {
       if (!processors.processBankTransferPayment) {
-        return { ok: false, error: { message: t('featOrders:checkoutSale.bankTransferUnavailable') } };
+        return {
+          ok: false,
+          error: { message: t('featOrders:checkoutSale.bankTransferUnavailable') },
+        };
       }
       // eslint-disable-next-line i18next/no-literal-string -- idempotency-key prefix, not UI copy
       idempotencyKeyRef.current ??= generateIdempotencyKey('payment_bank_transfer');
@@ -546,7 +553,8 @@ export function PaymentForm({
       try {
         if (method === 'cash') {
           const drawer = await openCashDrawer(settings.printerName);
-          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
+          if (!drawer.ok)
+            logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
           const printed = await printReceipt(receipt, settings);
           if (!printed.ok)
             logHardwareFail('printer.receipt.failed', printed.error.code, printed.error.message);
@@ -642,7 +650,8 @@ export function PaymentForm({
       try {
         if (legs.some(l => l.method === 'cash')) {
           const drawer = await openCashDrawer(settings.printerName);
-          if (!drawer.ok) logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
+          if (!drawer.ok)
+            logHardwareFail('cash_drawer.failed', drawer.error.code, drawer.error.message);
         }
         for (const receipt of result.data.receipts) {
           const printed = await printReceipt(receipt, settings);
@@ -739,10 +748,7 @@ export function PaymentForm({
                       {item.productName}
                     </p>
                     {item.discountAmount > 0 && (
-                      <p
-                        className="text-xs text-pos-accent"
-                        data-testid="line-item-discount-badge"
-                      >
+                      <p className="text-xs text-pos-accent" data-testid="line-item-discount-badge">
                         {item.discountRate != null
                           ? t('paymentForm.lineItemDiscountRate', { rate: item.discountRate })
                           : t('paymentForm.lineItemDiscountAmount', {
@@ -761,34 +767,39 @@ export function PaymentForm({
             </div>
           </section>
 
-          {method !== 'rappi' && activePromotionOptions.length > 0 && (
-            <section className="space-y-2 rounded-lg border p-3" data-testid="apply-promotion-section">
-              <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
-                {t('featOrders:applyPromotion.label')}
-              </Label>
-              <Select
-                value={selectedPromotionId ?? ''}
-                onValueChange={value => {
-                  setSelectedPromotionId(value);
-                }}
+          {method !== 'rappi' &&
+            processors.processBankTransferPayment &&
+            activePromotionOptions.length > 0 && (
+              <section
+                className="space-y-2 rounded-lg border p-3"
+                data-testid="apply-promotion-section"
               >
-                <SelectTrigger
-                  id="apply-promotion-select"
-                  data-testid="apply-promotion-select"
-                  disabled={isProcessing}
+                <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
+                  {t('featOrders:applyPromotion.label')}
+                </Label>
+                <Select
+                  value={selectedPromotionId ?? ''}
+                  onValueChange={value => {
+                    setSelectedPromotionId(value);
+                  }}
                 >
-                  <SelectValue placeholder={t('featOrders:applyPromotion.placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {activePromotionOptions.map(promo => (
-                    <SelectItem key={promo.id} value={promo.id}>
-                      {promo.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </section>
-          )}
+                  <SelectTrigger
+                    id="apply-promotion-select"
+                    data-testid="apply-promotion-select"
+                    disabled={isProcessing}
+                  >
+                    <SelectValue placeholder={t('featOrders:applyPromotion.placeholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activePromotionOptions.map(promo => (
+                      <SelectItem key={promo.id} value={promo.id}>
+                        {promo.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </section>
+            )}
 
           {method !== 'rappi' && (
             <section className="space-y-2 rounded-lg border p-3" data-testid="discount-section">

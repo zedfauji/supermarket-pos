@@ -351,7 +351,10 @@ describe('PaymentForm — discount section', () => {
     const user = userEvent.setup();
     renderForm();
     await expandDiscountSection(user);
-    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: 'Discount' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
 
     // Collapse.
     await user.click(screen.getByRole('switch', { name: 'Discount' }));
@@ -818,7 +821,11 @@ describe('PaymentForm — split mode', () => {
       processSplitPayment: vi
         .fn()
         .mockResolvedValue(
-          ok({ paymentGroupId: 'group-y', paymentIds: ['p1', 'p2'], receipts: [receipt1, receipt2] })
+          ok({
+            paymentGroupId: 'group-y',
+            paymentIds: ['p1', 'p2'],
+            receipts: [receipt1, receipt2],
+          })
         ),
     });
     renderForm(processors);
@@ -934,18 +941,22 @@ describe('PaymentForm — tax modes (Phase 24)', () => {
 
   it('property: displayed subtotal + tax === total to the cent, across rates in both modes (Open Question 2)', () => {
     fc.assert(
-      fc.property(fc.integer({ min: 0, max: 100 }), fc.boolean(), (taxRatePercent, taxInclusive) => {
-        cleanup();
-        mockSettings.billing = { ...DEFAULT_MOCK_BILLING, taxRatePercent, taxInclusive };
-        renderForm();
+      fc.property(
+        fc.integer({ min: 0, max: 100 }),
+        fc.boolean(),
+        (taxRatePercent, taxInclusive) => {
+          cleanup();
+          mockSettings.billing = { ...DEFAULT_MOCK_BILLING, taxRatePercent, taxInclusive };
+          renderForm();
 
-        const parseMoney = (text: string): number => Number(text.replace(/[^0-9.-]/g, ''));
-        const total = parseMoney(screen.getByTestId('total-row').textContent ?? '');
-        const taxAmount = parseMoney(screen.getByTestId('tax-row').textContent ?? '');
-        const subtotal = Math.round((total - taxAmount) * 100) / 100;
+          const parseMoney = (text: string): number => Number(text.replace(/[^0-9.-]/g, ''));
+          const total = parseMoney(screen.getByTestId('total-row').textContent ?? '');
+          const taxAmount = parseMoney(screen.getByTestId('tax-row').textContent ?? '');
+          const subtotal = Math.round((total - taxAmount) * 100) / 100;
 
-        expect(Math.round((subtotal + taxAmount) * 100)).toBe(Math.round(total * 100));
-      }),
+          expect(Math.round((subtotal + taxAmount) * 100)).toBe(Math.round(total * 100));
+        }
+      ),
       { numRuns: 20 }
     );
   });
@@ -954,6 +965,28 @@ describe('PaymentForm — tax modes (Phase 24)', () => {
 // ---------------------------------------------------------------------------
 // Phase 27 — "Apply Promotion" selector (PROMO-05)
 // ---------------------------------------------------------------------------
+
+// CR-01 fix: the "Apply Promotion" selector recomputes a discounted charge
+// amount client-side, but only process_direct_sale_atomic (the direct-sale
+// RPC, reached exclusively via CheckoutPanel/useCheckoutSale) independently
+// re-derives and authoritatively re-applies that same promotion server-side.
+// The generic process_payment_atomic/process_split_payment_atomic RPCs used
+// by the reopened-tab path (PaymentPane, no processBankTransferPayment) have
+// no such recompute step and never learn about the reduction at all — the
+// tab would be silently underpaid and left open forever. processors.
+// processBankTransferPayment is only ever supplied by useCheckoutSale (see
+// its doc comment on PaymentProcessors), so its presence is reused here as
+// the same "are we in the direct-sale context" gate the Bank Transfer method
+// button already relies on.
+function makeCheckoutProcessors(overrides: Partial<PaymentProcessors> = {}): PaymentProcessors {
+  const receipt = makeReceipt();
+  return makeProcessors({
+    processBankTransferPayment: vi
+      .fn()
+      .mockResolvedValue(ok({ paymentId: 'p-bank-transfer', receiptData: receipt })),
+    ...overrides,
+  });
+}
 
 describe('PaymentForm — Apply Promotion selector', () => {
   it('the section is hidden entirely when there are no currently-active promotions', () => {
@@ -973,6 +1006,24 @@ describe('PaymentForm — Apply Promotion selector', () => {
     expect(screen.queryByTestId('apply-promotion-section')).not.toBeInTheDocument();
   });
 
+  // CR-01 regression test: reopened-tab payment path (PaymentPane) uses the
+  // default processors, which never include processBankTransferPayment.
+  // Even with an active promotion available, the section must stay hidden —
+  // the generic RPCs it would call have no way to record the promotion
+  // discount, so silently underpaying a reopened tab must be impossible.
+  it('CR-01: the section stays hidden on the reopened-tab payment path (no processBankTransferPayment), even with an active promotion', () => {
+    mockPromotionsData.push(makePromotion());
+    renderWithProviders(
+      <PaymentForm
+        tab={promotableTab}
+        staffId={staffId}
+        onPaymentSuccess={vi.fn()}
+        processors={makeProcessors()}
+      />
+    );
+    expect(screen.queryByTestId('apply-promotion-section')).not.toBeInTheDocument();
+  });
+
   it('selecting an active promotion discounts the matching line without opening a PIN dialog', async () => {
     const user = userEvent.setup();
     mockPromotionsData.push(makePromotion());
@@ -981,7 +1032,7 @@ describe('PaymentForm — Apply Promotion selector', () => {
         tab={promotableTab}
         staffId={staffId}
         onPaymentSuccess={vi.fn()}
-        processors={makeProcessors()}
+        processors={makeCheckoutProcessors()}
       />
     );
 
@@ -1012,7 +1063,7 @@ describe('PaymentForm — Apply Promotion selector', () => {
         tab={alreadyDiscountedTab}
         staffId={staffId}
         onPaymentSuccess={vi.fn()}
-        processors={makeProcessors()}
+        processors={makeCheckoutProcessors()}
       />
     );
 
