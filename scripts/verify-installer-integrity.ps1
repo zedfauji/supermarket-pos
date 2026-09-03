@@ -38,6 +38,11 @@
          independently extractable from the built installer, RESEARCH.md Pattern 4)
          contains all four expected ExecWait substrings, and tauri.conf.json's
          bundle.windows.nsis.installerHooks still points at ../windows/hooks.nsh.
+      6. Taj's customers/taj-house-of-spices/tauri.override.json (Phase 26,
+         D-16/D-17) has identifier/bundle.publisher/plugins.updater.endpoints[0]
+         byte-identical to the values still hardcoded in src-tauri/tauri.conf.json
+         at this point in the phase (Plan 26-05 strips core's config later) -
+         source-side check, same shape as Check 2's fail-fast comparison.
 #>
 
 [CmdletBinding()]
@@ -46,7 +51,9 @@ param(
     [string]$InstallerPath,
 
     [Parameter(Mandatory)]
-    [string]$ExpectedThumbprint
+    [string]$ExpectedThumbprint,
+
+    [string]$TauriOverridePath = (Join-Path $PSScriptRoot '..\customers\taj-house-of-spices\tauri.override.json')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -139,6 +146,27 @@ if ($installerHooks -ne '../windows/hooks.nsh') {
     Fail "tauri.conf.json bundle.windows.nsis.installerHooks is '$installerHooks', expected '../windows/hooks.nsh'."
 }
 Write-Host "OK: windows/hooks.nsh contains all 4 expected ExecWait lines and tauri.conf.json points at it." -ForegroundColor Green
+
+# --- Check 6: Taj override identity fields byte-identical to tauri.conf.json (D-16/D-17) --
+if (-not (Test-Path -LiteralPath $TauriOverridePath)) {
+    Fail "Taj override file not found at '$TauriOverridePath'."
+}
+$tajOverride = Get-Content -LiteralPath $TauriOverridePath -Raw | ConvertFrom-Json
+
+$expectedIdentifier = 'com.tajhouseofspices.supermarketpos'
+$expectedPublisher = 'Taj House of Spice Supermarket POS'
+$expectedEndpoint = 'https://github.com/zedfauji/supermarket-pos/releases/latest/download/latest.json'
+
+if ($tajOverride.identifier -ne $expectedIdentifier) {
+    Fail "'$TauriOverridePath' field 'identifier' mismatch: got '$($tajOverride.identifier)', expected '$expectedIdentifier'."
+}
+if ($tajOverride.bundle.publisher -ne $expectedPublisher) {
+    Fail "'$TauriOverridePath' field 'bundle.publisher' mismatch: got '$($tajOverride.bundle.publisher)', expected '$expectedPublisher'."
+}
+if ($tajOverride.plugins.updater.endpoints[0] -ne $expectedEndpoint) {
+    Fail "'$TauriOverridePath' field 'plugins.updater.endpoints[0]' mismatch: got '$($tajOverride.plugins.updater.endpoints[0])', expected '$expectedEndpoint'."
+}
+Write-Host "OK: Taj's tauri.override.json identity fields (identifier/publisher/updater endpoint) are byte-identical to tauri.conf.json (D-16)." -ForegroundColor Green
 
 Write-Host "All checks passed" -ForegroundColor Green
 exit 0

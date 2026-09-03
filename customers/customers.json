@@ -14,5 +14,13 @@
     "supabase_project_ref": "fake-ref-not-real",
     "deployment_mode": "cloud",
     "github_environment": "test-onboard-fixture"
+  },
+  {
+    "name": "taj-house-of-spices",
+    "repo": "zedfauji/supermarket-pos-taj",
+    "status": "active",
+    "supabase_project_ref": "mkvinyekkyennyegfoxq",
+    "deployment_mode": "cloud",
+    "github_environment": "taj-house-of-spices"
   }
 ]
