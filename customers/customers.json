@@ -6,5 +6,13 @@
     "supabase_project_ref": "test-customer-placeholder-ref",
     "deployment_mode": "cloud",
     "github_environment": "test-customer"
+  },
+  {
+    "name": "test-onboard-fixture",
+    "repo": "zedfauji/supermarket-pos-test-onboard-fixture",
+    "status": "suspended",
+    "supabase_project_ref": "fake-ref-not-real",
+    "deployment_mode": "cloud",
+    "github_environment": "test-onboard-fixture"
   }
 ]

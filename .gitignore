@@ -92,6 +92,8 @@ backups/
 !.planning/**
 # OPS-02 deliverable: tracked DR doc, not scratch — exception to docs/ and *.md above
 !docs/database-backup-and-disaster-recovery.md
+# Phase 26 D-09 deliverable: tracked onboarding runbook, not scratch — exception to docs/ and *.md above
+!docs/onboarding-new-customer.md
 
 # impeccable-live-ignore-start
 .impeccable/hook.cache.json
