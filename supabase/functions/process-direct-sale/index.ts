@@ -30,7 +30,10 @@ const BodySchema = z
     referenceNumber: z.string().max(64).nullable().optional(),
     legs: z.array(legSchema).min(1).max(4).optional(),
     expectedTotal: z.number().nonnegative().multipleOf(0.01).optional(),
-    discountScope: z.enum(['all', 'pool_only', 'consumptions_only']).optional(),
+    // Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired —
+    // 'all' is the only member left, matching domain.ts's DiscountScopeSchema
+    // and process_direct_sale_atomic's own INVALID_DISCOUNT_SCOPE check.
+    discountScope: z.enum(['all']).optional(),
     discountType: z.enum(['percent', 'fixed']).optional(),
     discountValue: z.number().nonnegative().optional(),
     discountAmount: z.number().nonnegative().multipleOf(0.01).optional(),
