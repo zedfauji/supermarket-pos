@@ -225,7 +225,7 @@ SPEC.md (Phase 22/23).
 **Depends on:** Phase 25 (also depends on two pre-existing filed todos landing first per D-18:
 `fix-ci-tauri-build-broker-order.md`, `migrate-env-production-to-github-environment.md` — sequenced
 as Plan 26-01)
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -252,7 +252,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 26-05-PLAN.md — Real two-hop update-cycle proof: transition release (endpoint-only bump) through
+- [x] 26-05-PLAN.md — Real two-hop update-cycle proof: transition release (endpoint-only bump) through
   the old path, then a follow-up release through the new path — a controlled test client migrates
   channels with zero manual reinstall (D-16, D-17)
 
