@@ -94,6 +94,16 @@ jobs:
         working-directory: broker
         run: cargo build --release
 
+      - name: generate build cert (Phase 20, DEP-01)
+        # tauri.conf.json's bundle.resources unconditionally references
+        # cert/selfsigned.cer, and build.rs checks that file exists at
+        # *compile* time — before `--no-bundle` or any packaging flag is even
+        # read. Every cargo invocation touching src-tauri (cargo test, cargo
+        # build, tauri build) needs it on disk first, matching release.yml's
+        # identical step for the same reason.
+        shell: pwsh
+        run: powershell -File scripts/generate-build-cert.ps1
+
       - name: Rust unit tests
         working-directory: src-tauri
         run: cargo test

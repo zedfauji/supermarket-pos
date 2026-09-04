@@ -51,7 +51,6 @@ export default defineConfig(async () => {
       },
     },
     test: {
-      globalSetup: './src/test/global-setup.ts',
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
@@ -82,6 +81,7 @@ export default defineConfig(async () => {
           extends: true,
           test: {
             name: 'integration',
+            globalSetup: './src/test/global-setup.ts',
             globals: true,
             // jsdom (not 'node') — several *.integration.test.ts files use
             // @testing-library/react's renderHook against real Supabase RPCs
