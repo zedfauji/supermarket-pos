@@ -576,7 +576,6 @@
       "validity": "Vigencia y recurrencia",
       "review": "Revisión"
     },
-    "comingSoon": "Vigencia/Revisión — disponible en el siguiente plan.",
     "back": "Atrás",
     "next": "Siguiente",
     "createPromotion": "Crear promoción",
@@ -591,6 +590,35 @@
       "emptyBody": "Intenta con otro nombre de producto o categoría.",
       "removeChip": "Quitar {{name}}",
       "validationError": "Selecciona al menos un producto o categoría, o marca esta promoción como de toda la tienda."
+    },
+    "validity": {
+      "dateRangeError": "La fecha de fin debe ser igual o posterior a la fecha de inicio",
+      "recurringLabel": "Recurrente",
+      "startTimeLabel": "Hora de inicio",
+      "endTimeLabel": "Hora de fin",
+      "timeWindowError": "La hora de fin debe ser posterior a la hora de inicio",
+      "day": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb"
+      }
+    },
+    "review": {
+      "nameLabel": "Nombre",
+      "discountLabel": "Descuento",
+      "percentValue": "{{value}}%",
+      "scopeLabel": "Alcance",
+      "dateRangeLabel": "Vigencia",
+      "dateRangeValue": "{{from}} → {{to}}",
+      "recurrenceLabel": "Recurrencia",
+      "timeWindowValue": "{{startTime}}–{{endTime}}",
+      "noRecurrence": "Sin recurrencia — activa todos los días dentro del rango de fechas",
+      "previewLabel": "Ejemplo: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
+      "noPreview": "Ningún producto coincide actualmente con el alcance de esta promoción, así que no hay un ejemplo disponible."
     }
   }
 }

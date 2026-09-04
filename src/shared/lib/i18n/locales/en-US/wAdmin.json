@@ -576,7 +576,6 @@
       "validity": "Validity & Recurrence",
       "review": "Review"
     },
-    "comingSoon": "Validity/Review — coming in the next plan.",
     "back": "Back",
     "next": "Next",
     "createPromotion": "Create Promotion",
@@ -591,6 +590,35 @@
       "emptyBody": "Try a different product or category name.",
       "removeChip": "Remove {{name}}",
       "validationError": "Select at least one product or category, or mark this promotion as store-wide."
+    },
+    "validity": {
+      "dateRangeError": "End date must be on or after the start date",
+      "recurringLabel": "Recurring",
+      "startTimeLabel": "Start time",
+      "endTimeLabel": "End time",
+      "timeWindowError": "End time must be after start time",
+      "day": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
+    },
+    "review": {
+      "nameLabel": "Name",
+      "discountLabel": "Discount",
+      "percentValue": "{{value}}%",
+      "scopeLabel": "Scope",
+      "dateRangeLabel": "Active dates",
+      "dateRangeValue": "{{from}} → {{to}}",
+      "recurrenceLabel": "Recurrence",
+      "timeWindowValue": "{{startTime}}–{{endTime}}",
+      "noRecurrence": "No recurrence — active every day within the date range",
+      "previewLabel": "Example: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
+      "noPreview": "No product currently matches this promotion's scope, so no live example is available."
     }
   }
 }

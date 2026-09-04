@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { usePromotions } from '@entities/promotion';
 import type { DiscountType } from '@shared/lib/domain';
+import { cn } from '@shared/lib/utils';
 import {
   FormField,
   Input,
@@ -20,15 +21,15 @@ import {
   WIZARD_STEP_ORDER,
   type PromotionWizardStep,
 } from '../model/usePromotionWizardState';
+import { StepReview } from './wizard/StepReview';
 import { StepScope } from './wizard/StepScope';
-
-const SCOPE_INDEX = WIZARD_STEP_ORDER.indexOf('scope');
+import { StepValidityRecurrence } from './wizard/StepValidityRecurrence';
 
 /**
  * Dedicated create/edit screen for promotions (D-07), replacing the deleted
- * PromotionFormDialog modal. Basics & Discount (28-01) and Scope (28-03)
- * are real, working steps — Validity/Review remain placeholder panels until
- * 28-04 adds recurrence fields and the live price preview.
+ * PromotionFormDialog modal. All 4 steps — Basics & Discount (28-01), Scope
+ * (28-03), Validity & Recurrence, and Review (28-04) — are real, working
+ * steps.
  */
 export function PromotionWizardPage() {
   const { t } = useTranslation('wAdmin');
@@ -41,10 +42,11 @@ export function PromotionWizardPage() {
   const wizard = usePromotionWizardState(promotion);
   const stepIndex = WIZARD_STEP_ORDER.indexOf(wizard.currentStep);
   const isLastStep = stepIndex === WIZARD_STEP_ORDER.length - 1;
-  // D-08 partial: tracks whether the admin tried to leave the Scope step
-  // while it was invalid, so StepScope only shows its inline error after a
-  // real attempt (not on first render).
+  // D-08 partial: tracks whether the admin tried to leave the Scope/Validity
+  // step while it was invalid, so those steps only show their inline error
+  // after a real attempt (not on first render).
   const [scopeAttempted, setScopeAttempted] = useState(false);
+  const [validityAttempted, setValidityAttempted] = useState(false);
 
   function goToStep(next: PromotionWizardStep) {
     const nextIndex = WIZARD_STEP_ORDER.indexOf(next);
@@ -52,12 +54,22 @@ export function PromotionWizardPage() {
       if (nextIndex > wizard.furthestValidStep) return;
       // furthestValidStep is a high-water mark set the first time a step was
       // validly passed — it does not retroactively invalidate if the admin
-      // goes back and un-does a previously-valid Scope selection. Re-check
-      // isScopeStepValid() for any jump past Scope (e.g. clicking a later
-      // tab directly) so a since-invalidated Scope step still blocks.
-      if (nextIndex > SCOPE_INDEX && !wizard.isScopeStepValid()) {
-        setScopeAttempted(true);
-        return;
+      // goes back and un-does a previously-valid step's fields. Re-check
+      // every gated step strictly before the destination (D-08, now covering
+      // all 3 gated steps) so a direct tab click can't bypass a
+      // since-invalidated step.
+      for (let i = 0; i < nextIndex; i++) {
+        const step = WIZARD_STEP_ORDER[i];
+        if (!step) continue;
+        if (step === 'basics' && !wizard.validateBasics()) return;
+        if (step === 'scope' && !wizard.isScopeStepValid()) {
+          setScopeAttempted(true);
+          return;
+        }
+        if (step === 'validity' && !wizard.isValidityStepValid()) {
+          setValidityAttempted(true);
+          return;
+        }
       }
     }
     wizard.setCurrentStep(next);
@@ -67,6 +79,10 @@ export function PromotionWizardPage() {
     if (wizard.currentStep === 'basics' && !wizard.validateBasics()) return;
     if (wizard.currentStep === 'scope' && !wizard.isScopeStepValid()) {
       setScopeAttempted(true);
+      return;
+    }
+    if (wizard.currentStep === 'validity' && !wizard.isValidityStepValid()) {
+      setValidityAttempted(true);
       return;
     }
     const nextIndex = Math.min(stepIndex + 1, WIZARD_STEP_ORDER.length - 1);
@@ -112,6 +128,14 @@ export function PromotionWizardPage() {
               key={step}
               value={step}
               disabled={!isEditMode && idx > wizard.furthestValidStep}
+              // Step indicator states (28-UI-SPEC.md): current = accent
+              // bg/text; completed & revisitable = the base component's
+              // default clickable style; not-yet-reached in create mode =
+              // disabled + muted (disabled:opacity-50 from the base
+              // component); edit mode = never disabled, per D-10.
+              className={cn(
+                'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+              )}
             >
               {t(`promotionWizard.step.${step}`)}
             </TabsTrigger>
@@ -208,11 +232,39 @@ export function PromotionWizardPage() {
         </TabsContent>
 
         <TabsContent value="validity">
-          <p className="text-sm text-muted-foreground">{t('promotionWizard.comingSoon')}</p>
+          <StepValidityRecurrence
+            fromStr={wizard.fromStr}
+            toStr={wizard.toStr}
+            onDateRangeChange={wizard.handleDateRangeChange}
+            recurring={wizard.recurring}
+            onRecurringChange={wizard.handleRecurringChange}
+            daysOfWeek={wizard.daysOfWeek}
+            onToggleDayOfWeek={wizard.toggleDayOfWeek}
+            startTime={wizard.startTime}
+            endTime={wizard.endTime}
+            onStartTimeChange={wizard.setStartTime}
+            onEndTimeChange={wizard.setEndTime}
+            showValidationError={validityAttempted && !wizard.isValidityStepValid()}
+            disabled={wizard.isPending}
+          />
         </TabsContent>
 
         <TabsContent value="review">
-          <p className="text-sm text-muted-foreground">{t('promotionWizard.comingSoon')}</p>
+          <StepReview
+            name={wizard.name}
+            discountType={wizard.discountType}
+            discountValue={wizard.discountValue}
+            discountPercentStr={wizard.discountPercentStr}
+            fromStr={wizard.fromStr}
+            toStr={wizard.toStr}
+            storeWide={wizard.storeWide}
+            selectedProductIds={wizard.selectedProductIds}
+            selectedCategoryIds={wizard.selectedCategoryIds}
+            recurring={wizard.recurring}
+            daysOfWeek={wizard.daysOfWeek}
+            startTime={wizard.startTime}
+            endTime={wizard.endTime}
+          />
         </TabsContent>
       </Tabs>
 

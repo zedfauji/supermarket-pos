@@ -1,75 +1,37 @@
 import { useTranslation } from 'react-i18next';
 
+import { PRESETS, type Preset } from './DateRangePicker.presets';
 import { POSButton } from './POSButton';
 
 export type DateRangePickerProps = {
   fromStr: string;
   toStr: string;
   onChange: (fromStr: string, toStr: string) => void;
+  /** Optional preset override. Defaults to the backward-looking PRESETS (Reports' own
+   *  call sites keep compiling and behaving identically). The promotion wizard passes
+   *  PROMOTION_DATE_PRESETS instead (D-07's forward-looking-validity requirement). */
+  presets?: Preset[];
 };
 
-function toDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${String(y)}-${m}-${day}`;
-}
-
-type Preset = { label: string; from: () => string; to: () => string };
-
-const PRESETS: Preset[] = [
-  {
-    label: 'Today',
-    from: () => toDateStr(new Date()),
-    to: () => toDateStr(new Date()),
-  },
-  {
-    label: 'Yesterday',
-    from: () => {
-      const d = new Date();
-      d.setDate(d.getDate() - 1);
-      return toDateStr(d);
-    },
-    to: () => {
-      const d = new Date();
-      d.setDate(d.getDate() - 1);
-      return toDateStr(d);
-    },
-  },
-  {
-    label: 'Last 7 Days',
-    from: () => {
-      const d = new Date();
-      d.setDate(d.getDate() - 6);
-      return toDateStr(d);
-    },
-    to: () => toDateStr(new Date()),
-  },
-  {
-    label: 'This Month',
-    from: () => {
-      const d = new Date();
-      d.setDate(1);
-      return toDateStr(d);
-    },
-    to: () => toDateStr(new Date()),
-  },
-];
-
-export function DateRangePicker({ fromStr, toStr, onChange }: DateRangePickerProps) {
+export function DateRangePicker({
+  fromStr,
+  toStr,
+  onChange,
+  presets = PRESETS,
+}: DateRangePickerProps) {
   const { t } = useTranslation('common');
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {PRESETS.map(preset => (
+      {presets.map(preset => (
         <POSButton
-          key={preset.label}
+          key={preset.labelKey}
           variant="outline"
           touchSize="default"
           onClick={() => {
             onChange(preset.from(), preset.to());
           }}
         >
-          {preset.label}
+          {t(preset.labelKey)}
         </POSButton>
       ))}
       <label className="flex items-center gap-2 text-sm">

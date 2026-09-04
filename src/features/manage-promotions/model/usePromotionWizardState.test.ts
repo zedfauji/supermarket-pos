@@ -239,3 +239,121 @@ describe('usePromotionWizardState — edit-mode scope prefill', () => {
     expect(result.current.selectedCategoryIds).toEqual(['c-1']);
   });
 });
+
+// ============================================================================
+// TESTS — Validity & Recurrence step validity (D-04/D-05, full isStepValid
+// predicate machine)
+// ============================================================================
+
+describe('usePromotionWizardState — Validity step validity (D-04/D-05)', () => {
+  it('is valid by default (recurring off, default forward date range)', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    expect(result.current.recurring).toBe(false);
+    expect(result.current.isValidityStepValid()).toBe(true);
+  });
+
+  it('is false when the end date is before the start date', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleDateRangeChange('2026-06-10', '2026-06-01');
+    });
+    expect(result.current.isValidityStepValid()).toBe(false);
+  });
+
+  it('is false when recurring is on with no days and no time window configured', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleRecurringChange(true);
+    });
+    expect(result.current.isValidityStepValid()).toBe(false);
+  });
+
+  it('is true when recurring is on with only a day-of-week selected (no time window)', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleRecurringChange(true);
+    });
+    act(() => {
+      result.current.toggleDayOfWeek(1);
+    });
+    expect(result.current.isValidityStepValid()).toBe(true);
+  });
+
+  it('is true when recurring is on with only a time window set (no day-of-week restriction)', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleRecurringChange(true);
+    });
+    act(() => {
+      result.current.setStartTime('16:00');
+      result.current.setEndTime('18:00');
+    });
+    expect(result.current.isValidityStepValid()).toBe(true);
+  });
+
+  it('is false when recurring is on and endTime <= startTime (D-05, same-day only)', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleRecurringChange(true);
+    });
+    act(() => {
+      result.current.setStartTime('18:00');
+      result.current.setEndTime('16:00');
+    });
+    expect(result.current.isValidityStepValid()).toBe(false);
+  });
+
+  it('toggling recurring off clears daysOfWeek/startTime/endTime to null', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    act(() => {
+      result.current.handleRecurringChange(true);
+    });
+    act(() => {
+      result.current.toggleDayOfWeek(2);
+      result.current.setStartTime('16:00');
+      result.current.setEndTime('18:00');
+    });
+    expect(result.current.daysOfWeek).toEqual([2]);
+    act(() => {
+      result.current.handleRecurringChange(false);
+    });
+    expect(result.current.daysOfWeek).toBeNull();
+    expect(result.current.startTime).toBeNull();
+    expect(result.current.endTime).toBeNull();
+  });
+
+  it('edit-mode prefills recurring=true when the promotion has daysOfWeek or a time window set', () => {
+    const promotion = makePromotion({ daysOfWeek: [1, 3], startTime: null, endTime: null });
+    const { result } = renderHook(() => usePromotionWizardState(promotion), { wrapper });
+    expect(result.current.recurring).toBe(true);
+    expect(result.current.daysOfWeek).toEqual([1, 3]);
+  });
+
+  it('edit-mode prefills recurring=false when the promotion has no recurrence fields set', () => {
+    const promotion = makePromotion({ daysOfWeek: null, startTime: null, endTime: null });
+    const { result } = renderHook(() => usePromotionWizardState(promotion), { wrapper });
+    expect(result.current.recurring).toBe(false);
+  });
+});
+
+// ============================================================================
+// TESTS — isStepValid dispatcher (D-08, full 4-step gate)
+// ============================================================================
+
+describe('usePromotionWizardState — isStepValid dispatcher (D-08)', () => {
+  it('dispatches to basics/scope/validity checks and always allows review', () => {
+    const { result } = renderHook(() => usePromotionWizardState(null), { wrapper });
+    // Fresh wizard: no name yet -> basics invalid; storeWide true -> scope valid;
+    // default date range, no recurrence -> validity valid; review always true.
+    expect(result.current.isStepValid('basics')).toBe(false);
+    expect(result.current.isStepValid('scope')).toBe(true);
+    expect(result.current.isStepValid('validity')).toBe(true);
+    expect(result.current.isStepValid('review')).toBe(true);
+
+    act(() => {
+      result.current.setName('Friends & Family');
+      result.current.setDiscountPercentStr('20');
+    });
+    expect(result.current.isStepValid('basics')).toBe(true);
+  });
+});

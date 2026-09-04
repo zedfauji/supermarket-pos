@@ -34,11 +34,10 @@ function defaultToStr(): string {
 
 /**
  * Wizard state machine for the promotion create/edit flow (D-07/D-08/D-10).
- * Basics & Discount and Scope are real, working steps (28-01/28-03) —
- * Validity/Recurrence and the Review live-price preview are minimal
- * stand-ins (plain date-range default, no recurrence) that 28-04 expands
- * into full step UI. `save()` writes the real junction-table shape via the
- * entity mutations for both create and edit.
+ * Basics & Discount, Scope, and Validity & Recurrence are real, working
+ * steps (28-01/28-03/28-04); the Review step's live-price preview lives in
+ * StepReview.tsx (28-04 Task 3). `save()` writes the real junction-table +
+ * recurrence shape via the entity mutations for both create and edit.
  */
 export function usePromotionWizardState(promotion: Promotion | null | undefined) {
   const [currentStep, setCurrentStep] = useState<PromotionWizardStep>('basics');
@@ -67,6 +66,14 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
   const [storeWide, setStoreWide] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
+  // Validity & Recurrence step (D-04/D-05/D-06/D-08). recurring off ->
+  // daysOfWeek/startTime/endTime are always null (every-day/all-day, i.e.
+  // no recurrence restriction at all).
+  const [recurring, setRecurring] = useState(false);
+  const [daysOfWeek, setDaysOfWeek] = useState<number[] | null>(null);
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [valueError, setValueError] = useState<string | null>(null);
@@ -102,6 +109,18 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
           promotion.targets.filter(t => t.categoryId != null).map(t => t.categoryId as string)
         );
       }
+      // D-04/D-05 prefill: recurring is on when EITHER a day-of-week
+      // restriction or a time window was saved (matches isValidityStepValid's
+      // own "empty means every day / all day" reading of null/empty state).
+      const hasDaysOfWeek = promotion.daysOfWeek !== null && promotion.daysOfWeek.length > 0;
+      const hasTimeWindow = promotion.startTime !== null && promotion.endTime !== null;
+      setRecurring(hasDaysOfWeek || hasTimeWindow);
+      setDaysOfWeek(promotion.daysOfWeek);
+      // DB `time` columns may return "HH:MM:SS" — normalize to "HH:MM" for
+      // the native <input type="time"> fields (mirrors
+      // promotion-pricing.ts's own startTime/endTime.slice(0, 5) normalization).
+      setStartTime(promotion.startTime !== null ? promotion.startTime.slice(0, 5) : null);
+      setEndTime(promotion.endTime !== null ? promotion.endTime.slice(0, 5) : null);
       setFurthestValidStep(WIZARD_STEP_ORDER.length - 1);
     } else {
       setName('');
@@ -113,6 +132,10 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       setStoreWide(true);
       setSelectedProductIds([]);
       setSelectedCategoryIds([]);
+      setRecurring(false);
+      setDaysOfWeek(null);
+      setStartTime(null);
+      setEndTime(null);
       setFurthestValidStep(0);
     }
     setCurrentStep('basics');
@@ -153,6 +176,90 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
     return storeWide || selectedProductIds.length + selectedCategoryIds.length > 0;
   }
 
+  /** Wired directly to DateRangePicker's onChange(fromStr, toStr) shape. */
+  function handleDateRangeChange(nextFromStr: string, nextToStr: string) {
+    setFromStr(nextFromStr);
+    setToStr(nextToStr);
+  }
+
+  /**
+   * Toggling recurring off clears daysOfWeek/startTime/endTime to null (no
+   * other path can repopulate them while the recurrence fields are hidden) —
+   * mirrors handleStoreWideChange's own "switching X clears stale Y"
+   * convention.
+   */
+  function handleRecurringChange(checked: boolean) {
+    setRecurring(checked);
+    if (!checked) {
+      setDaysOfWeek(null);
+      setStartTime(null);
+      setEndTime(null);
+    }
+  }
+
+  /** Adds/removes `day` (0=Sunday..6=Saturday) from the daysOfWeek selection. */
+  function toggleDayOfWeek(day: number) {
+    setDaysOfWeek(prev => {
+      const current = prev ?? [];
+      return current.includes(day)
+        ? current.filter(d => d !== day)
+        : [...current, day].sort((a, b) => a - b);
+    });
+  }
+
+  /**
+   * Validates the Validity & Recurrence step (D-04/D-05/D-08). The date
+   * range must not end before it starts. When recurring is on: a "Recurring"
+   * toggle with nothing configured (no days, no time window) is invalid; an
+   * explicit time window with endTime <= startTime is invalid (D-05,
+   * same-day only); exactly one of startTime/endTime set (never both null,
+   * never both set) is invalid — it can't form a real window and would
+   * violate the DB's start/end-both-or-neither CHECK constraint. Only
+   * daysOfWeek set (no time window), or only a time window set (no
+   * daysOfWeek restriction), are both valid partial configurations — "no day
+   * restriction" / "no time restriction" reads as "every day" / "all day".
+   */
+  function isValidityStepValid(): boolean {
+    if (toStr < fromStr) return false;
+    if (recurring) {
+      const hasDays = (daysOfWeek?.length ?? 0) > 0;
+      const hasStartTime = startTime !== null;
+      const hasEndTime = endTime !== null;
+      if (hasStartTime !== hasEndTime) return false;
+      const hasTimeWindow = hasStartTime && hasEndTime;
+      if (!hasDays && !hasTimeWindow) return false;
+      if (startTime !== null && endTime !== null && endTime <= startTime) return false;
+    }
+    return true;
+  }
+
+  /** Pure (no side effects) mirror of validateBasics(), for isStepValid(). */
+  function isBasicsStepValid(): boolean {
+    if (!name.trim()) return false;
+    const percentValue = Number(discountPercentStr);
+    if (discountType === 'percent' && (percentValue <= 0 || percentValue > 100)) return false;
+    if (discountType === 'fixed' && discountValue <= 0) return false;
+    return true;
+  }
+
+  /**
+   * Full 4-step forward-nav gate dispatcher (D-08). 'review' is always
+   * valid — nothing to validate on the summary step itself; Save either
+   * succeeds or surfaces a server error.
+   */
+  function isStepValid(step: PromotionWizardStep): boolean {
+    switch (step) {
+      case 'basics':
+        return isBasicsStepValid();
+      case 'scope':
+        return isScopeStepValid();
+      case 'validity':
+        return isValidityStepValid();
+      case 'review':
+        return true;
+    }
+  }
+
   /** Validates the Basics & Discount step's fields (D-08 forward-nav gate). */
   function validateBasics(): boolean {
     let hasError = false;
@@ -186,10 +293,12 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       discountValue: discountType === 'percent' ? percentValue : discountValue,
       startsAt: startOfDay(fromStr),
       endsAt: endOfDay(toStr),
-      // Validity/Recurrence real UI lands in 28-04:
-      daysOfWeek: null,
-      startTime: null,
-      endTime: null,
+      // D-04/D-05: gated on `recurring` too (not just the raw field state)
+      // as defense-in-depth — handleRecurringChange already clears these on
+      // toggle-off, but save() shouldn't trust that path alone.
+      daysOfWeek: recurring && daysOfWeek !== null && daysOfWeek.length > 0 ? daysOfWeek : null,
+      startTime: recurring ? startTime : null,
+      endTime: recurring ? endTime : null,
       active: promotion?.active ?? true,
       createdBy: promotion?.createdBy ?? null,
     };
@@ -227,12 +336,23 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
     setDiscountPercentStr,
     fromStr,
     toStr,
+    handleDateRangeChange,
     storeWide,
     handleStoreWideChange,
     selectedProductIds,
     selectedCategoryIds,
     handleScopeSelectionChange,
     isScopeStepValid,
+    recurring,
+    handleRecurringChange,
+    daysOfWeek,
+    toggleDayOfWeek,
+    startTime,
+    setStartTime,
+    endTime,
+    setEndTime,
+    isValidityStepValid,
+    isStepValid,
     nameError,
     valueError,
     validateBasics,

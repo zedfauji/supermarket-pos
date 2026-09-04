@@ -32,7 +32,14 @@
   },
   "dateRangePicker": {
     "from": "From:",
-    "to": "To:"
+    "to": "To:",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7Days": "Last 7 Days",
+    "thisMonth": "This Month",
+    "todayOnward": "Today onward",
+    "next7Days": "Next 7 Days",
+    "next30Days": "Next 30 Days"
   },
   "errorBoundary": {
     "title": "Something went wrong"
