@@ -32,7 +32,14 @@
   },
   "dateRangePicker": {
     "from": "Desde:",
-    "to": "Hasta:"
+    "to": "Hasta:",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "last7Days": "Últimos 7 días",
+    "thisMonth": "Este mes",
+    "todayOnward": "Desde hoy",
+    "next7Days": "Próximos 7 días",
+    "next30Days": "Próximos 30 días"
   },
   "errorBoundary": {
     "title": "Algo salió mal"
