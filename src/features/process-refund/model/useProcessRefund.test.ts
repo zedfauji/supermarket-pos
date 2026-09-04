@@ -6,7 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcessRefundInputSchema } from '@entities/refund';
 import { supabase } from '@shared/lib/supabase';
 
-import { useProcessRefund, type ProcessRefundInput } from './useProcessRefund';
+import {
+  useProcessRefund,
+  type ProcessRefundInput,
+  type ProcessRefundMutationInput,
+} from './useProcessRefund';
 
 // ---------------------------------------------------------------------------
 // Helpers — Supabase is globally mocked by test-setup.ts.
@@ -18,6 +22,11 @@ const baseInput: ProcessRefundInput = {
     { order_item_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', qty: 1, amount: 10.5, restock: true },
   ],
   reason: 'wrong_order',
+};
+
+const baseMutationInput: ProcessRefundMutationInput = {
+  ...baseInput,
+  managerPin: '1234',
 };
 
 function makeWrapper(queryClient: QueryClient) {
@@ -126,7 +135,7 @@ describe('useProcessRefund', () => {
     const wrapper = makeWrapper(queryClient);
     const { result } = renderHook(() => useProcessRefund(), { wrapper });
 
-    const malformedInput = { ...baseInput, items: [] } as ProcessRefundInput;
+    const malformedInput = { ...baseMutationInput, items: [] } as ProcessRefundMutationInput;
     const res = await result.current.mutateAsync(malformedInput);
 
     expect(res.ok).toBe(false);
@@ -142,7 +151,7 @@ describe('useProcessRefund', () => {
     const wrapper = makeWrapper(queryClient);
     const { result } = renderHook(() => useProcessRefund(), { wrapper });
 
-    const res = await result.current.mutateAsync(baseInput);
+    const res = await result.current.mutateAsync(baseMutationInput);
 
     expect(res.ok).toBe(true);
     if (res.ok) {
@@ -152,7 +161,7 @@ describe('useProcessRefund', () => {
       p_original_payment_id: baseInput.originalPaymentId,
       p_items: baseInput.items,
       p_reason: baseInput.reason,
-      p_manager_pin: '',
+      p_manager_pin: baseMutationInput.managerPin,
     });
   });
 });

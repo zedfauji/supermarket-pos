@@ -272,7 +272,7 @@ describe('process_refund RPC (integration)', () => {
       p_original_payment_id: paymentId,
       p_items: refundItems,
       p_reason: 'wrong_order',
-      p_manager_pin: '',
+      p_manager_pin: process.env['E2E_MANAGER_PIN']!,
     });
 
     expect(error).toBeNull();
@@ -319,7 +319,7 @@ describe('process_refund RPC (integration)', () => {
       p_original_payment_id: paymentId,
       p_items: [{ order_item_id: itemIds[0], qty: 1, amount: 10.0, restock: false }],
       p_reason: 'billing_error',
-      p_manager_pin: '',
+      p_manager_pin: process.env['E2E_MANAGER_PIN']!,
     });
     expect(firstErr).toBeNull();
 
@@ -329,7 +329,7 @@ describe('process_refund RPC (integration)', () => {
       p_original_payment_id: paymentId,
       p_items: itemIds.map((id: string) => ({ order_item_id: id, qty: 1, amount: 10.0, restock: false })),
       p_reason: 'billing_error',
-      p_manager_pin: '',
+      p_manager_pin: process.env['E2E_MANAGER_PIN']!,
     });
 
     expect(error).not.toBeNull();
@@ -372,7 +372,7 @@ describe('process_refund RPC (integration)', () => {
         p_original_payment_id: paymentId,
         p_items: [{ order_item_id: itemIds[0], qty: 1, amount: 10.0, restock: true }],
         p_reason: 'quality_issue',
-        p_manager_pin: '',
+        p_manager_pin: process.env['E2E_MANAGER_PIN']!,
       });
 
       expect(error).toBeNull();
