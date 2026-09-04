@@ -95,7 +95,7 @@ describe('PromotionFormDialog', () => {
     it('typing "2" then "0" into the default field displays exactly "20", not "02" or "020"', async () => {
       const user = userEvent.setup();
       render(<PromotionFormDialog open onOpenChange={vi.fn()} promotion={null} />);
-      const percentInput = screen.getByLabelText(/discount percent/i) as HTMLInputElement;
+      const percentInput = screen.getByLabelText<HTMLInputElement>(/discount percent/i);
 
       await user.click(percentInput);
       await user.keyboard('2');
@@ -107,7 +107,7 @@ describe('PromotionFormDialog', () => {
     it('select-all + delete on a populated percent field produces a genuinely empty input, not "0"', async () => {
       const user = userEvent.setup();
       render(<PromotionFormDialog open onOpenChange={vi.fn()} promotion={existingPromotion} />);
-      const percentInput = screen.getByLabelText(/discount percent/i) as HTMLInputElement;
+      const percentInput = screen.getByLabelText<HTMLInputElement>(/discount percent/i);
       expect(percentInput.value).toBe('10');
 
       await user.clear(percentInput);
@@ -118,7 +118,7 @@ describe('PromotionFormDialog', () => {
     it('typing "35" after clearing displays exactly "35"', async () => {
       const user = userEvent.setup();
       render(<PromotionFormDialog open onOpenChange={vi.fn()} promotion={existingPromotion} />);
-      const percentInput = screen.getByLabelText(/discount percent/i) as HTMLInputElement;
+      const percentInput = screen.getByLabelText<HTMLInputElement>(/discount percent/i);
 
       await user.clear(percentInput);
       await user.type(percentInput, '35');
@@ -134,7 +134,7 @@ describe('PromotionFormDialog', () => {
       await user.click(screen.getByRole('combobox'));
       await user.click(screen.getByRole('option', { name: 'Arroz Basmati' }));
 
-      const percentInput = screen.getByLabelText(/discount percent/i) as HTMLInputElement;
+      const percentInput = screen.getByLabelText<HTMLInputElement>(/discount percent/i);
       await user.clear(percentInput);
       await user.type(percentInput, '20');
 
@@ -155,7 +155,7 @@ describe('PromotionFormDialog', () => {
       await user.click(screen.getByRole('combobox'));
       await user.click(screen.getByRole('option', { name: 'Arroz Basmati' }));
 
-      const percentInput = screen.getByLabelText(/discount percent/i) as HTMLInputElement;
+      const percentInput = screen.getByLabelText<HTMLInputElement>(/discount percent/i);
       await user.clear(percentInput);
 
       fireEvent.click(screen.getByRole('button', { name: 'Save Promotion' }));

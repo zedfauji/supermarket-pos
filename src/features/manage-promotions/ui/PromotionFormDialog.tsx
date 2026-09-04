@@ -56,6 +56,10 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
   const [targetId, setTargetId] = useState<string | null>(null);
   const [discountType, setDiscountType] = useState<DiscountType>('percent');
   const [discountValue, setDiscountValue] = useState(0);
+  // String-buffered percent input (G-27-8 Part A): raw string state, no per-keystroke
+  // Number() coercion — mirrors NearExpirySettingsTab.tsx's discountPercent pattern.
+  // Number() is applied once, at validate/save time, in handleSave.
+  const [discountPercentStr, setDiscountPercentStr] = useState('0');
   const [fromStr, setFromStr] = useState(() => toDateStr(new Date()));
   const [toStr, setToStr] = useState(() => toDateStr(new Date()));
   const [nameError, setNameError] = useState<string | null>(null);
@@ -72,6 +76,7 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
       setTargetId(promotion.scopeType === 'product' ? promotion.productId : promotion.categoryId);
       setDiscountType(promotion.discountType);
       setDiscountValue(promotion.discountValue);
+      setDiscountPercentStr(String(promotion.discountValue));
       setFromStr(toDateStr(promotion.startsAt));
       setToStr(toDateStr(promotion.endsAt));
     } else {
@@ -80,6 +85,7 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
       setTargetId(null);
       setDiscountType('percent');
       setDiscountValue(0);
+      setDiscountPercentStr('0');
       setFromStr(toDateStr(new Date()));
       setToStr(toDateStr(new Date()));
     }
@@ -103,6 +109,15 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
     setTargetId(null);
   }
 
+  function handleDiscountTypeChange(next: DiscountType) {
+    setDiscountType(next);
+    // Switching discount type mid-edit resets the percent field to a sane
+    // default — a stale string carried over from a previous edit session
+    // (or from the fixed-amount branch) is never left in a state that would
+    // coerce to NaN once the user switches back to 'percent'.
+    if (next === 'percent') setDiscountPercentStr('0');
+  }
+
   async function handleSave() {
     let hasError = false;
     if (!name.trim()) {
@@ -117,7 +132,8 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
     } else {
       setTargetError(null);
     }
-    if (discountType === 'percent' && (discountValue <= 0 || discountValue > 100)) {
+    const percentValue = Number(discountPercentStr);
+    if (discountType === 'percent' && (percentValue <= 0 || percentValue > 100)) {
       setValueError(t('promotionFormDialog.discountPercentError'));
       hasError = true;
     } else if (discountType === 'fixed' && discountValue <= 0) {
@@ -135,7 +151,7 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
       productId: scopeType === 'product' ? targetId : null,
       categoryId: scopeType === 'category' ? targetId : null,
       discountType,
-      discountValue,
+      discountValue: discountType === 'percent' ? percentValue : discountValue,
       startsAt: startOfDay(fromStr),
       endsAt: endOfDay(toStr),
       active: promotion?.active ?? true,
@@ -251,7 +267,7 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
                   variant={discountType === type ? 'default' : 'outline'}
                   disabled={save.isPending}
                   onClick={() => {
-                    setDiscountType(type);
+                    handleDiscountTypeChange(type);
                   }}
                   className="flex-1"
                 >
@@ -273,9 +289,9 @@ export function PromotionFormDialog({ open, onOpenChange, promotion }: Promotion
                 type="number"
                 min={0}
                 max={100}
-                value={discountValue}
+                value={discountPercentStr}
                 onChange={e => {
-                  setDiscountValue(Number(e.target.value));
+                  setDiscountPercentStr(e.target.value);
                 }}
                 disabled={save.isPending}
               />
