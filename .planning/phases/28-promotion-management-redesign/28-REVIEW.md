@@ -110,6 +110,9 @@ can produce real (if narrow) checkout-time discrepancies.
 
 ### CR-01: Promotion wizard's edit-mode Save bypasses Scope/Validity step validation, silently widening an intentionally-narrow promotion to store-wide
 
+**Status: FIXED** — commit `e4217ef` (`fix(28): block promotion save when Scope step is left invalid (CR-01)`). `handleSave()` now calls `wizard.isScopeStepValid()` and `wizard.isValidityStepValid()` before `wizard.save()`, bouncing an invalid state back to that step with its error shown, exactly as `goToStep()`/`handleNext()` already did. Regression test added:
+`e2e/promotions/wizard-step-validation.spec.ts` — "edit mode blocks Save when the admin leaves Scope in an invalid state, does not silently wipe an existing scope to store-wide" (fails without the fix, passes with it).
+
 **File:** `src/features/manage-promotions/ui/PromotionWizardPage.tsx:51-76, 100-112`
 **Issue:**
 `goToStep()` (lines 51-76) only re-validates Basics/Scope/Validity when
