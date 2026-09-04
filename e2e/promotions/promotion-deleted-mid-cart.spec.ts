@@ -50,14 +50,13 @@ async function seedPromotion(
   admin: SupabaseClient,
   createdBy: string,
   productId: string
-): Promise<string> {
+): Promise<{ id: string; name: string }> {
   const now = Date.now();
+  const name = `E2E deleted-mid-cart promo ${randomUUID()}`;
   const { data, error } = await admin
     .from('promotions')
     .insert({
-      name: `E2E deleted-mid-cart promo ${randomUUID()}`,
-      scope_type: 'product',
-      product_id: productId,
+      name,
       discount_type: 'percent',
       discount_value: 20,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -68,7 +67,14 @@ async function seedPromotion(
     .select('id')
     .single();
   if (error || !data) throw new Error(error?.message ?? 'promotion insert failed');
-  return data.id as string;
+  const promotionId = data.id as string;
+
+  const { error: targetsError } = await admin
+    .from('promotion_targets')
+    .insert({ promotion_id: promotionId, product_id: productId });
+  if (targetsError) throw new Error(targetsError.message);
+
+  return { id: promotionId, name };
 }
 
 test.describe('Promotion deleted mid-cart, online (PROMO-09)', () => {
@@ -85,7 +91,7 @@ test.describe('Promotion deleted mid-cart, online (PROMO-09)', () => {
     const admin = getServiceClient();
     const adminStaffId = await findRoleStaffId(admin, 'admin');
     const product = await findScopedProduct(admin);
-    const promotionId = await seedPromotion(admin, adminStaffId, product.id);
+    const promotion = await seedPromotion(admin, adminStaffId, product.id);
 
     await openCaja(500);
     await page.goto('/');
@@ -114,7 +120,7 @@ test.describe('Promotion deleted mid-cart, online (PROMO-09)', () => {
     await adminPage.goto('/');
     await loginAs(adminPage, 'admin');
     await adminPage.goto('/promotions');
-    const promoRow = adminPage.getByRole('row', { name: new RegExp(escapeRe(product.name)) });
+    const promoRow = adminPage.getByRole('row', { name: new RegExp(escapeRe(promotion.name)) });
     await expect(promoRow).toBeVisible({ timeout: 15_000 });
     await promoRow.getByRole('button', { name: 'Delete' }).click();
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
@@ -124,7 +130,7 @@ test.describe('Promotion deleted mid-cart, online (PROMO-09)', () => {
     const { data: stillThere } = await admin
       .from('promotions')
       .select('id')
-      .eq('id', promotionId)
+      .eq('id', promotion.id)
       .maybeSingle();
     expect(stillThere).toBeNull();
 

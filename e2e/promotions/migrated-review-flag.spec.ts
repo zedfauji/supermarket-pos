@@ -86,7 +86,10 @@ test.describe('Migrated-promotion review flag (D-11/D-12)', () => {
     uiCreatedPromotionNames.push(name);
 
     await page.goto('/promotions');
-    await page.getByRole('button', { name: /new promotion/i }).click();
+    // .first(): when the promotions table is empty, EmptyState renders its
+    // own duplicate "New Promotion" action button in addition to the page
+    // header's — the header one is always first in DOM order (28-05 fix).
+    await page.getByRole('button', { name: /new promotion/i }).first().click();
     await expect(page).toHaveURL(/\/promotions\/new$/);
 
     await page.getByLabel(/^name/i).fill(name);

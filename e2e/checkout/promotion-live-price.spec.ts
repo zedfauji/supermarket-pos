@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from '../fixtures';
 import { loginAs } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
@@ -23,7 +24,7 @@ function escapeRe(value: string): string {
 }
 
 async function seedPromotion(
-  admin: ReturnType<typeof getServiceClient>,
+  admin: SupabaseClient,
   createdBy: string,
   opts: { productId?: string; categoryId?: string; discountValue: number }
 ): Promise<string> {
@@ -32,9 +33,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `E2E promo ${randomUUID()}`,
-      scope_type: opts.productId ? 'product' : 'category',
-      product_id: opts.productId ?? null,
-      category_id: opts.categoryId ?? null,
       discount_type: 'percent',
       discount_value: opts.discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -45,8 +43,20 @@ async function seedPromotion(
     .select('id')
     .single();
   if (error || !data) throw new Error(error?.message ?? 'promotion insert failed');
-  seededPromotionIds.push(data.id as string);
-  return data.id as string;
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { productId, categoryId } = opts;
+  if (productId ?? categoryId) {
+    const { error: targetsError } = await admin.from('promotion_targets').insert({
+      promotion_id: promotionId,
+      product_id: productId ?? null,
+      category_id: categoryId ?? null,
+    });
+    if (targetsError) throw new Error(targetsError.message);
+  }
+
+  return promotionId;
 }
 
 interface ProductRow {
@@ -66,15 +76,30 @@ async function findTwoCategoryDistinctProducts(
     .single();
   if (aErr || !productA) throw new Error(aErr?.message ?? 'Product A not found');
 
+  // Excludes a near-expiry inventory row (28-05 fix): process_direct_sale_atomic's
+  // PROMO-02 expiry-proximity auto-discount (Phase 27, unrelated to this test)
+  // would otherwise silently apply to whatever arbitrary product gets picked as
+  // "productB" (the control, expected to show NO discount at all), tripping a
+  // false failure on the "unrelated product stays full price" assertion.
+  const nearExpiryCutoff = new Date();
+  nearExpiryCutoff.setDate(nearExpiryCutoff.getDate() + 14);
+  const nearExpiryCutoffStr = nearExpiryCutoff.toISOString().slice(0, 10);
+
   const { data: candidates, error: bErr } = await admin
     .from('products')
-    .select('id, name, base_price, category_id')
+    .select('id, name, base_price, category_id, inventory(expiry_date)')
     .eq('is_active', true)
     .eq('sold_by_weight', false)
     .neq('id', productA.id)
     .limit(20);
   if (bErr) throw new Error(bErr.message);
-  const productB = (candidates ?? []).find(p => p.category_id !== productA.category_id);
+  const productB = (candidates ?? []).find(p => {
+    if (p.category_id === productA.category_id) return false;
+    const inv = p.inventory as { expiry_date: string | null } | { expiry_date: string | null }[] | null;
+    const invRow = Array.isArray(inv) ? inv[0] : inv;
+    const expiryDate = invRow?.expiry_date;
+    return !expiryDate || expiryDate > nearExpiryCutoffStr;
+  });
   if (!productB) throw new Error('No second product in a different category found for the control case');
 
   return {

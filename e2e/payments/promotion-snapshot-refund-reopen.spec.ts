@@ -68,8 +68,6 @@ async function seedPercentPromotion(
     .from('promotions')
     .insert({
       name: `E2E promo-snapshot ${randomUUID()}`,
-      scope_type: 'product',
-      product_id: productId,
       discount_type: 'percent',
       discount_value: discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -80,8 +78,15 @@ async function seedPercentPromotion(
     .select('id, name')
     .single();
   if (error || !data) throw new Error(`seedPercentPromotion: insert failed - ${error?.message}`);
-  seededPromotionIds.push(data.id as string);
-  return { id: data.id as string, name: data.name as string };
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { error: targetsError } = await admin
+    .from('promotion_targets')
+    .insert({ promotion_id: promotionId, product_id: productId });
+  if (targetsError) throw new Error(`seedPercentPromotion: targets insert failed - ${targetsError.message}`);
+
+  return { id: promotionId, name: data.name as string };
 }
 
 async function enterPin(page: Page, pin: string): Promise<void> {
