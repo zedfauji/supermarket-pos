@@ -10,15 +10,20 @@ jobs:
   quality:
     name: Typecheck / Lint / Test / Audit
     runs-on: [self-hosted, windows, x64]
-    env:
-      # Isolate CI's npm cache from the runner machine's interactive user npm-cache
-      # (both share the same Windows account) — actions/setup-node's cache-save step
-      # was hanging on `tar: Permission denied` against npm-cache/_logs/*.log files
-      # locked by concurrently-running interactive node/npm processes on this box.
-      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Isolate npm cache from interactive user npm-cache
+        # `runner` context isn't valid in a job-level `env:` block (GH Actions
+        # context-availability rule — only step-level env/run/with can read it),
+        # so set NPM_CONFIG_CACHE here via $GITHUB_ENV instead. Reason for the
+        # isolation itself: this runner's CI and interactive-user npm share the
+        # same Windows account — actions/setup-node's cache-save step was hanging
+        # on `tar: Permission denied` against npm-cache/_logs/*.log files locked
+        # by concurrently-running interactive node/npm processes on this box.
+        shell: pwsh
+        run: "'NPM_CONFIG_CACHE={0}\\npm-cache' -f $env:RUNNER_TEMP | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
@@ -46,12 +51,15 @@ jobs:
   tauri-build:
     name: Tauri Native Build (Windows)
     runs-on: [self-hosted, windows, x64]
-    env:
-      # See the `quality` job's identical env block for why this is isolated.
-      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Isolate npm cache from interactive user npm-cache
+        # See the `quality` job's identical step for why this is set here instead
+        # of a job-level `env:` block.
+        shell: pwsh
+        run: "'NPM_CONFIG_CACHE={0}\\npm-cache' -f $env:RUNNER_TEMP | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
       - name: Prefer Git Bash over the WSL bash.exe stub
         # dtolnay/rust-toolchain's internal script needs a real /bin/bash. On this
