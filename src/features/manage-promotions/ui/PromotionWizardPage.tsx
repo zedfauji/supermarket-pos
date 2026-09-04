@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { usePromotions } from '@entities/promotion';
 import type { DiscountType } from '@shared/lib/domain';
+import { cn } from '@shared/lib/utils';
 import {
   FormField,
   Input,
@@ -20,14 +21,15 @@ import {
   WIZARD_STEP_ORDER,
   type PromotionWizardStep,
 } from '../model/usePromotionWizardState';
+import { StepReview } from './wizard/StepReview';
 import { StepScope } from './wizard/StepScope';
 import { StepValidityRecurrence } from './wizard/StepValidityRecurrence';
 
 /**
  * Dedicated create/edit screen for promotions (D-07), replacing the deleted
- * PromotionFormDialog modal. Basics & Discount (28-01), Scope (28-03), and
- * Validity & Recurrence (28-04) are real, working steps — Review remains a
- * placeholder panel until 28-04 Task 3 adds the live price preview.
+ * PromotionFormDialog modal. All 4 steps — Basics & Discount (28-01), Scope
+ * (28-03), Validity & Recurrence, and Review (28-04) — are real, working
+ * steps.
  */
 export function PromotionWizardPage() {
   const { t } = useTranslation('wAdmin');
@@ -126,6 +128,14 @@ export function PromotionWizardPage() {
               key={step}
               value={step}
               disabled={!isEditMode && idx > wizard.furthestValidStep}
+              // Step indicator states (28-UI-SPEC.md): current = accent
+              // bg/text; completed & revisitable = the base component's
+              // default clickable style; not-yet-reached in create mode =
+              // disabled + muted (disabled:opacity-50 from the base
+              // component); edit mode = never disabled, per D-10.
+              className={cn(
+                'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+              )}
             >
               {t(`promotionWizard.step.${step}`)}
             </TabsTrigger>
@@ -240,7 +250,21 @@ export function PromotionWizardPage() {
         </TabsContent>
 
         <TabsContent value="review">
-          <p className="text-sm text-muted-foreground">{t('promotionWizard.comingSoon')}</p>
+          <StepReview
+            name={wizard.name}
+            discountType={wizard.discountType}
+            discountValue={wizard.discountValue}
+            discountPercentStr={wizard.discountPercentStr}
+            fromStr={wizard.fromStr}
+            toStr={wizard.toStr}
+            storeWide={wizard.storeWide}
+            selectedProductIds={wizard.selectedProductIds}
+            selectedCategoryIds={wizard.selectedCategoryIds}
+            recurring={wizard.recurring}
+            daysOfWeek={wizard.daysOfWeek}
+            startTime={wizard.startTime}
+            endTime={wizard.endTime}
+          />
         </TabsContent>
       </Tabs>
 

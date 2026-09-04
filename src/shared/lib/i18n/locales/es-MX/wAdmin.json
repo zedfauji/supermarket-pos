@@ -576,7 +576,6 @@
       "validity": "Vigencia y recurrencia",
       "review": "Revisión"
     },
-    "comingSoon": "Vigencia/Revisión — disponible en el siguiente plan.",
     "back": "Atrás",
     "next": "Siguiente",
     "createPromotion": "Crear promoción",
@@ -607,6 +606,19 @@
         "fri": "Vie",
         "sat": "Sáb"
       }
+    },
+    "review": {
+      "nameLabel": "Nombre",
+      "discountLabel": "Descuento",
+      "percentValue": "{{value}}%",
+      "scopeLabel": "Alcance",
+      "dateRangeLabel": "Vigencia",
+      "dateRangeValue": "{{from}} → {{to}}",
+      "recurrenceLabel": "Recurrencia",
+      "timeWindowValue": "{{startTime}}–{{endTime}}",
+      "noRecurrence": "Sin recurrencia — activa todos los días dentro del rango de fechas",
+      "previewLabel": "Ejemplo: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
+      "noPreview": "Ningún producto coincide actualmente con el alcance de esta promoción, así que no hay un ejemplo disponible."
     }
   }
 }

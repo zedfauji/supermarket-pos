@@ -576,7 +576,6 @@
       "validity": "Validity & Recurrence",
       "review": "Review"
     },
-    "comingSoon": "Validity/Review — coming in the next plan.",
     "back": "Back",
     "next": "Next",
     "createPromotion": "Create Promotion",
@@ -607,6 +606,19 @@
         "fri": "Fri",
         "sat": "Sat"
       }
+    },
+    "review": {
+      "nameLabel": "Name",
+      "discountLabel": "Discount",
+      "percentValue": "{{value}}%",
+      "scopeLabel": "Scope",
+      "dateRangeLabel": "Active dates",
+      "dateRangeValue": "{{from}} → {{to}}",
+      "recurrenceLabel": "Recurrence",
+      "timeWindowValue": "{{startTime}}–{{endTime}}",
+      "noRecurrence": "No recurrence — active every day within the date range",
+      "previewLabel": "Example: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
+      "noPreview": "No product currently matches this promotion's scope, so no live example is available."
     }
   }
 }
