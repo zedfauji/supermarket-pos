@@ -53,9 +53,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `E2E scope-overlap promo ${randomUUID()}`,
-      scope_type: opts.productId ? 'product' : 'category',
-      product_id: opts.productId ?? null,
-      category_id: opts.categoryId ?? null,
       discount_type: 'percent',
       discount_value: opts.discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -66,8 +63,20 @@ async function seedPromotion(
     .select('id')
     .single();
   if (error || !data) throw new Error(error?.message ?? 'promotion insert failed');
-  seededPromotionIds.push(data.id as string);
-  return data.id as string;
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { productId, categoryId } = opts;
+  if (productId ?? categoryId) {
+    const { error: targetsError } = await admin.from('promotion_targets').insert({
+      promotion_id: promotionId,
+      product_id: productId ?? null,
+      category_id: categoryId ?? null,
+    });
+    if (targetsError) throw new Error(targetsError.message);
+  }
+
+  return promotionId;
 }
 
 async function payAndGetLastAmount(page: Page): Promise<number> {

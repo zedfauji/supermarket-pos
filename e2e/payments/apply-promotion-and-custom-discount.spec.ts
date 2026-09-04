@@ -70,8 +70,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `E2E apply-promo ${randomUUID()}`,
-      scope_type: 'product',
-      product_id: productId,
       discount_type: 'percent',
       discount_value: discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -82,7 +80,14 @@ async function seedPromotion(
     .select('id, name')
     .single();
   if (error || !data) throw new Error(`seedPromotion: insert failed - ${error?.message}`);
-  seededPromotionIds.push(data.id as string);
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { error: targetsError } = await admin
+    .from('promotion_targets')
+    .insert({ promotion_id: promotionId, product_id: productId });
+  if (targetsError) throw new Error(`seedPromotion: targets insert failed - ${targetsError.message}`);
+
   return data.name as string;
 }
 

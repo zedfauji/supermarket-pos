@@ -134,8 +134,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `E2E loose-weight/open-unit promo ${randomUUID()}`,
-      scope_type: 'product',
-      product_id: productId,
       discount_type: 'percent',
       discount_value: discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -146,8 +144,15 @@ async function seedPromotion(
     .select('id')
     .single();
   if (error || !data) throw new Error(error?.message ?? 'promotion insert failed');
-  seededPromotionIds.push(data.id as string);
-  return data.id as string;
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { error: targetsError } = await admin
+    .from('promotion_targets')
+    .insert({ promotion_id: promotionId, product_id: productId });
+  if (targetsError) throw new Error(targetsError.message);
+
+  return promotionId;
 }
 
 test.describe('Loose-weight and open-unit interaction with promotions (PROMO-09)', () => {

@@ -73,8 +73,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `E2E offline-promo ${Date.now()}`,
-      scope_type: 'product',
-      product_id: productId,
       discount_type: 'percent',
       discount_value: discountValue,
       starts_at: new Date(now - 60_000).toISOString(),
@@ -85,8 +83,15 @@ async function seedPromotion(
     .select('id')
     .single();
   if (error || !data) throw new Error(`seedPromotion: insert failed - ${error?.message}`);
-  seededPromotionIds.push(data.id as string);
-  return data.id as string;
+  const promotionId = data.id as string;
+  seededPromotionIds.push(promotionId);
+
+  const { error: targetsError } = await admin
+    .from('promotion_targets')
+    .insert({ promotion_id: promotionId, product_id: productId });
+  if (targetsError) throw new Error(`seedPromotion: targets insert failed - ${targetsError.message}`);
+
+  return promotionId;
 }
 
 async function addProductToCart(page: Page, productName: string): Promise<void> {
@@ -130,7 +135,7 @@ test.describe('Offline promotion conflict on reconnect (PROMO-08)', () => {
     const admin = getServiceClient();
     const adminStaffId = await findRoleStaffId(admin, 'admin');
     const { productId, name } = await seedProduct(admin, 50);
-    await seedPromotion(admin, adminStaffId, productId, 20); // 50 -> 40.00
+    const promotionId = await seedPromotion(admin, adminStaffId, productId, 20); // 50 -> 40.00
 
     await page.getByRole('button', { name: /checkout/i }).click();
     await expect(page).toHaveURL(/\/pos$/);
@@ -160,7 +165,7 @@ test.describe('Offline promotion conflict on reconnect (PROMO-08)', () => {
 
     // Simulate the promotion changing elsewhere while this terminal was
     // offline — discount drops from 20% to 10% (50 -> 45.00).
-    await admin.from('promotions').update({ discount_value: 10 }).eq('product_id', productId);
+    await admin.from('promotions').update({ discount_value: 10 }).eq('id', promotionId);
 
     await page.context().setOffline(false);
 

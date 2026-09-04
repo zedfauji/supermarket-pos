@@ -18,9 +18,15 @@ import { getServiceClient, resetTestState } from '../helpers/supabase';
  *
  * Permanent E2E proof (replaces the temporary repro spec used during the
  * debug session, per this project's mandatory-automated-testing policy):
- * create a percent promotion via the real New Promotion dialog, clear the
+ * create a percent promotion via the real /promotions/new wizard, clear the
  * default '0' and type '20', assert the DOM input value is exactly "20",
- * save, and assert the created row's discount_value = 20 server-side.
+ * save (store-wide, default date range, no recurrence), and assert the
+ * created row's discount_value = 20 server-side.
+ *
+ * Rewritten in Phase 28 (Promotion Management Redesign), Plan 05: the
+ * `PromotionFormDialog` this spec originally drove was deleted in 28-01 and
+ * replaced by the `PromotionWizardPage` route (`/promotions/new`) — same
+ * string-buffered percent field, new page instead of a dialog.
  */
 
 const seededPromotionIds: string[] = [];
@@ -45,15 +51,13 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
     await loginAs(page, 'admin');
     await page.goto('/promotions');
 
-    await page.getByRole('button', { name: 'New Promotion' }).click();
-    await expect(page.getByRole('dialog', { name: 'New Promotion' })).toBeVisible();
+    // .first(): when the promotions table is empty, EmptyState renders its
+    // own duplicate "New Promotion" action button in addition to the page
+    // header's — the header one is always first in DOM order.
+    await page.getByRole('button', { name: /new promotion/i }).first().click();
+    await expect(page).toHaveURL(/\/promotions\/new$/);
 
-    await page.getByLabel(/^Name/i).fill(promoName);
-
-    // Scope defaults to 'product' — pick any product from the catalog.
-    await page.getByRole('combobox').click();
-    await expect(page.getByRole('option').first()).toBeVisible({ timeout: 10_000 });
-    await page.getByRole('option').first().click();
+    await page.getByLabel(/^name/i).fill(promoName);
 
     // Discount type defaults to 'percent'. The field starts at the literal
     // digit '0' (create-mode default) — clear it and type '20'.
@@ -65,8 +69,17 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
     // Proves the fix: displays exactly "20", not "020" or stuck at "0".
     await expect(percentInput).toHaveValue('20');
 
-    await page.getByRole('button', { name: 'Save Promotion' }).click();
-    await expect(page.getByRole('dialog', { name: 'New Promotion' })).not.toBeVisible({ timeout: 10_000 });
+    // Advance through the remaining 3 steps: Scope defaults to store-wide
+    // (no picker interaction needed), Validity defaults to a valid date
+    // range with recurrence off, Review just confirms and creates.
+    await page.getByRole('button', { name: /^next$/i }).click(); // Basics -> Scope
+    await expect(page.getByRole('checkbox', { name: /store-wide/i })).toBeChecked();
+    await page.getByRole('button', { name: /^next$/i }).click(); // Scope -> Validity
+    await expect(page.getByRole('switch', { name: /recurring/i })).toBeVisible();
+    await page.getByRole('button', { name: /^next$/i }).click(); // Validity -> Review
+
+    await page.getByRole('button', { name: /create promotion/i }).click();
+    await expect(page).toHaveURL(/\/promotions$/);
 
     const admin = getServiceClient();
     const { data: created, error } = await admin
