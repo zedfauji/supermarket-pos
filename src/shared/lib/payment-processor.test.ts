@@ -91,6 +91,32 @@ describe('payment-processor', () => {
     });
   });
 
+  it('processRappiPayment forwards managerOverride/managerPin (CR-02 regression, Phase 27 code review — a discounted Rappi payment used to drop these fields on the floor, bypassing manager-PIN authorization)', async () => {
+    const spy = vi.spyOn(contracts, 'callProcessPayment').mockResolvedValue(
+      ok({
+        paymentId: 'p3',
+        receiptData: { ...receipt, paymentMethod: 'rappi' },
+        idempotent: false,
+      })
+    );
+
+    await processRappiPayment('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 9, 'R-2', {
+      scope: 'all',
+      type: 'percent',
+      value: 10,
+      amount: 1,
+      managerOverride: true,
+      managerPin: '345678',
+    });
+    const rappiTuple = spy.mock.calls[0];
+    if (rappiTuple === undefined) throw new Error('expected call');
+    expect(rappiTuple[0]).toMatchObject({
+      method: 'rappi',
+      managerOverride: true,
+      managerPin: '345678',
+    });
+  });
+
   it('processCashPayment forwards expectedVersion when supplied', async () => {
     const spy = vi.spyOn(contracts, 'callProcessPayment').mockResolvedValue(
       ok({

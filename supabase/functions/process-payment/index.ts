@@ -168,7 +168,11 @@ Deno.serve(async (req: Request) => {
     p_discount_type: body.discountType ?? null,
     p_discount_value: body.discountValue ?? null,
     p_discount_amount: body.discountAmount ?? null,
-    p_manager_override: body.managerOverride ?? null,
+    // ?? false, not ?? null: process_payment_atomic's `IF p_manager_override
+    // THEN` / `IF NOT p_manager_override THEN` guard treats a NULL boolean as
+    // neither branch, silently skipping the DISCOUNT_REQUIRES_MANAGER check
+    // (CR-01, Phase 27 code review).
+    p_manager_override: body.managerOverride ?? false,
     p_manager_pin: body.managerPin ?? null,
   });
 

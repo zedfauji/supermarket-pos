@@ -115,9 +115,9 @@ export const ProcessPaymentRequestSchema = z
     discountType: DiscountTypeSchema.optional(),
     discountValue: z.number().nonnegative().optional(),
     discountAmount: MoneySchema.optional(),
-    /** Phase 27 (PROMO-05/07): manager-PIN authorization carried alongside the ad-hoc discount fields. Unused by the generic tab RPC today — present for call-shape parity with ProcessDirectSaleRequestSchema. */
+    /** Phase 27 Plan 09 (G-27-13): live manager-PIN authorization path for `process_payment_atomic`'s DISCOUNT_REQUIRES_MANAGER guard — required (server-side, not by this schema) whenever a discount field is present. `undefined` here must reach the RPC as `false`, never `null`: a NULL boolean satisfies neither `IF p_manager_override THEN` nor `IF NOT p_manager_override THEN` in PL/pgSQL, silently skipping the guard. */
     managerOverride: z.boolean().optional(),
-    /** Phase 27 Plan 08 (G-27-13): the entered PIN of the staff who authorized managerOverride — carried alongside it for the same call-shape-parity reason. Unused by the generic tab RPC today. */
+    /** Phase 27 Plan 08/09 (G-27-13): the entered PIN of the staff who authorized managerOverride — the RPC re-derives the authorizing identity from this PIN independently, never from the caller's own staff id. */
     managerPin: z.string().optional(),
     /** Phase 15 gap-closure (D-02): cached tab.version for optimistic-concurrency guard. */
     expectedVersion: z.number().int().nonnegative().optional(),
@@ -878,9 +878,9 @@ export const ProcessSplitPaymentRequestSchema = z
     discountType: DiscountTypeSchema.optional(),
     discountValue: z.number().nonnegative().optional(),
     discountAmount: MoneySchema.optional(),
-    /** Phase 27 (PROMO-05/07): call-shape parity with ProcessDirectSaleRequestSchema — unused by the generic split-payment RPC today. */
+    /** Phase 27 Plan 09 (G-27-13): live manager-PIN authorization path for `process_split_payment_atomic`'s DISCOUNT_REQUIRES_MANAGER guard — required (server-side, not by this schema) whenever a discount field is present. `undefined` here must reach the RPC as `false`, never `null`: a NULL boolean satisfies neither `IF p_manager_override THEN` nor `IF NOT p_manager_override THEN` in PL/pgSQL, silently skipping the guard. */
     managerOverride: z.boolean().optional(),
-    /** Phase 27 Plan 08 (G-27-13): call-shape parity with ProcessDirectSaleRequestSchema — unused by the generic split-payment RPC today. */
+    /** Phase 27 Plan 08/09 (G-27-13): the entered PIN of the staff who authorized managerOverride — the RPC re-derives the authorizing identity from this PIN independently, never from the caller's own staff id. */
     managerPin: z.string().optional(),
   })
   .superRefine((data, ctx) => {

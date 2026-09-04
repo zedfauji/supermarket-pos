@@ -181,6 +181,8 @@ export async function processRappiPayment(
     discountType: discountInfo?.type,
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
+    managerOverride: discountInfo?.managerOverride,
+    managerPin: discountInfo?.managerPin,
     expectedVersion,
   });
 
