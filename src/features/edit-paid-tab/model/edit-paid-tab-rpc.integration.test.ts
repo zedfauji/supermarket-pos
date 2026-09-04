@@ -53,6 +53,11 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
   const cleanupTabIds: string[] = [];
   const cleanupCajaEntryConcepts: string[] = [];
 
+  // Matches the manager PIN seeded by createAuthStaff('manager') below — the
+  // re-keyed AUTH_FORBIDDEN check (folded todo fix) now authorizes off
+  // profiles.pin = p_manager_pin, not the caller's own auth.uid() session.
+  const managerPin = '999901';
+
   async function createAuthStaff(role: 'manager' | 'cashier'): Promise<{
     id: string;
     email: string;
@@ -266,6 +271,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', quantity: 3 }],
       p_notes: null,
       p_reason: 'Integration test: quantity correction',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -296,6 +302,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', notes: 'stale attempt' }],
       p_notes: null,
       p_reason: 'Integration test: stale version',
+      p_manager_pin: managerPin,
     });
 
     expect(error).not.toBeNull();
@@ -336,6 +343,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', notes: 'attempt on reopened tab' }],
       p_notes: null,
       p_reason: 'Integration test: reopened tab',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -354,6 +362,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       ],
       p_notes: null,
       p_reason: 'Integration test: whitelist enforcement',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -379,6 +388,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', unit_price: 15.0 }], // -5.00 delta
       p_notes: null,
       p_reason: 'Integration test: caja offset (price correction)',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -408,6 +418,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', unit_price: 12.0 }],
       p_notes: 'edited via integration test',
       p_reason: reason,
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -458,6 +469,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', quantity: 1 }], // 3 -> 1, restore 2
       p_notes: null,
       p_reason: 'Integration test: CR-01 quantity decrease restores inventory',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -507,6 +519,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'update', quantity: 4 }], // 1 -> 4, deplete 3 more
       p_notes: null,
       p_reason: 'Integration test: CR-01 quantity increase depletes inventory',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();
@@ -556,6 +569,7 @@ describe.skipIf(skip)('edit_paid_tab RPC (integration)', () => {
       p_order_item_patches: [{ id: seed.orderItemId, op: 'delete' }],
       p_notes: null,
       p_reason: 'Integration test: CR-01 soft-delete restores inventory',
+      p_manager_pin: managerPin,
     });
 
     expect(error).toBeNull();

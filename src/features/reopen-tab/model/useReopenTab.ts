@@ -26,6 +26,7 @@ export interface ReopenTabInput {
   tabId: string;
   expectedVersion: number;
   reason: string;
+  managerPin: string;
 }
 
 export interface ReopenTabRpcResult {
@@ -44,6 +45,7 @@ export function useReopenTab() {
           p_tab_id: input.tabId,
           p_expected_version: input.expectedVersion,
           p_reason: input.reason,
+          p_manager_pin: input.managerPin,
         })
       );
 

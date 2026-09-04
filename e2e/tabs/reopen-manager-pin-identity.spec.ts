@@ -1,0 +1,175 @@
+/**
+ * E2E spec: Phase 28 Plan 02 — folded todo
+ * (.planning/todos/pending/audit-manager-pin-identity-in-remaining-rpcs.md)
+ *
+ * Proves the reopen_tab identity-re-key fix (mirrors G-27-13/T-28-04): a
+ * cashier session that gets a REAL manager to type their own PIN into
+ * ManagerPinDialog now succeeds — before this plan's migration, reopen_tab
+ * had no p_manager_pin parameter at all and authorized off the CALLER's own
+ * auth.uid() session role, so this exact scenario failed with AUTH_FORBIDDEN
+ * despite the correct PIN being entered.
+ *
+ * Requires bar-pos/.env.local (or equivalent env) with E2E_*_PIN/NAME and
+ * SUPABASE_SERVICE_ROLE_KEY.
+ */
+import { expect, test } from '../fixtures';
+import { gotoAuthed, loginAs, logout } from '../helpers/auth';
+import { requireIntegrationEnv } from '../helpers/requireEnv';
+import { getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+
+interface SeededPaidTab {
+  tabId: string;
+  paymentId: string;
+}
+
+async function seedPaidTab(
+  db: ReturnType<typeof getServiceClient>,
+  unitPrice: number
+): Promise<SeededPaidTab> {
+  const { data: profile } = await db
+    .from('profiles')
+    .select('id')
+    .eq('role', 'admin')
+    .limit(1)
+    .single();
+
+  let shiftId: string;
+  const { data: existingShift } = await db
+    .from('shifts')
+    .select('id')
+    .is('clock_out', null)
+    .limit(1)
+    .maybeSingle();
+  if (existingShift) {
+    shiftId = existingShift.id as string;
+  } else {
+    const { data: newShift } = await db
+      .from('shifts')
+      .insert({ staff_id: profile.id, opening_cash: 0 })
+      .select('id')
+      .single();
+    shiftId = newShift.id as string;
+  }
+
+  const { data: tab } = await db
+    .from('tabs')
+    .insert({
+      customer_name: `E2E Reopen Identity Test ${String(Date.now())}`,
+      staff_id: profile.id,
+      shift_id: shiftId,
+      status: 'open',
+      is_deleted: false,
+    })
+    .select('id')
+    .single();
+
+  const { data: order } = await db
+    .from('orders')
+    .insert({ tab_id: tab.id, staff_id: profile.id, status: 'pending' })
+    .select('id')
+    .single();
+
+  const { data: product } = await db
+    .from('products')
+    .select('id')
+    .eq('is_active', true)
+    .limit(1)
+    .single();
+
+  await db.from('order_items').insert({
+    order_id: order.id,
+    product_id: product.id,
+    quantity: 1,
+    unit_price: unitPrice,
+    modifier_price_delta: 0,
+  });
+
+  const { error: tabUpdateErr } = await db
+    .from('tabs')
+    .update({ status: 'paid', closed_at: new Date().toISOString(), version: 2 })
+    .eq('id', tab.id);
+  if (tabUpdateErr) {
+    throw new Error(`seedPaidTab: tabs update to paid failed: ${tabUpdateErr.message}`);
+  }
+
+  const { data: payment, error: payErr } = await db
+    .from('payments')
+    .insert({
+      tab_id: tab.id,
+      amount: unitPrice,
+      method: 'cash',
+      is_refund: false,
+      status: 'completed',
+      processed_by: profile.id,
+      idempotency_key: `e2e-seed-reopen-identity-${(tab.id as string).slice(0, 8)}`,
+    })
+    .select('id')
+    .single();
+  if (payErr || !payment) {
+    throw new Error(`seedPaidTab: payments insert failed: ${payErr?.message ?? 'no row'}`);
+  }
+
+  return { tabId: tab.id as string, paymentId: payment.id as string };
+}
+
+async function enterManagerPin(page: import('@playwright/test').Page, pin: string): Promise<void> {
+  for (const ch of pin) {
+    const label = ch === '0' ? 'Key 0' : `Key ${ch}`;
+    const btn = page.getByRole('button', { name: label });
+    const isVisible = await btn.isVisible().catch(() => false);
+    if (isVisible) {
+      await btn.click();
+    } else {
+      await page.keyboard.type(ch);
+    }
+  }
+}
+
+test.beforeEach(async ({ page }) => {
+  requireIntegrationEnv();
+  await resetTestState();
+  await openCaja(500);
+  await page.goto('/');
+});
+
+test.afterEach(async ({ page }) => {
+  await logout(page).catch(() => undefined);
+});
+
+test('cashier session + a genuine manager PIN succeeds on reopen_tab (folded todo, mirrors G-27-13)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+
+  const db = getServiceClient();
+  const seeded = await seedPaidTab(db, 20.0);
+  const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+
+  await loginAs(page, 'cashier');
+  await gotoAuthed(page, '/payments');
+
+  const row = page.getByTestId(`payment-row-${seeded.paymentId}`);
+  await expect(row).toBeVisible({ timeout: 20_000 });
+  await row.getByRole('button', { name: /reopen ticket|reabrir cuenta/i }).click();
+
+  const dialog = page.getByRole('dialog', { name: /reopen ticket|reabrir cuenta/i });
+  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await dialog.locator('#reopen-tab-reason').fill('E2E cashier + manager PIN identity check');
+  await dialog.getByRole('button', { name: /request approval|solicitar aprobación/i }).click();
+
+  const pinDialog = page.getByRole('alertdialog');
+  await expect(pinDialog).toBeVisible({ timeout: 8_000 });
+
+  // The genuine manager's PIN — not the logged-in cashier's own identity.
+  // Before Task 1's fix, reopen_tab had no p_manager_pin parameter and
+  // authorized off the CALLER's own auth.uid() session role, so this exact
+  // flow failed with AUTH_FORBIDDEN despite the correct PIN being entered.
+  await enterManagerPin(page, managerPin);
+
+  await expect(
+    page.getByText(/ticket reopened successfully|cuenta reabierta correctamente/i)
+  ).toBeVisible({ timeout: 15_000 });
+
+  const { data: tabRow } = await db.from('tabs').select('status').eq('id', seeded.tabId).single();
+  expect((tabRow as { status: string }).status).toBe('open');
+});

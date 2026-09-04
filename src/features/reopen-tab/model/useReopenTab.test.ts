@@ -16,6 +16,7 @@ const baseInput: ReopenTabInput = {
   tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   expectedVersion: 1,
   reason: 'Customer requested correction',
+  managerPin: '1234',
 };
 
 function makeWrapper(queryClient: QueryClient) {

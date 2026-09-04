@@ -160,7 +160,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
     });
   }
 
-  async function handleSubmitRefund() {
+  async function handleSubmitRefund(pin: string) {
     if (!paymentId) return;
     const result = await mutation.mutateAsync({
       originalPaymentId: paymentId,
@@ -171,6 +171,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
         restock: item.restock,
       })),
       reason: reason as RefundReason,
+      managerPin: pin,
     });
     if (!result.ok) {
       toast.error(result.error.message);
@@ -323,9 +324,9 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
         open={pinOpen}
         onOpenChange={setPinOpen}
         requiredAction="process_refund"
-        onSuccess={() => {
+        onSuccess={(staff) => {
           setPinOpen(false);
-          void handleSubmitRefund();
+          void handleSubmitRefund(staff.pin);
         }}
       />
     </>

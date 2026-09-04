@@ -42,6 +42,7 @@ export interface EditPaidTabInput {
   orderItemPatches: EditPaidTabPatch[];
   notes: string | undefined;
   reason: string;
+  managerPin: string;
 }
 
 export interface EditPaidTabRpcResult {
@@ -64,6 +65,7 @@ export function useEditPaidTab() {
           p_order_item_patches: input.orderItemPatches as unknown as Json,
           p_notes: input.notes ?? '',
           p_reason: input.reason,
+          p_manager_pin: input.managerPin,
         })
       );
 

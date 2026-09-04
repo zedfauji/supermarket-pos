@@ -18,6 +18,7 @@ const baseInput: EditPaidTabInput = {
   orderItemPatches: [],
   notes: undefined,
   reason: 'Customer requested correction',
+  managerPin: '1234',
 };
 
 function makeWrapper(queryClient: QueryClient) {
