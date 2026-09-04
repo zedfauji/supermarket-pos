@@ -21,6 +21,13 @@ export interface DiscountInfo {
   amount: number;
   /** Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc discount and/or the below-cost floor-guard override. */
   managerOverride: boolean;
+  /**
+   * Phase 27 Plan 08 (G-27-13): the PIN of the staff member who matched in
+   * ManagerPinDialog — threaded to the RPC so the server can independently
+   * re-verify the authorizing identity from the entered PIN itself, rather
+   * than trusting the currently logged-in staff's own session identity.
+   */
+  managerPin: string | undefined;
 }
 
 export type CashPaymentResult = {
@@ -59,6 +66,7 @@ export async function processCashPayment(
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
     managerOverride: discountInfo?.managerOverride,
+    managerPin: discountInfo?.managerPin,
     expectedVersion,
   });
 
@@ -95,6 +103,7 @@ export async function processCardPayment(
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
     managerOverride: discountInfo?.managerOverride,
+    managerPin: discountInfo?.managerPin,
     expectedVersion,
   });
 
@@ -140,6 +149,7 @@ export async function processSplitPayment(
     discountValue: discountInfo?.value,
     discountAmount: discountInfo?.amount,
     managerOverride: discountInfo?.managerOverride,
+    managerPin: discountInfo?.managerPin,
   });
 
   if (!result.ok) {

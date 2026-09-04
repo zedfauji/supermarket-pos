@@ -48,12 +48,34 @@ vi.mock('sonner', () => ({
 // Stub exposing a "grant" control instead of the real PIN keypad/staff-list
 // fetch — mirrors CorrectOpenUnitDialog.test.tsx's pattern. Lets tests drive
 // the PIN-gate transition (Phase 27, PROMO-05/07) without a real staff list.
+// onSuccess is called with a mock matched-staff object (Phase 27 Plan 08,
+// G-27-13) so PaymentForm's PIN-capture wiring has something realistic to
+// capture — mirrors real ManagerPinDialog.handlePinComplete's onSuccess(match).
+const mockAuthorizingManager = {
+  id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  name: 'Mock Authorizing Manager',
+  email: 'authorizing-manager@test.dev',
+  role: 'manager' as const,
+  pin: '789012',
+  isActive: true,
+  mustChangePin: false,
+  locale: 'es-MX' as const,
+};
 vi.mock('@features/manager-pin-gate', () => ({
-  ManagerPinDialog: (props: { open: boolean; requiredAction: string; onSuccess: () => void }) =>
+  ManagerPinDialog: (props: {
+    open: boolean;
+    requiredAction: string;
+    onSuccess: (staff: typeof mockAuthorizingManager) => void;
+  }) =>
     props.open
       ? createElement(
           'button',
-          { onClick: props.onSuccess, 'data-required-action': props.requiredAction },
+          {
+            onClick: () => {
+              props.onSuccess(mockAuthorizingManager);
+            },
+            'data-required-action': props.requiredAction,
+          },
           'Grant PIN'
         )
       : null,
@@ -407,6 +429,45 @@ describe('PaymentForm — discount section', () => {
     expect(screen.getByTestId('discount-row')).toBeInTheDocument();
   });
 
+  // Phase 27 Plan 08 (G-27-13): the PIN of the staff who matched in
+  // ManagerPinDialog must reach the RPC call's discountInfo.managerPin — the
+  // server independently re-verifies authorization against this PIN, not
+  // the currently logged-in staff's own identity.
+  it('the PIN captured from ManagerPinDialog reaches processCashPayment discountInfo.managerPin', async () => {
+    const user = userEvent.setup();
+    const receipt = makeReceipt();
+    const processCashPayment = vi
+      .fn()
+      .mockResolvedValue(ok({ paymentId: 'p-cash', changeAmount: 0, receiptData: receipt }));
+    const processors = makeProcessors({ processCashPayment });
+    renderForm(processors);
+
+    await expandDiscountSection(user);
+
+    const discountInput = screen.getByLabelText('Discount %');
+    await user.clear(discountInput);
+    await user.type(discountInput, '10');
+    await user.tab();
+
+    const tendered = screen.getByLabelText('Amount tendered');
+    await user.clear(tendered);
+    await user.type(tendered, '20.00');
+    await user.tab();
+
+    await user.click(screen.getByRole('button', { name: 'Process payment' }));
+
+    await waitFor(() => {
+      expect(processCashPayment).toHaveBeenCalled();
+    });
+    const call = processCashPayment.mock.calls[0];
+    if (call === undefined) throw new Error('expected call');
+    // index 3 = discountInfo (tabId, amount, tenderedAmount, discountInfo, ...)
+    expect(call[3]).toMatchObject({
+      managerOverride: true,
+      managerPin: mockAuthorizingManager.pin,
+    });
+  });
+
   it('fixed $5 discount shows correct discount-applied-label', async () => {
     const user = userEvent.setup();
     renderForm();
@@ -606,8 +667,11 @@ describe('PaymentForm — below-cost override retry', () => {
     expect(secondCall).toBeDefined();
     // Same idempotency key on both attempts (index 5) — a retry, not a new sale.
     expect(secondCall![5]).toBe(firstCall![5]);
-    // managerOverride: true on the retry (index 3 = discountInfo).
-    expect(secondCall![3]).toMatchObject({ managerOverride: true });
+    // managerOverride: true + the matched staff's PIN on the retry (index 3 = discountInfo).
+    expect(secondCall![3]).toMatchObject({
+      managerOverride: true,
+      managerPin: mockAuthorizingManager.pin,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Receipt' })).toBeInTheDocument();

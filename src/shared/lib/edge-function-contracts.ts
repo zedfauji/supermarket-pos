@@ -117,6 +117,8 @@ export const ProcessPaymentRequestSchema = z
     discountAmount: MoneySchema.optional(),
     /** Phase 27 (PROMO-05/07): manager-PIN authorization carried alongside the ad-hoc discount fields. Unused by the generic tab RPC today — present for call-shape parity with ProcessDirectSaleRequestSchema. */
     managerOverride: z.boolean().optional(),
+    /** Phase 27 Plan 08 (G-27-13): the entered PIN of the staff who authorized managerOverride — carried alongside it for the same call-shape-parity reason. Unused by the generic tab RPC today. */
+    managerPin: z.string().optional(),
     /** Phase 15 gap-closure (D-02): cached tab.version for optimistic-concurrency guard. */
     expectedVersion: z.number().int().nonnegative().optional(),
   })
@@ -653,6 +655,8 @@ export const ProcessDirectSaleRequestSchema = z
     customerPhone: z.string().min(1).max(30).optional(),
     /** Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc discount and/or the below-cost floor-guard override. */
     managerOverride: z.boolean().optional(),
+    /** Phase 27 Plan 08 (G-27-13): the entered PIN of the staff who authorized managerOverride — forwarded to process_direct_sale_atomic for independent server-side re-verification. */
+    managerPin: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
@@ -876,6 +880,8 @@ export const ProcessSplitPaymentRequestSchema = z
     discountAmount: MoneySchema.optional(),
     /** Phase 27 (PROMO-05/07): call-shape parity with ProcessDirectSaleRequestSchema — unused by the generic split-payment RPC today. */
     managerOverride: z.boolean().optional(),
+    /** Phase 27 Plan 08 (G-27-13): call-shape parity with ProcessDirectSaleRequestSchema — unused by the generic split-payment RPC today. */
+    managerPin: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const legsTotal = data.legs.reduce((sum, leg) => sum + leg.amount, 0);

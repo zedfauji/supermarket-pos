@@ -42,6 +42,11 @@ const BodySchema = z
     // Phase 27 (PROMO-05/07): manager-PIN authorization for the ad-hoc
     // discount and/or the below-cost floor-guard override.
     managerOverride: z.boolean().optional(),
+    // Phase 27 Plan 08 (G-27-13): the entered PIN of the staff who
+    // authorized managerOverride — forwarded to process_direct_sale_atomic's
+    // p_manager_pin so the server independently re-derives the authorizing
+    // staff from the PIN itself, never from the caller's own identity.
+    managerPin: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if ((data.method == null) === (data.legs == null)) {
@@ -315,6 +320,7 @@ Deno.serve(async (req: Request) => {
     p_customer_name: body.data.customerName ?? 'Walk-in',
     p_customer_phone: body.data.customerPhone ?? null,
     p_manager_override: body.data.managerOverride ?? false,
+    p_manager_pin: body.data.managerPin ?? null,
   });
   if (error)
     return jsonResponse(

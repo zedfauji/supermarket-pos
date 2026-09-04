@@ -276,6 +276,7 @@ describe('payment-processor', () => {
         value: 10,
         amount: 1.25,
         managerOverride: true,
+        managerPin: '789012',
       });
 
       const tuple = spy.mock.calls[0];
@@ -286,6 +287,7 @@ describe('payment-processor', () => {
         discountValue: 10,
         discountAmount: 1.25,
         managerOverride: true,
+        managerPin: '789012',
       });
     });
 

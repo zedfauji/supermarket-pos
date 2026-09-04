@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 39
+open_count: 40
 waived_count: 0
 fixed_count: 16
-total_count: 55
-last_updated: 2026-09-04T01:20:44.000Z
+total_count: 56
+last_updated: 2026-09-04T04:48:35.281Z
 ---
 
 # Broken Windows Ledger
@@ -70,6 +70,7 @@ last_updated: 2026-09-04T01:20:44.000Z
 | 53 | 26 | deviation | scripts/onboard-customer.ps1 |  | scripts/onboard-customer.ps1 (Plan 26-03) hardcodes `gh repo create $fullRepo --private` for every new customer repo. Ledger #52 found that a private customer mirror 404s against Tauri's unauthenticated updater GET; #52 was fixed one-off for zedfauji/supermarket-pos-taj by flipping it public, but onboard-customer.ps1 itself was not changed -- customer #2 onward, onboarded via this script exactly as documented in docs/onboarding-new-customer.md, will reproduce the identical 404 unless the script defaults to --public or an authenticated-fetch updater mechanism is added first. Not fixed: discovered after Plan 26-03 already shipped; fixing requires either changing onboard-customer.ps1's default (and re-confirming with the operator that customer identity/branding in a public repo is acceptable, per the T-26-10 disposition already accepted for Taj) or a separate updater-auth mechanism. | open |  | 2026-09-03T16:40:00.000Z |  |
 | 54 | 26 | deviation | .github/workflows/release.yml | 162 | After fixing WINDOWS.md #51's repo-routing bug (GITHUB_REPOSITORY now correctly shadowed to matrix.customer.repo), a real workflow_dispatch run (33805295067, worktree-agent-a5fe98c9788387d07, v1.2.4) confirms tauri-action's release step now correctly targets zedfauji/supermarket-pos-taj (log: Looking for a draft release with tag v1.2.4... against the taj repo, not core) -- but the release creation call itself then fails: 403 Resource not accessible by personal access token on POST /repos/zedfauji/supermarket-pos-taj/releases. CUSTOMER_MIRROR_PAT has enough scope for git push --mirror (an earlier step in the same job succeeds) but not for the Releases REST API on the same public, user-owned (non-org, so not an SSO issue) repo. Root cause is the PAT's own granted scope/permission set (a stored GitHub secret this agent cannot inspect or regenerate), not release.yml's code. Not fixed: requires a human to regenerate CUSTOMER_MIRROR_PAT with Contents: Read and write (fine-grained) or full repo scope (classic) and confirm it covers Releases, then re-dispatch to confirm. Until resolved, sync-customers still cannot complete a fully-automatic release with zero manual gh release create workaround. | open |  | 2026-09-03T21:10:54.633Z |  |
 | 55 | 26 | deviation | .github/workflows/release.yml | 162 | CUSTOMER_MIRROR_PAT rotated to a classic PAT with repo scope (fixing #54's 403). Real workflow_dispatch (33823523719, worktree-agent-a02e68602df65c889, v1.2.5): the 403 is gone -- but sync-customers's tauri-action release step now silently uploads/overwrites assets on CORE's own v1.2.5 draft release (id 382413906, asset updated_at timestamps exactly match this job's upload timestamps) instead of creating anything on zedfauji/supermarket-pos-taj. Confirmed via API: taj repo's release list still only has v1.2.3, zero v1.2.5 release exists there in any state (draft or published). GITHUB_REPOSITORY is correctly logged as zedfauji/supermarket-pos-taj in the step's env dump, so the shadow env var IS being set, but tauri-action's internal find-or-create-draft-release call is not honoring it for this PAT/scope combination -- root cause not yet isolated (untested whether classic PAT vs @actions/github's own context resolution is the culprit). Not fixed: requires debugging tauri-action's actual octokit target repo resolution (e.g. explicit owner/repo action inputs if v0.6.2 supports them, or an alternate release-creation step) before sync-customers can land a real release on the customer mirror. Fixed: stopped relying on tauri-action's own release call entirely -- added an explicit `gh release create`/`upload --clobber` step (GH_TOKEN=CUSTOMER_MIRROR_PAT) that locates the just-built nsis/msi artifacts on disk, builds latest.json matching a real prior release's schema, and publishes directly to matrix.customer.repo. Real workflow_dispatch verification (33824675553, v1.2.6, worktree-agent-a4fb1499065df1463): `gh release view v1.2.6 --repo zedfauji/supermarket-pos-taj` confirms tag v1.2.6 with all 5 expected assets (installer, .sig, msi, .sig, latest.json); latest.json's platform url fields all point at zedfauji/supermarket-pos-taj/releases/download/v1.2.6/...; signtool.exe verify //pa //v on the downloaded installer confirms the real Authenticode chain (SHA1 86F3E828B1815AC72AA339B3046B3FE6B690AF62, self-signed root reported untrusted -- expected, matches this repo's own verify-installer-integrity.ps1 pattern); core's own v1.2.6 release (published by the untouched publish-tauri job) is unaffected, still draft=true with its own 5 assets. | fixed |  | 2026-09-04T01:03:00.927Z | 2026-09-04T01:20:44.000Z |
+| 56 | 27 | unrun-verify | e2e/payments/apply-promotion-and-custom-discount.spec.ts |  | Tests (b)/(c) edited correctly per Plan 27-08 Task 3 (cashier login + distinct manager PIN) but not executable in this sandboxed worktree — shared port-1520 dev server bound to main checkout's stale/crashed esbuild instance | open |  | 2026-09-04T04:48:35.281Z |  |
 
 ````json
 [
@@ -732,6 +733,18 @@ last_updated: 2026-09-04T01:20:44.000Z
     "reason": "",
     "recorded_at": "2026-09-04T01:03:00.927Z",
     "resolved_at": "2026-09-04T01:20:44.000Z"
+  },
+  {
+    "id": 56,
+    "kind": "unrun-verify",
+    "phase": "27",
+    "file": "e2e/payments/apply-promotion-and-custom-discount.spec.ts",
+    "line": null,
+    "description": "Tests (b)/(c) edited correctly per Plan 27-08 Task 3 (cashier login + distinct manager PIN) but not executable in this sandboxed worktree — shared port-1520 dev server bound to main checkout's stale/crashed esbuild instance",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-04T04:48:35.281Z",
+    "resolved_at": null
   }
 ]
 ````
