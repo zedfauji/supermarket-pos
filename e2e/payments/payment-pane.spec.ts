@@ -13,10 +13,12 @@
  *   - src/widgets/HomeDashboard/ui/HomeDashboard.tsx
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test, type Page } from '../fixtures';
 import { loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { getServiceClient, openCaja, resetTestState } from '../helpers/supabase';
+import { computeAuthoritativeTotal, getBillingTaxConfig } from '../helpers/tax';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -202,16 +204,105 @@ async function seedTabWithDuplicateItems(customerName: string): Promise<string> 
   return tab.id as string;
 }
 
+/**
+ * Phase 27 Plan 09 (G-27-13): seeds a product + category + inventory row with
+ * a caller-chosen base price (so discount math is predictable) and an open
+ * tab that references it via `caja_session_id` (required for the tab to
+ * appear in the PaymentPane's "tabs awaiting payment" list — see the local
+ * `seedOpenTab` helper above). Mirrors
+ * `e2e/payments/apply-promotion-and-custom-discount.spec.ts`'s `seedProduct`.
+ */
+async function seedDiscountTestTab(
+  admin: SupabaseClient,
+  customerName: string,
+  basePrice: number
+): Promise<{ tabId: string; productId: string; categoryId: string }> {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const { data: category, error: catErr } = await admin
+    .from('categories')
+    .insert({ name: `E2E PP Discount Category ${suffix}` })
+    .select('id')
+    .single();
+  if (catErr || !category) throw new Error(`seedDiscountTestTab: category insert failed - ${catErr?.message}`);
+
+  const { data: product, error: prodErr } = await admin
+    .from('products')
+    .insert({
+      name: `E2E PP Discount Product ${suffix}`,
+      category_id: category.id,
+      base_price: basePrice,
+      is_active: true,
+      sold_by_weight: false,
+    })
+    .select('id')
+    .single();
+  if (prodErr || !product) throw new Error(`seedDiscountTestTab: product insert failed - ${prodErr?.message}`);
+
+  const { error: invErr } = await admin
+    .from('inventory')
+    .insert({ product_id: product.id, quantity_on_hand: 100, cost_price: 1 });
+  if (invErr) throw new Error(`seedDiscountTestTab: inventory insert failed - ${invErr.message}`);
+
+  const shift = await ensureOpenShift(admin);
+  const { data: caja } = await admin.from('caja_sessions').select('id').eq('status', 'open').maybeSingle();
+  if (!caja) throw new Error('seedDiscountTestTab: no open caja session — run openCaja first');
+
+  const { data: tab, error: tabErr } = await admin
+    .from('tabs')
+    .insert({
+      customer_name: customerName,
+      staff_id: shift.staff_id,
+      shift_id: shift.id,
+      caja_session_id: caja.id,
+      status: 'open',
+    })
+    .select('id')
+    .single();
+  if (tabErr || !tab) throw new Error(`seedDiscountTestTab: tab insert failed - ${tabErr?.message}`);
+
+  const { data: order, error: orderErr } = await admin
+    .from('orders')
+    .insert({ tab_id: tab.id, staff_id: shift.staff_id, status: 'served' })
+    .select('id')
+    .single();
+  if (orderErr || !order) throw new Error(`seedDiscountTestTab: order insert failed - ${orderErr?.message}`);
+
+  const { error: itemErr } = await admin.from('order_items').insert({
+    order_id: order.id,
+    product_id: product.id,
+    quantity: 1,
+    unit_price: basePrice,
+    modifier_price_delta: 0,
+  });
+  if (itemErr) throw new Error(`seedDiscountTestTab: order_item insert failed - ${itemErr.message}`);
+
+  return { tabId: tab.id as string, productId: product.id as string, categoryId: category.id as string };
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 test.describe('Payment Pane', () => {
+  const seededDiscountProductIds: { productId: string; categoryId: string }[] = [];
+
   test.beforeEach(async ({ page }) => {
     requireIntegrationEnv();
     await resetTestState();
     await openCaja(500);
     await page.goto('/');
+  });
+
+  test.afterEach(async () => {
+    if (seededDiscountProductIds.length === 0) return;
+    const admin = getServiceClient();
+    for (const { productId, categoryId } of seededDiscountProductIds) {
+      await admin.from('inventory').delete().eq('product_id', productId);
+      await admin.from('products').delete().eq('id', productId);
+      await admin.from('categories').delete().eq('id', categoryId);
+    }
+    seededDiscountProductIds.length = 0;
   });
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -439,5 +530,185 @@ test.describe('Payment Pane', () => {
       timeout: 10_000,
     });
     await logout(page);
+  });
+
+  // ── Manager-PIN ad-hoc discount (Phase 27 Plan 09, G-27-13) ────────────────
+
+  test('T13: reopened-tab ad-hoc discount requires a manager PIN and completes — process_payment_atomic path (G-27-13)', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const admin = getServiceClient();
+    const { tabId, productId, categoryId } = await seedDiscountTestTab(
+      admin,
+      'PP Adhoc Discount Test',
+      40
+    );
+    seededDiscountProductIds.push({ productId, categoryId });
+
+    // Cashier operates the payment screen; a DIFFERENT manager's PIN
+    // authorizes the ad-hoc discount — the real cashier-operates /
+    // manager-authorizes scenario the debug session flagged (same class of
+    // bug as G-27-13's primary finding, fixed for process_direct_sale_atomic
+    // in Plan 08; this plan closes it for process_payment_atomic).
+    await loginAs(page, 'cashier');
+    await goToPaymentsViaHome(page);
+
+    const list = page.getByTestId('tabs-waiting-for-payment');
+    await expect(list.getByText('PP Adhoc Discount Test')).toBeVisible({ timeout: 20_000 });
+    await list.getByRole('button', { name: /tab PP Adhoc Discount Test/i }).click();
+    await page.getByRole('button', { name: /verify pin to process payment/i }).click();
+
+    // Identity-verification PIN gate (RBAC close_tab) — cashier's own PIN
+    // unlocks PaymentForm (T8's exact pattern).
+    let pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+    await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+    const cashierPin = process.env['E2E_BARTENDER_PIN'] ?? '';
+    await enterPin(page, cashierPin);
+    await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('payment-btn-cash')).toBeVisible({ timeout: 15_000 });
+
+    // Ad-hoc discount PIN gate — a distinct manager's real PIN.
+    const discountToggle = page.locator('#discount-toggle');
+    await expect(discountToggle).toBeVisible({ timeout: 10_000 });
+    await discountToggle.click();
+    pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+    await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+    const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+    await enterPin(page, managerPin);
+    await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+
+    const discountInput = page.getByLabel(/discount %|discount amount/i);
+    await expect(discountInput).toBeVisible({ timeout: 5_000 });
+    await discountInput.fill('10');
+    await expect(page.getByTestId('discount-applied-label')).toBeVisible();
+
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const afterDiscount = Math.round(40 * 0.9 * 100) / 100; // 36.00
+    const expectedTotal = computeAuthoritativeTotal(afterDiscount, taxRatePercent, taxInclusive);
+
+    await page.getByTestId('payment-btn-cash').click();
+    await page.getByLabel(/amount tendered/i).fill('100');
+    await page.getByRole('button', { name: /^process payment$/i }).click();
+
+    await expect(page.getByRole('heading', { name: 'Receipt' })).toBeVisible({ timeout: 90_000 });
+
+    const { data: payments, error: paymentsError } = await admin
+      .from('payments')
+      .select('amount, discount_scope, discount_type, discount_value')
+      .eq('tab_id', tabId)
+      .order('processed_at', { ascending: false })
+      .limit(1);
+    if (paymentsError || !payments?.[0]) throw new Error(paymentsError?.message ?? 'Payment not found');
+    const payment = payments[0] as {
+      amount: number;
+      discount_scope: string | null;
+      discount_type: string | null;
+      discount_value: number | null;
+    };
+    expect(payment.discount_scope).toBe('all');
+    expect(payment.discount_type).toBe('percent');
+    expect(Number(payment.discount_value)).toBeCloseTo(10, 1);
+    expect(Number(payment.amount)).toBeCloseTo(expectedTotal, 2);
+  });
+
+  test('T14: split-tender ad-hoc discount on the reopened-tab payment screen — process_split_payment_atomic no longer rejects discountScope/discountType (G-27-13)', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const admin = getServiceClient();
+    const { tabId, productId, categoryId } = await seedDiscountTestTab(
+      admin,
+      'PP Split Discount Test',
+      50
+    );
+    seededDiscountProductIds.push({ productId, categoryId });
+
+    await loginAs(page, 'cashier');
+    await goToPaymentsViaHome(page);
+
+    const list = page.getByTestId('tabs-waiting-for-payment');
+    await expect(list.getByText('PP Split Discount Test')).toBeVisible({ timeout: 20_000 });
+    await list.getByRole('button', { name: /tab PP Split Discount Test/i }).click();
+    await page.getByRole('button', { name: /verify pin to process payment/i }).click();
+
+    let pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+    await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+    const cashierPin = process.env['E2E_BARTENDER_PIN'] ?? '';
+    await enterPin(page, cashierPin);
+    await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('payment-btn-cash')).toBeVisible({ timeout: 15_000 });
+
+    const discountToggle = page.locator('#discount-toggle');
+    await expect(discountToggle).toBeVisible({ timeout: 10_000 });
+    await discountToggle.click();
+    pinDialog = page.getByRole('alertdialog', { name: /manager access required/i });
+    await expect(pinDialog).toBeVisible({ timeout: 10_000 });
+    const managerPin = process.env['E2E_MANAGER_PIN'] ?? '';
+    await enterPin(page, managerPin);
+    await expect(pinDialog).not.toBeVisible({ timeout: 10_000 });
+
+    const discountInput = page.getByLabel(/discount %|discount amount/i);
+    await expect(discountInput).toBeVisible({ timeout: 5_000 });
+    await discountInput.fill('10');
+    await expect(page.getByTestId('discount-applied-label')).toBeVisible();
+
+    const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
+    const afterDiscount = Math.round(50 * 0.9 * 100) / 100; // 45.00
+    const expectedTotal = computeAuthoritativeTotal(afterDiscount, taxRatePercent, taxInclusive);
+
+    // Before Task 1's fix, process-split-payment/index.ts's BodySchema
+    // declared discountScope: z.enum(['tab', 'item']) / discountType:
+    // z.enum(['percentage', 'fixed']) — stale bar-pos-era values that never
+    // matched what the client sends ('all' / 'percent'), so every
+    // split-payment discount request was rejected by Zod with 400
+    // VALIDATION_ERROR before ever reaching process_split_payment_atomic.
+    const splitToggle = page.locator('#split-mode-toggle');
+    await expect(splitToggle).toBeVisible({ timeout: 10_000 });
+    await splitToggle.click();
+
+    const leg1 = Math.round((expectedTotal / 2) * 100) / 100;
+    const leg2 = Math.round((expectedTotal - leg1) * 100) / 100;
+
+    const amountInputs = page.getByLabel('Amount', { exact: true });
+    const tenderedInputs = page.getByLabel('Amount tendered', { exact: true });
+    await expect(amountInputs).toHaveCount(2, { timeout: 10_000 });
+
+    await amountInputs.nth(0).fill(leg1.toFixed(2));
+    await tenderedInputs.nth(0).fill(leg1.toFixed(2));
+    await amountInputs.nth(1).fill(leg2.toFixed(2));
+    await tenderedInputs.nth(1).fill(leg2.toFixed(2));
+
+    await page.getByRole('button', { name: /^process split payment$/i }).click();
+
+    await expect(page.getByRole('heading', { name: 'Receipt' })).toBeVisible({ timeout: 90_000 });
+
+    const { data: payments, error: paymentsError } = await admin
+      .from('payments')
+      .select('amount, split_index, discount_scope, discount_type, discount_value')
+      .eq('tab_id', tabId)
+      .order('split_index', { ascending: true });
+    if (paymentsError || !payments || payments.length !== 2) {
+      throw new Error(paymentsError?.message ?? `Expected 2 split payment rows, got ${String(payments?.length)}`);
+    }
+    const rows = payments as {
+      amount: number;
+      split_index: number | null;
+      discount_scope: string | null;
+      discount_type: string | null;
+      discount_value: number | null;
+    }[];
+    const leg0 = rows.find(r => r.split_index === 0);
+    const leg1Row = rows.find(r => r.split_index === 1);
+    if (!leg0 || !leg1Row) throw new Error('Expected split_index 0 and 1 rows');
+
+    // Discount stored ONLY on split_index=0 (D-04) — the fix's whole point
+    // is that this row is no longer silently rejected before insert.
+    expect(leg0.discount_scope).toBe('all');
+    expect(leg0.discount_type).toBe('percent');
+    expect(Number(leg0.discount_value)).toBeCloseTo(10, 1);
+    expect(leg1Row.discount_scope).toBeNull();
+
+    expect(Number(leg0.amount) + Number(leg1Row.amount)).toBeCloseTo(expectedTotal, 2);
   });
 });
