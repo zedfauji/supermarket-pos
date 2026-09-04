@@ -259,6 +259,20 @@ jobs:
             Write-Host "FAILED: gh release publish to '$repo' for tag '$tag' exited $LASTEXITCODE." -ForegroundColor Red
             exit 1
           }
+
+          # tauri-action always pre-creates the release as a Draft
+          # (releaseDraft: true above), so `gh release view` above always
+          # finds it and takes the --clobber upload branch, which only
+          # uploads assets - it never un-drafts. Without this, the release
+          # stays a permanent draft and /releases/latest never resolves to
+          # it (26-VERIFICATION.md gap; confirmed live against v1.2.6 on
+          # supermarket-pos-taj). Run unconditionally so both the
+          # create-path and the clobber-upload-path end up non-draft.
+          gh release edit $tag --repo $repo --draft=false
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "FAILED: gh release edit --draft=false on '$repo' for tag '$tag' exited $LASTEXITCODE." -ForegroundColor Red
+            exit 1
+          }
           Write-Host "OK: published $tag to $repo via explicit gh release (WINDOWS.md #55)." -ForegroundColor Green
 
       - name: Clean up materialized secrets
