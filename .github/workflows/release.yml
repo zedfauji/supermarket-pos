@@ -161,15 +161,16 @@ jobs:
 
       - uses: tauri-apps/tauri-action@v0.6.2
         env:
-          # WINDOWS.md #51: tauri-action resolves its release target repo from
-          # @actions/github's ambient GITHUB_TOKEN/GITHUB_REPOSITORY context,
-          # NOT from matrix.customer.repo — left as the workflow's default
-          # (always core's own repo), this step's release/assets silently land
-          # on zedfauji/supermarket-pos instead of this customer's mirror,
-          # racing and clobbering publish-tauri's own upload for the same tag.
-          # GITHUB_REPOSITORY shadowed to the customer's repo for this step
-          # only; CUSTOMER_MIRROR_PAT already has contents:write there (same
-          # PAT used by the "Mirror-push to customer repo" step above).
+          # WINDOWS.md #51/#54/#55: across 3 real verification rounds, this
+          # step's own release-creation call has proven unreliable at
+          # reaching the customer's repo — sometimes it 403s (#54), sometimes
+          # it silently lands on CORE's repo instead (#55), even with
+          # GITHUB_REPOSITORY shadowed below and a PAT that has confirmed
+          # contents:write there. This step is KEPT for what it reliably does
+          # (build + sign the customer-configured bundles) but is NO LONGER
+          # the authoritative publish — that's the explicit "Publish release
+          # to customer repo via gh CLI" step below, which is independent of
+          # wherever this step's own release call happens to land.
           GITHUB_TOKEN: ${{ secrets.CUSTOMER_MIRROR_PAT }}
           GITHUB_REPOSITORY: ${{ matrix.customer.repo }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -185,6 +186,80 @@ jobs:
           args: >-
             --config {"bundle":{"windows":{"certificateThumbprint":"${{ steps.gencert.outputs.thumbprint }}","digestAlgorithm":"sha256"}}}
             --config customers/${{ matrix.customer.name }}/tauri.override.json
+
+      - name: Publish release to customer repo via gh CLI (WINDOWS.md #55)
+        # SOLE authoritative publish to the customer's repo. Does not depend
+        # on tauri-action's own release call above (which has repeatedly
+        # proven unreliable — #51/#54/#55) — this step locates the artifacts
+        # tauri-action already built+signed on local disk, builds its own
+        # updater manifest, and publishes directly with `gh`, which is the
+        # same mechanic already proven reliable in 26-05's manual workaround.
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.CUSTOMER_MIRROR_PAT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo = '${{ matrix.customer.repo }}'
+          $bundleRoot = 'src-tauri/target/release/bundle'
+
+          $tauriConf = Get-Content -LiteralPath 'src-tauri/tauri.conf.json' -Raw | ConvertFrom-Json
+          $version = $tauriConf.version
+          $tag = "v$version"
+
+          # Glob dynamically, not a hardcoded filename — product-name spacing
+          # in the local build output can vary (26-05 finding), and GitHub
+          # itself sanitizes spaces to dots when it serves the uploaded asset
+          # (confirmed against a real release's actual asset names), so the
+          # download URL must use the sanitized name regardless of the local
+          # file's raw name.
+          $nsisExe = Get-ChildItem -Path (Join-Path $bundleRoot 'nsis') -Filter '*-setup.exe' | Select-Object -First 1
+          $nsisSig = Get-ChildItem -Path (Join-Path $bundleRoot 'nsis') -Filter '*-setup.exe.sig' | Select-Object -First 1
+          $msiFile = Get-ChildItem -Path (Join-Path $bundleRoot 'msi') -Filter '*.msi' | Select-Object -First 1
+          $msiSig = Get-ChildItem -Path (Join-Path $bundleRoot 'msi') -Filter '*.msi.sig' | Select-Object -First 1
+
+          if (-not $nsisExe -or -not $nsisSig -or -not $msiFile -or -not $msiSig) {
+            Write-Host "FAILED: could not locate all 4 built artifacts (nsis .exe/.exe.sig, msi/.msi.sig) under '$bundleRoot'." -ForegroundColor Red
+            exit 1
+          }
+
+          $nsisSignature = (Get-Content -LiteralPath $nsisSig.FullName -Raw).Trim()
+          $msiSignature = (Get-Content -LiteralPath $msiSig.FullName -Raw).Trim()
+          $nsisSanitizedName = $nsisExe.Name -replace ' ', '.'
+          $msiSanitizedName = $msiFile.Name -replace ' ', '.'
+          $exeUrl = "https://github.com/$repo/releases/download/$tag/$nsisSanitizedName"
+          $msiUrl = "https://github.com/$repo/releases/download/$tag/$msiSanitizedName"
+          $pubDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+
+          # Manifest shape matches a real prior release's latest.json byte-for-byte
+          # (fetched via `gh release download v1.2.3 --repo zedfauji/supermarket-pos-taj
+          # -p latest.json` during this fix's verification) rather than a guessed shape.
+          $manifest = [ordered]@{
+            version  = $version
+            notes    = 'See CHANGELOG.md for release notes.'
+            pub_date = $pubDate
+            platforms = [ordered]@{
+              'windows-x86_64'     = [ordered]@{ signature = $msiSignature; url = $msiUrl }
+              'windows-x86_64-msi'  = [ordered]@{ signature = $msiSignature; url = $msiUrl }
+              'windows-x86_64-nsis' = [ordered]@{ signature = $nsisSignature; url = $exeUrl }
+            }
+          }
+          $manifestPath = Join-Path $bundleRoot 'latest.json'
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
+
+          $assetPaths = @($nsisExe.FullName, $nsisSig.FullName, $msiFile.FullName, $msiSig.FullName, $manifestPath)
+
+          gh release view $tag --repo $repo *>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists on $repo (retry) - uploading with --clobber." -ForegroundColor Yellow
+            gh release upload $tag @assetPaths --repo $repo --clobber
+          } else {
+            gh release create $tag @assetPaths --repo $repo --title "Supermarket POS $tag" --notes 'See CHANGELOG.md for release notes.'
+          }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "FAILED: gh release publish to '$repo' for tag '$tag' exited $LASTEXITCODE." -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "OK: published $tag to $repo via explicit gh release (WINDOWS.md #55)." -ForegroundColor Green
 
       - name: Clean up materialized secrets
         if: always()
