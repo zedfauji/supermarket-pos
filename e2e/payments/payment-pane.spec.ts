@@ -539,19 +539,30 @@ test.describe('Payment Pane', () => {
   }) => {
     test.setTimeout(120_000);
     const admin = getServiceClient();
-    const { tabId, productId, categoryId } = await seedDiscountTestTab(
-      admin,
-      'PP Adhoc Discount Test',
-      40
-    );
-    seededDiscountProductIds.push({ productId, categoryId });
 
     // Cashier operates the payment screen; a DIFFERENT manager's PIN
     // authorizes the ad-hoc discount — the real cashier-operates /
     // manager-authorizes scenario the debug session flagged (same class of
     // bug as G-27-13's primary finding, fixed for process_direct_sale_atomic
     // in Plan 08; this plan closes it for process_payment_atomic).
+    //
+    // Login FIRST: `useTabs()` filters the "tabs awaiting payment" list by
+    // the current viewer's shift_id (src/entities/tab/model/queries.ts), and
+    // logging in opens the cashier's own shift. Seeding before login would
+    // make `ensureOpenShift` fall back to creating a manager shift (none
+    // open yet after `resetTestState()`), tying the tab to a shift_id the
+    // cashier's session never matches — the tab would silently never appear.
     await loginAs(page, 'cashier');
+    await goToPaymentsViaHome(page);
+
+    const { tabId, productId, categoryId } = await seedDiscountTestTab(
+      admin,
+      'PP Adhoc Discount Test',
+      40
+    );
+    seededDiscountProductIds.push({ productId, categoryId });
+    // Re-navigate: /payments' useTabs() query was already mounted (and cached
+    // empty) before the tab existed — a fresh navigation forces a refetch.
     await goToPaymentsViaHome(page);
 
     const list = page.getByTestId('tabs-waiting-for-payment');
@@ -617,14 +628,18 @@ test.describe('Payment Pane', () => {
   }) => {
     test.setTimeout(120_000);
     const admin = getServiceClient();
+
+    // See T13's comment: seed after login so `ensureOpenShift` reuses the
+    // cashier's own shift instead of creating an unrelated manager one.
+    await loginAs(page, 'cashier');
+    await goToPaymentsViaHome(page);
+
     const { tabId, productId, categoryId } = await seedDiscountTestTab(
       admin,
       'PP Split Discount Test',
       50
     );
     seededDiscountProductIds.push({ productId, categoryId });
-
-    await loginAs(page, 'cashier');
     await goToPaymentsViaHome(page);
 
     const list = page.getByTestId('tabs-waiting-for-payment');
