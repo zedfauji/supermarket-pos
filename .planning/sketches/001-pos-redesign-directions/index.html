@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Redesign — 5 Directions</title>
+<style>
+/* ============================= RESET / BASE ============================= */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:#000;color:#fff;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-top:44px; /* variant-nav height */
+}
+button{font:inherit;cursor:pointer;color:inherit}
+input{font:inherit}
+img,svg{display:block}
+::selection{background:rgba(255,255,255,.2)}
+
+/* ============================= TOP VARIANT NAV ============================= */
+#variant-nav{
+  position:fixed;top:0;left:0;right:0;height:44px;z-index:9998;
+  background:#000;border-bottom:1px solid #262626;
+  display:flex;align-items:stretch;overflow-x:auto;
+  font-size:13px;font-weight:600;letter-spacing:.01em;
+}
+#variant-nav .variant-tab{
+  background:none;border:none;border-right:1px solid #1c1c1c;
+  color:#8a8a8a;padding:0 18px;white-space:nowrap;
+  transition:background .15s ease,color .15s ease;
+}
+#variant-nav .variant-tab:hover{color:#e5e5e5;background:#111}
+#variant-nav .variant-tab.active{color:#fff;background:#1a1a1a;box-shadow:inset 0 -2px 0 #fff}
+
+/* ============================= VARIANT SECTION ============================= */
+.variant{min-height:calc(100vh - 44px)}
+
+.v-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;position:sticky;top:44px;z-index:50;
+  backdrop-filter:blur(10px);
+}
+.v-toolbar-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;font-weight:700}
+.screen-tabs{display:flex;gap:6px}
+.screen-tab{
+  border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;
+  background:transparent;opacity:.55;transition:.15s ease;
+}
+.screen-tab:hover{opacity:.85}
+.screen-tab.active{opacity:1}
+
+.screen{padding:8px 24px 64px;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ============================= SHARED COMPONENT SKELETON ============================= */
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.55;margin:0 0 4px}
+.h1{font-size:28px;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em}
+.sub{opacity:.6;font-size:14px;margin:0 0 24px}
+
+.alert-strip{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:600;
+}
+
+.home-grid{display:grid;gap:14px}
+.tile{
+  display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
+  padding:18px;cursor:pointer;user-select:none;transition:transform .12s ease,filter .12s ease;
+  min-height:110px;
+}
+.tile:hover{filter:brightness(1.08)}
+.tile:active{transform:scale(.97)}
+.tile-icon{font-size:26px;line-height:1}
+.tile-label{font-weight:700;font-size:15px}
+.tile-meta{font-size:12px;opacity:.55}
+
+.pos-layout{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+@media (max-width:900px){.pos-layout{grid-template-columns:1fr}}
+.search-row{display:flex;gap:10px;margin-bottom:16px}
+.search-input{flex:1;padding:12px 16px;border-radius:10px;font-size:15px;border:none;outline:none}
+.scan-btn{padding:12px 18px;border-radius:10px;font-weight:700;border:none;white-space:nowrap}
+
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.product-card{padding:12px;cursor:pointer;transition:transform .12s ease,filter .12s ease;display:flex;flex-direction:column;gap:8px}
+.product-card:hover{filter:brightness(1.1)}
+.product-card:active{transform:scale(.96)}
+.product-emoji{font-size:28px}
+.product-name{font-weight:700;font-size:13.5px;line-height:1.25}
+.product-price{font-weight:800;font-size:14px;margin-top:auto}
+.product-stock{font-size:11px;opacity:.5}
+
+.cart-panel{padding:16px;display:flex;flex-direction:column;gap:12px;position:sticky;top:110px}
+.cart-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px 0}
+.cart-item-name{flex:1;font-size:13.5px;font-weight:600}
+.cart-item-unit{font-size:11px;opacity:.5}
+.qty-group{display:flex;align-items:center;gap:6px}
+.qty-btn{width:26px;height:26px;border-radius:6px;border:none;font-weight:800;display:flex;align-items:center;justify-content:center}
+.qty-val{min-width:18px;text-align:center;font-weight:700;font-size:13px}
+.line-total{font-weight:700;font-size:13px;min-width:52px;text-align:right}
+.cart-totals{display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding-top:10px}
+.cart-totals .row{display:flex;justify-content:space-between}
+.cart-totals .row.total{font-size:18px;font-weight:800;padding-top:8px}
+.btn-primary-lg{border:none;padding:16px;border-radius:12px;font-weight:800;font-size:15px;width:100%;text-align:center;transition:filter .12s ease,transform .1s ease}
+.btn-primary-lg:hover{filter:brightness(1.08)}
+.btn-primary-lg:active{transform:scale(.98)}
+
+.payment-layout{display:grid;grid-template-columns:1fr 340px;gap:24px}
+@media (max-width:900px){.payment-layout{grid-template-columns:1fr}}
+.tender-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.tender-btn{padding:24px 12px;border-radius:14px;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:14px;transition:.15s ease}
+.tender-icon{font-size:24px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px}
+.key{padding:16px;border-radius:10px;border:none;font-weight:700;font-size:17px;text-align:center}
+.quick-cash{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.chip{padding:8px 14px;border-radius:999px;border:none;font-weight:700;font-size:13px}
+.order-summary{padding:18px;border-radius:14px}
+
+.receipt-wrap{display:flex;justify-content:center;padding:20px 0}
+.receipt{width:100%;max-width:380px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.receipt-line{display:flex;justify-content:space-between;font-size:13px}
+.receipt-actions{display:flex;gap:10px;margin-top:16px}
+.receipt-actions button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:13px}
+
+/* ============================= TOAST ============================= */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.25s ease;z-index:9999;border:1px solid #333}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============================= A. TACTILE BIG-TOUCH RETAIL ============================= */
+#v-a{
+  --bg:#241a12; --surface:#2f2216; --surface2:#3a2a1a; --surface3:#241a12;
+  --text:#fdf3e7; --muted:#c9ac8c; --primary:#ff7a1a; --primary-text:#1a0f05;
+  --accent:#ffb347; --danger:#ff5a5a; --border:#4a3520; --radius:22px; --radius-sm:16px;
+  --shadow:0 10px 24px rgba(0,0,0,.5);
+  background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;
+}
+#v-a .v-toolbar{background:rgba(36,26,18,.85);border-bottom:1px solid var(--border)}
+#v-a .screen-tab{color:var(--muted);border-radius:14px}
+#v-a .screen-tab.active{background:var(--primary);color:var(--primary-text)}
+#v-a .alert-strip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--accent)}
+#v-a .home-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+#v-a .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);min-height:150px}
+#v-a .tile.tile-primary{background:var(--primary);color:var(--primary-text)}
+#v-a .tile-meta{color:var(--muted)}
+#v-a .search-input{background:var(--surface);color:var(--text);border:2px solid var(--border);border-radius:var(--radius-sm)}
+#v-a .search-input::placeholder{color:var(--muted)}
+#v-a .scan-btn{background:var(--primary);color:var(--primary-text);border-radius:var(--radius-sm)}
+#v-a .product-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow)}
+#v-a .product-price{color:var(--accent)}
+#v-a .product-stock{color:var(--muted)}
+#v-a .cart-panel{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius)}
+#v-a .cart-item{border-bottom:1px solid var(--border)}
+#v-a .cart-item-unit{color:var(--muted)}
+#v-a .qty-btn{background:var(--surface2);color:var(--text)}
+#v-a .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
+#v-a .cart-totals .row.total{color:var(--text)}
+#v-a .btn-primary-lg{background:var(--primary);color:var(--primary-text)}
+#v-a .tender-btn{background:var(--surface);border:2px solid var(--border);color:var(--text)}
+#v-a .tender-btn.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+#v-a .keypad .key{background:var(--surface);color:var(--text);border:2px solid var(--border)}
+#v-a .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
+#v-a .order-summary{background:var(--surface);border:2px solid var(--border)}
+#v-a .receipt{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-a .receipt-line{color:var(--muted)}
+#v-a .receipt-actions button{background:var(--surface2);color:var(--text)}
+#v-a .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
+
+/* ============================= B. DATA-DENSE PRO TERMINAL ============================= */
+#v-b{
+  --bg:#0d1117; --surface:#141a21; --surface2:#1b232c; --text:#e6edf3; --muted:#7d8b99;
+  --primary:#3fb950; --primary-text:#04150a; --accent:#58a6ff; --danger:#f85149;
+  --border:#262d36; --radius:4px; --radius-sm:3px;
+  background:var(--bg);color:var(--text);font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+}
+#v-b .screen{padding-top:0}
+#v-b .v-toolbar{background:rgba(13,17,23,.9);border-bottom:1px solid var(--border)}
+#v-b .v-toolbar-title{font-family:'JetBrains Mono',monospace}
+#v-b .screen-tab{color:var(--muted);border-radius:3px;font-size:12px}
+#v-b .screen-tab.active{background:var(--surface2);color:var(--accent);box-shadow:inset 0 0 0 1px var(--border)}
+#v-b .alert-strip{background:#241a12;border:1px solid #4a2f12;border-radius:var(--radius);color:#f0a53c;font-family:'JetBrains Mono',monospace}
+#v-b .home-grid{grid-template-columns:1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+#v-b .tile{background:var(--surface);border-radius:0;min-height:auto;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 16px}
+#v-b .tile-label{font-size:13.5px}
+#v-b .tile-meta{color:var(--muted);font-size:11px}
+#v-b .tile-key{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-family:'JetBrains Mono',monospace}
+#v-b .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:13px}
+#v-b .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius);font-size:12px}
+#v-b .product-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12.5px}
+#v-b .product-table th{text-align:left;padding:8px 10px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+#v-b .product-table td{padding:8px 10px;border-top:1px solid var(--border)}
+#v-b .product-table tr{cursor:pointer;transition:background .1s}
+#v-b .product-table tr:hover td{background:var(--surface2)}
+#v-b .product-table .price{color:var(--primary);font-weight:700}
+#v-b .product-table .stock-low{color:var(--danger)}
+#v-b .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+#v-b .cart-item{border-bottom:1px solid var(--border);font-size:12.5px}
+#v-b .cart-item-unit{color:var(--muted)}
+#v-b .qty-btn{background:var(--surface2);color:var(--text);border-radius:3px}
+#v-b .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
+#v-b .cart-totals .row.total{color:var(--primary)}
+#v-b .btn-primary-lg{background:var(--primary);color:var(--primary-text);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
+#v-b .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius)}
+#v-b .tender-btn.active{background:var(--surface2);color:var(--accent);border-color:var(--accent)}
+#v-b .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
+#v-b .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:3px}
+#v-b .order-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px}
+#v-b .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
+#v-b .receipt-line{color:var(--muted);font-size:12px}
+#v-b .receipt-actions button{background:var(--surface2);color:var(--text);border-radius:var(--radius)}
+#v-b .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
+
+/* ============================= C. CARD-BASED MODERN SAAS ============================= */
+#v-c{
+  --bg:#15161c; --surface:#1d1f28; --surface2:#242732; --text:#f2f3f7; --muted:#9a9db0;
+  --primary:#7c6ff0; --primary-text:#0d0a1f; --accent:#39d1c4; --danger:#ff6b81;
+  --border:#2c2f3c; --radius:20px; --radius-sm:14px; --shadow:0 16px 32px -12px rgba(0,0,0,.5);
+  background:radial-gradient(circle at 20% 0%,#1c1e29,var(--bg) 60%);color:var(--text);
+}
+#v-c .v-toolbar{background:rgba(21,22,28,.8)}
+#v-c .screen-tab{color:var(--muted);border-radius:999px}
+#v-c .screen-tab.active{background:var(--surface2);color:var(--text);box-shadow:0 0 0 1px var(--border)}
+#v-c .alert-strip{background:linear-gradient(90deg,rgba(124,111,240,.15),rgba(57,209,196,.1));border:1px solid var(--border);border-radius:999px;color:var(--accent)}
+#v-c .home-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+#v-c .tile{background:linear-gradient(155deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);min-height:130px}
+#v-c .tile.tile-primary{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+#v-c .tile-meta{color:var(--muted)}
+#v-c .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:14px}
+#v-c .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:14px}
+#v-c .product-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 6px 16px -8px rgba(0,0,0,.4)}
+#v-c .product-price{color:var(--accent)}
+#v-c .product-stock{color:var(--muted)}
+#v-c .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-c .cart-item{border-bottom:1px solid var(--border)}
+#v-c .cart-item-unit{color:var(--muted)}
+#v-c .qty-btn{background:var(--surface2);color:var(--text)}
+#v-c .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
+#v-c .cart-totals .row.total{color:var(--text)}
+#v-c .btn-primary-lg{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+#v-c .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+#v-c .tender-btn.active{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text);border-color:transparent}
+#v-c .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+#v-c .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
+#v-c .order-summary{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+#v-c .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-c .receipt-line{color:var(--muted)}
+#v-c .receipt-actions button{background:var(--surface2);color:var(--text)}
+#v-c .receipt-actions button.primary{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+
+/* ============================= D. MINIMAL / EDITORIAL ============================= */
+#v-d{
+  --bg:#161513; --surface:#1c1b18; --surface2:#212019; --text:#ece7de; --muted:#8f887a;
+  --primary:#ece7de; --primary-text:#161513; --accent:#c9a24b; --danger:#c96b4b;
+  --border:#332f28; --radius:2px; --radius-sm:2px;
+  background:var(--bg);color:var(--text);font-family:'Iowan Old Style','Georgia',serif;
+}
+#v-d .v-toolbar{background:rgba(22,21,19,.9);border-bottom:1px solid var(--border)}
+#v-d .v-toolbar-title{font-family:'Inter',sans-serif}
+#v-d .screen-tab{color:var(--muted);border-radius:0;font-family:'Inter',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+#v-d .screen-tab.active{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+#v-d .h1{font-weight:400;font-family:'Iowan Old Style','Georgia',serif}
+#v-d .eyebrow,#v-d .sub{font-family:'Inter',sans-serif}
+#v-d .alert-strip{background:transparent;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;color:var(--accent);font-family:'Inter',sans-serif;font-size:12.5px}
+#v-d .home-grid{grid-template-columns:1fr;gap:0;border-top:1px solid var(--border)}
+#v-d .tile{background:transparent;border-radius:0;border-bottom:1px solid var(--border);min-height:auto;flex-direction:row;align-items:center;justify-content:space-between;padding:20px 4px}
+#v-d .tile-icon{display:none}
+#v-d .tile-label{font-family:'Iowan Old Style','Georgia',serif;font-size:19px;font-weight:400}
+#v-d .tile-meta{color:var(--muted);font-family:'Inter',sans-serif;font-size:12px}
+#v-d .search-input{background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif;padding-left:0}
+#v-d .scan-btn{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .product-grid{grid-template-columns:1fr;gap:0}
+#v-d .product-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 2px}
+#v-d .product-emoji{display:none}
+#v-d .product-name{font-family:'Iowan Old Style','Georgia',serif;font-size:16px}
+#v-d .product-price{font-family:'Inter',sans-serif;color:var(--accent)}
+#v-d .product-stock{color:var(--muted);font-family:'Inter',sans-serif}
+#v-d .cart-panel{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0;padding-left:20px}
+#v-d .cart-item{border-bottom:1px solid var(--border);font-family:'Inter',sans-serif}
+#v-d .cart-item-unit{color:var(--muted)}
+#v-d .qty-btn{background:transparent;border:1px solid var(--border);border-radius:0;color:var(--text)}
+#v-d .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'Inter',sans-serif}
+#v-d .cart-totals .row.total{color:var(--text);font-family:'Iowan Old Style','Georgia',serif;font-size:22px}
+#v-d .btn-primary-lg{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'Inter',sans-serif;letter-spacing:.04em}
+#v-d .tender-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .tender-btn.active{border-color:var(--accent);color:var(--accent)}
+#v-d .keypad .key{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:0;font-family:'Iowan Old Style','Georgia',serif}
+#v-d .chip{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .order-summary{background:transparent;border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .receipt{background:transparent;border:1px solid var(--border);border-radius:0}
+#v-d .receipt-line{color:var(--muted);font-family:'Inter',sans-serif}
+#v-d .receipt-actions button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .receipt-actions button.primary{background:var(--accent);color:var(--primary-text);border-color:var(--accent)}
+
+/* ============================= E. BOLD NEO-BRUTALIST ============================= */
+#v-e{
+  --bg:#0a0a0a; --surface:#fff200; --surface2:#111111; --text:#f5f5f5; --ink:#0a0a0a; --muted:#999;
+  --primary:#ff2d55; --primary-text:#fff; --accent:#00e5ff; --danger:#ff2d55;
+  --border:#000; --radius:0px; --shadow:6px 6px 0 #000;
+  background:var(--bg);color:var(--text);font-family:'Arial Black','Helvetica Neue',sans-serif;
+}
+#v-e .v-toolbar{background:#000;border-bottom:3px solid var(--surface)}
+#v-e .screen-tab{color:var(--muted);border-radius:0;font-family:'Arial Black',sans-serif;text-transform:uppercase;font-size:12px;border:2px solid transparent}
+#v-e .screen-tab.active{background:var(--surface);color:var(--ink);border:2px solid #000}
+#v-e .h1{text-transform:uppercase;font-weight:900;letter-spacing:-0.02em}
+#v-e .alert-strip{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow);font-weight:800;text-transform:uppercase;font-size:12.5px}
+#v-e .home-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+#v-e .tile{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow);min-height:130px}
+#v-e .tile.tile-primary{background:var(--primary);border-color:#000;color:#fff}
+#v-e .tile-label{text-transform:uppercase;font-weight:900}
+#v-e .tile-meta{color:var(--surface)}
+#v-e .search-input{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:700}
+#v-e .scan-btn{background:var(--accent);color:#000;border:3px solid #000;border-radius:0;font-weight:900;text-transform:uppercase}
+#v-e .product-card{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow)}
+#v-e .product-name{text-transform:uppercase;font-weight:800}
+#v-e .product-price{color:var(--surface);font-weight:900}
+#v-e .product-stock{color:var(--muted)}
+#v-e .cart-panel{background:#fff;color:#000;border:3px solid #000;border-radius:0;box-shadow:var(--shadow)}
+#v-e .cart-item{border-bottom:2px dashed #000}
+#v-e .cart-item-unit{color:#666}
+#v-e .qty-btn{background:#000;color:#fff;border-radius:0}
+#v-e .cart-totals{color:#000;border-top:3px solid #000}
+#v-e .cart-totals .row.total{color:var(--primary);font-weight:900}
+#v-e .btn-primary-lg{background:var(--primary);color:#fff;border-radius:0;border:3px solid #000;box-shadow:var(--shadow);text-transform:uppercase;font-weight:900}
+#v-e .tender-btn{background:var(--surface2);border:3px solid var(--surface);color:#fff;border-radius:0;text-transform:uppercase}
+#v-e .tender-btn.active{background:var(--accent);color:#000;border-color:#000}
+#v-e .keypad .key{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:900}
+#v-e .chip{background:var(--surface);color:#000;border:2px solid #000;border-radius:0;font-weight:800}
+#v-e .order-summary{background:var(--surface2);border:3px solid var(--surface);color:#fff}
+#v-e .receipt{background:#fff;color:#000;border:3px solid #000;box-shadow:var(--shadow);position:relative}
+#v-e .receipt::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:14px;background:
+  repeating-linear-gradient(115deg,#0a0a0a 0 8px,transparent 8px 16px);}
+#v-e .receipt-line{color:#333;font-weight:600}
+#v-e .receipt-actions button{background:#000;color:#fff;border-radius:0;text-transform:uppercase;font-weight:800}
+#v-e .receipt-actions button.primary{background:var(--primary)}
+
+/* ============================= SKETCH TOOLBAR ============================= */
+#sketch-tools{
+  position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;
+  background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:.5;
+  transition:opacity .2s;display:flex;gap:10px;align-items:center;
+}
+#sketch-tools:hover{opacity:1}
+#sketch-tools select,#sketch-tools button{background:#222;color:#fff;border:1px solid #444;border-radius:5px;padding:3px 6px;font-size:11px}
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" data-variant-target="a">A · Tactile Big-Touch</button>
+  <button class="variant-tab" data-variant-target="b">B · Data-Dense Pro Terminal</button>
+  <button class="variant-tab" data-variant-target="c">C · Card-Based Modern SaaS</button>
+  <button class="variant-tab" data-variant-target="d">D · Minimal / Editorial</button>
+  <button class="variant-tab" data-variant-target="e">E · Bold Neo-Brutalist</button>
+</div>
+
+<!-- ================================================================== -->
+<!-- VARIANT A — TACTILE BIG-TOUCH RETAIL                                 -->
+<!-- ================================================================== -->
+<section class="variant" id="v-a" data-variant="a">
+  <header class="v-toolbar">
+    <div class="v-toolbar-title">A · Tactile Big-Touch Retail</div>
+    <nav class="screen-tabs">
+      <button class="screen-tab active" data-screen="home">Home</button>
+      <button class="screen-tab" data-screen="pos">POS · Checkout</button>
+      <button class="screen-tab" data-screen="payment">Payment</button>
+      <button class="screen-tab" data-screen="receipt">Receipt</button>
+    </nav>
+  </header>
+
+  <div class="screen screen-home" data-screen-panel="home">
+    <p class="eyebrow">Buenos días, Maria</p>
+    <h1 class="h1">Tienda Kishan Imports</h1>
+    <p class="sub">Caja abierta · Turno desde 8:00 AM</p>
+    <div class="alert-strip">⚠ 4 productos por vencer en 14 días — revisar Inventario</div>
+    <div class="home-grid">
+      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">POS · Venta</div><div class="tile-meta">Iniciar cobro</div></div>
+      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">Inventario</div><div class="tile-meta">318 productos</div></div>
+      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">Proveedores</div><div class="tile-meta">2 envíos pendientes</div></div>
+      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">Personal</div><div class="tile-meta">5 activos hoy</div></div>
+      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">Reportes</div><div class="tile-meta">Ventas del día</div></div>
+      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">Pagos</div><div class="tile-meta">Historial</div></div>
+      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 en caja</div></div>
+      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">Configuración</div><div class="tile-meta">Recibos, hardware</div></div>
+    </div>
+  </div>
+
+  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
+    <div class="pos-layout">
+      <div>
+        <div class="search-row">
+          <input class="search-input" placeholder="Buscar o escanear producto…">
+          <button class="scan-btn">📷 Escanear</button>
+        </div>
+        <div class="product-grid">
+          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH Garam Masala</div><div class="product-price">$3.10</div><div class="product-stock">55 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">Britannia Marie</div><div class="product-price">$1.75</div><div class="product-stock">80 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">Haldiram Namkeen</div><div class="product-price">$2.90</div><div class="product-stock">27 en stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 en stock</div></div>
+        </div>
+      </div>
+      <aside class="cart-panel">
+        <div class="cart-title"><span>Carrito · 3 productos</span><span>✕</span></div>
+        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
+        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
+        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
+          <div class="row"><span>Impuesto (8%)</span><span class="tax-val">$2.12</span></div>
+          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg" data-goto="payment">Cobrar $28.62</button>
+      </aside>
+    </div>
+  </div>
+
+  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
+    <h1 class="h1">Cobrar $28.62</h1>
+    <div class="payment-layout">
+      <div>
+        <div class="tender-grid">
+          <button class="tender-btn active"><span class="tender-icon">💵</span>Efectivo</button>
+          <button class="tender-btn"><span class="tender-icon">💳</span>Tarjeta</button>
+          <button class="tender-btn"><span class="tender-icon">➗</span>Dividir</button>
+        </div>
+        <div class="quick-cash">
+          <button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exacto</button>
+        </div>
+        <div class="keypad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Impuesto</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Completar Venta</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
+    <div class="receipt-wrap">
+      <div class="receipt">
+        <div style="text-align:center"><div style="font-size:32px">✅</div><h1 class="h1" style="font-size:20px">Venta Completa</h1><p class="sub">Ticket #4821 · Hoy, 2:14 PM</p></div>
+        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
+        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
+        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Impuesto</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <p class="sub" style="margin:4px 0 0">Pagado en efectivo · Cambio $1.38</p>
+        <div class="receipt-actions">
+          <button>🖨 Imprimir</button>
+          <button>✉ Email</button>
+          <button class="primary" data-goto="home">Nueva Venta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- VARIANT B — DATA-DENSE PRO TERMINAL                                   -->
+<!-- ================================================================== -->
+<section class="variant" id="v-b" data-variant="b" style="display:none">
+  <header class="v-toolbar">
+    <div class="v-toolbar-title">B · Data-Dense Pro Terminal</div>
+    <nav class="screen-tabs">
+      <button class="screen-tab active" data-screen="home">home</button>
+      <button class="screen-tab" data-screen="pos">pos.checkout</button>
+      <button class="screen-tab" data-screen="payment">payment</button>
+      <button class="screen-tab" data-screen="receipt">receipt</button>
+    </nav>
+  </header>
+
+  <div class="screen screen-home" data-screen-panel="home">
+    <p class="eyebrow">session: maria.g · terminal-01</p>
+    <h1 class="h1" style="font-size:20px">kishan-imports // pos</h1>
+    <p class="sub">caja: open · $1,240.50 · uptime 6h12m</p>
+    <div class="alert-strip">⚠ 4 sku expiring ≤14d — see inventory.alerts</div>
+    <div class="home-grid">
+      <div class="tile" data-goto="pos"><div><div class="tile-label">▸ pos / checkout</div><div class="tile-meta">start a new sale</div></div><div class="tile-key">F1</div></div>
+      <div class="tile"><div><div class="tile-label">▸ inventory</div><div class="tile-meta">318 sku · 6 below reorder pt.</div></div><div class="tile-key">F2</div></div>
+      <div class="tile"><div><div class="tile-label">▸ suppliers</div><div class="tile-meta">2 shipments pending receive</div></div><div class="tile-key">F3</div></div>
+      <div class="tile"><div><div class="tile-label">▸ staff</div><div class="tile-meta">5 clocked in</div></div><div class="tile-key">F4</div></div>
+      <div class="tile"><div><div class="tile-label">▸ reports</div><div class="tile-meta">today: $2,481.30 / 61 sales</div></div><div class="tile-key">F5</div></div>
+      <div class="tile"><div><div class="tile-label">▸ payments</div><div class="tile-meta">history + refunds</div></div><div class="tile-key">F6</div></div>
+      <div class="tile"><div><div class="tile-label">▸ caja</div><div class="tile-meta">open since 08:00</div></div><div class="tile-key">F7</div></div>
+      <div class="tile"><div><div class="tile-label">▸ settings</div><div class="tile-meta">receipt, hardware, locale</div></div><div class="tile-key">F8</div></div>
+    </div>
+  </div>
+
+  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
+    <div class="pos-layout">
+      <div>
+        <div class="search-row">
+          <input class="search-input" placeholder="scan barcode / search sku or name…">
+          <button class="scan-btn">[F9] scan</button>
+        </div>
+        <table class="product-table">
+          <thead><tr><th>sku</th><th>name</th><th>price</th><th>stock</th></tr></thead>
+          <tbody>
+            <tr><td>8901030</td><td>Tata Salt 1kg</td><td class="price">$2.50</td><td>42</td></tr>
+            <tr><td>8901234</td><td>Basmati Rice 5kg</td><td class="price">$12.00</td><td class="stock-low">18</td></tr>
+            <tr><td>8901555</td><td>Toor Dal 1kg</td><td class="price">$4.25</td><td>30</td></tr>
+            <tr><td>8901777</td><td>MDH Garam Masala 100g</td><td class="price">$3.10</td><td>55</td></tr>
+            <tr><td>8901999</td><td>Amul Ghee 500ml</td><td class="price">$9.50</td><td class="stock-low">12</td></tr>
+            <tr><td>8902111</td><td>Britannia Marie Biscuits</td><td class="price">$1.75</td><td>80</td></tr>
+            <tr><td>8902222</td><td>Haldiram Namkeen 200g</td><td class="price">$2.90</td><td>27</td></tr>
+            <tr><td>8902333</td><td>Red Label Tea 250g</td><td class="price">$3.40</td><td>33</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="cart-panel">
+        <div class="cart-title"><span>cart[3]</span><span>clear</span></div>
+        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
+        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
+        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
+        <div class="cart-totals">
+          <div class="row"><span>subtotal</span><span class="subtotal-val">$26.50</span></div>
+          <div class="row"><span>tax(8%)</span><span class="tax-val">$2.12</span></div>
+          <div class="row total"><span>total</span><span class="total-val">$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg" data-goto="payment">[F12] charge $28.62</button>
+      </aside>
+    </div>
+  </div>
+
+  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
+    <h1 class="h1" style="font-size:18px">charge $28.62</h1>
+    <div class="payment-layout">
+      <div>
+        <div class="tender-grid">
+          <button class="tender-btn active">cash [F1]</button>
+          <button class="tender-btn">card [F2]</button>
+          <button class="tender-btn">split [F3]</button>
+        </div>
+        <div class="quick-cash"><button class="chip">$30.00</button><button class="chip">$40.00</button><button class="chip">$50.00</button><button class="chip">exact</button></div>
+        <div class="keypad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">.</button><button class="key">0</button><button class="key">del</button>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="cart-totals">
+          <div class="row"><span>subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>tax</span><span>$2.12</span></div>
+          <div class="row total"><span>total</span><span>$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">complete_sale()</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
+    <div class="receipt-wrap">
+      <div class="receipt">
+        <div><div class="eyebrow" style="color:var(--primary)">✓ sale complete</div><h1 class="h1" style="font-size:17px">ticket #4821</h1><p class="sub">2026-09-04 14:14:02 · terminal-01</p></div>
+        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
+        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
+        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
+        <div class="cart-totals">
+          <div class="row"><span>subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>tax</span><span>$2.12</span></div>
+          <div class="row total"><span>total</span><span>$28.62</span></div>
+        </div>
+        <p class="sub">tender: cash · change: $1.38</p>
+        <div class="receipt-actions">
+          <button>print</button>
+          <button>email</button>
+          <button class="primary" data-goto="home">new_sale()</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- VARIANT C — CARD-BASED MODERN SAAS                                    -->
+<!-- ================================================================== -->
+<section class="variant" id="v-c" data-variant="c" style="display:none">
+  <header class="v-toolbar">
+    <div class="v-toolbar-title">C · Card-Based Modern SaaS</div>
+    <nav class="screen-tabs">
+      <button class="screen-tab active" data-screen="home">Home</button>
+      <button class="screen-tab" data-screen="pos">Checkout</button>
+      <button class="screen-tab" data-screen="payment">Payment</button>
+      <button class="screen-tab" data-screen="receipt">Receipt</button>
+    </nav>
+  </header>
+
+  <div class="screen screen-home" data-screen-panel="home">
+    <p class="eyebrow">Good afternoon</p>
+    <h1 class="h1">Hi Maria 👋</h1>
+    <p class="sub">Kishan Imports · Caja open since 8:00 AM</p>
+    <div class="alert-strip">4 items expiring within 14 days · Review inventory</div>
+    <div class="home-grid">
+      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">New Sale</div><div class="tile-meta">Start checkout</div></div>
+      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">Inventory</div><div class="tile-meta">318 products tracked</div></div>
+      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
+      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in today</div></div>
+      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
+      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">Payments</div><div class="tile-meta">History & refunds</div></div>
+      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 balance</div></div>
+      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">Settings</div><div class="tile-meta">Receipts & hardware</div></div>
+    </div>
+  </div>
+
+  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
+    <div class="pos-layout">
+      <div>
+        <div class="search-row">
+          <input class="search-input" placeholder="Search products or scan a barcode">
+          <button class="scan-btn">Scan</button>
+        </div>
+        <div class="product-grid">
+          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH Garam Masala</div><div class="product-price">$3.10</div><div class="product-stock">55 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">Britannia Marie</div><div class="product-price">$1.75</div><div class="product-stock">80 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">Haldiram Namkeen</div><div class="product-price">$2.90</div><div class="product-stock">27 in stock</div></div>
+          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 in stock</div></div>
+        </div>
+      </div>
+      <aside class="cart-panel">
+        <div class="cart-title"><span>Order · 3 items</span><span>Clear</span></div>
+        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
+        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
+        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
+          <div class="row"><span>Tax (8%)</span><span class="tax-val">$2.12</span></div>
+          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg" data-goto="payment">Continue to Payment</button>
+      </aside>
+    </div>
+  </div>
+
+  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
+    <h1 class="h1">Take Payment</h1>
+    <p class="sub">Total due $28.62</p>
+    <div class="payment-layout">
+      <div>
+        <div class="tender-grid">
+          <button class="tender-btn active"><span class="tender-icon">💵</span>Cash</button>
+          <button class="tender-btn"><span class="tender-icon">💳</span>Card</button>
+          <button class="tender-btn"><span class="tender-icon">➗</span>Split</button>
+        </div>
+        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exact</button></div>
+        <div class="keypad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Tax</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
+    <div class="receipt-wrap">
+      <div class="receipt">
+        <div style="text-align:center"><div style="font-size:32px">🎉</div><h1 class="h1" style="font-size:20px">Payment Successful</h1><p class="sub">Order #4821 · Today, 2:14 PM</p></div>
+        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
+        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
+        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Tax</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <p class="sub">Paid by cash · Change $1.38</p>
+        <div class="receipt-actions">
+          <button>Print</button>
+          <button>Email</button>
+          <button class="primary" data-goto="home">New Sale</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- VARIANT D — MINIMAL / EDITORIAL                                       -->
+<!-- ================================================================== -->
+<section class="variant" id="v-d" data-variant="d" style="display:none">
+  <header class="v-toolbar">
+    <div class="v-toolbar-title">D · Minimal / Editorial</div>
+    <nav class="screen-tabs">
+      <button class="screen-tab active" data-screen="home">Home</button>
+      <button class="screen-tab" data-screen="pos">Checkout</button>
+      <button class="screen-tab" data-screen="payment">Payment</button>
+      <button class="screen-tab" data-screen="receipt">Receipt</button>
+    </nav>
+  </header>
+
+  <div class="screen screen-home" data-screen-panel="home">
+    <p class="eyebrow">Kishan Imports</p>
+    <h1 class="h1">Good afternoon, Maria.</h1>
+    <p class="sub">Caja open since 8:00 AM — five staff on shift.</p>
+    <div class="alert-strip">Four items expire within fourteen days.</div>
+    <div class="home-grid">
+      <div class="tile" data-goto="pos"><div class="tile-label">New sale</div><div class="tile-meta">Begin checkout</div></div>
+      <div class="tile"><div class="tile-label">Inventory</div><div class="tile-meta">318 products</div></div>
+      <div class="tile"><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
+      <div class="tile"><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in</div></div>
+      <div class="tile"><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
+      <div class="tile"><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div>
+      <div class="tile"><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 in drawer</div></div>
+      <div class="tile"><div class="tile-label">Settings</div><div class="tile-meta">Receipts, hardware</div></div>
+    </div>
+  </div>
+
+  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
+    <div class="pos-layout">
+      <div>
+        <div class="search-row">
+          <input class="search-input" placeholder="Search or scan a product">
+          <button class="scan-btn">Scan</button>
+        </div>
+        <div class="product-grid">
+          <div class="product-card"><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 in stock</div></div>
+          <div class="product-card"><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 in stock</div></div>
+          <div class="product-card"><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 in stock</div></div>
+          <div class="product-card"><div class="product-name">MDH Garam Masala 100g</div><div class="product-price">$3.10</div><div class="product-stock">55 in stock</div></div>
+          <div class="product-card"><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 in stock</div></div>
+          <div class="product-card"><div class="product-name">Britannia Marie Biscuits</div><div class="product-price">$1.75</div><div class="product-stock">80 in stock</div></div>
+          <div class="product-card"><div class="product-name">Haldiram Namkeen 200g</div><div class="product-price">$2.90</div><div class="product-stock">27 in stock</div></div>
+          <div class="product-card"><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 in stock</div></div>
+        </div>
+      </div>
+      <aside class="cart-panel">
+        <div class="cart-title"><span>Order — 3 items</span><span>Clear</span></div>
+        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
+        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
+        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
+          <div class="row"><span>Tax</span><span class="tax-val">$2.12</span></div>
+          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg" data-goto="payment">Continue</button>
+      </aside>
+    </div>
+  </div>
+
+  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
+    <h1 class="h1">$28.62 due</h1>
+    <div class="payment-layout">
+      <div>
+        <div class="tender-grid">
+          <button class="tender-btn active">Cash</button>
+          <button class="tender-btn">Card</button>
+          <button class="tender-btn">Split</button>
+        </div>
+        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exact</button></div>
+        <div class="keypad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Tax</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Confirm payment</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
+    <div class="receipt-wrap">
+      <div class="receipt">
+        <div style="text-align:center"><h1 class="h1" style="font-size:22px">Thank you.</h1><p class="sub">Ticket No. 4821 — Today, 2:14 PM</p></div>
+        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
+        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
+        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
+          <div class="row"><span>Tax</span><span>$2.12</span></div>
+          <div class="row total"><span>Total</span><span>$28.62</span></div>
+        </div>
+        <p class="sub">Paid in cash — change $1.38</p>
+        <div class="receipt-actions">
+          <button>Print</button>
+          <button>Email</button>
+          <button class="primary" data-goto="home">New sale</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- VARIANT E — BOLD NEO-BRUTALIST                                        -->
+<!-- ================================================================== -->
+<section class="variant" id="v-e" data-variant="e" style="display:none">
+  <header class="v-toolbar">
+    <div class="v-toolbar-title">E · Bold Neo-Brutalist</div>
+    <nav class="screen-tabs">
+      <button class="screen-tab active" data-screen="home">HOME</button>
+      <button class="screen-tab" data-screen="pos">CHECKOUT</button>
+      <button class="screen-tab" data-screen="payment">PAYMENT</button>
+      <button class="screen-tab" data-screen="receipt">RECEIPT</button>
+    </nav>
+  </header>
+
+  <div class="screen screen-home" data-screen-panel="home">
+    <p class="eyebrow" style="color:var(--surface)">KISHAN IMPORTS</p>
+    <h1 class="h1">HEY MARIA</h1>
+    <p class="sub" style="color:#ccc">CAJA OPEN · 8:00 AM · 5 STAFF ON SHIFT</p>
+    <div class="alert-strip">⚠ 4 ITEMS EXPIRE IN 14 DAYS — CHECK INVENTORY</div>
+    <div class="home-grid">
+      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">NEW SALE</div><div class="tile-meta">START CHECKOUT</div></div>
+      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">INVENTORY</div><div class="tile-meta">318 PRODUCTS</div></div>
+      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">SUPPLIERS</div><div class="tile-meta">2 PENDING</div></div>
+      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">STAFF</div><div class="tile-meta">5 CLOCKED IN</div></div>
+      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">REPORTS</div><div class="tile-meta">$2,481.30 TODAY</div></div>
+      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">PAYMENTS</div><div class="tile-meta">HISTORY</div></div>
+      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">CAJA</div><div class="tile-meta">$1,240.50</div></div>
+      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">SETTINGS</div><div class="tile-meta">HARDWARE</div></div>
+    </div>
+  </div>
+
+  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
+    <div class="pos-layout">
+      <div>
+        <div class="search-row">
+          <input class="search-input" placeholder="SEARCH OR SCAN…">
+          <button class="scan-btn">SCAN</button>
+        </div>
+        <div class="product-grid">
+          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">TATA SALT 1KG</div><div class="product-price">$2.50</div><div class="product-stock">42 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">BASMATI RICE 5KG</div><div class="product-price">$12.00</div><div class="product-stock">18 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">TOOR DAL 1KG</div><div class="product-price">$4.25</div><div class="product-stock">30 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH GARAM MASALA</div><div class="product-price">$3.10</div><div class="product-stock">55 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">AMUL GHEE 500ML</div><div class="product-price">$9.50</div><div class="product-stock">12 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">BRITANNIA MARIE</div><div class="product-price">$1.75</div><div class="product-stock">80 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">HALDIRAM NAMKEEN</div><div class="product-price">$2.90</div><div class="product-stock">27 LEFT</div></div>
+          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">RED LABEL TEA</div><div class="product-price">$3.40</div><div class="product-stock">33 LEFT</div></div>
+        </div>
+      </div>
+      <aside class="cart-panel">
+        <div class="cart-title"><span>CART · 3</span><span>CLEAR</span></div>
+        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">TATA SALT 1KG</div><div class="cart-item-unit">$2.50 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
+        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">BASMATI RICE 5KG</div><div class="cart-item-unit">$12.00 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
+        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">AMUL GHEE 500ML</div><div class="cart-item-unit">$9.50 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
+        <div class="cart-totals">
+          <div class="row"><span>SUBTOTAL</span><span class="subtotal-val">$26.50</span></div>
+          <div class="row"><span>TAX (8%)</span><span class="tax-val">$2.12</span></div>
+          <div class="row total"><span>TOTAL</span><span class="total-val">$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg" data-goto="payment">CHARGE $28.62</button>
+      </aside>
+    </div>
+  </div>
+
+  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
+    <h1 class="h1">CHARGE $28.62</h1>
+    <div class="payment-layout">
+      <div>
+        <div class="tender-grid">
+          <button class="tender-btn active">CASH</button>
+          <button class="tender-btn">CARD</button>
+          <button class="tender-btn">SPLIT</button>
+        </div>
+        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">EXACT</button></div>
+        <div class="keypad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="cart-totals">
+          <div class="row"><span>SUBTOTAL</span><span>$26.50</span></div>
+          <div class="row"><span>TAX</span><span>$2.12</span></div>
+          <div class="row total"><span>TOTAL</span><span>$28.62</span></div>
+        </div>
+        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">COMPLETE SALE</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
+    <div class="receipt-wrap">
+      <div class="receipt">
+        <div style="text-align:center;padding-top:10px"><h1 class="h1" style="font-size:20px">SALE COMPLETE</h1><p class="sub" style="color:#555">TICKET #4821 — TODAY 2:14 PM</p></div>
+        <div class="receipt-line"><span>TATA SALT 1KG ×2</span><span>$5.00</span></div>
+        <div class="receipt-line"><span>BASMATI RICE 5KG ×1</span><span>$12.00</span></div>
+        <div class="receipt-line"><span>AMUL GHEE 500ML ×1</span><span>$9.50</span></div>
+        <div class="cart-totals">
+          <div class="row"><span>SUBTOTAL</span><span>$26.50</span></div>
+          <div class="row"><span>TAX</span><span>$2.12</span></div>
+          <div class="row total"><span>TOTAL</span><span>$28.62</span></div>
+        </div>
+        <p class="sub" style="color:#555">PAID CASH — CHANGE $1.38</p>
+        <div class="receipt-actions">
+          <button>PRINT</button>
+          <button>EMAIL</button>
+          <button class="primary" data-goto="home">NEW SALE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="sketch-tools">
+  <span>Sketch 001</span>
+  <button onclick="alert('5 full-system directions — switch via the top bar. Pick a winner, we mark it and move to refinement rounds.')">?</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+// Top-level variant switcher
+document.querySelectorAll('#variant-nav .variant-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    const target = tab.dataset.variantTarget;
+    document.querySelectorAll('#variant-nav .variant-tab').forEach(t=>t.classList.toggle('active', t===tab));
+    document.querySelectorAll('.variant').forEach(v=>{
+      v.style.display = (v.dataset.variant===target) ? '' : 'none';
+    });
+    window.scrollTo({top:0,behavior:'instant'});
+  });
+});
+
+function switchScreen(variant, screenName, tabEl){
+  variant.querySelectorAll('.screen-tab').forEach(t=>t.classList.toggle('active', t===tabEl || t.dataset.screen===screenName));
+  variant.querySelectorAll('.screen').forEach(s=>{ s.style.display = (s.dataset.screenPanel===screenName) ? '' : 'none'; });
+}
+
+function recalcCart(variant){
+  let subtotal=0;
+  variant.querySelectorAll('.cart-item').forEach(row=>{
+    const price=parseFloat(row.dataset.price);
+    const qty=parseInt(row.querySelector('.qty-val').textContent,10);
+    subtotal+=price*qty;
+    row.querySelector('.line-total').textContent='$'+(price*qty).toFixed(2);
+  });
+  const tax=subtotal*0.08, total=subtotal+tax;
+  variant.querySelectorAll('.subtotal-val').forEach(el=>el.textContent='$'+subtotal.toFixed(2));
+  variant.querySelectorAll('.tax-val').forEach(el=>el.textContent='$'+tax.toFixed(2));
+  variant.querySelectorAll('.total-val').forEach(el=>el.textContent='$'+total.toFixed(2));
+}
+
+document.querySelectorAll('.variant').forEach(variant=>{
+  // screen tabs
+  variant.querySelectorAll('.screen-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>switchScreen(variant, tab.dataset.screen, tab));
+  });
+  // home tile / receipt "new sale" navigation
+  variant.querySelectorAll('[data-goto]').forEach(el=>{
+    el.addEventListener('click', ()=>switchScreen(variant, el.dataset.goto, null));
+  });
+  // qty steppers
+  variant.querySelectorAll('.qty-inc,.qty-dec').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const row=btn.closest('.cart-item');
+      const qtyEl=row.querySelector('.qty-val');
+      let qty=parseInt(qtyEl.textContent,10);
+      qty = btn.classList.contains('qty-inc') ? qty+1 : Math.max(1,qty-1);
+      qtyEl.textContent=qty;
+      recalcCart(variant);
+    });
+  });
+  // product card add-to-cart feedback
+  variant.querySelectorAll('.product-card, .product-table tbody tr').forEach(el=>{
+    el.addEventListener('click', ()=>showToast('Added to cart'));
+  });
+  // tender select
+  variant.querySelectorAll('.tender-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      variant.querySelectorAll('.tender-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  // keypad feedback
+  variant.querySelectorAll('.key, .chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ btn.style.transform='scale(.92)'; setTimeout(()=>btn.style.transform='',100); });
+  });
+  // complete sale -> receipt
+  variant.querySelectorAll('.btn-complete-sale').forEach(btn=>{
+    const original=btn.textContent;
+    btn.addEventListener('click', ()=>{
+      btn.textContent='Processing…'; btn.disabled=true;
+      setTimeout(()=>{
+        switchScreen(variant,'receipt',null);
+        btn.textContent=original; btn.disabled=false;
+        showToast('Sale complete');
+      }, 550);
+    });
+  });
+});
+</script>
+</body>
+</html>
