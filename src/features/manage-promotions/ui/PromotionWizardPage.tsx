@@ -98,8 +98,23 @@ export function PromotionWizardPage() {
   }
 
   async function handleSave() {
+    // D-10 lets edit mode jump straight to Review without visiting every
+    // step; re-validate Basics/Scope/Validity here regardless of entry
+    // point, or an invalid Scope step's targets:[] silently saves as if the
+    // admin had genuinely chosen store-wide (indistinguishable at the data
+    // layer — this was a real data-integrity bug, not just a UX gap).
     if (!wizard.validateBasics()) {
       wizard.setCurrentStep('basics');
+      return;
+    }
+    if (!wizard.isScopeStepValid()) {
+      setScopeAttempted(true);
+      wizard.setCurrentStep('scope');
+      return;
+    }
+    if (!wizard.isValidityStepValid()) {
+      setValidityAttempted(true);
+      wizard.setCurrentStep('validity');
       return;
     }
     const result = await wizard.save();

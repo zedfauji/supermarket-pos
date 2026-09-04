@@ -195,4 +195,73 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
     await page.getByRole('tab', { name: /^review$/i }).click();
     await expect(page.getByText(name)).toBeVisible();
   });
+
+  test('edit mode blocks Save when the admin leaves Scope in an invalid state, does not silently wipe an existing scope to store-wide', async ({
+    page,
+  }) => {
+    // Regression test for a 28-code-review Critical finding: 0 rows in
+    // promotion_targets means store-wide (see 20260904000001's own comment),
+    // so an unvalidated Scope step saving targets:[] is indistinguishable
+    // from a genuine store-wide promotion — silent, undetectable data loss
+    // for whoever originally scoped this promotion to one product.
+    const admin = getServiceClient();
+    const product = await seedProduct(admin, 50);
+    const name = `E2E wizard-edit-scope-guard promo ${randomUUID()}`;
+    uiCreatedPromotionNames.push(name);
+    const adminStaffId = await findRoleStaffId(admin, 'admin');
+
+    const { data, error } = await admin
+      .from('promotions')
+      .insert({
+        name,
+        discount_type: 'percent',
+        discount_value: 10,
+        starts_at: new Date(Date.now() - 60_000).toISOString(),
+        ends_at: new Date(Date.now() + 60 * 60_000).toISOString(),
+        active: true,
+        created_by: adminStaffId,
+      })
+      .select('id')
+      .single();
+    if (error) throw new Error(error.message);
+    const promotionId = data.id as string;
+    seededPromotionIds.push(promotionId);
+    const { error: targetErr } = await admin
+      .from('promotion_targets')
+      .insert({ promotion_id: promotionId, product_id: product.productId });
+    if (targetErr) throw new Error(targetErr.message);
+
+    await page.goto(`/promotions/${promotionId}/edit`);
+    await page.getByRole('tab', { name: /^scope$/i }).click();
+    // Prefilled from promotion.targets (28-03): store-wide starts unchecked,
+    // with the seeded product already selected as a chip.
+    await expect(page.getByRole('checkbox', { name: /store-wide/i })).not.toBeChecked();
+
+    // Remove the only selected target without picking a replacement — Scope
+    // is now invalid (D-08: "select at least one product or category").
+    await page.getByRole('button', { name: new RegExp(`remove ${product.name}`, 'i') }).click();
+
+    // D-10: no forward-gating in edit mode, so this tab click succeeds even
+    // though Scope is invalid.
+    await page.getByRole('tab', { name: /^review$/i }).click();
+    await page.getByRole('button', { name: /save changes/i }).click();
+
+    // Save must be blocked: the admin is bounced back to Scope with the
+    // same validation error Next would have shown, never silently persisted.
+    await expect(page.getByRole('tab', { name: /^scope$/i })).toHaveAttribute(
+      'data-state',
+      'active'
+    );
+    await expect(page.getByText(/select at least one product or category/i)).toBeVisible();
+
+    // The promotion's original scope (one product, not store-wide) survived
+    // untouched server-side — this is the actual data-integrity assertion.
+    const { data: targets, error: targetsErr } = await admin
+      .from('promotion_targets')
+      .select('product_id')
+      .eq('promotion_id', promotionId);
+    if (targetsErr) throw new Error(targetsErr.message);
+    expect(targets).toHaveLength(1);
+    expect(targets?.[0]?.product_id).toBe(product.productId);
+  });
 });
