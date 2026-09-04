@@ -225,7 +225,7 @@ SPEC.md (Phase 22/23).
 **Depends on:** Phase 25 (also depends on two pre-existing filed todos landing first per D-18:
 `fix-ci-tauri-build-broker-order.md`, `migrate-env-production-to-github-environment.md` — sequenced
 as Plan 26-01)
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -258,7 +258,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 — cutover completion)*
 
-- [ ] 26-06-PLAN.md — Retirement: strip tauri.conf.json to a generic placeholder, remove the old
+- [x] 26-06-PLAN.md — Retirement: strip tauri.conf.json to a generic placeholder, remove the old
   publish-tauri job, re-verify the D-08 gate against the final placeholder config (D-16, D-17)
 
 **UI hint**: no
