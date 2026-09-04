@@ -1939,6 +1939,7 @@ export type Database = {
       edit_paid_tab: {
         Args: {
           p_expected_version: number
+          p_manager_pin?: string
           p_notes: string
           p_order_item_patches: Json
           p_reason: string
@@ -2030,6 +2031,7 @@ export type Database = {
           p_items: Json
           p_legs?: Json
           p_manager_override?: boolean
+          p_manager_pin?: string
           p_method?: string
           p_reference_number?: string
           p_shift_id: string
@@ -2048,6 +2050,8 @@ export type Database = {
           p_discount_value?: number
           p_expected_version?: number
           p_idempotency_key: string
+          p_manager_override?: boolean
+          p_manager_pin?: string
           p_method: string
           p_rappi_order_id?: string
           p_reference_number?: string
@@ -2076,6 +2080,8 @@ export type Database = {
           p_expected_version?: number
           p_idempotency_key: string
           p_legs: Json
+          p_manager_override?: boolean
+          p_manager_pin?: string
           p_staff_id: string
           p_tab_id: string
         }
@@ -2108,7 +2114,12 @@ export type Database = {
         Returns: Json
       }
       reopen_tab: {
-        Args: { p_expected_version: number; p_reason: string; p_tab_id: string }
+        Args: {
+          p_expected_version: number
+          p_manager_pin?: string
+          p_reason: string
+          p_tab_id: string
+        }
         Returns: Json
       }
       set_own_locale: {
