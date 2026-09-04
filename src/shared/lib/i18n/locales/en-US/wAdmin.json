@@ -532,8 +532,11 @@
     "columnDiscount": "Discount",
     "columnDateRange": "Active dates",
     "columnStatus": "Status",
+    "columnReview": "Review",
     "scopeProduct": "Product",
     "scopeCategory": "Category",
+    "scopeStoreWide": "Store-wide",
+    "scopeTargetCounts": "{{productCount}} product(s), {{categoryCount}} category/ies",
     "toggleActiveAriaLabel": "Toggle promotion active",
     "edit": "Edit",
     "delete": "Delete",
@@ -565,5 +568,18 @@
     "activeRangeLabel": "Active dates",
     "saveButton": "Save Promotion",
     "savedToast": "Promotion saved"
+  },
+  "promotionWizard": {
+    "step": {
+      "basics": "Basics & Discount",
+      "scope": "Scope",
+      "validity": "Validity & Recurrence",
+      "review": "Review"
+    },
+    "comingSoon": "Scope/Validity/Review — coming in the next plan.",
+    "back": "Back",
+    "next": "Next",
+    "createPromotion": "Create Promotion",
+    "saveChanges": "Save Changes"
   }
 }

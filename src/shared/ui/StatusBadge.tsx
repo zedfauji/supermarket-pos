@@ -29,7 +29,8 @@ export type StatusBadgeProps = {
     | 'promo_active'
     | 'promo_scheduled'
     | 'promo_expired'
-    | 'promo_inactive';
+    | 'promo_inactive'
+    | 'promo_needs_review';
   /** Additional CSS classes */
   className?: string;
 };
@@ -135,6 +136,12 @@ const statusConfig: Record<string, StatusConfig> = {
   promo_inactive: {
     labelKey: 'statusBadge.promoInactive',
     variant: 'outline',
+  },
+  // Phase 28 (D-12): migrated-from-old-schema indicator on the promotions list.
+  promo_needs_review: {
+    labelKey: 'statusBadge.promoNeedsReview',
+    variant: 'outline',
+    className: 'bg-pos-warning text-black hover:opacity-90',
   },
 };
 

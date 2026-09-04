@@ -125,7 +125,8 @@
     "promoActive": "Active",
     "promoScheduled": "Scheduled",
     "promoExpired": "Expired",
-    "promoInactive": "Inactive"
+    "promoInactive": "Inactive",
+    "promoNeedsReview": "Needs review"
   },
   "updateAvailableDialog": {
     "titleAvailable": "Update Available",

@@ -1100,72 +1100,107 @@ export type Database = {
         }
         Relationships: []
       }
-      promotions: {
+      promotion_targets: {
         Row: {
-          active: boolean
           category_id: string | null
           created_at: string
-          created_by: string | null
-          discount_type: string
-          discount_value: number
-          ends_at: string
           id: string
-          name: string
           product_id: string | null
-          scope_type: string
-          starts_at: string
-          updated_at: string
+          promotion_id: string
         }
         Insert: {
-          active?: boolean
           category_id?: string | null
           created_at?: string
-          created_by?: string | null
-          discount_type: string
-          discount_value: number
-          ends_at: string
           id?: string
-          name: string
           product_id?: string | null
-          scope_type: string
-          starts_at: string
-          updated_at?: string
+          promotion_id: string
         }
         Update: {
-          active?: boolean
           category_id?: string | null
           created_at?: string
-          created_by?: string | null
-          discount_type?: string
-          discount_value?: number
-          ends_at?: string
           id?: string
-          name?: string
           product_id?: string | null
-          scope_type?: string
-          starts_at?: string
-          updated_at?: string
+          promotion_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "promotions_category_id_fkey"
+            foreignKeyName: "promotion_targets_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "promotion_targets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_targets_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          days_of_week: number[] | null
+          discount_type: string
+          discount_value: number
+          end_time: string | null
+          ends_at: string
+          id: string
+          name: string
+          needs_review: boolean
+          start_time: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          days_of_week?: number[] | null
+          discount_type: string
+          discount_value: number
+          end_time?: string | null
+          ends_at: string
+          id?: string
+          name: string
+          needs_review?: boolean
+          start_time?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          days_of_week?: number[] | null
+          discount_type?: string
+          discount_value?: number
+          end_time?: string | null
+          ends_at?: string
+          id?: string
+          name?: string
+          needs_review?: boolean
+          start_time?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
             foreignKeyName: "promotions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "promotions_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -1939,6 +1974,7 @@ export type Database = {
       edit_paid_tab: {
         Args: {
           p_expected_version: number
+          p_manager_pin?: string
           p_notes: string
           p_order_item_patches: Json
           p_reason: string
@@ -2030,6 +2066,7 @@ export type Database = {
           p_items: Json
           p_legs?: Json
           p_manager_override?: boolean
+          p_manager_pin?: string
           p_method?: string
           p_reference_number?: string
           p_shift_id: string
@@ -2048,6 +2085,8 @@ export type Database = {
           p_discount_value?: number
           p_expected_version?: number
           p_idempotency_key: string
+          p_manager_override?: boolean
+          p_manager_pin?: string
           p_method: string
           p_rappi_order_id?: string
           p_reference_number?: string
@@ -2076,6 +2115,8 @@ export type Database = {
           p_expected_version?: number
           p_idempotency_key: string
           p_legs: Json
+          p_manager_override?: boolean
+          p_manager_pin?: string
           p_staff_id: string
           p_tab_id: string
         }
@@ -2108,7 +2149,12 @@ export type Database = {
         Returns: Json
       }
       reopen_tab: {
-        Args: { p_expected_version: number; p_reason: string; p_tab_id: string }
+        Args: {
+          p_expected_version: number
+          p_manager_pin?: string
+          p_reason: string
+          p_tab_id: string
+        }
         Returns: Json
       }
       set_own_locale: {
