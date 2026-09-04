@@ -368,7 +368,7 @@ plus the folded todo `audit-manager-pin-identity-in-remaining-rpcs.md` — no fo
 REQ-IDs for this phase; traced entirely via CONTEXT.md's locked decision IDs, matching the
 D-number-traceable precedent used when a phase has no SPEC.md (Phase 22/23/26).
 **Depends on:** Phase 27
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 **Wave 1** (parallel — no file overlap)
@@ -384,7 +384,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 — shares the wizard page/state hook)*
 
-- [ ] 28-03-PLAN.md — Scope step: new `MultiSelectPicker` shared/ui primitive
+- [x] 28-03-PLAN.md — Scope step: new `MultiSelectPicker` shared/ui primitive
   (cmdk-based, product+category multi-select) + `StepScope.tsx` wiring (D-01 UI surface, D-08
   partial)
 
