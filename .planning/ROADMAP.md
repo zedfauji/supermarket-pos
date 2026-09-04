@@ -368,16 +368,16 @@ plus the folded todo `audit-manager-pin-identity-in-remaining-rpcs.md` — no fo
 REQ-IDs for this phase; traced entirely via CONTEXT.md's locked decision IDs, matching the
 D-number-traceable precedent used when a phase has no SPEC.md (Phase 22/23/26).
 **Depends on:** Phase 27
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
 **Wave 1** (parallel — no file overlap)
 
-- [ ] 28-01-PLAN.md — Tracer: `promotion_targets` junction table + recurrence columns +
+- [x] 28-01-PLAN.md — Tracer: `promotion_targets` junction table + recurrence columns +
   `needs_review` backfill migration, `process_direct_sale_atomic` scope+recurrence extension,
   `evaluateBestPromotion` multi-target/recurrence mirror (TDD), minimal single-step wizard entry
   replacing `PromotionFormDialog` end-to-end (D-01, D-02, D-03, D-04, D-05, D-06, D-11, D-12)
-- [ ] 28-02-PLAN.md — Manager-PIN identity audit (folded todo): re-key
+- [x] 28-02-PLAN.md — Manager-PIN identity audit (folded todo): re-key
   `process_refund`/`reopen_tab`/`edit_paid_tab` to `profiles.pin = p_manager_pin` (mirrors the
   proven G-27-13 fix), harden `close_tab`'s zero-check gap, thread `staff.pin` through all three
   dialogs, E2E proof
