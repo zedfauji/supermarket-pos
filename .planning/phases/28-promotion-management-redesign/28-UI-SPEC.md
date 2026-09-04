@@ -32,14 +32,14 @@ created: "2026-09-04"
 > What the project's design system actually provides. **Enumerate this from the installed
 > package — never from recall.** Delete whichever provenance line below does not apply.
 
-Could not enumerate via `npx shadcn info` (its component-count check reads `components.json`'s configured alias path `src/app/components/ui`, which this FSD repo does not use — see Design System note above). Manually enumerated via `ls src/shared/ui/*.tsx` cross-referenced against `package.json`'s `@radix-ui/*`/`cmdk` dependency versions — 25 shadcn-derived primitives + 20 hand-built composite components — 2026-09-04.
+Could not enumerate via `npx shadcn info` (its component-count check reads `components.json`'s configured alias path `src/app/components/ui`, which this FSD repo does not use — see Design System note above). Manually enumerated via `ls src/shared/ui/*.tsx` cross-referenced against resolved installed versions read from each package's own `node_modules/<pkg>/package.json` (`node -p "require('./node_modules/<pkg>/package.json').version"`, not the caret ranges in this repo's `package.json`) — 25 shadcn-derived primitives + 20 hand-built composite components — `cmdk@1.1.1`, `@radix-ui/react-tabs@1.1.13`, `@radix-ui/react-dialog@1.1.15`, `@radix-ui/react-alert-dialog@1.1.15`, `@radix-ui/react-scroll-area@1.2.10`, `@radix-ui/react-tooltip@1.2.8`, `@radix-ui/react-label@2.1.8`, `@radix-ui/react-progress@1.1.8`, `@radix-ui/react-slot@1.2.4` — 2026-09-04.
 
 This table is a **non-exhaustive** list of known-good components relevant to this phase, never a closed allowlist — the executor may use anything `@shared/ui` exports, and adding a new hand-authored primitive (mirroring existing conventions) is expected, not an exception.
 
 | Component | Import path | Notes |
 |-----------|-------------|-------|
-| `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent` | `@shared/ui/tabs` (wraps `@radix-ui/react-tabs@^1.1.13`) | Base for the wizard's step container — controlled `value`/`onValueChange`, per RESEARCH.md Pattern 1. Do not build a custom stepper. |
-| `Command` / `CommandInput` / `CommandList` / `CommandItem` / `CommandGroup` / `CommandEmpty` | `@shared/ui/command` (wraps `cmdk@^1.1.1`) | The only existing search-combobox primitive; base for the new multi-select target picker (`MultiSelectPicker`, new — see UI Structure below). `CommandEmpty` supplies the search-no-match empty state. |
+| `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent` | `@shared/ui/tabs` (wraps `@radix-ui/react-tabs@1.1.13`) | Base for the wizard's step container — controlled `value`/`onValueChange`, per RESEARCH.md Pattern 1. Do not build a custom stepper. |
+| `Command` / `CommandInput` / `CommandList` / `CommandItem` / `CommandGroup` / `CommandEmpty` | `@shared/ui/command` (wraps `cmdk@1.1.1`) | The only existing search-combobox primitive; base for the new multi-select target picker (`MultiSelectPicker`, new — see UI Structure below). `CommandEmpty` supplies the search-no-match empty state. |
 | `Popover` / `PopoverTrigger` / `PopoverContent` | `@shared/ui/popover` | Houses the `Command` list as a dropdown surface for the multi-select trigger, matching `CategoryTreePicker`'s existing popover-based pattern. |
 | `Checkbox` | `@shared/ui/checkbox` | Day-of-week multi-select (D-04, 7 boxes Sun–Sat) and the "store-wide / no restriction" toggle. |
 | `Badge` | `@shared/ui/badge` | Selected-target chips in the Scope step (with an inline remove `×`), and the `needs_review` list-page indicator (D-12). |
@@ -82,14 +82,14 @@ Exceptions: touch targets follow the existing `POSButton` scale (44/56/72px), no
 
 Unchanged from the rest of the app — confirmed against `src/shared/ui/Typography.stories.tsx`'s documented scale. This phase introduces no new type sizes/weights.
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Body | 14px (`text-sm`) | 400 (regular) | 1.5 (Tailwind default `leading-normal`) |
-| Label | 14px (`text-sm`) | 500 (`font-medium`) | 1.5 |
-| Heading (step title / section header) | 16px (`text-base`) / 18px (`text-lg`) | 600 (`font-semibold`) | 1.2 |
-| Display (wizard page title only, via `SectionHeader`) | 24px (`text-2xl`) | 700 (`font-bold`) | 1.2 |
+| Role | Size | Weight | Line Height | Source |
+|------|------|--------|-------------|--------|
+| Body | 14px (`text-sm`) | 400 (regular) | 1.5 (Tailwind default `leading-normal`) | New phase UI (step content, chip labels, field values) |
+| Heading (step title / step-content section header) | 16px (`text-base`) / 18px (`text-lg`) | 600 (`font-semibold`) | 1.2 | New phase UI (`TabsTrigger` step labels, in-step subheadings) |
+| Label | 14px (`text-sm`) | 500 (`font-medium`) | 1.5 | Inherited unchanged from `FormField`'s existing app-wide label styling — every field in this wizard reuses `FormField` as-is (see Component Inventory); not a phase-specific weight choice |
+| Display (wizard page title only) | 24px (`text-2xl`) | 700 (`font-bold`) | 1.2 | Inherited unchanged from `SectionHeader`'s existing app-wide title styling — reused as-is for the wizard page header, per its Component Inventory entry; not a phase-specific weight choice |
 
-Only 2 weights used anywhere in this phase's UI: 400 (body/values) and 600 (labels/headings) — `font-bold` (700) is reserved for the single page-level `SectionHeader` title, matching existing `SectionHeader` usage elsewhere in the app, not a new pattern.
+This phase's own new UI (step content, step-indicator labels, chips, values) introduces exactly 2 weights: 400 (body/values) and 600 (step titles/headings) — matching the Dimension 4 cap. The Label row's 500 and the Display row's 700 are not additional choices made for this phase: both are inherited byte-for-byte from `FormField` and `SectionHeader`, two pre-existing, unmodified app-wide components this phase reuses rather than redesigns (see Component Inventory rows for `FormField` and `SectionHeader`). No new component in this phase introduces a weight outside {400, 600}.
 
 ---
 
