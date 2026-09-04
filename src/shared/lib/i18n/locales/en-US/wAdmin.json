@@ -591,6 +591,22 @@
       "emptyBody": "Try a different product or category name.",
       "removeChip": "Remove {{name}}",
       "validationError": "Select at least one product or category, or mark this promotion as store-wide."
+    },
+    "validity": {
+      "dateRangeError": "End date must be on or after the start date",
+      "recurringLabel": "Recurring",
+      "startTimeLabel": "Start time",
+      "endTimeLabel": "End time",
+      "timeWindowError": "End time must be after start time",
+      "day": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
     }
   }
 }

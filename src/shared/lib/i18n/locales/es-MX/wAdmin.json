@@ -591,6 +591,22 @@
       "emptyBody": "Intenta con otro nombre de producto o categoría.",
       "removeChip": "Quitar {{name}}",
       "validationError": "Selecciona al menos un producto o categoría, o marca esta promoción como de toda la tienda."
+    },
+    "validity": {
+      "dateRangeError": "La fecha de fin debe ser igual o posterior a la fecha de inicio",
+      "recurringLabel": "Recurrente",
+      "startTimeLabel": "Hora de inicio",
+      "endTimeLabel": "Hora de fin",
+      "timeWindowError": "La hora de fin debe ser posterior a la hora de inicio",
+      "day": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb"
+      }
     }
   }
 }
