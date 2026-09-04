@@ -368,7 +368,7 @@ plus the folded todo `audit-manager-pin-identity-in-remaining-rpcs.md` — no fo
 REQ-IDs for this phase; traced entirely via CONTEXT.md's locked decision IDs, matching the
 D-number-traceable precedent used when a phase has no SPEC.md (Phase 22/23/26).
 **Depends on:** Phase 27
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1** (parallel — no file overlap)
@@ -390,7 +390,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 28-04-PLAN.md — Validity & Recurrence + Review steps: forward-looking `DateRangePicker`
+- [x] 28-04-PLAN.md — Validity & Recurrence + Review steps: forward-looking `DateRangePicker`
   presets, day-of-week/time-of-day recurrence UI, full 4-step `isStepValid` gate (TDD), Review
   step's live computed-price preview, edit-mode free step navigation (D-04, D-05, D-06, D-07,
   D-08, D-09, D-10)
