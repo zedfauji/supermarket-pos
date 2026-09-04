@@ -363,13 +363,44 @@ built in Phase 27 (`evaluateBestPromotion`, `process_direct_sale_atomic`'s
 (timezone handling, interaction with the existing best-price-wins pool), not just a UI
 addition.
 
-**Requirements**: TBD — capture via `/gsd-discuss-phase 28`
+**Requirements**: D-01 .. D-12 (see `.planning/phases/28-promotion-management-redesign/28-CONTEXT.md`)
+plus the folded todo `audit-manager-pin-identity-in-remaining-rpcs.md` — no formal `REQUIREMENTS.md`
+REQ-IDs for this phase; traced entirely via CONTEXT.md's locked decision IDs, matching the
+D-number-traceable precedent used when a phase has no SPEC.md (Phase 22/23/26).
 **Depends on:** Phase 27
-**Plans:** 0 plans
+**Plans:** 5 plans
 
 Plans:
+**Wave 1** (parallel — no file overlap)
 
-- [ ] TBD (run /gsd-plan-phase 28 to break down)
+- [ ] 28-01-PLAN.md — Tracer: `promotion_targets` junction table + recurrence columns +
+  `needs_review` backfill migration, `process_direct_sale_atomic` scope+recurrence extension,
+  `evaluateBestPromotion` multi-target/recurrence mirror (TDD), minimal single-step wizard entry
+  replacing `PromotionFormDialog` end-to-end (D-01, D-02, D-03, D-04, D-05, D-06, D-11, D-12)
+- [ ] 28-02-PLAN.md — Manager-PIN identity audit (folded todo): re-key
+  `process_refund`/`reopen_tab`/`edit_paid_tab` to `profiles.pin = p_manager_pin` (mirrors the
+  proven G-27-13 fix), harden `close_tab`'s zero-check gap, thread `staff.pin` through all three
+  dialogs, E2E proof
+
+**Wave 2** *(blocked on Wave 1 — shares the wizard page/state hook)*
+
+- [ ] 28-03-PLAN.md — Scope step: new `MultiSelectPicker` shared/ui primitive
+  (cmdk-based, product+category multi-select) + `StepScope.tsx` wiring (D-01 UI surface, D-08
+  partial)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 28-04-PLAN.md — Validity & Recurrence + Review steps: forward-looking `DateRangePicker`
+  presets, day-of-week/time-of-day recurrence UI, full 4-step `isStepValid` gate (TDD), Review
+  step's live computed-price preview, edit-mode free step navigation (D-04, D-05, D-06, D-07,
+  D-08, D-09, D-10)
+
+**Wave 4** *(blocked on Wave 1-3 — phase gate)*
+
+- [ ] 28-05-PLAN.md — Full-suite regression fix (10 pre-existing promotion-fixture E2E specs
+  updated for the new schema/wizard) + `npm run test:e2e` phase-gate close-out
+
+**UI hint**: yes
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
