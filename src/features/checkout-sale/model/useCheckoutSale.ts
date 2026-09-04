@@ -137,6 +137,7 @@ export function useCheckoutSale() {
             discountValue: payment.discountInfo.value,
             discountAmount: payment.discountInfo.amount,
             managerOverride: payment.discountInfo.managerOverride,
+            managerPin: payment.discountInfo.managerPin,
           }
         : {}),
       ...(payment.customerName ? { customerName: payment.customerName } : {}),

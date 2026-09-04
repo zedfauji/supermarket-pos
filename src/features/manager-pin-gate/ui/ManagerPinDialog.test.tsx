@@ -86,6 +86,25 @@ describe('ManagerPinDialog', () => {
     });
   });
 
+  // Phase 27 Plan 08 (G-27-13): onSuccess widened from () => void to
+  // (staff: Staff) => void — callers need to know WHICH staff matched so
+  // they can thread that staff's PIN to a server-side re-verification.
+  it('entering correct manager PIN calls onSuccess with the matched staff object', async () => {
+    const user = userEvent.setup();
+    const { onSuccess } = renderDialog();
+
+    const dialog = screen.getByRole('alertdialog');
+    for (const ch of '789012') {
+      await user.click(
+        within(dialog).getByRole('button', { name: ch === '0' ? 'Key 0' : `Key ${ch}` })
+      );
+    }
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledWith(mockManager);
+    });
+  });
+
   it('entering cashier PIN does not grant access — shows error', async () => {
     const user = userEvent.setup();
     renderDialog();

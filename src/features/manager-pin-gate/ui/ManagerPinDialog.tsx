@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStaffList } from '@entities/staff/model/queries';
+import type { Staff } from '@shared/lib/domain';
 import { canAccess } from '@shared/lib/rbac';
 import type { StaffAction } from '@shared/lib/rbac';
 import {
@@ -19,7 +20,16 @@ export interface ManagerPinDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   requiredAction: StaffAction;
-  onSuccess: () => void;
+  /**
+   * Called with the matched staff member whenever a PIN comparison succeeds.
+   * Widened from `() => void` in Phase 27 Plan 08 (G-27-13) — additive and
+   * backward compatible: TypeScript always allows a callback with fewer
+   * declared params to satisfy this prop, so existing `() => {...}`
+   * consumers keep compiling unmodified. Callers that need to know WHICH
+   * staff authorized (e.g. threading their PIN server-side for an
+   * independent re-verification) can now read it from this argument.
+   */
+  onSuccess: (staff: Staff) => void;
 }
 
 export function ManagerPinDialog({
@@ -70,7 +80,7 @@ export function ManagerPinDialog({
   function handlePinComplete(enteredPin: string) {
     const match = eligibleStaff.find(s => s.pin === enteredPin);
     if (match) {
-      onSuccess();
+      onSuccess(match);
     } else {
       setError(t('managerPinGate.incorrectPin'));
       setPin('');

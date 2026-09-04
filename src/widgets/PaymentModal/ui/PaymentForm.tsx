@@ -209,6 +209,15 @@ export function PaymentForm({
   // (D-07). pinPurpose tracks which flow requested the dialog so onSuccess
   // knows what to do next.
   const [managerOverride, setManagerOverride] = useState(false);
+  // Phase 27 Plan 08 (G-27-13): the PIN of the staff member who actually
+  // matched in ManagerPinDialog — threaded to the RPC so the server can
+  // independently re-verify authorization against the entered PIN rather
+  // than the currently logged-in staff's own identity. Reset everywhere
+  // managerOverride resets to false, so a stale PIN from a prior payment
+  // attempt is never reused.
+  const [authorizingManagerPin, setAuthorizingManagerPin] = useState<string | undefined>(
+    undefined
+  );
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinPurpose, setPinPurpose] = useState<'discount' | 'below_cost' | null>(null);
   // Phase 27 (PROMO-05): id of the "Apply Promotion" selection — independent
@@ -246,6 +255,7 @@ export function PaymentForm({
     setDiscountValue(0);
     setDiscountExpanded(false);
     setManagerOverride(false);
+    setAuthorizingManagerPin(undefined);
     setPinDialogOpen(false);
     setPinPurpose(null);
     setSelectedPromotionId(null);
@@ -407,13 +417,21 @@ export function PaymentForm({
      * that fires `onSuccess` -> `setManagerOverride(true)` -> re-submit in
      * the same tick doesn't read the stale pre-update state value.
      */
-    overrideManagerOverride?: boolean
+    overrideManagerOverride?: boolean,
+    /**
+     * Mirrors `overrideManagerOverride` for the authorizing PIN (Phase 27
+     * Plan 08, G-27-13) — same same-tick-stale-state problem: the below-cost
+     * retry path calls `onSuccess` -> `setAuthorizingManagerPin(...)` ->
+     * resubmit in the same tick, before React commits the new state.
+     */
+    overrideManagerPin?: string
   ): Promise<Result<{ receiptData: ReceiptData }, { message: string; code?: AppErrorCode }>> => {
     if (!staffId) {
       return { ok: false, error: { message: t('paymentForm.notSignedIn') } };
     }
 
     const effectiveManagerOverride = overrideManagerOverride ?? managerOverride;
+    const effectiveManagerPin = overrideManagerPin ?? authorizingManagerPin;
     // Present whenever there's an ad-hoc discount OR a manager override is in
     // effect — the latter must reach the RPC even with discountAmount=0 (a
     // below-cost retry triggered purely by an auto-applied promotion, no
@@ -427,6 +445,7 @@ export function PaymentForm({
             value: discountValue,
             amount: discountAmount,
             managerOverride: effectiveManagerOverride,
+            managerPin: effectiveManagerPin,
           }
         : undefined;
 
@@ -516,10 +535,10 @@ export function PaymentForm({
     return { ok: true, data: { receiptData: r.data.receiptData } };
   };
 
-  const handlePrimary = async (overrideManagerOverride?: boolean) => {
+  const handlePrimary = async (overrideManagerOverride?: boolean, overrideManagerPin?: string) => {
     setErrorMessage(null);
     setIsProcessing(true);
-    const result = await runPayment(overrideManagerOverride);
+    const result = await runPayment(overrideManagerOverride, overrideManagerPin);
     setIsProcessing(false);
 
     if (!result.ok) {
@@ -570,11 +589,15 @@ export function PaymentForm({
     })();
   };
 
-  const handleSplitPrimary = async (overrideManagerOverride?: boolean) => {
+  const handleSplitPrimary = async (
+    overrideManagerOverride?: boolean,
+    overrideManagerPin?: string
+  ) => {
     setErrorMessage(null);
     setIsProcessing(true);
 
     const effectiveManagerOverride = overrideManagerOverride ?? managerOverride;
+    const effectiveManagerPin = overrideManagerPin ?? authorizingManagerPin;
     const discountInfoArg =
       discountAmount > 0 || effectiveManagerOverride
         ? {
@@ -584,6 +607,7 @@ export function PaymentForm({
             value: discountValue,
             amount: discountAmount,
             managerOverride: effectiveManagerOverride,
+            managerPin: effectiveManagerPin,
           }
         : undefined;
 
@@ -828,6 +852,7 @@ export function PaymentForm({
                     } else {
                       setDiscountExpanded(false);
                       setManagerOverride(false);
+                      setAuthorizingManagerPin(undefined);
                     }
                   }}
                 />
@@ -1373,16 +1398,21 @@ export function PaymentForm({
           if (!open) setPinPurpose(null);
         }}
         requiredAction="apply_custom_discount"
-        onSuccess={() => {
+        onSuccess={staff => {
           setPinDialogOpen(false);
           setManagerOverride(true);
+          setAuthorizingManagerPin(staff.pin);
           if (pinPurpose === 'discount') {
             setDiscountExpanded(true);
           } else if (pinPurpose === 'below_cost') {
             // Resubmit the SAME payment attempt (idempotencyKeyRef is
             // untouched on a failed attempt) with managerOverride: true —
-            // a retry, not a new sale.
-            void (isSplitMode ? handleSplitPrimary(true) : handlePrimary(true));
+            // a retry, not a new sale. staff.pin is passed explicitly
+            // (not read from state) since this fires in the same tick as
+            // setAuthorizingManagerPin above, before React commits it.
+            void (isSplitMode
+              ? handleSplitPrimary(true, staff.pin)
+              : handlePrimary(true, staff.pin));
           }
           setPinPurpose(null);
         }}
