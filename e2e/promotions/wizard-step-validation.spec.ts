@@ -99,7 +99,11 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
     uiCreatedPromotionNames.push(name);
 
     await page.goto('/promotions');
-    await page.getByRole('button', { name: /new promotion/i }).click();
+    // .first(): when the promotions table is empty, EmptyState renders its
+    // own duplicate "New Promotion" action button in addition to the page
+    // header's — the header one is always first in DOM order (28-05 fix,
+    // surfaced once the shared local DB genuinely has zero promotion rows).
+    await page.getByRole('button', { name: /new promotion/i }).first().click();
     await expect(page).toHaveURL(/\/promotions\/new$/);
 
     // D-08: an empty name blocks Next on the Basics step.

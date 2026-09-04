@@ -470,15 +470,36 @@ async function seedPaidTabWithTwoItems(cajaSessionId: string): Promise<SeededPai
     shiftStaffId = profile.id as string;
   }
 
-  const { data: products, error: productError } = await admin
+  // Excludes products with a near-expiry inventory row (and zero-priced
+  // placeholder rows) — process_direct_sale_atomic's PROMO-02 expiry-proximity
+  // auto-discount (Phase 27, unrelated to this fixture) silently reduces the
+  // derived total for any product within settings.near_expiry's threshold
+  // (default 14 days), which this helper's flat unitPrice*tax expectation
+  // never accounts for, tripping a false AMOUNT_MISMATCH (28-05 fix, mirrors
+  // e2e/tabs/reopen-closed-ticket.spec.ts's identical seed helper fix).
+  const nearExpiryCutoff = new Date();
+  nearExpiryCutoff.setDate(nearExpiryCutoff.getDate() + 14);
+  const nearExpiryCutoffStr = nearExpiryCutoff.toISOString().slice(0, 10);
+
+  const { data: candidateProducts, error: productError } = await admin
     .from('products')
-    .select('id, base_price')
+    .select('id, base_price, inventory(expiry_date)')
     .eq('is_active', true)
-    .limit(2);
-  if (productError || !products || products.length < 2) {
-    throw new Error(
-      `seedPaidTabWithTwoItems: need at least 2 active products - ${productError?.message ?? 'none'}`
-    );
+    .gt('base_price', 0)
+    .limit(50);
+  if (productError || !candidateProducts) {
+    throw new Error(`seedPaidTabWithTwoItems: product lookup failed - ${productError?.message ?? 'none'}`);
+  }
+  const products = candidateProducts
+    .filter(p => {
+      const inv = p.inventory as { expiry_date: string | null } | { expiry_date: string | null }[] | null;
+      const invRow = Array.isArray(inv) ? inv[0] : inv;
+      const expiryDate = invRow?.expiry_date;
+      return !expiryDate || expiryDate > nearExpiryCutoffStr;
+    })
+    .slice(0, 2);
+  if (products.length < 2) {
+    throw new Error('seedPaidTabWithTwoItems: need at least 2 active, positively-priced products without a near-expiry inventory row');
   }
 
   const { taxRatePercent, taxInclusive } = await getBillingTaxConfig(admin);
