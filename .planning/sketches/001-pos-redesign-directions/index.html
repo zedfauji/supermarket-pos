@@ -3,148 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>POS Redesign — 5 Directions</title>
+<title>POS Redesign — 5 Directions v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
 /* ============================= RESET / BASE ============================= */
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
-body{
-  background:#000;color:#fff;
-  font-family:'Inter',system-ui,-apple-system,sans-serif;
-  -webkit-font-smoothing:antialiased;
-  padding-top:44px; /* variant-nav height */
-}
-button{font:inherit;cursor:pointer;color:inherit}
+body{background:#000;color:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding-top:44px}
+button{font:inherit;cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
 input{font:inherit}
-img,svg{display:block}
+svg{display:block}
+.ic{width:18px;height:18px;stroke-width:2px;flex-shrink:0}
+.ic-sm{width:14px;height:14px}
+.ic-lg{width:26px;height:26px}
 ::selection{background:rgba(255,255,255,.2)}
+@property --angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes spin-angle{to{--angle:360deg}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,122,26,.45)}50%{box-shadow:0 0 0 10px rgba(255,122,26,0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 
 /* ============================= TOP VARIANT NAV ============================= */
-#variant-nav{
-  position:fixed;top:0;left:0;right:0;height:44px;z-index:9998;
-  background:#000;border-bottom:1px solid #262626;
-  display:flex;align-items:stretch;overflow-x:auto;
-  font-size:13px;font-weight:600;letter-spacing:.01em;
-}
-#variant-nav .variant-tab{
-  background:none;border:none;border-right:1px solid #1c1c1c;
-  color:#8a8a8a;padding:0 18px;white-space:nowrap;
-  transition:background .15s ease,color .15s ease;
-}
+#variant-nav{position:fixed;top:0;left:0;right:0;height:44px;z-index:9998;background:#000;border-bottom:1px solid #262626;display:flex;align-items:stretch;overflow-x:auto;font-size:12.5px;font-weight:600;letter-spacing:.01em;font-family:'Plus Jakarta Sans',sans-serif}
+#variant-nav .variant-tab{background:none;border:none;border-right:1px solid #1c1c1c;color:#8a8a8a;padding:0 18px;white-space:nowrap;transition:background .15s ease,color .15s ease}
 #variant-nav .variant-tab:hover{color:#e5e5e5;background:#111}
 #variant-nav .variant-tab.active{color:#fff;background:#1a1a1a;box-shadow:inset 0 -2px 0 #fff}
 
 /* ============================= VARIANT SECTION ============================= */
-.variant{min-height:calc(100vh - 44px)}
-
-.v-toolbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 24px;position:sticky;top:44px;z-index:50;
-  backdrop-filter:blur(10px);
-}
-.v-toolbar-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;font-weight:700}
-.screen-tabs{display:flex;gap:6px}
-.screen-tab{
-  border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;
-  background:transparent;opacity:.55;transition:.15s ease;
-}
+.variant{min-height:calc(100vh - 44px);position:relative}
+.v-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;position:sticky;top:44px;z-index:50}
+.v-toolbar-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.55;font-weight:700}
+.screen-tabs{display:flex;gap:4px;position:relative}
+.screen-tab{border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;opacity:.5;transition:.2s ease;position:relative}
 .screen-tab:hover{opacity:.85}
 .screen-tab.active{opacity:1}
+.screen{padding:10px 28px 72px;position:relative;z-index:1}
+.screen[data-entered] .stagger>*{animation:rise .45s cubic-bezier(.16,1,.3,1) both}
 
-.screen{padding:8px 24px 64px;animation:fadein .2s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* grain overlay (shared, opt-in via .grain on variant root) */
+.grain{position:relative}
+.grain::before{content:'';position:fixed;top:44px;left:0;right:0;bottom:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;z-index:5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* ============================= SHARED COMPONENT SKELETON ============================= */
-.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.55;margin:0 0 4px}
-.h1{font-size:28px;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em}
-.sub{opacity:.6;font-size:14px;margin:0 0 24px}
+/* ============================= SHARED SKELETON ============================= */
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;opacity:.5;margin:0 0 6px}
+.h1{font-size:34px;font-weight:800;margin:0 0 4px;letter-spacing:-0.02em;line-height:1.05}
+.sub{opacity:.55;font-size:14px;margin:0 0 22px}
 
-.alert-strip{
-  display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:600;
-}
+.alert-strip{display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:22px;font-size:13px;font-weight:600}
 
-.home-grid{display:grid;gap:14px}
-.tile{
-  display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
-  padding:18px;cursor:pointer;user-select:none;transition:transform .12s ease,filter .12s ease;
-  min-height:110px;
-}
-.tile:hover{filter:brightness(1.08)}
-.tile:active{transform:scale(.97)}
-.tile-icon{font-size:26px;line-height:1}
+.home-grid{display:grid;gap:12px}
+.tile{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:18px;cursor:pointer;user-select:none;transition:transform .15s cubic-bezier(.2,.8,.2,1),filter .15s ease,box-shadow .15s ease;position:relative;overflow:hidden}
+.tile:active{transform:scale(.96)}
+.tile-icon{display:flex}
 .tile-label{font-weight:700;font-size:15px}
-.tile-meta{font-size:12px;opacity:.55}
+.tile-meta{font-size:12px;opacity:.5}
 
-.pos-layout{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+.pos-layout{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 @media (max-width:900px){.pos-layout{grid-template-columns:1fr}}
-.search-row{display:flex;gap:10px;margin-bottom:16px}
-.search-input{flex:1;padding:12px 16px;border-radius:10px;font-size:15px;border:none;outline:none}
-.scan-btn{padding:12px 18px;border-radius:10px;font-weight:700;border:none;white-space:nowrap}
+.search-row{display:flex;gap:10px;margin-bottom:18px}
+.search-input{flex:1;padding:13px 16px;border-radius:10px;font-size:14.5px;border:none;outline:none}
+.scan-btn{padding:13px 18px;border-radius:10px;font-weight:700;border:none;white-space:nowrap;display:flex;align-items:center;gap:8px}
 
 .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.product-card{padding:12px;cursor:pointer;transition:transform .12s ease,filter .12s ease;display:flex;flex-direction:column;gap:8px}
-.product-card:hover{filter:brightness(1.1)}
+.product-card{padding:13px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column;gap:9px;position:relative}
 .product-card:active{transform:scale(.96)}
-.product-emoji{font-size:28px}
-.product-name{font-weight:700;font-size:13.5px;line-height:1.25}
-.product-price{font-weight:800;font-size:14px;margin-top:auto}
-.product-stock{font-size:11px;opacity:.5}
+.cat-dot{width:8px;height:8px;border-radius:99px;flex-shrink:0}
+.product-name{font-weight:700;font-size:13px;line-height:1.3}
+.product-price{font-weight:800;font-size:14.5px;margin-top:auto;font-variant-numeric:tabular-nums}
+.product-stock{font-size:11px;opacity:.48}
 
-.cart-panel{padding:16px;display:flex;flex-direction:column;gap:12px;position:sticky;top:110px}
-.cart-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.cart-panel{padding:18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:114px}
+.cart-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13.5px}
+.cart-title-icons{display:flex;align-items:center;gap:6px;opacity:.6;cursor:pointer}
 .cart-item{display:flex;align-items:center;gap:10px;padding:10px 0}
 .cart-item-name{flex:1;font-size:13.5px;font-weight:600}
-.cart-item-unit{font-size:11px;opacity:.5}
+.cart-item-unit{font-size:11px;opacity:.48}
 .qty-group{display:flex;align-items:center;gap:6px}
-.qty-btn{width:26px;height:26px;border-radius:6px;border:none;font-weight:800;display:flex;align-items:center;justify-content:center}
-.qty-val{min-width:18px;text-align:center;font-weight:700;font-size:13px}
-.line-total{font-weight:700;font-size:13px;min-width:52px;text-align:right}
+.qty-btn{width:26px;height:26px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center}
+.qty-val{min-width:18px;text-align:center;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.line-total{font-weight:700;font-size:13px;min-width:54px;text-align:right;font-variant-numeric:tabular-nums}
 .cart-totals{display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding-top:10px}
 .cart-totals .row{display:flex;justify-content:space-between}
-.cart-totals .row.total{font-size:18px;font-weight:800;padding-top:8px}
-.btn-primary-lg{border:none;padding:16px;border-radius:12px;font-weight:800;font-size:15px;width:100%;text-align:center;transition:filter .12s ease,transform .1s ease}
-.btn-primary-lg:hover{filter:brightness(1.08)}
-.btn-primary-lg:active{transform:scale(.98)}
+.cart-totals .row .val{font-variant-numeric:tabular-nums}
+.cart-totals .row.total{font-size:19px;font-weight:800;padding-top:8px}
+.btn-primary-lg{border:none;padding:16px;border-radius:12px;font-weight:800;font-size:15px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;position:relative}
 
-.payment-layout{display:grid;grid-template-columns:1fr 340px;gap:24px}
+.payment-layout{display:grid;grid-template-columns:1fr 340px;gap:26px}
 @media (max-width:900px){.payment-layout{grid-template-columns:1fr}}
-.tender-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
-.tender-btn{padding:24px 12px;border-radius:14px;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:14px;transition:.15s ease}
-.tender-icon{font-size:24px}
+.tender-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.tender-btn{padding:22px 12px;border-radius:14px;border:none;display:flex;flex-direction:column;align-items:center;gap:9px;font-weight:700;font-size:13.5px;transition:.2s ease;position:relative}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px}
-.key{padding:16px;border-radius:10px;border:none;font-weight:700;font-size:17px;text-align:center}
+.key{padding:16px;border-radius:10px;border:none;font-weight:700;font-size:17px;text-align:center;transition:transform .1s ease}
 .quick-cash{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.chip{padding:8px 14px;border-radius:999px;border:none;font-weight:700;font-size:13px}
-.order-summary{padding:18px;border-radius:14px}
+.chip{padding:8px 14px;border-radius:999px;border:none;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.order-summary{padding:20px;border-radius:14px;position:relative;overflow:hidden}
 
-.receipt-wrap{display:flex;justify-content:center;padding:20px 0}
-.receipt{width:100%;max-width:380px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.receipt-wrap{display:flex;justify-content:center;padding:24px 0}
+.receipt{width:100%;max-width:380px;padding:26px;display:flex;flex-direction:column;gap:11px;position:relative}
 .receipt-line{display:flex;justify-content:space-between;font-size:13px}
 .receipt-actions{display:flex;gap:10px;margin-top:16px}
-.receipt-actions button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:13px}
+.receipt-actions button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* border-trail animated ring — real "border beam" technique */
+.trail{position:relative}
+.trail::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--angle,0deg),transparent 55%,var(--trail-c,#fff) 78%,transparent 92%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin-angle 2.4s linear infinite;pointer-events:none}
+
+/* spotlight-follow — hover glow tracking cursor */
+.spotlight{position:relative;overflow:hidden}
+.spotlight::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .35s ease;background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.14),transparent 70%)}
+.spotlight:hover::after{opacity:1}
 
 /* ============================= TOAST ============================= */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
-  opacity:0;pointer-events:none;transition:.25s ease;z-index:9999;border:1px solid #333}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.3,1.1);z-index:9999;border:1px solid #333;display:flex;align-items:center;gap:8px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ============================= A. TACTILE BIG-TOUCH RETAIL ============================= */
-#v-a{
-  --bg:#241a12; --surface:#2f2216; --surface2:#3a2a1a; --surface3:#241a12;
-  --text:#fdf3e7; --muted:#c9ac8c; --primary:#ff7a1a; --primary-text:#1a0f05;
-  --accent:#ffb347; --danger:#ff5a5a; --border:#4a3520; --radius:22px; --radius-sm:16px;
-  --shadow:0 10px 24px rgba(0,0,0,.5);
-  background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;
-}
-#v-a .v-toolbar{background:rgba(36,26,18,.85);border-bottom:1px solid var(--border)}
+#v-a{--bg:#241a12;--surface:#2f2216;--surface2:#3a2a1a;--text:#fdf3e7;--muted:#c9ac8c;--primary:#ff7a1a;--primary-text:#1a0f05;--accent:#ffb347;--danger:#ff5a5a;--border:#4a3520;--radius:22px;--radius-sm:16px;--shadow:0 12px 28px -6px rgba(0,0,0,.55);background:radial-gradient(ellipse at top,#2c2015,var(--bg) 55%);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+#v-a .v-toolbar{background:rgba(36,26,18,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
 #v-a .screen-tab{color:var(--muted);border-radius:14px}
 #v-a .screen-tab.active{background:var(--primary);color:var(--primary-text)}
 #v-a .alert-strip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--accent)}
-#v-a .home-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
-#v-a .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);min-height:150px}
-#v-a .tile.tile-primary{background:var(--primary);color:var(--primary-text)}
+#v-a .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:118px}
+#v-a .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-a .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:linear-gradient(155deg,var(--primary),#e0620a);color:var(--primary-text);animation:pulse-glow 3.5s ease-in-out infinite}
 #v-a .tile-meta{color:var(--muted)}
+#v-a .tile.tile-primary .tile-meta{color:rgba(26,15,5,.65)}
 #v-a .search-input{background:var(--surface);color:var(--text);border:2px solid var(--border);border-radius:var(--radius-sm)}
 #v-a .search-input::placeholder{color:var(--muted)}
 #v-a .scan-btn{background:var(--primary);color:var(--primary-text);border-radius:var(--radius-sm)}
@@ -157,10 +143,11 @@ img,svg{display:block}
 #v-a .qty-btn{background:var(--surface2);color:var(--text)}
 #v-a .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
 #v-a .cart-totals .row.total{color:var(--text)}
-#v-a .btn-primary-lg{background:var(--primary);color:var(--primary-text)}
+#v-a .btn-primary-lg{background:var(--primary);color:var(--primary-text);box-shadow:0 10px 24px -6px rgba(255,122,26,.55)}
 #v-a .tender-btn{background:var(--surface);border:2px solid var(--border);color:var(--text)}
-#v-a .tender-btn.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+#v-a .tender-btn.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary);--trail-c:var(--accent)}
 #v-a .keypad .key{background:var(--surface);color:var(--text);border:2px solid var(--border)}
+#v-a .keypad .key:active{transform:scale(.9)}
 #v-a .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
 #v-a .order-summary{background:var(--surface);border:2px solid var(--border)}
 #v-a .receipt{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -169,67 +156,60 @@ img,svg{display:block}
 #v-a .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
 
 /* ============================= B. DATA-DENSE PRO TERMINAL ============================= */
-#v-b{
-  --bg:#0d1117; --surface:#141a21; --surface2:#1b232c; --text:#e6edf3; --muted:#7d8b99;
-  --primary:#3fb950; --primary-text:#04150a; --accent:#58a6ff; --danger:#f85149;
-  --border:#262d36; --radius:4px; --radius-sm:3px;
-  background:var(--bg);color:var(--text);font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-}
-#v-b .screen{padding-top:0}
-#v-b .v-toolbar{background:rgba(13,17,23,.9);border-bottom:1px solid var(--border)}
-#v-b .v-toolbar-title{font-family:'JetBrains Mono',monospace}
-#v-b .screen-tab{color:var(--muted);border-radius:3px;font-size:12px}
+#v-b{--bg:#0a0d12;--surface:#12161d;--surface2:#181e27;--text:#e6edf3;--muted:#71808f;--primary:#3fb950;--primary-text:#04150a;--accent:#58a6ff;--danger:#f85149;--border:#212932;--radius:5px;--radius-sm:4px;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans','IBM Plex Mono',monospace}
+#v-b .screen{padding-top:2px}
+#v-b .v-toolbar{background:rgba(10,13,18,.92);border-bottom:1px solid var(--border)}
+#v-b .v-toolbar-title{font-family:'IBM Plex Mono',monospace}
+#v-b .screen-tab{color:var(--muted);border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace}
 #v-b .screen-tab.active{background:var(--surface2);color:var(--accent);box-shadow:inset 0 0 0 1px var(--border)}
-#v-b .alert-strip{background:#241a12;border:1px solid #4a2f12;border-radius:var(--radius);color:#f0a53c;font-family:'JetBrains Mono',monospace}
+#v-b .alert-strip{background:#1c150a;border:1px solid #3d2a0e;border-radius:var(--radius);color:#f0a53c;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
 #v-b .home-grid{grid-template-columns:1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-#v-b .tile{background:var(--surface);border-radius:0;min-height:auto;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 16px}
-#v-b .tile-label{font-size:13.5px}
-#v-b .tile-meta{color:var(--muted);font-size:11px}
-#v-b .tile-key{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-family:'JetBrains Mono',monospace}
-#v-b .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:13px}
-#v-b .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius);font-size:12px}
-#v-b .product-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12.5px}
-#v-b .product-table th{text-align:left;padding:8px 10px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-#v-b .product-table td{padding:8px 10px;border-top:1px solid var(--border)}
+#v-b .tile{background:var(--surface);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:13px 16px}
+#v-b .tile-label{font-size:13.5px;font-family:'IBM Plex Sans',sans-serif}
+#v-b .tile-meta{color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace}
+#v-b .tile-key{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-family:'IBM Plex Mono',monospace}
+#v-b .tile:hover{background:var(--surface2)}
+#v-b .tile.tile-primary{border-left:2px solid var(--primary)}
+#v-b .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace;font-size:13px}
+#v-b .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:'IBM Plex Mono',monospace}
+#v-b .product-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12.5px;font-family:'IBM Plex Mono',monospace}
+#v-b .product-table th{text-align:left;padding:9px 10px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+#v-b .product-table td{padding:9px 10px;border-top:1px solid var(--border)}
 #v-b .product-table tr{cursor:pointer;transition:background .1s}
 #v-b .product-table tr:hover td{background:var(--surface2)}
 #v-b .product-table .price{color:var(--primary);font-weight:700}
 #v-b .product-table .stock-low{color:var(--danger)}
 #v-b .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-#v-b .cart-item{border-bottom:1px solid var(--border);font-size:12.5px}
+#v-b .cart-item{border-bottom:1px solid var(--border);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
 #v-b .cart-item-unit{color:var(--muted)}
 #v-b .qty-btn{background:var(--surface2);color:var(--text);border-radius:3px}
-#v-b .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
+#v-b .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace}
 #v-b .cart-totals .row.total{color:var(--primary)}
-#v-b .btn-primary-lg{background:var(--primary);color:var(--primary-text);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
-#v-b .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius)}
-#v-b .tender-btn.active{background:var(--surface2);color:var(--accent);border-color:var(--accent)}
-#v-b .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
-#v-b .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:3px}
-#v-b .order-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px}
-#v-b .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace}
+#v-b .btn-primary-lg{background:var(--primary);color:var(--primary-text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
+#v-b .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
+#v-b .tender-btn.active{background:var(--surface2);color:var(--accent);border-color:var(--accent);--trail-c:var(--accent)}
+#v-b .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
+#v-b .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:3px;font-family:'IBM Plex Mono',monospace}
+#v-b .order-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
+#v-b .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
 #v-b .receipt-line{color:var(--muted);font-size:12px}
-#v-b .receipt-actions button{background:var(--surface2);color:var(--text);border-radius:var(--radius)}
+#v-b .receipt-actions button{background:var(--surface2);color:var(--text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
 #v-b .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
 
 /* ============================= C. CARD-BASED MODERN SAAS ============================= */
-#v-c{
-  --bg:#15161c; --surface:#1d1f28; --surface2:#242732; --text:#f2f3f7; --muted:#9a9db0;
-  --primary:#7c6ff0; --primary-text:#0d0a1f; --accent:#39d1c4; --danger:#ff6b81;
-  --border:#2c2f3c; --radius:20px; --radius-sm:14px; --shadow:0 16px 32px -12px rgba(0,0,0,.5);
-  background:radial-gradient(circle at 20% 0%,#1c1e29,var(--bg) 60%);color:var(--text);
-}
-#v-c .v-toolbar{background:rgba(21,22,28,.8)}
+#v-c{--bg:#131420;--surface:#1b1d2c;--surface2:#232537;--text:#f2f3f7;--muted:#8f92a8;--primary:#7c6ff0;--primary-text:#0d0a1f;--accent:#39d1c4;--danger:#ff6b81;--border:#2a2c3f;--radius:20px;--radius-sm:14px;--shadow:0 20px 40px -14px rgba(0,0,0,.55);background:radial-gradient(circle at 15% -10%,#241f3d,var(--bg) 55%);color:var(--text);font-family:'Manrope',system-ui,sans-serif}
+#v-c .v-toolbar{background:rgba(19,20,32,.7);backdrop-filter:blur(14px)}
 #v-c .screen-tab{color:var(--muted);border-radius:999px}
 #v-c .screen-tab.active{background:var(--surface2);color:var(--text);box-shadow:0 0 0 1px var(--border)}
-#v-c .alert-strip{background:linear-gradient(90deg,rgba(124,111,240,.15),rgba(57,209,196,.1));border:1px solid var(--border);border-radius:999px;color:var(--accent)}
-#v-c .home-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-#v-c .tile{background:linear-gradient(155deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);min-height:130px}
-#v-c .tile.tile-primary{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+#v-c .alert-strip{background:linear-gradient(90deg,rgba(124,111,240,.16),rgba(57,209,196,.08));border:1px solid var(--border);border-radius:999px;color:var(--accent)}
+#v-c .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:112px}
+#v-c .tile{background:linear-gradient(155deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-c .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
 #v-c .tile-meta{color:var(--muted)}
+#v-c .tile.tile-primary .tile-meta{color:rgba(13,10,31,.65)}
 #v-c .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:14px}
 #v-c .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:14px}
-#v-c .product-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 6px 16px -8px rgba(0,0,0,.4)}
+#v-c .product-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 10px 22px -12px rgba(0,0,0,.5)}
 #v-c .product-price{color:var(--accent)}
 #v-c .product-stock{color:var(--muted)}
 #v-c .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -238,7 +218,7 @@ img,svg{display:block}
 #v-c .qty-btn{background:var(--surface2);color:var(--text)}
 #v-c .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
 #v-c .cart-totals .row.total{color:var(--text)}
-#v-c .btn-primary-lg{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+#v-c .btn-primary-lg{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text);box-shadow:0 14px 28px -10px rgba(124,111,240,.55)}
 #v-c .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text)}
 #v-c .tender-btn.active{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text);border-color:transparent}
 #v-c .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border)}
@@ -250,99 +230,92 @@ img,svg{display:block}
 #v-c .receipt-actions button.primary{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
 
 /* ============================= D. MINIMAL / EDITORIAL ============================= */
-#v-d{
-  --bg:#161513; --surface:#1c1b18; --surface2:#212019; --text:#ece7de; --muted:#8f887a;
-  --primary:#ece7de; --primary-text:#161513; --accent:#c9a24b; --danger:#c96b4b;
-  --border:#332f28; --radius:2px; --radius-sm:2px;
-  background:var(--bg);color:var(--text);font-family:'Iowan Old Style','Georgia',serif;
-}
-#v-d .v-toolbar{background:rgba(22,21,19,.9);border-bottom:1px solid var(--border)}
-#v-d .v-toolbar-title{font-family:'Inter',sans-serif}
-#v-d .screen-tab{color:var(--muted);border-radius:0;font-family:'Inter',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+#v-d{--bg:#15140f;--surface:#1b1a14;--surface2:#211f18;--text:#ece7de;--muted:#94896f;--primary:#ece7de;--primary-text:#15140f;--accent:#c9a24b;--danger:#c96b4b;--border:#332e22;--radius:2px;--radius-sm:2px;background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif}
+#v-d .v-toolbar{background:rgba(21,20,15,.92);border-bottom:1px solid var(--border)}
+#v-d .v-toolbar-title{font-family:'IBM Plex Sans',sans-serif}
+#v-d .screen-tab{color:var(--muted);border-radius:0;font-family:'IBM Plex Sans',sans-serif;text-transform:uppercase;font-size:10.5px;letter-spacing:.1em}
 #v-d .screen-tab.active{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
-#v-d .h1{font-weight:400;font-family:'Iowan Old Style','Georgia',serif}
-#v-d .eyebrow,#v-d .sub{font-family:'Inter',sans-serif}
-#v-d .alert-strip{background:transparent;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;color:var(--accent);font-family:'Inter',sans-serif;font-size:12.5px}
+#v-d .h1{font-weight:500;font-family:'Fraunces',Georgia,serif;font-optical-sizing:auto}
+#v-d .eyebrow,#v-d .sub{font-family:'IBM Plex Sans',sans-serif}
+#v-d .alert-strip{background:transparent;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;color:var(--accent);font-family:'IBM Plex Sans',sans-serif;font-size:12px}
 #v-d .home-grid{grid-template-columns:1fr;gap:0;border-top:1px solid var(--border)}
-#v-d .tile{background:transparent;border-radius:0;border-bottom:1px solid var(--border);min-height:auto;flex-direction:row;align-items:center;justify-content:space-between;padding:20px 4px}
-#v-d .tile-icon{display:none}
-#v-d .tile-label{font-family:'Iowan Old Style','Georgia',serif;font-size:19px;font-weight:400}
-#v-d .tile-meta{color:var(--muted);font-family:'Inter',sans-serif;font-size:12px}
-#v-d .search-input{background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif;padding-left:0}
-#v-d .scan-btn{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .tile{background:transparent;border-radius:0;border-bottom:1px solid var(--border);flex-direction:row;align-items:center;justify-content:space-between;padding:22px 4px}
+#v-d .tile-icon{color:var(--accent);opacity:.85}
+#v-d .tile-label{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:500;transition:transform .2s ease}
+#v-d .tile:hover .tile-label{transform:translateX(6px)}
+#v-d .tile-meta{color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:11.5px}
+#v-d .search-input{background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif;padding-left:0}
+#v-d .scan-btn{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .product-grid{grid-template-columns:1fr;gap:0}
-#v-d .product-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 2px}
-#v-d .product-emoji{display:none}
-#v-d .product-name{font-family:'Iowan Old Style','Georgia',serif;font-size:16px}
-#v-d .product-price{font-family:'Inter',sans-serif;color:var(--accent)}
-#v-d .product-stock{color:var(--muted);font-family:'Inter',sans-serif}
-#v-d .cart-panel{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0;padding-left:20px}
-#v-d .cart-item{border-bottom:1px solid var(--border);font-family:'Inter',sans-serif}
+#v-d .product-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:17px 2px}
+#v-d .product-name{font-family:'Fraunces',Georgia,serif;font-size:16.5px;font-weight:400}
+#v-d .product-price{font-family:'IBM Plex Sans',sans-serif;color:var(--accent)}
+#v-d .product-stock{color:var(--muted);font-family:'IBM Plex Sans',sans-serif}
+#v-d .cart-panel{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0;padding-left:22px}
+#v-d .cart-item{border-bottom:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
 #v-d .cart-item-unit{color:var(--muted)}
 #v-d .qty-btn{background:transparent;border:1px solid var(--border);border-radius:0;color:var(--text)}
-#v-d .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'Inter',sans-serif}
-#v-d .cart-totals .row.total{color:var(--text);font-family:'Iowan Old Style','Georgia',serif;font-size:22px}
-#v-d .btn-primary-lg{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'Inter',sans-serif;letter-spacing:.04em}
-#v-d .tender-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
+#v-d .cart-totals .row.total{color:var(--text);font-family:'Fraunces',Georgia,serif;font-size:24px;font-weight:500}
+#v-d .btn-primary-lg{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'IBM Plex Sans',sans-serif;letter-spacing:.04em}
+#v-d .tender-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .tender-btn.active{border-color:var(--accent);color:var(--accent)}
-#v-d .keypad .key{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:0;font-family:'Iowan Old Style','Georgia',serif}
-#v-d .chip{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
-#v-d .order-summary{background:transparent;border:1px solid var(--border);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .keypad .key{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:0;font-family:'Fraunces',Georgia,serif}
+#v-d .chip{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
+#v-d .order-summary{background:transparent;border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .receipt{background:transparent;border:1px solid var(--border);border-radius:0}
-#v-d .receipt-line{color:var(--muted);font-family:'Inter',sans-serif}
-#v-d .receipt-actions button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'Inter',sans-serif}
+#v-d .receipt-line{color:var(--muted);font-family:'IBM Plex Sans',sans-serif}
+#v-d .receipt-actions button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .receipt-actions button.primary{background:var(--accent);color:var(--primary-text);border-color:var(--accent)}
 
 /* ============================= E. BOLD NEO-BRUTALIST ============================= */
-#v-e{
-  --bg:#0a0a0a; --surface:#fff200; --surface2:#111111; --text:#f5f5f5; --ink:#0a0a0a; --muted:#999;
-  --primary:#ff2d55; --primary-text:#fff; --accent:#00e5ff; --danger:#ff2d55;
-  --border:#000; --radius:0px; --shadow:6px 6px 0 #000;
-  background:var(--bg);color:var(--text);font-family:'Arial Black','Helvetica Neue',sans-serif;
-}
+#v-e{--bg:#0a0a0a;--surface:#fff200;--surface2:#111111;--text:#f5f5f5;--muted:#999;--primary:#ff2d55;--primary-text:#fff;--accent:#00e5ff;--danger:#ff2d55;--border:#000;--radius:0px;--shadow:6px 6px 0 #000;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif}
 #v-e .v-toolbar{background:#000;border-bottom:3px solid var(--surface)}
-#v-e .screen-tab{color:var(--muted);border-radius:0;font-family:'Arial Black',sans-serif;text-transform:uppercase;font-size:12px;border:2px solid transparent}
-#v-e .screen-tab.active{background:var(--surface);color:var(--ink);border:2px solid #000}
-#v-e .h1{text-transform:uppercase;font-weight:900;letter-spacing:-0.02em}
-#v-e .alert-strip{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow);font-weight:800;text-transform:uppercase;font-size:12.5px}
-#v-e .home-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-#v-e .tile{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow);min-height:130px}
-#v-e .tile.tile-primary{background:var(--primary);border-color:#000;color:#fff}
-#v-e .tile-label{text-transform:uppercase;font-weight:900}
-#v-e .tile-meta{color:var(--surface)}
+#v-e .v-toolbar-title{font-family:'Archivo Black',sans-serif}
+#v-e .screen-tab{color:var(--muted);border-radius:0;font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:11px;border:2px solid transparent}
+#v-e .screen-tab.active{background:var(--surface);color:#0a0a0a;border:2px solid #000}
+#v-e .h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-weight:400;letter-spacing:-0.01em}
+#v-e .alert-strip{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow);font-weight:700;text-transform:uppercase;font-size:12px;font-family:'Space Grotesk',sans-serif}
+#v-e .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:112px}
+#v-e .tile{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow)}
+#v-e .tile:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
+#v-e .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:var(--primary);border-color:#000;color:#fff}
+#v-e .tile-label{text-transform:uppercase;font-weight:700;font-family:'Space Grotesk',sans-serif}
+#v-e .tile-meta{color:var(--surface);font-weight:600}
+#v-e .tile.tile-primary .tile-meta{color:#fff}
 #v-e .search-input{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:700}
-#v-e .scan-btn{background:var(--accent);color:#000;border:3px solid #000;border-radius:0;font-weight:900;text-transform:uppercase}
+#v-e .scan-btn{background:var(--accent);color:#000;border:3px solid #000;border-radius:0;font-weight:700;text-transform:uppercase}
 #v-e .product-card{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow)}
-#v-e .product-name{text-transform:uppercase;font-weight:800}
-#v-e .product-price{color:var(--surface);font-weight:900}
+#v-e .product-card:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
+#v-e .product-name{text-transform:uppercase;font-weight:700}
+#v-e .product-price{color:var(--surface);font-weight:700}
 #v-e .product-stock{color:var(--muted)}
 #v-e .cart-panel{background:#fff;color:#000;border:3px solid #000;border-radius:0;box-shadow:var(--shadow)}
 #v-e .cart-item{border-bottom:2px dashed #000}
 #v-e .cart-item-unit{color:#666}
 #v-e .qty-btn{background:#000;color:#fff;border-radius:0}
 #v-e .cart-totals{color:#000;border-top:3px solid #000}
-#v-e .cart-totals .row.total{color:var(--primary);font-weight:900}
-#v-e .btn-primary-lg{background:var(--primary);color:#fff;border-radius:0;border:3px solid #000;box-shadow:var(--shadow);text-transform:uppercase;font-weight:900}
+#v-e .cart-totals .row.total{color:var(--primary);font-weight:700}
+#v-e .btn-primary-lg{background:var(--primary);color:#fff;border-radius:0;border:3px solid #000;box-shadow:var(--shadow);text-transform:uppercase;font-weight:700}
+#v-e .btn-primary-lg:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
 #v-e .tender-btn{background:var(--surface2);border:3px solid var(--surface);color:#fff;border-radius:0;text-transform:uppercase}
-#v-e .tender-btn.active{background:var(--accent);color:#000;border-color:#000}
-#v-e .keypad .key{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:900}
-#v-e .chip{background:var(--surface);color:#000;border:2px solid #000;border-radius:0;font-weight:800}
+#v-e .tender-btn.active{background:var(--accent);color:#000;border-color:#000;--trail-c:var(--primary)}
+#v-e .keypad .key{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:700}
+#v-e .keypad .key:active{transform:translate(3px,3px)}
+#v-e .chip{background:var(--surface);color:#000;border:2px solid #000;border-radius:0;font-weight:700}
 #v-e .order-summary{background:var(--surface2);border:3px solid var(--surface);color:#fff}
-#v-e .receipt{background:#fff;color:#000;border:3px solid #000;box-shadow:var(--shadow);position:relative}
-#v-e .receipt::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:14px;background:
-  repeating-linear-gradient(115deg,#0a0a0a 0 8px,transparent 8px 16px);}
+#v-e .order-summary .cart-totals{color:#ccc;border-top:3px solid var(--surface)}
+#v-e .order-summary .cart-totals .row.total{color:var(--surface)}
+#v-e .receipt{background:#fff;color:#000;border:3px solid #000;box-shadow:var(--shadow)}
+#v-e .receipt::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:14px;background:repeating-linear-gradient(115deg,#0a0a0a 0 8px,transparent 8px 16px)}
 #v-e .receipt-line{color:#333;font-weight:600}
-#v-e .receipt-actions button{background:#000;color:#fff;border-radius:0;text-transform:uppercase;font-weight:800}
+#v-e .receipt-actions button{background:#000;color:#fff;border-radius:0;text-transform:uppercase;font-weight:700}
 #v-e .receipt-actions button.primary{background:var(--primary)}
 
 /* ============================= SKETCH TOOLBAR ============================= */
-#sketch-tools{
-  position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;
-  background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:.5;
-  transition:opacity .2s;display:flex;gap:10px;align-items:center;
-}
+#sketch-tools{position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:.5;transition:opacity .2s;display:flex;gap:10px;align-items:center}
 #sketch-tools:hover{opacity:1}
-#sketch-tools select,#sketch-tools button{background:#222;color:#fff;border:1px solid #444;border-radius:5px;padding:3px 6px;font-size:11px}
+#sketch-tools button{background:#222;color:#fff;border:1px solid #444;border-radius:5px;padding:3px 8px;font-size:11px}
 </style>
 </head>
 <body>
@@ -356,9 +329,9 @@ img,svg{display:block}
 </div>
 
 <!-- ================================================================== -->
-<!-- VARIANT A — TACTILE BIG-TOUCH RETAIL                                 -->
+<!-- VARIANT A — TACTILE BIG-TOUCH RETAIL -->
 <!-- ================================================================== -->
-<section class="variant" id="v-a" data-variant="a">
+<section class="variant grain" id="v-a" data-variant="a">
   <header class="v-toolbar">
     <div class="v-toolbar-title">A · Tactile Big-Touch Retail</div>
     <nav class="screen-tabs">
@@ -373,16 +346,16 @@ img,svg{display:block}
     <p class="eyebrow">Buenos días, Maria</p>
     <h1 class="h1">Tienda Kishan Imports</h1>
     <p class="sub">Caja abierta · Turno desde 8:00 AM</p>
-    <div class="alert-strip">⚠ 4 productos por vencer en 14 días — revisar Inventario</div>
-    <div class="home-grid">
-      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">POS · Venta</div><div class="tile-meta">Iniciar cobro</div></div>
-      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">Inventario</div><div class="tile-meta">318 productos</div></div>
-      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">Proveedores</div><div class="tile-meta">2 envíos pendientes</div></div>
-      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">Personal</div><div class="tile-meta">5 activos hoy</div></div>
-      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">Reportes</div><div class="tile-meta">Ventas del día</div></div>
-      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">Pagos</div><div class="tile-meta">Historial</div></div>
-      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 en caja</div></div>
-      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">Configuración</div><div class="tile-meta">Recibos, hardware</div></div>
+    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 productos por vencer en 14 días — revisar Inventario</div>
+    <div class="home-grid stagger">
+      <div class="tile tile-primary magnetic" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">POS · Venta</div><div class="tile-meta">Iniciar cobro</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">Inventario</div><div class="tile-meta">318 productos</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">Proveedores</div><div class="tile-meta">2 envíos pendientes</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">Personal</div><div class="tile-meta">5 activos hoy</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">Reportes</div><div class="tile-meta">Ventas del día</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">Pagos</div><div class="tile-meta">Historial</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 en caja</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">Configuración</div><div class="tile-meta">Recibos, hardware</div></div>
     </div>
   </div>
 
@@ -391,89 +364,26 @@ img,svg{display:block}
       <div>
         <div class="search-row">
           <input class="search-input" placeholder="Buscar o escanear producto…">
-          <button class="scan-btn">📷 Escanear</button>
+          <button class="scan-btn"><i data-lucide="scan-line" class="ic"></i>Escanear</button>
         </div>
-        <div class="product-grid">
-          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH Garam Masala</div><div class="product-price">$3.10</div><div class="product-stock">55 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">Britannia Marie</div><div class="product-price">$1.75</div><div class="product-stock">80 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">Haldiram Namkeen</div><div class="product-price">$2.90</div><div class="product-stock">27 en stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 en stock</div></div>
-        </div>
+        <div class="product-grid stagger" id="a-products"></div>
       </div>
-      <aside class="cart-panel">
-        <div class="cart-title"><span>Carrito · 3 productos</span><span>✕</span></div>
-        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
-        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
-        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 c/u</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
-          <div class="row"><span>Impuesto (8%)</span><span class="tax-val">$2.12</span></div>
-          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg" data-goto="payment">Cobrar $28.62</button>
-      </aside>
+      <aside class="cart-panel" id="a-cart"></aside>
     </div>
   </div>
 
   <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
     <h1 class="h1">Cobrar $28.62</h1>
-    <div class="payment-layout">
-      <div>
-        <div class="tender-grid">
-          <button class="tender-btn active"><span class="tender-icon">💵</span>Efectivo</button>
-          <button class="tender-btn"><span class="tender-icon">💳</span>Tarjeta</button>
-          <button class="tender-btn"><span class="tender-icon">➗</span>Dividir</button>
-        </div>
-        <div class="quick-cash">
-          <button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exacto</button>
-        </div>
-        <div class="keypad">
-          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
-        </div>
-      </div>
-      <div class="order-summary">
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Impuesto</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Completar Venta</button>
-      </div>
-    </div>
+    <div class="payment-layout" id="a-payment"></div>
   </div>
 
   <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap">
-      <div class="receipt">
-        <div style="text-align:center"><div style="font-size:32px">✅</div><h1 class="h1" style="font-size:20px">Venta Completa</h1><p class="sub">Ticket #4821 · Hoy, 2:14 PM</p></div>
-        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
-        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
-        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Impuesto</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <p class="sub" style="margin:4px 0 0">Pagado en efectivo · Cambio $1.38</p>
-        <div class="receipt-actions">
-          <button>🖨 Imprimir</button>
-          <button>✉ Email</button>
-          <button class="primary" data-goto="home">Nueva Venta</button>
-        </div>
-      </div>
-    </div>
+    <div class="receipt-wrap" id="a-receipt"></div>
   </div>
 </section>
 
 <!-- ================================================================== -->
-<!-- VARIANT B — DATA-DENSE PRO TERMINAL                                   -->
+<!-- VARIANT B — DATA-DENSE PRO TERMINAL -->
 <!-- ================================================================== -->
 <section class="variant" id="v-b" data-variant="b" style="display:none">
   <header class="v-toolbar">
@@ -488,18 +398,18 @@ img,svg{display:block}
 
   <div class="screen screen-home" data-screen-panel="home">
     <p class="eyebrow">session: maria.g · terminal-01</p>
-    <h1 class="h1" style="font-size:20px">kishan-imports // pos</h1>
+    <h1 class="h1" style="font-size:20px;font-family:'IBM Plex Mono',monospace">kishan-imports // pos</h1>
     <p class="sub">caja: open · $1,240.50 · uptime 6h12m</p>
-    <div class="alert-strip">⚠ 4 sku expiring ≤14d — see inventory.alerts</div>
-    <div class="home-grid">
-      <div class="tile" data-goto="pos"><div><div class="tile-label">▸ pos / checkout</div><div class="tile-meta">start a new sale</div></div><div class="tile-key">F1</div></div>
-      <div class="tile"><div><div class="tile-label">▸ inventory</div><div class="tile-meta">318 sku · 6 below reorder pt.</div></div><div class="tile-key">F2</div></div>
-      <div class="tile"><div><div class="tile-label">▸ suppliers</div><div class="tile-meta">2 shipments pending receive</div></div><div class="tile-key">F3</div></div>
-      <div class="tile"><div><div class="tile-label">▸ staff</div><div class="tile-meta">5 clocked in</div></div><div class="tile-key">F4</div></div>
-      <div class="tile"><div><div class="tile-label">▸ reports</div><div class="tile-meta">today: $2,481.30 / 61 sales</div></div><div class="tile-key">F5</div></div>
-      <div class="tile"><div><div class="tile-label">▸ payments</div><div class="tile-meta">history + refunds</div></div><div class="tile-key">F6</div></div>
-      <div class="tile"><div><div class="tile-label">▸ caja</div><div class="tile-meta">open since 08:00</div></div><div class="tile-key">F7</div></div>
-      <div class="tile"><div><div class="tile-label">▸ settings</div><div class="tile-meta">receipt, hardware, locale</div></div><div class="tile-key">F8</div></div>
+    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 sku expiring ≤14d — see inventory.alerts</div>
+    <div class="home-grid stagger">
+      <div class="tile tile-primary" data-goto="pos"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="shopping-cart" class="ic"></i><div><div class="tile-label">pos / checkout</div><div class="tile-meta">start a new sale</div></div></div><div class="tile-key">F1</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="package" class="ic"></i><div><div class="tile-label">inventory</div><div class="tile-meta">318 sku · 6 below reorder pt.</div></div></div><div class="tile-key">F2</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="truck" class="ic"></i><div><div class="tile-label">suppliers</div><div class="tile-meta">2 shipments pending receive</div></div></div><div class="tile-key">F3</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="users" class="ic"></i><div><div class="tile-label">staff</div><div class="tile-meta">5 clocked in</div></div></div><div class="tile-key">F4</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="bar-chart-3" class="ic"></i><div><div class="tile-label">reports</div><div class="tile-meta">today: $2,481.30 / 61 sales</div></div></div><div class="tile-key">F5</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="credit-card" class="ic"></i><div><div class="tile-label">payments</div><div class="tile-meta">history + refunds</div></div></div><div class="tile-key">F6</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="banknote" class="ic"></i><div><div class="tile-label">caja</div><div class="tile-meta">open since 08:00</div></div></div><div class="tile-key">F7</div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" class="ic"></i><div><div class="tile-label">settings</div><div class="tile-meta">receipt, hardware, locale</div></div></div><div class="tile-key">F8</div></div>
     </div>
   </div>
 
@@ -510,88 +420,27 @@ img,svg{display:block}
           <input class="search-input" placeholder="scan barcode / search sku or name…">
           <button class="scan-btn">[F9] scan</button>
         </div>
-        <table class="product-table">
+        <table class="product-table stagger">
           <thead><tr><th>sku</th><th>name</th><th>price</th><th>stock</th></tr></thead>
-          <tbody>
-            <tr><td>8901030</td><td>Tata Salt 1kg</td><td class="price">$2.50</td><td>42</td></tr>
-            <tr><td>8901234</td><td>Basmati Rice 5kg</td><td class="price">$12.00</td><td class="stock-low">18</td></tr>
-            <tr><td>8901555</td><td>Toor Dal 1kg</td><td class="price">$4.25</td><td>30</td></tr>
-            <tr><td>8901777</td><td>MDH Garam Masala 100g</td><td class="price">$3.10</td><td>55</td></tr>
-            <tr><td>8901999</td><td>Amul Ghee 500ml</td><td class="price">$9.50</td><td class="stock-low">12</td></tr>
-            <tr><td>8902111</td><td>Britannia Marie Biscuits</td><td class="price">$1.75</td><td>80</td></tr>
-            <tr><td>8902222</td><td>Haldiram Namkeen 200g</td><td class="price">$2.90</td><td>27</td></tr>
-            <tr><td>8902333</td><td>Red Label Tea 250g</td><td class="price">$3.40</td><td>33</td></tr>
-          </tbody>
+          <tbody id="b-products"></tbody>
         </table>
       </div>
-      <aside class="cart-panel">
-        <div class="cart-title"><span>cart[3]</span><span>clear</span></div>
-        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
-        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
-        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50/ea</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
-        <div class="cart-totals">
-          <div class="row"><span>subtotal</span><span class="subtotal-val">$26.50</span></div>
-          <div class="row"><span>tax(8%)</span><span class="tax-val">$2.12</span></div>
-          <div class="row total"><span>total</span><span class="total-val">$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg" data-goto="payment">[F12] charge $28.62</button>
-      </aside>
+      <aside class="cart-panel" id="b-cart"></aside>
     </div>
   </div>
 
   <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1" style="font-size:18px">charge $28.62</h1>
-    <div class="payment-layout">
-      <div>
-        <div class="tender-grid">
-          <button class="tender-btn active">cash [F1]</button>
-          <button class="tender-btn">card [F2]</button>
-          <button class="tender-btn">split [F3]</button>
-        </div>
-        <div class="quick-cash"><button class="chip">$30.00</button><button class="chip">$40.00</button><button class="chip">$50.00</button><button class="chip">exact</button></div>
-        <div class="keypad">
-          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-          <button class="key">.</button><button class="key">0</button><button class="key">del</button>
-        </div>
-      </div>
-      <div class="order-summary">
-        <div class="cart-totals">
-          <div class="row"><span>subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>tax</span><span>$2.12</span></div>
-          <div class="row total"><span>total</span><span>$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">complete_sale()</button>
-      </div>
-    </div>
+    <h1 class="h1" style="font-size:18px;font-family:'IBM Plex Mono',monospace">charge $28.62</h1>
+    <div class="payment-layout" id="b-payment"></div>
   </div>
 
   <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap">
-      <div class="receipt">
-        <div><div class="eyebrow" style="color:var(--primary)">✓ sale complete</div><h1 class="h1" style="font-size:17px">ticket #4821</h1><p class="sub">2026-09-04 14:14:02 · terminal-01</p></div>
-        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
-        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
-        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
-        <div class="cart-totals">
-          <div class="row"><span>subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>tax</span><span>$2.12</span></div>
-          <div class="row total"><span>total</span><span>$28.62</span></div>
-        </div>
-        <p class="sub">tender: cash · change: $1.38</p>
-        <div class="receipt-actions">
-          <button>print</button>
-          <button>email</button>
-          <button class="primary" data-goto="home">new_sale()</button>
-        </div>
-      </div>
-    </div>
+    <div class="receipt-wrap" id="b-receipt"></div>
   </div>
 </section>
 
 <!-- ================================================================== -->
-<!-- VARIANT C — CARD-BASED MODERN SAAS                                    -->
+<!-- VARIANT C — CARD-BASED MODERN SAAS -->
 <!-- ================================================================== -->
 <section class="variant" id="v-c" data-variant="c" style="display:none">
   <header class="v-toolbar">
@@ -608,16 +457,16 @@ img,svg{display:block}
     <p class="eyebrow">Good afternoon</p>
     <h1 class="h1">Hi Maria 👋</h1>
     <p class="sub">Kishan Imports · Caja open since 8:00 AM</p>
-    <div class="alert-strip">4 items expiring within 14 days · Review inventory</div>
-    <div class="home-grid">
-      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">New Sale</div><div class="tile-meta">Start checkout</div></div>
-      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">Inventory</div><div class="tile-meta">318 products tracked</div></div>
-      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
-      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in today</div></div>
-      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
-      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">Payments</div><div class="tile-meta">History & refunds</div></div>
-      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 balance</div></div>
-      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">Settings</div><div class="tile-meta">Receipts & hardware</div></div>
+    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 items expiring within 14 days · Review inventory</div>
+    <div class="home-grid stagger">
+      <div class="tile tile-primary spotlight tilt" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">New Sale</div><div class="tile-meta">Start checkout</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">Inventory</div><div class="tile-meta">318 products tracked</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in today</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 balance</div></div>
+      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">Settings</div><div class="tile-meta">Receipts &amp; hardware</div></div>
     </div>
   </div>
 
@@ -626,88 +475,27 @@ img,svg{display:block}
       <div>
         <div class="search-row">
           <input class="search-input" placeholder="Search products or scan a barcode">
-          <button class="scan-btn">Scan</button>
+          <button class="scan-btn"><i data-lucide="scan-line" class="ic"></i>Scan</button>
         </div>
-        <div class="product-grid">
-          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH Garam Masala</div><div class="product-price">$3.10</div><div class="product-stock">55 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">Britannia Marie</div><div class="product-price">$1.75</div><div class="product-stock">80 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">Haldiram Namkeen</div><div class="product-price">$2.90</div><div class="product-stock">27 in stock</div></div>
-          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 in stock</div></div>
-        </div>
+        <div class="product-grid stagger" id="c-products"></div>
       </div>
-      <aside class="cart-panel">
-        <div class="cart-title"><span>Order · 3 items</span><span>Clear</span></div>
-        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
-        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
-        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
-          <div class="row"><span>Tax (8%)</span><span class="tax-val">$2.12</span></div>
-          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg" data-goto="payment">Continue to Payment</button>
-      </aside>
+      <aside class="cart-panel" id="c-cart"></aside>
     </div>
   </div>
 
   <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
     <h1 class="h1">Take Payment</h1>
     <p class="sub">Total due $28.62</p>
-    <div class="payment-layout">
-      <div>
-        <div class="tender-grid">
-          <button class="tender-btn active"><span class="tender-icon">💵</span>Cash</button>
-          <button class="tender-btn"><span class="tender-icon">💳</span>Card</button>
-          <button class="tender-btn"><span class="tender-icon">➗</span>Split</button>
-        </div>
-        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exact</button></div>
-        <div class="keypad">
-          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
-        </div>
-      </div>
-      <div class="order-summary">
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Tax</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Confirm Payment</button>
-      </div>
-    </div>
+    <div class="payment-layout" id="c-payment"></div>
   </div>
 
   <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap">
-      <div class="receipt">
-        <div style="text-align:center"><div style="font-size:32px">🎉</div><h1 class="h1" style="font-size:20px">Payment Successful</h1><p class="sub">Order #4821 · Today, 2:14 PM</p></div>
-        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
-        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
-        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Tax</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <p class="sub">Paid by cash · Change $1.38</p>
-        <div class="receipt-actions">
-          <button>Print</button>
-          <button>Email</button>
-          <button class="primary" data-goto="home">New Sale</button>
-        </div>
-      </div>
-    </div>
+    <div class="receipt-wrap" id="c-receipt"></div>
   </div>
 </section>
 
 <!-- ================================================================== -->
-<!-- VARIANT D — MINIMAL / EDITORIAL                                       -->
+<!-- VARIANT D — MINIMAL / EDITORIAL -->
 <!-- ================================================================== -->
 <section class="variant" id="v-d" data-variant="d" style="display:none">
   <header class="v-toolbar">
@@ -725,15 +513,15 @@ img,svg{display:block}
     <h1 class="h1">Good afternoon, Maria.</h1>
     <p class="sub">Caja open since 8:00 AM — five staff on shift.</p>
     <div class="alert-strip">Four items expire within fourteen days.</div>
-    <div class="home-grid">
-      <div class="tile" data-goto="pos"><div class="tile-label">New sale</div><div class="tile-meta">Begin checkout</div></div>
-      <div class="tile"><div class="tile-label">Inventory</div><div class="tile-meta">318 products</div></div>
-      <div class="tile"><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
-      <div class="tile"><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in</div></div>
-      <div class="tile"><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
-      <div class="tile"><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div>
-      <div class="tile"><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 in drawer</div></div>
-      <div class="tile"><div class="tile-label">Settings</div><div class="tile-meta">Receipts, hardware</div></div>
+    <div class="home-grid stagger">
+      <div class="tile" data-goto="pos"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="shopping-cart" class="ic tile-icon"></i><div><div class="tile-label">New sale</div><div class="tile-meta">Begin checkout</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="package" class="ic tile-icon"></i><div><div class="tile-label">Inventory</div><div class="tile-meta">318 products</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="truck" class="ic tile-icon"></i><div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="users" class="ic tile-icon"></i><div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="bar-chart-3" class="ic tile-icon"></i><div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="credit-card" class="ic tile-icon"></i><div><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="banknote" class="ic tile-icon"></i><div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 in drawer</div></div></div></div>
+      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="settings" class="ic tile-icon"></i><div><div class="tile-label">Settings</div><div class="tile-meta">Receipts, hardware</div></div></div></div>
     </div>
   </div>
 
@@ -744,87 +532,26 @@ img,svg{display:block}
           <input class="search-input" placeholder="Search or scan a product">
           <button class="scan-btn">Scan</button>
         </div>
-        <div class="product-grid">
-          <div class="product-card"><div class="product-name">Tata Salt 1kg</div><div class="product-price">$2.50</div><div class="product-stock">42 in stock</div></div>
-          <div class="product-card"><div class="product-name">Basmati Rice 5kg</div><div class="product-price">$12.00</div><div class="product-stock">18 in stock</div></div>
-          <div class="product-card"><div class="product-name">Toor Dal 1kg</div><div class="product-price">$4.25</div><div class="product-stock">30 in stock</div></div>
-          <div class="product-card"><div class="product-name">MDH Garam Masala 100g</div><div class="product-price">$3.10</div><div class="product-stock">55 in stock</div></div>
-          <div class="product-card"><div class="product-name">Amul Ghee 500ml</div><div class="product-price">$9.50</div><div class="product-stock">12 in stock</div></div>
-          <div class="product-card"><div class="product-name">Britannia Marie Biscuits</div><div class="product-price">$1.75</div><div class="product-stock">80 in stock</div></div>
-          <div class="product-card"><div class="product-name">Haldiram Namkeen 200g</div><div class="product-price">$2.90</div><div class="product-stock">27 in stock</div></div>
-          <div class="product-card"><div class="product-name">Red Label Tea 250g</div><div class="product-price">$3.40</div><div class="product-stock">33 in stock</div></div>
-        </div>
+        <div class="product-grid stagger" id="d-products"></div>
       </div>
-      <aside class="cart-panel">
-        <div class="cart-title"><span>Order — 3 items</span><span>Clear</span></div>
-        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">Tata Salt 1kg</div><div class="cart-item-unit">$2.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
-        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">Basmati Rice 5kg</div><div class="cart-item-unit">$12.00 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
-        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">Amul Ghee 500ml</div><div class="cart-item-unit">$9.50 each</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span class="subtotal-val">$26.50</span></div>
-          <div class="row"><span>Tax</span><span class="tax-val">$2.12</span></div>
-          <div class="row total"><span>Total</span><span class="total-val">$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg" data-goto="payment">Continue</button>
-      </aside>
+      <aside class="cart-panel" id="d-cart"></aside>
     </div>
   </div>
 
   <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
     <h1 class="h1">$28.62 due</h1>
-    <div class="payment-layout">
-      <div>
-        <div class="tender-grid">
-          <button class="tender-btn active">Cash</button>
-          <button class="tender-btn">Card</button>
-          <button class="tender-btn">Split</button>
-        </div>
-        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">Exact</button></div>
-        <div class="keypad">
-          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
-        </div>
-      </div>
-      <div class="order-summary">
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Tax</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">Confirm payment</button>
-      </div>
-    </div>
+    <div class="payment-layout" id="d-payment"></div>
   </div>
 
   <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap">
-      <div class="receipt">
-        <div style="text-align:center"><h1 class="h1" style="font-size:22px">Thank you.</h1><p class="sub">Ticket No. 4821 — Today, 2:14 PM</p></div>
-        <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
-        <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
-        <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><span>$26.50</span></div>
-          <div class="row"><span>Tax</span><span>$2.12</span></div>
-          <div class="row total"><span>Total</span><span>$28.62</span></div>
-        </div>
-        <p class="sub">Paid in cash — change $1.38</p>
-        <div class="receipt-actions">
-          <button>Print</button>
-          <button>Email</button>
-          <button class="primary" data-goto="home">New sale</button>
-        </div>
-      </div>
-    </div>
+    <div class="receipt-wrap" id="d-receipt"></div>
   </div>
 </section>
 
 <!-- ================================================================== -->
-<!-- VARIANT E — BOLD NEO-BRUTALIST                                        -->
+<!-- VARIANT E — BOLD NEO-BRUTALIST -->
 <!-- ================================================================== -->
-<section class="variant" id="v-e" data-variant="e" style="display:none">
+<section class="variant grain" id="v-e" data-variant="e" style="display:none">
   <header class="v-toolbar">
     <div class="v-toolbar-title">E · Bold Neo-Brutalist</div>
     <nav class="screen-tabs">
@@ -839,16 +566,16 @@ img,svg{display:block}
     <p class="eyebrow" style="color:var(--surface)">KISHAN IMPORTS</p>
     <h1 class="h1">HEY MARIA</h1>
     <p class="sub" style="color:#ccc">CAJA OPEN · 8:00 AM · 5 STAFF ON SHIFT</p>
-    <div class="alert-strip">⚠ 4 ITEMS EXPIRE IN 14 DAYS — CHECK INVENTORY</div>
-    <div class="home-grid">
-      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon">🛒</div><div class="tile-label">NEW SALE</div><div class="tile-meta">START CHECKOUT</div></div>
-      <div class="tile"><div class="tile-icon">📦</div><div class="tile-label">INVENTORY</div><div class="tile-meta">318 PRODUCTS</div></div>
-      <div class="tile"><div class="tile-icon">🚚</div><div class="tile-label">SUPPLIERS</div><div class="tile-meta">2 PENDING</div></div>
-      <div class="tile"><div class="tile-icon">👥</div><div class="tile-label">STAFF</div><div class="tile-meta">5 CLOCKED IN</div></div>
-      <div class="tile"><div class="tile-icon">📊</div><div class="tile-label">REPORTS</div><div class="tile-meta">$2,481.30 TODAY</div></div>
-      <div class="tile"><div class="tile-icon">💳</div><div class="tile-label">PAYMENTS</div><div class="tile-meta">HISTORY</div></div>
-      <div class="tile"><div class="tile-icon">🧾</div><div class="tile-label">CAJA</div><div class="tile-meta">$1,240.50</div></div>
-      <div class="tile"><div class="tile-icon">⚙️</div><div class="tile-label">SETTINGS</div><div class="tile-meta">HARDWARE</div></div>
+    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 ITEMS EXPIRE IN 14 DAYS — CHECK INVENTORY</div>
+    <div class="home-grid stagger">
+      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">NEW SALE</div><div class="tile-meta">START CHECKOUT</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">INVENTORY</div><div class="tile-meta">318 PRODUCTS</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">SUPPLIERS</div><div class="tile-meta">2 PENDING</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">STAFF</div><div class="tile-meta">5 CLOCKED IN</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">REPORTS</div><div class="tile-meta">$2,481.30</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">PAYMENTS</div><div class="tile-meta">HISTORY</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">CAJA</div><div class="tile-meta">$1,240.50</div></div>
+      <div class="tile"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">SETTINGS</div><div class="tile-meta">HARDWARE</div></div>
     </div>
   </div>
 
@@ -859,112 +586,192 @@ img,svg{display:block}
           <input class="search-input" placeholder="SEARCH OR SCAN…">
           <button class="scan-btn">SCAN</button>
         </div>
-        <div class="product-grid">
-          <div class="product-card"><div class="product-emoji">🧂</div><div class="product-name">TATA SALT 1KG</div><div class="product-price">$2.50</div><div class="product-stock">42 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🍚</div><div class="product-name">BASMATI RICE 5KG</div><div class="product-price">$12.00</div><div class="product-stock">18 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🫘</div><div class="product-name">TOOR DAL 1KG</div><div class="product-price">$4.25</div><div class="product-stock">30 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🌶️</div><div class="product-name">MDH GARAM MASALA</div><div class="product-price">$3.10</div><div class="product-stock">55 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🧈</div><div class="product-name">AMUL GHEE 500ML</div><div class="product-price">$9.50</div><div class="product-stock">12 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🍪</div><div class="product-name">BRITANNIA MARIE</div><div class="product-price">$1.75</div><div class="product-stock">80 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🥨</div><div class="product-name">HALDIRAM NAMKEEN</div><div class="product-price">$2.90</div><div class="product-stock">27 LEFT</div></div>
-          <div class="product-card"><div class="product-emoji">🍵</div><div class="product-name">RED LABEL TEA</div><div class="product-price">$3.40</div><div class="product-stock">33 LEFT</div></div>
-        </div>
+        <div class="product-grid stagger" id="e-products"></div>
       </div>
-      <aside class="cart-panel">
-        <div class="cart-title"><span>CART · 3</span><span>CLEAR</span></div>
-        <div class="cart-item" data-price="2.50"><div><div class="cart-item-name">TATA SALT 1KG</div><div class="cart-item-unit">$2.50 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">2</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$5.00</div></div>
-        <div class="cart-item" data-price="12.00"><div><div class="cart-item-name">BASMATI RICE 5KG</div><div class="cart-item-unit">$12.00 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$12.00</div></div>
-        <div class="cart-item" data-price="9.50"><div><div class="cart-item-name">AMUL GHEE 500ML</div><div class="cart-item-unit">$9.50 EA</div></div><div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">1</span><button class="qty-btn qty-inc">+</button></div><div class="line-total">$9.50</div></div>
-        <div class="cart-totals">
-          <div class="row"><span>SUBTOTAL</span><span class="subtotal-val">$26.50</span></div>
-          <div class="row"><span>TAX (8%)</span><span class="tax-val">$2.12</span></div>
-          <div class="row total"><span>TOTAL</span><span class="total-val">$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg" data-goto="payment">CHARGE $28.62</button>
-      </aside>
+      <aside class="cart-panel" id="e-cart"></aside>
     </div>
   </div>
 
   <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
     <h1 class="h1">CHARGE $28.62</h1>
-    <div class="payment-layout">
-      <div>
-        <div class="tender-grid">
-          <button class="tender-btn active">CASH</button>
-          <button class="tender-btn">CARD</button>
-          <button class="tender-btn">SPLIT</button>
-        </div>
-        <div class="quick-cash"><button class="chip">$30</button><button class="chip">$40</button><button class="chip">$50</button><button class="chip">EXACT</button></div>
-        <div class="keypad">
-          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-          <button class="key">.</button><button class="key">0</button><button class="key">⌫</button>
-        </div>
-      </div>
-      <div class="order-summary">
-        <div class="cart-totals">
-          <div class="row"><span>SUBTOTAL</span><span>$26.50</span></div>
-          <div class="row"><span>TAX</span><span>$2.12</span></div>
-          <div class="row total"><span>TOTAL</span><span>$28.62</span></div>
-        </div>
-        <button class="btn-primary-lg btn-complete-sale" style="margin-top:16px">COMPLETE SALE</button>
-      </div>
-    </div>
+    <div class="payment-layout" id="e-payment"></div>
   </div>
 
   <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap">
-      <div class="receipt">
-        <div style="text-align:center;padding-top:10px"><h1 class="h1" style="font-size:20px">SALE COMPLETE</h1><p class="sub" style="color:#555">TICKET #4821 — TODAY 2:14 PM</p></div>
-        <div class="receipt-line"><span>TATA SALT 1KG ×2</span><span>$5.00</span></div>
-        <div class="receipt-line"><span>BASMATI RICE 5KG ×1</span><span>$12.00</span></div>
-        <div class="receipt-line"><span>AMUL GHEE 500ML ×1</span><span>$9.50</span></div>
-        <div class="cart-totals">
-          <div class="row"><span>SUBTOTAL</span><span>$26.50</span></div>
-          <div class="row"><span>TAX</span><span>$2.12</span></div>
-          <div class="row total"><span>TOTAL</span><span>$28.62</span></div>
-        </div>
-        <p class="sub" style="color:#555">PAID CASH — CHANGE $1.38</p>
-        <div class="receipt-actions">
-          <button>PRINT</button>
-          <button>EMAIL</button>
-          <button class="primary" data-goto="home">NEW SALE</button>
-        </div>
-      </div>
-    </div>
+    <div class="receipt-wrap" id="e-receipt"></div>
   </div>
 </section>
 
 <div id="sketch-tools">
-  <span>Sketch 001</span>
-  <button onclick="alert('5 full-system directions — switch via the top bar. Pick a winner, we mark it and move to refinement rounds.')">?</button>
+  <span>Sketch 001 · v2</span>
+  <button onclick="alert('5 full-system directions, real icons (lucide), real type pairings, hand-built spotlight/tilt/magnetic/border-trail/sliding-number motion. Switch via top bar.')">?</button>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t=setTimeout(()=>t.classList.remove('show'),1600);
+/* ============================= SHARED DATA ============================= */
+const PRODUCTS = [
+  {sku:'8901030',name:'Tata Salt 1kg',price:2.50,stock:42,cat:'spice'},
+  {sku:'8901234',name:'Basmati Rice 5kg',price:12.00,stock:18,cat:'grain'},
+  {sku:'8901555',name:'Toor Dal 1kg',price:4.25,stock:30,cat:'grain'},
+  {sku:'8901777',name:'MDH Garam Masala 100g',price:3.10,stock:55,cat:'spice'},
+  {sku:'8901999',name:'Amul Ghee 500ml',price:9.50,stock:12,cat:'dairy'},
+  {sku:'8902111',name:'Britannia Marie Biscuits',price:1.75,stock:80,cat:'snack'},
+  {sku:'8902222',name:'Haldiram Namkeen 200g',price:2.90,stock:27,cat:'snack'},
+  {sku:'8902333',name:'Red Label Tea 250g',price:3.40,stock:33,cat:'beverage'},
+];
+const CAT_COLOR = {spice:'#f5a524',grain:'#2ecc71',dairy:'#4aa8ff',snack:'#ff5da2',beverage:'#a78bfa'};
+const CART = [
+  {sku:'8901030',name:'Tata Salt 1kg',price:2.50,qty:2},
+  {sku:'8901234',name:'Basmati Rice 5kg',price:12.00,qty:1},
+  {sku:'8901999',name:'Amul Ghee 500ml',price:9.50,qty:1},
+];
+
+function fmt(n){ return '$'+n.toFixed(2); }
+
+function productGridHTML(){
+  return PRODUCTS.map(p=>`
+    <div class="product-card spotlight" data-price="${p.price}" data-name="${p.name}">
+      <div style="display:flex;align-items:center;gap:7px"><span class="cat-dot" style="background:${CAT_COLOR[p.cat]}"></span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;opacity:.5">${p.cat}</span></div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-price">${fmt(p.price)}</div>
+      <div class="product-stock">${p.stock} in stock</div>
+    </div>`).join('');
+}
+function productTableHTML(){
+  return PRODUCTS.map(p=>`
+    <tr data-price="${p.price}" data-name="${p.name}">
+      <td>${p.sku}</td>
+      <td><span class="cat-dot" style="background:${CAT_COLOR[p.cat]};display:inline-block;margin-right:7px"></span>${p.name}</td>
+      <td class="price">${fmt(p.price)}</td>
+      <td class="${p.stock<15?'stock-low':''}">${p.stock}</td>
+    </tr>`).join('');
+}
+function cartHTML(labels){
+  const rows = CART.map(c=>`
+    <div class="cart-item" data-price="${c.price}">
+      <div><div class="cart-item-name">${c.name}</div><div class="cart-item-unit">${fmt(c.price)} ${labels.each}</div></div>
+      <div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">${c.qty}</span><button class="qty-btn qty-inc">+</button></div>
+      <div class="line-total">${fmt(c.price*c.qty)}</div>
+    </div>`).join('');
+  return `
+    <div class="cart-title"><span>${labels.title}</span><span class="cart-title-icons"><i data-lucide="trash-2" class="ic-sm"></i></span></div>
+    ${rows}
+    <div class="cart-totals">
+      <div class="row"><span>${labels.subtotal}</span><span class="val subtotal-val">$26.50</span></div>
+      <div class="row"><span>${labels.tax}</span><span class="val tax-val">$2.12</span></div>
+      <div class="row total"><span>${labels.total}</span><span class="val total-val">$28.62</span></div>
+    </div>
+    <button class="btn-primary-lg magnetic" data-goto="payment">${labels.cta}</button>`;
+}
+function paymentHTML(labels){
+  return `
+    <div>
+      <div class="tender-grid">
+        <button class="tender-btn active trail" style="--trail-c:currentColor"><i data-lucide="banknote" class="ic"></i>${labels.cash}</button>
+        <button class="tender-btn"><i data-lucide="credit-card" class="ic"></i>${labels.card}</button>
+        <button class="tender-btn"><i data-lucide="layers" class="ic"></i>${labels.split}</button>
+      </div>
+      <div class="quick-cash"><button class="chip">$30.00</button><button class="chip">$40.00</button><button class="chip">$50.00</button><button class="chip">${labels.exact}</button></div>
+      <div class="keypad">
+        <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+        <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+        <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+        <button class="key">.</button><button class="key">0</button><button class="key"><i data-lucide="delete" class="ic-sm"></i></button>
+      </div>
+    </div>
+    <div class="order-summary">
+      <div class="cart-totals">
+        <div class="row"><span>${labels.subtotal}</span><span class="val">$26.50</span></div>
+        <div class="row"><span>${labels.tax}</span><span class="val">$2.12</span></div>
+        <div class="row total"><span>${labels.total}</span><span class="val">$28.62</span></div>
+      </div>
+      <button class="btn-primary-lg btn-complete-sale magnetic" style="margin-top:16px"><i data-lucide="check-circle-2" class="ic"></i>${labels.confirm}</button>
+    </div>`;
+}
+function receiptHTML(labels){
+  return `
+    <div class="receipt">
+      <div style="text-align:center"><i data-lucide="check-circle-2" class="ic-lg" style="margin:0 auto 8px;color:${labels.checkColor}"></i><h1 class="h1" style="font-size:20px">${labels.heading}</h1><p class="sub">${labels.ticket}</p></div>
+      <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
+      <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
+      <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
+      <div class="cart-totals">
+        <div class="row"><span>${labels.subtotal}</span><span class="val">$26.50</span></div>
+        <div class="row"><span>${labels.tax}</span><span class="val">$2.12</span></div>
+        <div class="row total"><span>${labels.total}</span><span class="val">$28.62</span></div>
+      </div>
+      <p class="sub" style="margin:2px 0 0">${labels.paid}</p>
+      <div class="receipt-actions">
+        <button><i data-lucide="printer" class="ic-sm"></i>${labels.print}</button>
+        <button><i data-lucide="mail" class="ic-sm"></i>${labels.email}</button>
+        <button class="primary" data-goto="home"><i data-lucide="rotate-cw" class="ic-sm"></i>${labels.newSale}</button>
+      </div>
+    </div>`;
 }
 
-// Top-level variant switcher
-document.querySelectorAll('#variant-nav .variant-tab').forEach(tab=>{
-  tab.addEventListener('click', ()=>{
-    const target = tab.dataset.variantTarget;
-    document.querySelectorAll('#variant-nav .variant-tab').forEach(t=>t.classList.toggle('active', t===tab));
-    document.querySelectorAll('.variant').forEach(v=>{
-      v.style.display = (v.dataset.variant===target) ? '' : 'none';
-    });
-    window.scrollTo({top:0,behavior:'instant'});
-  });
-});
+/* Populate each variant's dynamic regions */
+document.getElementById('a-products').innerHTML = productGridHTML();
+document.getElementById('a-cart').innerHTML = cartHTML({title:'Carrito · 3 productos',each:'c/u',subtotal:'Subtotal',tax:'Impuesto (8%)',total:'Total',cta:'Cobrar $28.62'});
+document.getElementById('a-payment').innerHTML = paymentHTML({cash:'Efectivo',card:'Tarjeta',split:'Dividir',exact:'Exacto',subtotal:'Subtotal',tax:'Impuesto',total:'Total',confirm:'Completar Venta'});
+document.getElementById('a-receipt').innerHTML = receiptHTML({heading:'Venta Completa',ticket:'Ticket #4821 · Hoy, 2:14 PM',subtotal:'Subtotal',tax:'Impuesto',total:'Total',paid:'Pagado en efectivo · Cambio $1.38',print:'Imprimir',email:'Email',newSale:'Nueva Venta',checkColor:'var(--primary)'});
 
-function switchScreen(variant, screenName, tabEl){
-  variant.querySelectorAll('.screen-tab').forEach(t=>t.classList.toggle('active', t===tabEl || t.dataset.screen===screenName));
-  variant.querySelectorAll('.screen').forEach(s=>{ s.style.display = (s.dataset.screenPanel===screenName) ? '' : 'none'; });
+document.getElementById('b-products').innerHTML = productTableHTML();
+document.getElementById('b-cart').innerHTML = cartHTML({title:'cart[3]',each:'/ea',subtotal:'subtotal',tax:'tax(8%)',total:'total',cta:'[F12] charge $28.62'});
+document.getElementById('b-payment').innerHTML = paymentHTML({cash:'cash [F1]',card:'card [F2]',split:'split [F3]',exact:'exact',subtotal:'subtotal',tax:'tax',total:'total',confirm:'complete_sale()'});
+document.getElementById('b-receipt').innerHTML = receiptHTML({heading:'ticket #4821',ticket:'2026-09-04 14:14:02 · terminal-01',subtotal:'subtotal',tax:'tax',total:'total',paid:'tender: cash · change: $1.38',print:'print',email:'email',newSale:'new_sale()',checkColor:'var(--primary)'});
+
+document.getElementById('c-products').innerHTML = productGridHTML();
+document.getElementById('c-cart').innerHTML = cartHTML({title:'Order · 3 items',each:'each',subtotal:'Subtotal',tax:'Tax (8%)',total:'Total',cta:'Continue to Payment'});
+document.getElementById('c-payment').innerHTML = paymentHTML({cash:'Cash',card:'Card',split:'Split',exact:'Exact',subtotal:'Subtotal',tax:'Tax',total:'Total',confirm:'Confirm Payment'});
+document.getElementById('c-receipt').innerHTML = receiptHTML({heading:'Payment Successful',ticket:'Order #4821 · Today, 2:14 PM',subtotal:'Subtotal',tax:'Tax',total:'Total',paid:'Paid by cash · Change $1.38',print:'Print',email:'Email',newSale:'New Sale',checkColor:'var(--accent)'});
+
+document.getElementById('d-products').innerHTML = productGridHTML();
+document.getElementById('d-cart').innerHTML = cartHTML({title:'Order — 3 items',each:'each',subtotal:'Subtotal',tax:'Tax',total:'Total',cta:'Continue'});
+document.getElementById('d-payment').innerHTML = paymentHTML({cash:'Cash',card:'Card',split:'Split',exact:'Exact',subtotal:'Subtotal',tax:'Tax',total:'Total',confirm:'Confirm payment'});
+document.getElementById('d-receipt').innerHTML = receiptHTML({heading:'Thank you.',ticket:'Ticket No. 4821 — Today, 2:14 PM',subtotal:'Subtotal',tax:'Tax',total:'Total',paid:'Paid in cash — change $1.38',print:'Print',email:'Email',newSale:'New sale',checkColor:'var(--accent)'});
+
+document.getElementById('e-products').innerHTML = productGridHTML();
+document.getElementById('e-cart').innerHTML = cartHTML({title:'CART · 3',each:'EA',subtotal:'SUBTOTAL',tax:'TAX (8%)',total:'TOTAL',cta:'CHARGE $28.62'});
+document.getElementById('e-payment').innerHTML = paymentHTML({cash:'CASH',card:'CARD',split:'SPLIT',exact:'EXACT',subtotal:'SUBTOTAL',tax:'TAX',total:'TOTAL',confirm:'COMPLETE SALE'});
+document.getElementById('e-receipt').innerHTML = receiptHTML({heading:'SALE COMPLETE',ticket:'TICKET #4821 — TODAY 2:14 PM',subtotal:'SUBTOTAL',tax:'TAX',total:'TOTAL',paid:'PAID CASH — CHANGE $1.38',print:'PRINT',email:'EMAIL',newSale:'NEW SALE',checkColor:'var(--primary)'});
+
+/* uppercase product/cart text content for variant E only (post-hoc, cheap) */
+document.querySelectorAll('#v-e .product-name, #v-e .cart-item-name, #v-e .cart-item-unit, #v-e .product-stock').forEach(el=>{ el.textContent = el.textContent.toUpperCase(); });
+
+/* ============================= INTERACTIVITY ============================= */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML = '<i data-lucide="check" class="ic-sm"></i>'+msg;
+  if(window.lucide) lucide.createIcons({attrs:{class:'ic ic-sm'}});
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>t.classList.remove('show'),1500);
+}
+
+function animateValue(el, to, prefix){
+  prefix = prefix===undefined ? '$' : prefix;
+  const from = parseFloat((el.dataset.val||el.textContent||'0').replace(/[^0-9.\-]/g,'')) || 0;
+  const start = performance.now();
+  el.dataset.val = to;
+  const dur = 400;
+  function tick(now){
+    const p = Math.min(1,(now-start)/dur);
+    const eased = 1-Math.pow(1-p,3);
+    const val = from + (to-from)*eased;
+    el.textContent = prefix+val.toFixed(2);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function switchScreen(variant, screenName){
+  variant.querySelectorAll('.screen-tab').forEach(t=>t.classList.toggle('active', t.dataset.screen===screenName));
+  variant.querySelectorAll('.screen').forEach(s=>{
+    const active = s.dataset.screenPanel===screenName;
+    s.style.display = active ? '' : 'none';
+    if(active){ s.removeAttribute('data-entered'); void s.offsetWidth; s.setAttribute('data-entered',''); }
+  });
 }
 
 function recalcCart(variant){
@@ -973,26 +780,24 @@ function recalcCart(variant){
     const price=parseFloat(row.dataset.price);
     const qty=parseInt(row.querySelector('.qty-val').textContent,10);
     subtotal+=price*qty;
-    row.querySelector('.line-total').textContent='$'+(price*qty).toFixed(2);
+    animateValue(row.querySelector('.line-total'), price*qty);
   });
   const tax=subtotal*0.08, total=subtotal+tax;
-  variant.querySelectorAll('.subtotal-val').forEach(el=>el.textContent='$'+subtotal.toFixed(2));
-  variant.querySelectorAll('.tax-val').forEach(el=>el.textContent='$'+tax.toFixed(2));
-  variant.querySelectorAll('.total-val').forEach(el=>el.textContent='$'+total.toFixed(2));
+  variant.querySelectorAll('.subtotal-val').forEach(el=>animateValue(el, subtotal));
+  variant.querySelectorAll('.tax-val').forEach(el=>animateValue(el, tax));
+  variant.querySelectorAll('.total-val').forEach(el=>animateValue(el, total));
 }
 
 document.querySelectorAll('.variant').forEach(variant=>{
-  // screen tabs
   variant.querySelectorAll('.screen-tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>switchScreen(variant, tab.dataset.screen, tab));
+    tab.addEventListener('click', ()=>switchScreen(variant, tab.dataset.screen));
   });
-  // home tile / receipt "new sale" navigation
   variant.querySelectorAll('[data-goto]').forEach(el=>{
-    el.addEventListener('click', ()=>switchScreen(variant, el.dataset.goto, null));
+    el.addEventListener('click', ()=>switchScreen(variant, el.dataset.goto));
   });
-  // qty steppers
   variant.querySelectorAll('.qty-inc,.qty-dec').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
       const row=btn.closest('.cart-item');
       const qtyEl=row.querySelector('.qty-val');
       let qty=parseInt(qtyEl.textContent,10);
@@ -1001,34 +806,80 @@ document.querySelectorAll('.variant').forEach(variant=>{
       recalcCart(variant);
     });
   });
-  // product card add-to-cart feedback
   variant.querySelectorAll('.product-card, .product-table tbody tr').forEach(el=>{
-    el.addEventListener('click', ()=>showToast('Added to cart'));
+    el.addEventListener('click', ()=>showToast((el.dataset.name||'Item')+' added'));
   });
-  // tender select
   variant.querySelectorAll('.tender-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      variant.querySelectorAll('.tender-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
+      variant.querySelectorAll('.tender-btn').forEach(b=>{b.classList.remove('active','trail')});
+      btn.classList.add('active','trail');
     });
   });
-  // keypad feedback
   variant.querySelectorAll('.key, .chip').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ btn.style.transform='scale(.92)'; setTimeout(()=>btn.style.transform='',100); });
+    btn.addEventListener('click', ()=>{ btn.style.transform='scale(.9)'; setTimeout(()=>btn.style.transform='',110); });
   });
-  // complete sale -> receipt
   variant.querySelectorAll('.btn-complete-sale').forEach(btn=>{
-    const original=btn.textContent;
+    const original=btn.innerHTML;
     btn.addEventListener('click', ()=>{
-      btn.textContent='Processing…'; btn.disabled=true;
+      btn.innerHTML='<i data-lucide="loader-2" class="ic spin"></i> Processing…';
+      if(window.lucide) lucide.createIcons();
       setTimeout(()=>{
-        switchScreen(variant,'receipt',null);
-        btn.textContent=original; btn.disabled=false;
+        switchScreen(variant,'receipt');
+        btn.innerHTML=original;
+        if(window.lucide) lucide.createIcons();
         showToast('Sale complete');
       }, 550);
     });
   });
 });
+
+/* spotlight-follow cursor */
+document.addEventListener('pointermove', (e)=>{
+  const el = e.target.closest ? e.target.closest('.spotlight') : null;
+  if(!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty('--mx', (e.clientX-r.left)+'px');
+  el.style.setProperty('--my', (e.clientY-r.top)+'px');
+});
+
+/* tilt on hover */
+document.querySelectorAll('.tilt').forEach(el=>{
+  el.addEventListener('mousemove', e=>{
+    const r=el.getBoundingClientRect();
+    const px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
+    el.style.transform=`perspective(700px) rotateX(${(-py*7).toFixed(2)}deg) rotateY(${(px*7).toFixed(2)}deg) translateZ(2px)`;
+  });
+  el.addEventListener('mouseleave', ()=>{ el.style.transform=''; });
+});
+
+/* magnetic buttons */
+document.querySelectorAll('.magnetic').forEach(el=>{
+  el.addEventListener('mousemove', e=>{
+    const r=el.getBoundingClientRect();
+    const mx=(e.clientX-r.left-r.width/2)*0.2, my=(e.clientY-r.top-r.height/2)*0.3;
+    el.style.transform=`translate(${mx.toFixed(1)}px, ${my.toFixed(1)}px)`;
+  });
+  el.addEventListener('mouseleave', ()=>{ el.style.transform=''; });
+});
+
+/* top-level variant switcher */
+document.querySelectorAll('#variant-nav .variant-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    const target = tab.dataset.variantTarget;
+    document.querySelectorAll('#variant-nav .variant-tab').forEach(t=>t.classList.toggle('active', t===tab));
+    document.querySelectorAll('.variant').forEach(v=>{ v.style.display = (v.dataset.variant===target) ? '' : 'none'; });
+    window.scrollTo({top:0,behavior:'instant'});
+  });
+});
+
+/* icon spin keyframe (added via JS to avoid unused CSS warnings) */
+const styleTag=document.createElement('style');
+styleTag.textContent='.spin{animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(styleTag);
+
+if(window.lucide){ lucide.createIcons(); }
+document.querySelector('.screen-home[data-screen-panel]')?.setAttribute('data-entered','');
+document.querySelectorAll('.screen[data-screen-panel="home"]').forEach(s=>s.setAttribute('data-entered',''));
 </script>
 </body>
 </html>
