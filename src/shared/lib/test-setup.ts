@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterEach, vi } from 'vitest';

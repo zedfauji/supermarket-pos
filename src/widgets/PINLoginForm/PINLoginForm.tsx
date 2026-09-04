@@ -63,7 +63,7 @@ export function PINLoginForm() {
       });
       /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
       clearSelection();
-      navigate('/home');
+      void navigate('/home');
       return;
     }
 
@@ -172,7 +172,7 @@ export function PINLoginForm() {
 
       useStaffStore.getState().login(selectedStaff, result.data);
       clearSelection();
-      navigate('/home');
+      void navigate('/home');
     } finally {
       setIsClockingIn(false);
     }
