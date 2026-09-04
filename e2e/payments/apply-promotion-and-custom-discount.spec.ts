@@ -182,12 +182,13 @@ test.describe('Apply Promotion + custom discount (PROMO-05)', () => {
     page,
   }) => {
     test.setTimeout(120_000);
-    // Manager login: process_direct_sale_atomic's apply_custom_discount
-    // re-check is keyed off the CURRENTLY LOGGED-IN staff (p_staff_id), not
-    // the staff whose PIN is entered in ManagerPinDialog — mirrors every
-    // other manager-PIN-gated E2E spec in this codebase
-    // (e2e/reports/discount-and-revenue.spec.ts, e2e/payments/edge-cases.spec.ts).
-    await loginAs(page, 'manager');
+    // Cashier login: the real cashier-operates/manager-authorizes scenario
+    // (Phase 27 Plan 08, G-27-13) — process_direct_sale_atomic now
+    // independently re-verifies the manager override against the PIN
+    // actually entered in ManagerPinDialog, not the currently logged-in
+    // staff's own identity, so a cashier session with a different manager's
+    // PIN typed into the dialog completes successfully.
+    await loginAs(page, 'cashier');
 
     const admin = getServiceClient();
     const { name } = await seedProduct(admin, 40);
@@ -266,7 +267,10 @@ test.describe('Apply Promotion + custom discount (PROMO-05)', () => {
     page,
   }) => {
     test.setTimeout(120_000);
-    await loginAs(page, 'manager');
+    // Cashier login (Phase 27 Plan 08, G-27-13) — same real-scenario reason
+    // as test (b): a distinct manager's PIN authorizes the ad-hoc discount
+    // from within the cashier's own session.
+    await loginAs(page, 'cashier');
 
     const admin = getServiceClient();
     const adminStaffId = await findRoleStaffId(admin, 'admin');
