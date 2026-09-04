@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 39
+open_count: 40
 waived_count: 0
 fixed_count: 15
-total_count: 54
-last_updated: 2026-09-03T21:10:54.633Z
+total_count: 55
+last_updated: 2026-09-04T01:03:00.927Z
 ---
 
 # Broken Windows Ledger
@@ -69,6 +69,7 @@ last_updated: 2026-09-03T21:10:54.633Z
 | 52 | 26 | deviation | customers/customers.json | 1 | zedfauji/supermarket-pos-taj (created gh repo create --private in Plan 26-04) is a PRIVATE repo, but Tauri's updater plugin makes a plain unauthenticated HTTP GET to plugins.updater.endpoints (no auth header configured anywhere in tauri.conf.json/tauri.override.json). Reproduced live: curl -sL https://github.com/zedfauji/supermarket-pos-taj/releases/latest/download/latest.json returned 404 both with and without a valid PAT bearer Authorization header (GitHub's /releases/latest/download/ redirect shortcut does not accept token auth the way api.github.com does for private repos) -- only gh CLI's own authenticated API calls could reach the asset. This meant a real installed Taj till, once migrated to Taj's own endpoint, could not actually complete an automatic update check against a private mirror repo. Fixed by the orchestrator at the Plan 26-06 pre-flight checkpoint: `gh repo edit zedfauji/supermarket-pos-taj --visibility public --accept-visibility-change-consequences` -- re-verified live, curl now returns 200. Accepted per 26-04's own T-26-10 threat disposition (medium/non-blocking exposure of identity strings, not credentials). | fixed |  | 2026-09-03T16:30:00.000Z | 2026-09-03T16:40:00.000Z |
 | 53 | 26 | deviation | scripts/onboard-customer.ps1 |  | scripts/onboard-customer.ps1 (Plan 26-03) hardcodes `gh repo create $fullRepo --private` for every new customer repo. Ledger #52 found that a private customer mirror 404s against Tauri's unauthenticated updater GET; #52 was fixed one-off for zedfauji/supermarket-pos-taj by flipping it public, but onboard-customer.ps1 itself was not changed -- customer #2 onward, onboarded via this script exactly as documented in docs/onboarding-new-customer.md, will reproduce the identical 404 unless the script defaults to --public or an authenticated-fetch updater mechanism is added first. Not fixed: discovered after Plan 26-03 already shipped; fixing requires either changing onboard-customer.ps1's default (and re-confirming with the operator that customer identity/branding in a public repo is acceptable, per the T-26-10 disposition already accepted for Taj) or a separate updater-auth mechanism. | open |  | 2026-09-03T16:40:00.000Z |  |
 | 54 | 26 | deviation | .github/workflows/release.yml | 162 | After fixing WINDOWS.md #51's repo-routing bug (GITHUB_REPOSITORY now correctly shadowed to matrix.customer.repo), a real workflow_dispatch run (33805295067, worktree-agent-a5fe98c9788387d07, v1.2.4) confirms tauri-action's release step now correctly targets zedfauji/supermarket-pos-taj (log: Looking for a draft release with tag v1.2.4... against the taj repo, not core) -- but the release creation call itself then fails: 403 Resource not accessible by personal access token on POST /repos/zedfauji/supermarket-pos-taj/releases. CUSTOMER_MIRROR_PAT has enough scope for git push --mirror (an earlier step in the same job succeeds) but not for the Releases REST API on the same public, user-owned (non-org, so not an SSO issue) repo. Root cause is the PAT's own granted scope/permission set (a stored GitHub secret this agent cannot inspect or regenerate), not release.yml's code. Not fixed: requires a human to regenerate CUSTOMER_MIRROR_PAT with Contents: Read and write (fine-grained) or full repo scope (classic) and confirm it covers Releases, then re-dispatch to confirm. Until resolved, sync-customers still cannot complete a fully-automatic release with zero manual gh release create workaround. | open |  | 2026-09-03T21:10:54.633Z |  |
+| 55 | 26 | deviation | .github/workflows/release.yml | 162 | CUSTOMER_MIRROR_PAT rotated to a classic PAT with repo scope (fixing #54's 403). Real workflow_dispatch (33823523719, worktree-agent-a02e68602df65c889, v1.2.5): the 403 is gone -- but sync-customers's tauri-action release step now silently uploads/overwrites assets on CORE's own v1.2.5 draft release (id 382413906, asset updated_at timestamps exactly match this job's upload timestamps) instead of creating anything on zedfauji/supermarket-pos-taj. Confirmed via API: taj repo's release list still only has v1.2.3, zero v1.2.5 release exists there in any state (draft or published). GITHUB_REPOSITORY is correctly logged as zedfauji/supermarket-pos-taj in the step's env dump, so the shadow env var IS being set, but tauri-action's internal find-or-create-draft-release call is not honoring it for this PAT/scope combination -- root cause not yet isolated (untested whether classic PAT vs @actions/github's own context resolution is the culprit). Not fixed: requires debugging tauri-action's actual octokit target repo resolution (e.g. explicit owner/repo action inputs if v0.6.2 supports them, or an alternate release-creation step) before sync-customers can land a real release on the customer mirror. | open |  | 2026-09-04T01:03:00.927Z |  |
 
 ````json
 [
@@ -718,6 +719,18 @@ last_updated: 2026-09-03T21:10:54.633Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-03T21:10:54.633Z",
+    "resolved_at": null
+  },
+  {
+    "id": 55,
+    "kind": "deviation",
+    "phase": "26",
+    "file": ".github/workflows/release.yml",
+    "line": 162,
+    "description": "CUSTOMER_MIRROR_PAT rotated to a classic PAT with repo scope (fixing #54's 403). Real workflow_dispatch (33823523719, worktree-agent-a02e68602df65c889, v1.2.5): the 403 is gone -- but sync-customers's tauri-action release step now silently uploads/overwrites assets on CORE's own v1.2.5 draft release (id 382413906, asset updated_at timestamps exactly match this job's upload timestamps) instead of creating anything on zedfauji/supermarket-pos-taj. Confirmed via API: taj repo's release list still only has v1.2.3, zero v1.2.5 release exists there in any state (draft or published). GITHUB_REPOSITORY is correctly logged as zedfauji/supermarket-pos-taj in the step's env dump, so the shadow env var IS being set, but tauri-action's internal find-or-create-draft-release call is not honoring it for this PAT/scope combination -- root cause not yet isolated (untested whether classic PAT vs @actions/github's own context resolution is the culprit). Not fixed: requires debugging tauri-action's actual octokit target repo resolution (e.g. explicit owner/repo action inputs if v0.6.2 supports them, or an alternate release-creation step) before sync-customers can land a real release on the customer mirror.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-04T01:03:00.927Z",
     "resolved_at": null
   }
 ]
