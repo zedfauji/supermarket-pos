@@ -128,6 +128,11 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 ### Roadmap Evolution
 
+- Phase 29 added: Local POS Virtual Assistant — optional separate local inference service with
+  English/Spanish chat; existing RBAC, approval, and audit gates remain authoritative; supports both
+  remote and local-Docker Supabase without cloud AI APIs, has a hard 1 GB install budget, preserves
+  checkout responsiveness, and fails closed against abusive requests.
+
 - Phase 28 added: Promotion Management Redesign — scoped out of Phase 27's UAT gap-closure
   (gap `G-27-8`) because it's a genuine feature/design expansion (multi-select scope,
   blank/store-wide promotions, day-of-week/time-of-day recurrence, wizard flow), not a bug

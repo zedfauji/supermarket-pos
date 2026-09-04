@@ -305,8 +305,10 @@ Plans:
 
 - [x] 27-02-PLAN.md — Admin `/promotions` CRUD page, route guard, Home dashboard tile, expiry-discount
   rate settings field (PROMO-01, PROMO-02)
+
 - [x] 27-03-PLAN.md — Live scan-time discount display across every add-to-cart path + cart-line
   discount badge (PROMO-03)
+
 - [x] 27-04-PLAN.md — Payment screen: PIN-gated ad-hoc discount (retiring `pool_only`/
   `consumptions_only`), "Apply Promotion" selector, below-cost override retry (PROMO-05, PROMO-07)
 
@@ -314,6 +316,7 @@ Plans:
 
 - [x] 27-05-PLAN.md — Snapshot survives refund/reopen/promotion-deletion; margin report proven
   correct against discounted price with zero report-code changes (PROMO-06)
+
 - [x] 27-06-PLAN.md — Offline promotion-conflict flag: cart-line snapshot + reconnect re-evaluation,
   never silently re-priced (PROMO-08)
 
@@ -350,6 +353,7 @@ UX/copy, exactly how multi-select should look):
   current dialog's gaps (schema XOR constraint blocking multi-target/blank promotions, reused
   Reports `DateRangePicker` with no forward-looking presets, no recurrence columns anywhere,
   single-step modal with only final-click validation).
+
 - `.planning/phases/27-promotions-discount-management/27-UAT.md` (gap `G-27-8`) — the verbatim
   user feedback that triggered this phase, plus a `missing:` list of concrete capabilities.
 
@@ -377,6 +381,7 @@ Plans:
   `needs_review` backfill migration, `process_direct_sale_atomic` scope+recurrence extension,
   `evaluateBestPromotion` multi-target/recurrence mirror (TDD), minimal single-step wizard entry
   replacing `PromotionFormDialog` end-to-end (D-01, D-02, D-03, D-04, D-05, D-06, D-11, D-12)
+
 - [x] 28-02-PLAN.md — Manager-PIN identity audit (folded todo): re-key
   `process_refund`/`reopen_tab`/`edit_paid_tab` to `profiles.pin = p_manager_pin` (mirrors the
   proven G-27-13 fix), harden `close_tab`'s zero-check gap, thread `staff.pin` through all three
@@ -401,6 +406,17 @@ Plans:
   updated for the new schema/wizard) + `npm run test:e2e` phase-gate close-out
 
 **UI hint**: yes
+
+### Phase 29: Local POS Virtual Assistant
+
+**Goal:** An optional, separately installed, loopback-only local assistant lets authenticated cashiers, managers, and admins complete POS operations through English or Spanish chat. Every proposed operation is re-authorized by the existing RBAC rules, previewed, and approved at the proper level; checkout-critical work remains responsive; the assistant supports both remote Supabase and local Docker Supabase without cloud AI APIs, remains under a 1 GB installed budget, and fails closed against abuse.
+**Requirements**: TBD
+**Depends on:** Phase 28
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 29 to break down)
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
