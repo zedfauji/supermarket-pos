@@ -128,6 +128,13 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 ### Roadmap Evolution
 
+- Phase 28 added: Promotion Management Redesign — scoped out of Phase 27's UAT gap-closure
+  (gap `G-27-8`) because it's a genuine feature/design expansion (multi-select scope,
+  blank/store-wide promotions, day-of-week/time-of-day recurrence, wizard flow), not a bug
+  fix. Five gap-closure plans (27-11..27-15) were drafted and withdrawn (never executed) after
+  user feedback that this scope skipped discuss-phase/ui-phase/research. See
+  `.planning/debug/promotion-dialog-ux-and-scope-gaps.md` for the existing root-cause
+  characterization to start from.
 - Phase 26 added: Multi-Customer Deployment — ship this codebase to multiple customers, each with
   an isolated Supabase project and their own release/updater channel. Scoped from spikes 007–010
   (`.planning/spikes/MANIFEST.md`, idea key `multi-customer-deployment`), triggered by CI run

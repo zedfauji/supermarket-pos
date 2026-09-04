@@ -324,6 +324,52 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 28: Promotion Management Redesign
+
+**Goal:** Replace the basic single-step promotion dialog shipped in Phase 27 with a properly
+scoped creation/edit flow. A promotion can target multiple products from multiple categories
+in one row (not exactly one product OR one category), can be blank/store-wide (a generic
+flat-discount promotion with no target restriction, e.g. "Friends & Family 20% off"), can
+recur on a day-of-week and/or time-of-day schedule (e.g. every day 4-6PM) in addition to a
+plain date range, and presents forward-looking validity options (the current reused Reports
+`DateRangePicker` only offers backward-looking presets — Today/Yesterday/Last 7 Days/This
+Month — which is nonsensical for a promotion that starts in the future). The creation flow is
+a dedicated screen (not a modal dialog), likely a multi-step wizard, that validates
+completeness on exit rather than only at a single final Save click.
+
+This is a genuine feature/design expansion, not a bug fix — it was deliberately deferred out
+of Phase 27's UAT gap-closure (`.planning/phases/27-promotions-discount-management/27-UAT.md`
+gap `G-27-8`) specifically so it gets a real `/gsd-discuss-phase` + `/gsd-ui-phase` +
+research pass instead of being retrofitted as a same-phase gap plan. Two source documents
+already exist and should be read before discussion starts — they characterize the current
+code precisely (exact file:line citations) and should save re-investigation, but do not
+substitute for design decisions still to be made (wizard step boundaries, exact recurrence
+UX/copy, exactly how multi-select should look):
+- `.planning/debug/promotion-dialog-ux-and-scope-gaps.md` — root-cause investigation of the
+  current dialog's gaps (schema XOR constraint blocking multi-target/blank promotions, reused
+  Reports `DateRangePicker` with no forward-looking presets, no recurrence columns anywhere,
+  single-step modal with only final-click validation).
+- `.planning/phases/27-promotions-discount-management/27-UAT.md` (gap `G-27-8`) — the verbatim
+  user feedback that triggered this phase, plus a `missing:` list of concrete capabilities.
+
+Note the stuck-at-0 percent-field bug reported alongside this feedback was a separate, narrow
+bug (number-typed state + per-keystroke coercion) and was fixed directly as a Phase 27 gap
+plan (`27-10-PLAN.md`) — it is NOT part of this phase's scope.
+
+Recurrence changes what "active" means for a promotion and will touch the pricing engine
+built in Phase 27 (`evaluateBestPromotion`, `process_direct_sale_atomic`'s
+`now() BETWEEN starts_at AND ends_at` check) — treat this as a real design/research question
+(timezone handling, interaction with the existing best-price-wins pool), not just a UI
+addition.
+
+**Requirements**: TBD — capture via `/gsd-discuss-phase 28`
+**Depends on:** Phase 27
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 28 to break down)
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.
