@@ -15,7 +15,12 @@ vi.mock('@entities/promotion', () => ({
   evaluateBestPromotion: () => null,
 }));
 vi.mock('@entities/settings', () => ({
-  useSettings: () => ({ data: { nearExpiry: { discountPercent: 0, thresholdDays: 0 } } }),
+  useSettings: () => ({
+    data: {
+      nearExpiry: { discountPercent: 0, thresholdDays: 0 },
+      general: { timezone: 'America/Mexico_City' },
+    },
+  }),
 }));
 vi.mock('@entities/tab/model/cartStore', () => ({
   useCartStore: (selector: (state: { resolveConflict: typeof mockResolveConflict }) => unknown) =>

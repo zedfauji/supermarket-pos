@@ -51,6 +51,7 @@ vi.mock('@entities/settings', () => {
       taxInclusive: true,
       paymentMethods: { cash: true, bbvaCard: true, rappi: true },
     },
+    general: { timezone: 'America/Mexico_City' },
   };
   return {
     useSettings: () => ({ data: stableSettings }),
