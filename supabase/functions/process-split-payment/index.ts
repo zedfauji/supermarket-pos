@@ -45,10 +45,18 @@ const BodySchema = z
     legs: z.array(legSchema).min(1).max(4),
     expectedTotal: z.number().nonnegative().multipleOf(0.01),
     idempotencyKey: z.string().min(1).max(255),
-    discountScope: z.enum(['tab', 'item']).nullable().optional(),
-    discountType: z.enum(['percentage', 'fixed']).nullable().optional(),
+    // Phase 27 Plan 09 (G-27-13) fix: these enums were bar-pos-era stale values
+    // ('tab'/'item', 'percentage'/'fixed') that never matched what the client
+    // actually sends (DiscountScopeSchema/DiscountTypeSchema in domain.ts:
+    // 'all', 'percent'/'fixed') — every split-payment discount request was
+    // silently rejected by Zod with 400 VALIDATION_ERROR before ever reaching
+    // the RPC.
+    discountScope: z.enum(['all']).nullable().optional(),
+    discountType: z.enum(['percent', 'fixed']).nullable().optional(),
     discountValue: z.number().nonnegative().nullable().optional(),
     discountAmount: z.number().nonnegative().multipleOf(0.01).nullable().optional(),
+    managerOverride: z.boolean().nullable().optional(),
+    managerPin: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     const legsTotal = data.legs.reduce((sum, leg) => sum + leg.amount, 0);
@@ -182,6 +190,8 @@ Deno.serve(async (req: Request) => {
     p_discount_type: body.discountType ?? null,
     p_discount_value: body.discountValue ?? null,
     p_discount_amount: body.discountAmount ?? null,
+    p_manager_override: body.managerOverride ?? null,
+    p_manager_pin: body.managerPin ?? null,
   });
 
   if (rpcError) {
