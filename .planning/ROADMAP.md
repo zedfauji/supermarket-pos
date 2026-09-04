@@ -291,7 +291,7 @@ planning should not anchor on.
 
 **Requirements**: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05, PROMO-06, PROMO-07, PROMO-08, PROMO-09
 **Depends on:** Nothing (new domain entity; touches checkout/payment RPCs and `order_items` but no other phase blocks it)
-**Plans:** 7/7 plans complete
+**Plans:** 10/10 plans complete
 
 Plans:
 **Wave 1**
@@ -345,6 +345,7 @@ already exist and should be read before discussion starts — they characterize 
 code precisely (exact file:line citations) and should save re-investigation, but do not
 substitute for design decisions still to be made (wizard step boundaries, exact recurrence
 UX/copy, exactly how multi-select should look):
+
 - `.planning/debug/promotion-dialog-ux-and-scope-gaps.md` — root-cause investigation of the
   current dialog's gaps (schema XOR constraint blocking multi-target/blank promotions, reused
   Reports `DateRangePicker` with no forward-looking presets, no recurrence columns anywhere,

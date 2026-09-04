@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 26
-current_phase_name: Multi-Customer Deployment
-status: executing
-stopped_at: Phase 26 Plan 01 complete, Plan 02 (tracer) proven end-to-end, Plan 02 Task 3 (hardening) outstanding. Phase 27 (Promotions & Discount Management) completed in a concurrent session — verified 16/16 must-haves.
-last_updated: "2026-09-03T01:58:38.344Z"
-last_activity: 2026-09-02
-last_activity_desc: Phase 26 Plan 01 (CI prerequisites) shipped; Plan 02's tracer proven via a real workflow_dispatch run. Phase 27 completed and verified in a concurrent session.
-state_head: 870705f1d1928d84f567b5da0d6fe373cc094842
+current_phase: 28
+current_phase_name: Promotion Management Redesign
+status: planning
+stopped_at: Phase 27 complete, ready to plan Phase 28
+last_updated: "2026-09-04T06:05:41.695Z"
+last_activity: 2026-09-04
+last_activity_desc: Phase 27 complete, transitioned to Phase 28
+state_head: 61d640ffc9303f9f930d46bb521d82ba9e041565
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 7
-  total_plans: 37
-  completed_plans: 32
-  percent: 70
+  total_plans: 40
+  completed_plans: 40
+  percent: 64
 ---
 
 # Project State
@@ -25,15 +25,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 26 — Multi-Customer Deployment (Phase 27 — Promotions & Discount Management completed in a concurrent session)
+**Current focus:** Phase 27 — Promotions & Discount Management
 
 ## Current Position
 
-Phase: 26 — Multi-Customer Deployment
-Plan: 2 of 6 (26-02 Task 3 hardening outstanding — fail-fast:false, input-validation regex,
+Phase: 28 — Promotion Management Redesign
+Plan: Not started
   D-08 negative-path proof, flip test-customer fixture to suspended)
-Status: Executing
-Last activity: 2026-09-02 — Plan 01 shipped; Plan 02's tracer (manifest-gated mirror-push, dual
+Status: Ready to plan
+Last activity: 2026-09-04 — Phase 27 complete, transitioned to Phase 28
   --config merge, D-08 gate) proven end-to-end via a real workflow_dispatch run
 
 **Also complete (concurrent session):** Phase 27 — Promotions & Discount Management, 7/7 plans,
@@ -43,7 +43,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 **Velocity:**
 
-- Total plans completed: 88 (all v1.0, Phases 1-4)
+- Total plans completed: 91 (all v1.0, Phases 1-4)
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -68,7 +68,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 | 21 | 2 | - | - |
 | 23 | 5 | - | - |
 | 24 | 4 | - | - |
-| 27 | 7 | - | - |
+| 27 | 10 | - | - |
 
 **Recent Trend:**
 
@@ -285,7 +285,7 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-09-03T01:58:38.344Z
-Stopped at: Phase 26 Plan 02 tracer proven end-to-end; Task 3 hardening outstanding. Phase 27 completed and verified (16/16 must-haves) in a concurrent session.
+Stopped at: Phase 27 complete, ready to plan Phase 28
 Resume file: .planning/phases/26-multi-customer-deployment/26-02-PLAN.md
 
 ## Operator Next Steps
