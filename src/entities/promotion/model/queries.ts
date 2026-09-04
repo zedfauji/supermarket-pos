@@ -25,19 +25,31 @@ const PROMOTION_QUERY_KEY = ['promotions'] as const;
 // ROW MAPPER
 // ============================================================================
 
-function mapPromotionRow(row: Tables<'promotions'>): Result<Promotion> {
+/** Row shape returned by the `*, promotion_targets(*)` nested-join select. */
+type PromotionRowWithTargets = Tables<'promotions'> & {
+  promotion_targets: Tables<'promotion_targets'>[] | null;
+};
+
+function mapPromotionRow(row: PromotionRowWithTargets): Result<Promotion> {
   try {
     return ok(
       PromotionSchema.parse({
         id: row.id,
         name: row.name,
-        scopeType: row.scope_type,
-        productId: row.product_id,
-        categoryId: row.category_id,
+        targets: (row.promotion_targets ?? []).map(t => ({
+          id: t.id,
+          promotionId: t.promotion_id,
+          productId: t.product_id,
+          categoryId: t.category_id,
+        })),
         discountType: row.discount_type,
         discountValue: row.discount_value,
         startsAt: new Date(row.starts_at),
         endsAt: new Date(row.ends_at),
+        daysOfWeek: row.days_of_week,
+        startTime: row.start_time,
+        endTime: row.end_time,
+        needsReview: row.needs_review,
         active: row.active,
         createdAt: new Date(row.created_at),
         createdBy: row.created_by,
@@ -60,13 +72,16 @@ function invalidatePromotionQueries(queryClient: ReturnType<typeof useQueryClien
 // QUERIES
 // ============================================================================
 
-/** Fetches all promotions, newest first (stable default sort order). */
+/** Fetches all promotions (with their targets), newest first (stable default sort order). */
 export function usePromotions() {
   const query = useQuery({
     queryKey: PROMOTION_QUERY_KEY,
     queryFn: async (): Promise<Result<Promotion[]>> => {
       const res = await supabaseQuery(() =>
-        supabase.from('promotions').select('*').order('created_at', { ascending: false })
+        supabase
+          .from('promotions')
+          .select('*, promotion_targets(*)')
+          .order('created_at', { ascending: false })
       );
 
       if (!res.ok) {
@@ -78,7 +93,7 @@ export function usePromotions() {
       }
 
       const promotions: Promotion[] = [];
-      for (const row of res.data) {
+      for (const row of res.data as unknown as PromotionRowWithTargets[]) {
         const mapped = mapPromotionRow(row);
         if (!mapped.ok) {
           logger.error('promotions.map_failed', { message: mapped.error.message });
@@ -112,13 +127,13 @@ export function useMutationCreatePromotion() {
     mutationFn: async (input: PromotionCreate): Promise<Result<Promotion>> => {
       const insertRow: TablesInsert<'promotions'> = {
         name: input.name,
-        scope_type: input.scopeType,
-        product_id: input.productId,
-        category_id: input.categoryId,
         discount_type: input.discountType,
         discount_value: input.discountValue,
         starts_at: input.startsAt.toISOString(),
         ends_at: input.endsAt.toISOString(),
+        days_of_week: input.daysOfWeek,
+        start_time: input.startTime,
+        end_time: input.endTime,
         active: input.active,
         created_by: input.createdBy,
       };
@@ -131,7 +146,42 @@ export function useMutationCreatePromotion() {
         logger.error('promotions.create_failed', { message: res.error.message });
         return res;
       }
-      return mapPromotionRow(res.data as unknown as Tables<'promotions'>);
+      const promotionRow = res.data as unknown as Tables<'promotions'>;
+      const promotionId = promotionRow.id;
+      let insertedTargets: Tables<'promotion_targets'>[] = [];
+
+      if (input.targets.length > 0) {
+        const targetRows: TablesInsert<'promotion_targets'>[] = input.targets.map(t => ({
+          promotion_id: promotionId,
+          product_id: t.productId,
+          category_id: t.categoryId,
+        }));
+        const targetsRes = await supabaseMutation(() =>
+          supabase.from('promotion_targets').insert(targetRows).select('*')
+        );
+        if (!targetsRes.ok) {
+          logger.error('promotions.create_targets_failed', {
+            message: targetsRes.error.message,
+            promotionId,
+          });
+          // The promotion row itself was created successfully — do not
+          // silently leave an orphaned store-wide promotion. Surface the
+          // promotion id so the admin can retry adding targets via edit.
+          return err(
+            unknownError(
+              new Error(
+                `Promotion "${input.name}" (${promotionId}) was created, but its targets failed to save: ${targetsRes.error.message}. Edit the promotion to retry.`
+              )
+            )
+          );
+        }
+        insertedTargets = targetsRes.data as unknown as Tables<'promotion_targets'>[];
+      }
+
+      return mapPromotionRow({
+        ...promotionRow,
+        promotion_targets: insertedTargets,
+      });
     },
     onSuccess: result => {
       if (result.ok) invalidatePromotionQueries(queryClient);
@@ -150,27 +200,58 @@ export function useMutationUpdatePromotion() {
 
   return useMutation({
     mutationFn: async (input: PromotionUpdate): Promise<Result<null>> => {
-      const { id, ...rest } = input;
+      const { id, targets, ...rest } = input;
       const row: TablesUpdate<'promotions'> = {};
       if (rest.name !== undefined) row.name = rest.name;
-      if (rest.scopeType !== undefined) row.scope_type = rest.scopeType;
-      if (rest.productId !== undefined) row.product_id = rest.productId;
-      if (rest.categoryId !== undefined) row.category_id = rest.categoryId;
       if (rest.discountType !== undefined) row.discount_type = rest.discountType;
       if (rest.discountValue !== undefined) row.discount_value = rest.discountValue;
       if (rest.startsAt !== undefined) row.starts_at = rest.startsAt.toISOString();
       if (rest.endsAt !== undefined) row.ends_at = rest.endsAt.toISOString();
+      if (rest.daysOfWeek !== undefined) row.days_of_week = rest.daysOfWeek;
+      if (rest.startTime !== undefined) row.start_time = rest.startTime;
+      if (rest.endTime !== undefined) row.end_time = rest.endTime;
       if (rest.active !== undefined) row.active = rest.active;
 
-      if (Object.keys(row).length === 0) return ok(null);
-
-      const res = await supabaseMutation(() =>
-        supabase.from('promotions').update(row).eq('id', id)
-      );
-      if (!res.ok) {
-        logger.error('promotions.update_failed', { message: res.error.message });
-        return res;
+      if (Object.keys(row).length > 0) {
+        const res = await supabaseMutation(() =>
+          supabase.from('promotions').update(row).eq('id', id)
+        );
+        if (!res.ok) {
+          logger.error('promotions.update_failed', { message: res.error.message });
+          return res;
+        }
       }
+
+      // Delete + reinsert (not a diff) — simplest correct approach for a
+      // handful of target rows per promotion.
+      if (targets !== undefined) {
+        const delRes = await supabaseMutation(() =>
+          supabase.from('promotion_targets').delete().eq('promotion_id', id)
+        );
+        if (!delRes.ok) {
+          logger.error('promotions.update_targets_delete_failed', {
+            message: delRes.error.message,
+          });
+          return delRes;
+        }
+        if (targets.length > 0) {
+          const targetRows: TablesInsert<'promotion_targets'>[] = targets.map(t => ({
+            promotion_id: id,
+            product_id: t.productId,
+            category_id: t.categoryId,
+          }));
+          const insRes = await supabaseMutation(() =>
+            supabase.from('promotion_targets').insert(targetRows)
+          );
+          if (!insRes.ok) {
+            logger.error('promotions.update_targets_insert_failed', {
+              message: insRes.error.message,
+            });
+            return insRes;
+          }
+        }
+      }
+
       return ok(null);
     },
     onSuccess: result => {

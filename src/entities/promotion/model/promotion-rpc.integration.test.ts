@@ -52,15 +52,16 @@ function deriveTotal(subtotal: number, taxRatePercent: number, taxInclusive: boo
 
 async function getStaffAndShift(
   roles: ('cashier' | 'manager' | 'admin')[]
-): Promise<{ staffId: string; shiftId: string }> {
+): Promise<{ staffId: string; shiftId: string; staffPin: string }> {
   const { data: staff } = await testDb
     .from('profiles')
-    .select('id')
+    .select('id, pin')
     .in('role', roles)
     .limit(1)
     .single();
   if (!staff) throw new Error(`getStaffAndShift: no profile found for roles ${roles.join(',')}`);
   const staffId = staff.id as string;
+  const staffPin = staff.pin as string;
 
   const { data: existing } = await testDb
     .from('shifts')
@@ -69,15 +70,16 @@ async function getStaffAndShift(
     .is('clock_out', null)
     .limit(1)
     .maybeSingle();
-  if (existing) return { staffId, shiftId: existing.id as string };
+  if (existing) return { staffId, shiftId: existing.id as string, staffPin };
 
   const { data: newShift, error } = await testDb
     .from('shifts')
     .insert({ staff_id: staffId, opening_cash: 0 })
     .select('id')
     .single();
-  if (error || !newShift) throw new Error(`getStaffAndShift: shift create failed: ${error?.message ?? 'no row'}`);
-  return { staffId, shiftId: newShift.id as string };
+  if (error || !newShift)
+    throw new Error(`getStaffAndShift: shift create failed: ${error?.message ?? 'no row'}`);
+  return { staffId, shiftId: newShift.id as string, staffPin };
 }
 
 async function getOrCreateOpenCaja(staffId: string): Promise<{ cajaId: string; created: boolean }> {
@@ -93,7 +95,8 @@ async function getOrCreateOpenCaja(staffId: string): Promise<{ cajaId: string; c
     .insert({ opened_by: staffId, opening_cash: 0 })
     .select('id')
     .single();
-  if (error || !data) throw new Error(`getOrCreateOpenCaja: create failed: ${error?.message ?? 'no row'}`);
+  if (error || !data)
+    throw new Error(`getOrCreateOpenCaja: create failed: ${error?.message ?? 'no row'}`);
   return { cajaId: data.id as string, created: true };
 }
 
@@ -112,7 +115,8 @@ async function seedProduct(basePrice: number, costPrice: number): Promise<Produc
     .insert({ name: `Promo Test Category ${suffix}` })
     .select('id')
     .single();
-  if (catErr || !category) throw new Error(`seedProduct: category insert failed: ${catErr?.message ?? 'no row'}`);
+  if (catErr || !category)
+    throw new Error(`seedProduct: category insert failed: ${catErr?.message ?? 'no row'}`);
 
   const { data: product, error: prodErr } = await testDb
     .from('products')
@@ -124,7 +128,8 @@ async function seedProduct(basePrice: number, costPrice: number): Promise<Produc
     })
     .select('id')
     .single();
-  if (prodErr || !product) throw new Error(`seedProduct: product insert failed: ${prodErr?.message ?? 'no row'}`);
+  if (prodErr || !product)
+    throw new Error(`seedProduct: product insert failed: ${prodErr?.message ?? 'no row'}`);
 
   const { error: invErr } = await testDb
     .from('inventory')
@@ -151,8 +156,6 @@ async function seedPromotion(
     .from('promotions')
     .insert({
       name: `Promo Test ${Date.now()}`,
-      scope_type: 'product',
-      product_id: productId,
       discount_type: discountType,
       discount_value: discountValue,
       starts_at: startsAt.toISOString(),
@@ -160,17 +163,35 @@ async function seedPromotion(
     })
     .select('*')
     .single();
-  if (error || !data) throw new Error(`seedPromotion: insert failed: ${error?.message ?? 'no row'}`);
+  if (error || !data)
+    throw new Error(`seedPromotion: insert failed: ${error?.message ?? 'no row'}`);
+  const { data: targetRow, error: targetError } = await testDb
+    .from('promotion_targets')
+    .insert({ promotion_id: data.id as string, product_id: productId })
+    .select('*')
+    .single();
+  if (targetError || !targetRow) {
+    throw new Error(`seedPromotion: target insert failed: ${targetError?.message ?? 'no row'}`);
+  }
   return {
     id: data.id as string,
     name: data.name as string,
-    scopeType: data.scope_type as 'product' | 'category',
-    productId: data.product_id as string | null,
-    categoryId: data.category_id as string | null,
+    targets: [
+      {
+        id: targetRow.id as string,
+        promotionId: data.id as string,
+        productId: targetRow.product_id as string | null,
+        categoryId: targetRow.category_id as string | null,
+      },
+    ],
     discountType: data.discount_type as 'percent' | 'fixed',
     discountValue: data.discount_value as number,
     startsAt: new Date(data.starts_at as string),
     endsAt: new Date(data.ends_at as string),
+    daysOfWeek: data.days_of_week as number[] | null,
+    startTime: data.start_time as string | null,
+    endTime: data.end_time as string | null,
+    needsReview: data.needs_review as boolean,
     active: data.active as boolean,
     createdAt: new Date(data.created_at as string),
     createdBy: data.created_by as string | null,
@@ -178,7 +199,11 @@ async function seedPromotion(
 }
 
 /** Deletes everything the RPC creates for one sale, plus the fixture rows. */
-async function cleanupSale(tabId: string | undefined, fixture: ProductFixture, promotionId?: string): Promise<void> {
+async function cleanupSale(
+  tabId: string | undefined,
+  fixture: ProductFixture,
+  promotionId?: string
+): Promise<void> {
   if (tabId) {
     await testDb.from('payments').delete().eq('tab_id', tabId);
     const { data: orders } = await testDb.from('orders').select('id').eq('tab_id', tabId);
@@ -213,7 +238,8 @@ describe('process_direct_sale_atomic — promotions + floor guard (integration)'
         new Date(),
         15,
         null,
-        14
+        14,
+        'America/Mexico_City'
       );
       expect(expected).not.toBeNull();
 
@@ -249,7 +275,10 @@ describe('process_direct_sale_atomic — promotions + floor guard (integration)'
         tabId = (data as { tabId?: string }).tabId;
         expect(tabId).toBeTruthy();
 
-        const { data: orders } = await testDb.from('orders').select('id').eq('tab_id', tabId as string);
+        const { data: orders } = await testDb
+          .from('orders')
+          .select('id')
+          .eq('tab_id', tabId as string);
         const orderIds = (orders ?? []).map(o => o.id as string);
         const { data: orderItems } = await testDb
           .from('order_items')
@@ -331,7 +360,7 @@ describe('process_direct_sale_atomic — promotions + floor guard (integration)'
       const costPrice = 90;
       const fixture = await seedProduct(basePrice, costPrice);
       const promotion = await seedPromotion(fixture.productId, 'fixed', 30);
-      const { staffId, shiftId } = await getStaffAndShift(['manager', 'admin']);
+      const { staffId, shiftId, staffPin } = await getStaffAndShift(['manager', 'admin']);
       const { cajaId } = await getOrCreateOpenCaja(staffId);
       const { taxRatePercent, taxInclusive } = await getBillingSettings();
       const amount = deriveTotal(70, taxRatePercent, taxInclusive);
@@ -358,6 +387,7 @@ describe('process_direct_sale_atomic — promotions + floor guard (integration)'
           p_amount: amount,
           p_tendered_amount: amount,
           p_manager_override: true,
+          p_manager_pin: staffPin,
         } as never);
 
         expect(error).toBeNull();

@@ -3,16 +3,14 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Percent, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useCategories } from '@entities/category';
-import { useProducts } from '@entities/product';
 import {
   usePromotions,
   useMutationUpdatePromotion,
   useMutationDeletePromotion,
   type Promotion,
 } from '@entities/promotion';
-import { PromotionFormDialog } from '@features/manage-promotions';
 import {
   Badge,
   ConfirmDialog,
@@ -37,15 +35,12 @@ function derivePromotionStatus(p: Promotion): StatusBadgeProps['status'] {
 export default function PromotionsPage() {
   const { t } = useTranslation('pages');
   const { t: tAdmin } = useTranslation('wAdmin');
+  const navigate = useNavigate();
   const { data: fetchedPromotions, isLoading, resultError } = usePromotions();
-  const { data: products } = useProducts();
-  const { data: categories } = useCategories();
   const updateMutation = useMutationUpdatePromotion();
   const deleteMutation = useMutationDeletePromotion();
 
   const [lastGoodPromotions, setLastGoodPromotions] = useState<Promotion[]>([]);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,12 +59,8 @@ export default function PromotionsPage() {
   // clearing the table to blank (must_haves backstop truth).
   const promotions = fetchedPromotions ?? lastGoodPromotions;
 
-  const productNameById = new Map((products ?? []).map(p => [p.id, p.name]));
-  const categoryNameById = new Map((categories ?? []).map(c => [c.id, c.name]));
-
   function openCreateDialog() {
-    setEditingPromotion(null);
-    setFormOpen(true);
+    void navigate('/promotions/new');
   }
 
   const columns: ColumnDef<Promotion>[] = [
@@ -84,19 +75,19 @@ export default function PromotionsPage() {
       header: tAdmin('promotionsListPanel.columnScope'),
       cell: ({ row }) => {
         const p = row.original;
-        const targetName =
-          p.scopeType === 'product'
-            ? (productNameById.get(p.productId ?? '') ?? '')
-            : (categoryNameById.get(p.categoryId ?? '') ?? '');
-        return (
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate">{targetName}</span>
-            <Badge variant="secondary" className="shrink-0 text-xs">
-              {p.scopeType === 'product'
-                ? tAdmin('promotionsListPanel.scopeProduct')
-                : tAdmin('promotionsListPanel.scopeCategory')}
+        if (p.targets.length === 0) {
+          return (
+            <Badge variant="secondary" className="text-xs">
+              {tAdmin('promotionsListPanel.scopeStoreWide')}
             </Badge>
-          </div>
+          );
+        }
+        const productCount = p.targets.filter(t => t.productId !== null).length;
+        const categoryCount = p.targets.filter(t => t.categoryId !== null).length;
+        return (
+          <span className="text-sm">
+            {tAdmin('promotionsListPanel.scopeTargetCounts', { productCount, categoryCount })}
+          </span>
         );
       },
     },
@@ -125,6 +116,12 @@ export default function PromotionsPage() {
       cell: ({ row }) => <StatusBadge status={derivePromotionStatus(row.original)} />,
     },
     {
+      id: 'review',
+      header: tAdmin('promotionsListPanel.columnReview'),
+      cell: ({ row }) =>
+        row.original.needsReview ? <StatusBadge status="promo_needs_review" /> : null,
+    },
+    {
       id: 'actions',
       header: '',
       cell: ({ row }) => {
@@ -146,8 +143,7 @@ export default function PromotionsPage() {
               aria-label={tAdmin('promotionsListPanel.edit')}
               onClick={e => {
                 e.stopPropagation();
-                setEditingPromotion(p);
-                setFormOpen(true);
+                void navigate(`/promotions/${p.id}/edit`);
               }}
             >
               <Pencil className="size-4" />
@@ -193,15 +189,6 @@ export default function PromotionsPage() {
             action={{ label: t('promotions.newPromotion'), onClick: openCreateDialog }}
           />
         }
-      />
-
-      <PromotionFormDialog
-        open={formOpen}
-        onOpenChange={open => {
-          setFormOpen(open);
-          if (!open) setEditingPromotion(null);
-        }}
-        promotion={editingPromotion}
       />
 
       <ConfirmDialog

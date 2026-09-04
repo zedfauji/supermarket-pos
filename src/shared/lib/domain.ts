@@ -1475,7 +1475,7 @@ export const ProcessRefundInputSchema = z
       .nonempty(),
     reason: RefundReasonSchema,
   })
-  .refine((data) => new Set(data.items.map((i) => i.order_item_id)).size === data.items.length, {
+  .refine(data => new Set(data.items.map(i => i.order_item_id)).size === data.items.length, {
     message: 'Duplicate order_item_id in refund items',
     path: ['items'],
   });
@@ -1647,28 +1647,64 @@ export type OfflineAction = z.infer<typeof OfflineActionSchema>;
 // PROMOTIONS (Phase 27 — Promotions & Discount Management)
 // ============================================================================
 
-export const PromotionScopeTypeSchema = z.enum(['product', 'category']);
-export type PromotionScopeType = z.infer<typeof PromotionScopeTypeSchema>;
+// Phase 28: promotion_targets junction table replaces the singular
+// scopeType/productId/categoryId columns (D-01/D-02). A promotion with zero
+// targets is store-wide; N targets (product and/or category rows) apply to
+// every one of those N targets in the same best-price-wins candidate pool.
+export const PromotionTargetSchema = z.object({
+  id: UuidSchema,
+  promotionId: UuidSchema,
+  /** Exactly one of productId/categoryId is set — enforced by the DB CHECK constraint. */
+  productId: UuidSchema.nullable(),
+  categoryId: UuidSchema.nullable(),
+});
+
+/** Create/update payload shape for one target row — no id/promotionId (assigned server-side). */
+export const PromotionTargetInputSchema = z.object({
+  productId: UuidSchema.nullable(),
+  categoryId: UuidSchema.nullable(),
+});
 
 export const PromotionSchema = z.object({
   id: UuidSchema,
   name: z.string().min(1).max(100),
-  scopeType: PromotionScopeTypeSchema,
-  /** Exactly one of productId/categoryId is set — enforced by the DB CHECK constraint. */
-  productId: UuidSchema.nullable(),
-  categoryId: UuidSchema.nullable(),
+  /** Empty array = store-wide (D-01). Mixed product/category rows are all valid candidates. */
+  targets: z.array(PromotionTargetSchema).default([]),
   discountType: DiscountTypeSchema,
   discountValue: z.number().positive(),
   startsAt: TimestampSchema,
   endsAt: TimestampSchema,
+  /** Day-of-week recurrence filter (D-03/D-04): 0=Sunday..6=Saturday, matching Postgres EXTRACT(DOW). Null/empty = every day. */
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).nullable(),
+  /** Time-of-day recurrence filter (D-05), same-day only — "HH:MM" or "HH:MM:SS" string. Both null or both set (DB CHECK). */
+  startTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  /** True for every promotion row that predates the Phase 28 migration (D-11/D-12) — never true for a freshly-created one. */
+  needsReview: z.boolean().default(false),
   active: z.boolean().default(true),
   createdAt: TimestampSchema,
   createdBy: UuidSchema.nullable(),
 });
 
-export const PromotionCreateSchema = PromotionSchema.omit({ id: true, createdAt: true });
-export const PromotionUpdateSchema = PromotionSchema.partial().required({ id: true });
+export const PromotionCreateSchema = PromotionSchema.omit({
+  id: true,
+  createdAt: true,
+  targets: true,
+  needsReview: true,
+}).extend({
+  targets: z.array(PromotionTargetInputSchema).default([]),
+});
+export const PromotionUpdateSchema = PromotionSchema.omit({
+  targets: true,
+})
+  .partial()
+  .required({ id: true })
+  .extend({
+    targets: z.array(PromotionTargetInputSchema).optional(),
+  });
 
+export type PromotionTarget = z.infer<typeof PromotionTargetSchema>;
+export type PromotionTargetInput = z.infer<typeof PromotionTargetInputSchema>;
 export type Promotion = z.infer<typeof PromotionSchema>;
 export type PromotionCreate = z.infer<typeof PromotionCreateSchema>;
 export type PromotionUpdate = z.infer<typeof PromotionUpdateSchema>;

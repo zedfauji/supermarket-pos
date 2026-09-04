@@ -532,8 +532,11 @@
     "columnDiscount": "Descuento",
     "columnDateRange": "Vigencia",
     "columnStatus": "Estado",
+    "columnReview": "Revisión",
     "scopeProduct": "Producto",
     "scopeCategory": "Categoría",
+    "scopeStoreWide": "Toda la tienda",
+    "scopeTargetCounts": "{{productCount}} producto(s), {{categoryCount}} categoría(s)",
     "toggleActiveAriaLabel": "Alternar promoción activa",
     "edit": "Editar",
     "delete": "Eliminar",
@@ -565,5 +568,18 @@
     "activeRangeLabel": "Vigencia",
     "saveButton": "Guardar promoción",
     "savedToast": "Promoción guardada"
+  },
+  "promotionWizard": {
+    "step": {
+      "basics": "Datos y descuento",
+      "scope": "Alcance",
+      "validity": "Vigencia y recurrencia",
+      "review": "Revisión"
+    },
+    "comingSoon": "Alcance/Vigencia/Revisión — disponible en el siguiente plan.",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "createPromotion": "Crear promoción",
+    "saveChanges": "Guardar cambios"
   }
 }
