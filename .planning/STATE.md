@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 28
-current_phase_name: Promotion Management Redesign
-status: planning
-stopped_at: Phase 28 context gathered
-last_updated: "2026-09-04T15:12:20.922Z"
+current_phase_name: promotion-management-redesign
+status: executing
+stopped_at: Phase 28 UI-SPEC approved
+last_updated: "2026-09-04T16:11:49.959Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
-state_head: 7c45b3936d8c40662862353abaa917298524cbc4
+state_head: 95d71412ab46b110bbcebdeb13d03294a44297af
 progress:
   total_phases: 11
   completed_phases: 7
-  total_plans: 40
+  total_plans: 45
   completed_plans: 40
   percent: 64
 ---
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 
 ## Current Position
 
-Phase: 28 — Promotion Management Redesign
+Phase: 28 (promotion-management-redesign) — READY TO EXECUTE
 Plan: Not started
   D-08 negative-path proof, flip test-customer fixture to suspended)
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-09-04 — Phase 27 complete, transitioned to Phase 28
   --config merge, D-08 gate) proven end-to-end via a real workflow_dispatch run
 
@@ -284,9 +284,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-04T15:12:05.514Z
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-promotion-management-redesign/28-CONTEXT.md
+Last session: 2026-09-04T15:35:41.737Z
+Stopped at: Phase 28 UI-SPEC approved
+Resume file: D:/Projects/Code/supermarket-pos/.planning/phases/28-promotion-management-redesign/28-UI-SPEC.md
 
 ## Operator Next Steps
 
