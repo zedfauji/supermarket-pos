@@ -14,6 +14,14 @@ const BodySchema = z
     rappiOrderId: z.string().max(128).nullable().optional(),
     // Phase 15 gap-closure (D-02): cached tab.version for optimistic-concurrency guard.
     expectedVersion: z.number().int().nonnegative().optional(),
+    // Phase 27 Plan 09 (G-27-13): ad-hoc discount + manager-PIN re-verification,
+    // mirroring process-direct-sale/index.ts's BodySchema shape exactly.
+    discountScope: z.enum(['all']).optional(),
+    discountType: z.enum(['percent', 'fixed']).optional(),
+    discountValue: z.number().nonnegative().optional(),
+    discountAmount: z.number().nonnegative().multipleOf(0.01).optional(),
+    managerOverride: z.boolean().optional(),
+    managerPin: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.method === 'cash' && data.tenderedAmount == null) {
@@ -156,6 +164,12 @@ Deno.serve(async (req: Request) => {
     p_reference_number: body.referenceNumber?.trim() ? body.referenceNumber.trim() : null,
     p_rappi_order_id: body.rappiOrderId?.trim() ? body.rappiOrderId.trim() : null,
     ...(body.expectedVersion !== undefined ? { p_expected_version: body.expectedVersion } : {}),
+    p_discount_scope: body.discountScope ?? null,
+    p_discount_type: body.discountType ?? null,
+    p_discount_value: body.discountValue ?? null,
+    p_discount_amount: body.discountAmount ?? null,
+    p_manager_override: body.managerOverride ?? null,
+    p_manager_pin: body.managerPin ?? null,
   });
 
   if (rpcError) {
