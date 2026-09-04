@@ -34,12 +34,11 @@ function defaultToStr(): string {
 
 /**
  * Wizard state machine for the promotion create/edit flow (D-07/D-08/D-10).
- * This task (28-01) only implements the Basics & Discount step's real
- * fields — Scope/Validity/Review are minimal stand-ins (store-wide target,
- * plain date-range default, no recurrence) that Waves 2 (28-03/28-04)
- * expand into full step UI. `save()` already writes the real
- * junction-table/recurrence shape via the entity mutations, so this task's
- * output is a genuinely working (if partial) wizard, not a throwaway.
+ * Basics & Discount and Scope are real, working steps (28-01/28-03) —
+ * Validity/Recurrence and the Review live-price preview are minimal
+ * stand-ins (plain date-range default, no recurrence) that 28-04 expands
+ * into full step UI. `save()` writes the real junction-table shape via the
+ * entity mutations for both create and edit.
  */
 export function usePromotionWizardState(promotion: Promotion | null | undefined) {
   const [currentStep, setCurrentStep] = useState<PromotionWizardStep>('basics');
@@ -61,6 +60,14 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
   const [fromStr, setFromStr] = useState(() => toDateStr(new Date()));
   const [toStr, setToStr] = useState(defaultToStr);
 
+  // Scope step (D-01/D-08 partial — full 4-step gate lands in 28-04).
+  // storeWide defaults true, matching the Plan-01 always-store-wide default
+  // so existing behavior doesn't regress until the admin explicitly picks
+  // targets.
+  const [storeWide, setStoreWide] = useState(true);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
   const [nameError, setNameError] = useState<string | null>(null);
   const [valueError, setValueError] = useState<string | null>(null);
 
@@ -80,6 +87,21 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       setDiscountPercentStr(String(promotion.discountValue));
       setFromStr(toDateStr(promotion.startsAt));
       setToStr(toDateStr(promotion.endsAt));
+      // D-01/D-08 prefill: zero targets = store-wide; otherwise split the
+      // junction rows by which FK is non-null.
+      if (promotion.targets.length === 0) {
+        setStoreWide(true);
+        setSelectedProductIds([]);
+        setSelectedCategoryIds([]);
+      } else {
+        setStoreWide(false);
+        setSelectedProductIds(
+          promotion.targets.filter(t => t.productId != null).map(t => t.productId as string)
+        );
+        setSelectedCategoryIds(
+          promotion.targets.filter(t => t.categoryId != null).map(t => t.categoryId as string)
+        );
+      }
       setFurthestValidStep(WIZARD_STEP_ORDER.length - 1);
     } else {
       setName('');
@@ -88,6 +110,9 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       setDiscountPercentStr('0');
       setFromStr(toDateStr(new Date()));
       setToStr(defaultToStr());
+      setStoreWide(true);
+      setSelectedProductIds([]);
+      setSelectedCategoryIds([]);
       setFurthestValidStep(0);
     }
     setCurrentStep('basics');
@@ -99,6 +124,33 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
   function handleDiscountTypeChange(next: DiscountType) {
     setDiscountType(next);
     if (next === 'percent') setDiscountPercentStr('0');
+  }
+
+  /**
+   * Checking store-wide clears any selected targets (no other path can
+   * repopulate them while the picker is disabled). Unchecking simply flips
+   * the flag — by construction the arrays are already empty at that point
+   * (see the Deviations-free precedent in CategoryTreePicker's own
+   * single-value-clear-on-deselect behavior), so no prior selection is ever
+   * silently restored.
+   */
+  function handleStoreWideChange(checked: boolean) {
+    setStoreWide(checked);
+    if (checked) {
+      setSelectedProductIds([]);
+      setSelectedCategoryIds([]);
+    }
+  }
+
+  /** Wired directly to MultiSelectPicker's onChange shape. */
+  function handleScopeSelectionChange(next: { productIds: string[]; categoryIds: string[] }) {
+    setSelectedProductIds(next.productIds);
+    setSelectedCategoryIds(next.categoryIds);
+  }
+
+  /** D-08 partial: forward-nav gate for the Scope step. */
+  function isScopeStepValid(): boolean {
+    return storeWide || selectedProductIds.length + selectedCategoryIds.length > 0;
   }
 
   /** Validates the Basics & Discount step's fields (D-08 forward-nav gate). */
@@ -134,7 +186,7 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       discountValue: discountType === 'percent' ? percentValue : discountValue,
       startsAt: startOfDay(fromStr),
       endsAt: endOfDay(toStr),
-      // Task 1 minimal stand-ins (Scope/Validity real UI lands in 28-03/28-04):
+      // Validity/Recurrence real UI lands in 28-04:
       daysOfWeek: null,
       startTime: null,
       endTime: null,
@@ -142,18 +194,22 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
       createdBy: promotion?.createdBy ?? null,
     };
 
+    // D-01: storeWide -> [] (store-wide/no restriction); otherwise one row
+    // per selected product/category, each with the other FK null.
+    const targets = storeWide
+      ? []
+      : [
+          ...selectedProductIds.map(id => ({ productId: id, categoryId: null })),
+          ...selectedCategoryIds.map(id => ({ productId: null, categoryId: id })),
+        ];
+
     if (promotion) {
-      // Edit mode: `targets` is intentionally OMITTED here (never sent as
-      // `[]`) — the update mutation only touches promotion_targets when
-      // `targets !== undefined`. Since this task's Scope step has no real
-      // picker UI yet, sending an empty array would silently wipe out any
-      // targets an existing promotion already has. Real Scope-step editing
-      // (28-03/28-04) will pass the actual selected set here instead.
-      return updateMutation.mutateAsync({ id: promotion.id, ...basics });
+      // Edit mode now has a real Scope-step picker (28-03) — the selected
+      // set (never omitted) always reflects the admin's current choice,
+      // including an explicit `[]` for a promotion switched to store-wide.
+      return updateMutation.mutateAsync({ id: promotion.id, ...basics, targets });
     }
-    // Create mode: a brand-new promotion has no prior targets to lose —
-    // an explicit empty array here is exactly D-01's store-wide default.
-    return createMutation.mutateAsync({ ...basics, targets: [] });
+    return createMutation.mutateAsync({ ...basics, targets });
   }
 
   return {
@@ -171,6 +227,12 @@ export function usePromotionWizardState(promotion: Promotion | null | undefined)
     setDiscountPercentStr,
     fromStr,
     toStr,
+    storeWide,
+    handleStoreWideChange,
+    selectedProductIds,
+    selectedCategoryIds,
+    handleScopeSelectionChange,
+    isScopeStepValid,
     nameError,
     valueError,
     validateBasics,

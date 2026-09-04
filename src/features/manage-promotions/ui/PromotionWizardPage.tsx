@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -19,13 +20,15 @@ import {
   WIZARD_STEP_ORDER,
   type PromotionWizardStep,
 } from '../model/usePromotionWizardState';
+import { StepScope } from './wizard/StepScope';
+
+const SCOPE_INDEX = WIZARD_STEP_ORDER.indexOf('scope');
 
 /**
  * Dedicated create/edit screen for promotions (D-07), replacing the deleted
- * PromotionFormDialog modal. This task (28-01) ships a real, working
- * Basics & Discount step end-to-end; the Scope/Validity/Review steps are
- * minimal placeholder panels — the full 4-step flow (multi-select target
- * picker, recurrence fields, live price preview) lands in 28-03/28-04.
+ * PromotionFormDialog modal. Basics & Discount (28-01) and Scope (28-03)
+ * are real, working steps — Validity/Review remain placeholder panels until
+ * 28-04 adds recurrence fields and the live price preview.
  */
 export function PromotionWizardPage() {
   const { t } = useTranslation('wAdmin');
@@ -38,15 +41,34 @@ export function PromotionWizardPage() {
   const wizard = usePromotionWizardState(promotion);
   const stepIndex = WIZARD_STEP_ORDER.indexOf(wizard.currentStep);
   const isLastStep = stepIndex === WIZARD_STEP_ORDER.length - 1;
+  // D-08 partial: tracks whether the admin tried to leave the Scope step
+  // while it was invalid, so StepScope only shows its inline error after a
+  // real attempt (not on first render).
+  const [scopeAttempted, setScopeAttempted] = useState(false);
 
   function goToStep(next: PromotionWizardStep) {
     const nextIndex = WIZARD_STEP_ORDER.indexOf(next);
-    if (!isEditMode && nextIndex > wizard.furthestValidStep) return;
+    if (!isEditMode) {
+      if (nextIndex > wizard.furthestValidStep) return;
+      // furthestValidStep is a high-water mark set the first time a step was
+      // validly passed — it does not retroactively invalidate if the admin
+      // goes back and un-does a previously-valid Scope selection. Re-check
+      // isScopeStepValid() for any jump past Scope (e.g. clicking a later
+      // tab directly) so a since-invalidated Scope step still blocks.
+      if (nextIndex > SCOPE_INDEX && !wizard.isScopeStepValid()) {
+        setScopeAttempted(true);
+        return;
+      }
+    }
     wizard.setCurrentStep(next);
   }
 
   function handleNext() {
     if (wizard.currentStep === 'basics' && !wizard.validateBasics()) return;
+    if (wizard.currentStep === 'scope' && !wizard.isScopeStepValid()) {
+      setScopeAttempted(true);
+      return;
+    }
     const nextIndex = Math.min(stepIndex + 1, WIZARD_STEP_ORDER.length - 1);
     wizard.setFurthestValidStep(Math.max(wizard.furthestValidStep, nextIndex));
     const nextStep = WIZARD_STEP_ORDER[nextIndex];
@@ -174,7 +196,15 @@ export function PromotionWizardPage() {
         </TabsContent>
 
         <TabsContent value="scope">
-          <p className="text-sm text-muted-foreground">{t('promotionWizard.comingSoon')}</p>
+          <StepScope
+            storeWide={wizard.storeWide}
+            onStoreWideChange={wizard.handleStoreWideChange}
+            selectedProductIds={wizard.selectedProductIds}
+            selectedCategoryIds={wizard.selectedCategoryIds}
+            onScopeSelectionChange={wizard.handleScopeSelectionChange}
+            showValidationError={scopeAttempted && !wizard.isScopeStepValid()}
+            disabled={wizard.isPending}
+          />
         </TabsContent>
 
         <TabsContent value="validity">

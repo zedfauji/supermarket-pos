@@ -102,6 +102,11 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+// Mock scrollIntoView — jsdom has no layout engine and doesn't implement it,
+// but cmdk's Command primitive (MultiSelectPicker) calls it on every
+// keyboard/selection navigation.
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
 // Mock Tauri updater plugin — not available in jsdom
 vi.mock('@tauri-apps/plugin-updater', () => ({
   check: vi.fn().mockResolvedValue(null),

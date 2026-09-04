@@ -576,10 +576,21 @@
       "validity": "Validity & Recurrence",
       "review": "Review"
     },
-    "comingSoon": "Scope/Validity/Review — coming in the next plan.",
+    "comingSoon": "Validity/Review — coming in the next plan.",
     "back": "Back",
     "next": "Next",
     "createPromotion": "Create Promotion",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "scope": {
+      "storeWideLabel": "Store-wide (no restriction)",
+      "pickerPlaceholder": "Select products or categories…",
+      "searchPlaceholder": "Search products or categories…",
+      "productsGroup": "Products",
+      "categoriesGroup": "Categories",
+      "emptyHeading": "No matches",
+      "emptyBody": "Try a different product or category name.",
+      "removeChip": "Remove {{name}}",
+      "validationError": "Select at least one product or category, or mark this promotion as store-wide."
+    }
   }
 }

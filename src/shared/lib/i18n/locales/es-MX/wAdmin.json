@@ -576,10 +576,21 @@
       "validity": "Vigencia y recurrencia",
       "review": "Revisión"
     },
-    "comingSoon": "Alcance/Vigencia/Revisión — disponible en el siguiente plan.",
+    "comingSoon": "Vigencia/Revisión — disponible en el siguiente plan.",
     "back": "Atrás",
     "next": "Siguiente",
     "createPromotion": "Crear promoción",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "scope": {
+      "storeWideLabel": "Toda la tienda (sin restricción)",
+      "pickerPlaceholder": "Selecciona productos o categorías…",
+      "searchPlaceholder": "Buscar productos o categorías…",
+      "productsGroup": "Productos",
+      "categoriesGroup": "Categorías",
+      "emptyHeading": "Sin coincidencias",
+      "emptyBody": "Intenta con otro nombre de producto o categoría.",
+      "removeChip": "Quitar {{name}}",
+      "validationError": "Selecciona al menos un producto o categoría, o marca esta promoción como de toda la tienda."
+    }
   }
 }
