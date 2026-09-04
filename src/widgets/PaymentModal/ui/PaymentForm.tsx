@@ -115,6 +115,10 @@ const DEFAULT_ENABLED_METHODS = {
   rappi: true,
 } as const;
 const DEFAULT_TAX_RATE_PERCENT = 16;
+// Phase 28 (D-06): mirrors process_direct_sale_atomic's own
+// COALESCE(..., 'America/Mexico_City') fallback when settings.general is
+// unavailable — evaluateBestPromotion always needs a timezone argument.
+const DEFAULT_TIMEZONE = 'America/Mexico_City';
 
 export type PaymentProcessors = {
   processCashPayment: typeof processCashPayment;
@@ -186,6 +190,7 @@ export function PaymentForm({
   const enabledMethods = appSettings?.billing.paymentMethods ?? DEFAULT_ENABLED_METHODS;
   const taxRatePercent = appSettings?.billing.taxRatePercent ?? DEFAULT_TAX_RATE_PERCENT;
   const taxInclusive = appSettings?.billing.taxInclusive ?? true;
+  const timezone = appSettings?.general.timezone ?? DEFAULT_TIMEZONE;
   const paymentLabels = appSettings?.paymentLabels ?? {
     cash: t('paymentForm.defaultLabelCash'),
     card: t('paymentForm.defaultLabelCard'),
@@ -215,9 +220,7 @@ export function PaymentForm({
   // than the currently logged-in staff's own identity. Reset everywhere
   // managerOverride resets to false, so a stale PIN from a prior payment
   // attempt is never reused.
-  const [authorizingManagerPin, setAuthorizingManagerPin] = useState<string | undefined>(
-    undefined
-  );
+  const [authorizingManagerPin, setAuthorizingManagerPin] = useState<string | undefined>(undefined);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinPurpose, setPinPurpose] = useState<'discount' | 'below_cost' | null>(null);
   // Phase 27 (PROMO-05): id of the "Apply Promotion" selection — independent
@@ -324,7 +327,8 @@ export function PaymentForm({
         new Date(),
         0,
         null,
-        0
+        0,
+        timezone
       );
       if (!match) return item;
       const candidateUnitPrice =
@@ -337,7 +341,7 @@ export function PaymentForm({
       if (candidateUnitPrice >= item.unitPrice) return item;
       return { ...item, unitPrice: candidateUnitPrice };
     });
-  }, [tab.items, selectedPromotion]);
+  }, [tab.items, selectedPromotion, timezone]);
 
   const itemsSubtotal = useMemo(
     () => effectiveItems.reduce((sum, item) => sum + calculateLineTotal(item), 0),

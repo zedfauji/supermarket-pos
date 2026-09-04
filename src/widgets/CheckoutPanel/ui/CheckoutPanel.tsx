@@ -47,7 +47,8 @@ export function CheckoutPanel() {
   // Peek window while the screen visually appears locked, defeating the
   // lock's purpose even though no cart mutation occurs.
   const locked = useLockStateStore(s => s.locked);
-  const scannerEnabled = !paymentOpen && !weightEntry.isOpen && editingWeightItemId === null && !locked;
+  const scannerEnabled =
+    !paymentOpen && !weightEntry.isOpen && editingWeightItemId === null && !locked;
   // A scan only populates the product search box — it never adds to the cart
   // by itself. useBarcodeScanner hands over the full scanned code in one
   // call, so this always replaces `search` rather than appending to it.
@@ -82,7 +83,8 @@ export function CheckoutPanel() {
       new Date(),
       appSettings.nearExpiry.discountPercent,
       daysUntilExpiry,
-      appSettings.nearExpiry.thresholdDays
+      appSettings.nearExpiry.thresholdDays,
+      appSettings.general.timezone
     );
   };
   // The ADD_TO_CART_EVENT listener below is registered once on mount
@@ -146,7 +148,8 @@ export function CheckoutPanel() {
           new Date(),
           appSettings.nearExpiry.discountPercent,
           daysUntilExpiry,
-          appSettings.nearExpiry.thresholdDays
+          appSettings.nearExpiry.thresholdDays,
+          appSettings.general.timezone
         );
         const changed =
           !match ||
@@ -178,7 +181,12 @@ export function CheckoutPanel() {
       const { product, qty, weightGrams } = event.payload;
       const match = resolvePromotionMatchRef.current(product);
       if (weightGrams != null) {
-        addWeightedItem(product, weightGrams, match?.discountedUnitPrice, match?.promotionId ?? null);
+        addWeightedItem(
+          product,
+          weightGrams,
+          match?.discountedUnitPrice,
+          match?.promotionId ?? null
+        );
       } else {
         const times = qty ?? 1;
         for (let i = 0; i < times; i += 1) {

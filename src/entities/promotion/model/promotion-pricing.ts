@@ -4,8 +4,14 @@
  * Pure best-price-wins pricing function (PROMO-04, D-05/D-06). Zero imports
  * beyond the Promotion type — independently testable, and mirrored (not
  * literally shared, RESEARCH.md Pitfall 1) in process_direct_sale_atomic's
- * plpgsql body (supabase/migrations/20260901000002_process_direct_sale_atomic_promotions.sql),
+ * plpgsql body (supabase/migrations/20260904000001_promotion_targets_recurrence.sql),
  * which is the sole authoritative computation at checkout.
+ *
+ * Phase 28 (D-01..D-06): scope matching moved from the singular
+ * scopeType/productId/categoryId columns to promo.targets (0 targets =
+ * store-wide); an additional recurrence AND-filter (daysOfWeek/startTime/
+ * endTime) is evaluated in the store's configured timezone, never the
+ * runtime's own local zone.
  */
 import type { Promotion } from '@shared/lib/domain';
 
@@ -13,6 +19,46 @@ export interface PromotionPricingProduct {
   productId: string;
   categoryId: string;
   basePrice: number;
+}
+
+/**
+ * Converts `now` to the store-local calendar day-of-week (Postgres
+ * EXTRACT(DOW) convention: 0=Sunday..6=Saturday) and wall-clock "HH:MM",
+ * via `Intl.DateTimeFormat` with an explicit `timeZone` — never
+ * `Date.getDay()`/`Date.getHours()`, which read the RUNTIME's own local
+ * zone (the cashier's Tauri app, a CI runner, etc.), not the store's
+ * configured `settings.general.timezone`. Mirrors
+ * `process_direct_sale_atomic`'s `EXTRACT(DOW FROM now() AT TIME ZONE
+ * v_store_tz)` / `(now() AT TIME ZONE v_store_tz)::time` exactly.
+ */
+export function getStoreLocalDowAndTime(
+  now: Date,
+  timeZone: string
+): { dayOfWeek: number; hhmm: string } {
+  // 'en-US' here pins Intl's weekday-token vocabulary ('Sun'..'Sat') for the
+  // DOW_MAP lookup below, not UI copy — the caller's own locale never
+  // affects this.
+  // eslint-disable-next-line i18next/no-literal-string
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const get = (type: string): string => parts.find(p => p.type === type)?.value ?? '';
+  const DOW_MAP: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  const dayOfWeek = DOW_MAP[get('weekday')] ?? 0;
+  const hhmm = `${get('hour')}:${get('minute')}`;
+  return { dayOfWeek, hhmm };
 }
 
 export interface PromotionMatch {
@@ -31,11 +77,12 @@ function round2(n: number): number {
 
 /**
  * Evaluates the best-price-wins candidate pool for one line item: every
- * active product-scoped OR category-scoped promotion matching the product,
- * plus the expiry-proximity auto-discount trigger — all in one pool (D-05).
- * The single largest discount amount wins; on an exact tie the most
- * recently created promotion wins (D-06), and the expiry-trigger candidate
- * (no createdAt) loses exact ties against any real promotion.
+ * active promotion matching the product via its `targets` (zero targets =
+ * store-wide, D-01) AND passing the recurrence AND-filter (D-03..D-06),
+ * plus the expiry-proximity auto-discount trigger — all in one pool
+ * (PROMO-04/D-05). The single largest discount amount wins; on an exact tie
+ * the most recently created promotion wins (D-06), and the expiry-trigger
+ * candidate (no createdAt) loses exact ties against any real promotion.
  *
  * Returns null when no candidate qualifies (no matching promotion, no
  * expiry trigger).
@@ -46,7 +93,8 @@ export function evaluateBestPromotion(
   now: Date,
   expiryDiscountPercent: number,
   daysUntilExpiry: number | null,
-  expiryThresholdDays: number
+  expiryThresholdDays: number,
+  timezone: string
 ): PromotionMatch | null {
   let bestPromoId: string | null = null;
   let bestPromoRate: number | null = null;
@@ -56,10 +104,38 @@ export function evaluateBestPromotion(
   for (const promo of activePromotions) {
     if (!promo.active) continue;
     if (now < promo.startsAt || now > promo.endsAt) continue;
+
+    // D-01: zero targets = store-wide, matches any product. Otherwise match
+    // if ANY target row references this product or its category.
     const matchesScope =
-      (promo.scopeType === 'product' && promo.productId === product.productId) ||
-      (promo.scopeType === 'category' && promo.categoryId === product.categoryId);
+      promo.targets.length === 0 ||
+      promo.targets.some(
+        t => t.productId === product.productId || t.categoryId === product.categoryId
+      );
     if (!matchesScope) continue;
+
+    // D-03..D-06: recurrence AND-filter — computed once per candidate
+    // iteration in the store's configured timezone (never the runtime's own
+    // local zone), not once per sub-check.
+    const needsRecurrenceCheck =
+      (promo.daysOfWeek !== null && promo.daysOfWeek.length > 0) ||
+      (promo.startTime !== null && promo.endTime !== null);
+    if (needsRecurrenceCheck) {
+      const { dayOfWeek, hhmm } = getStoreLocalDowAndTime(now, timezone);
+      if (promo.daysOfWeek !== null && promo.daysOfWeek.length > 0) {
+        if (!promo.daysOfWeek.includes(dayOfWeek)) continue;
+      }
+      if (promo.startTime !== null && promo.endTime !== null) {
+        // Normalize to "HH:MM" — startTime/endTime may come back "HH:MM:SS"
+        // from the DB's `time` column; a straight string compare against
+        // "HH:MM" would otherwise treat an exact-boundary match as less-than
+        // (a shorter string that's a prefix of a longer one compares as
+        // smaller), breaking the inclusive boundary (D-05).
+        const start = promo.startTime.slice(0, 5);
+        const end = promo.endTime.slice(0, 5);
+        if (hhmm < start || hhmm > end) continue;
+      }
+    }
 
     const rawAmount =
       promo.discountType === 'percent'

@@ -120,6 +120,11 @@ const { mockSettings, DEFAULT_MOCK_BILLING } = vi.hoisted(() => {
     mockSettings: {
       billing: { ...DEFAULT_MOCK_BILLING },
       paymentLabels: { cash: 'Efectivo', card: 'Terminal BBVA', rappi: 'Rappi' },
+      // Phase 28 (D-06): evaluateBestPromotion's new timezone argument reads
+      // appSettings.general.timezone — the "Apply Promotion" selector tests
+      // below need this populated or PaymentForm.tsx's `?? DEFAULT_TIMEZONE`
+      // fallback would silently mask a real regression here.
+      general: { timezone: 'America/Mexico_City' },
     },
   };
 });
@@ -215,13 +220,22 @@ function makePromotion(overrides: Partial<Promotion> = {}): Promotion {
   return {
     id: '99999999-9999-9999-9999-999999999999',
     name: '10% Off Promotable Product',
-    scopeType: 'product',
-    productId: promotableProductId,
-    categoryId: null,
+    targets: [
+      {
+        id: 'aaaaaaaa-1111-1111-1111-111111111111',
+        promotionId: '99999999-9999-9999-9999-999999999999',
+        productId: promotableProductId,
+        categoryId: null,
+      },
+    ],
     discountType: 'percent',
     discountValue: 10,
     startsAt: new Date(now.getTime() - 60 * 60 * 1000),
     endsAt: new Date(now.getTime() + 60 * 60 * 1000),
+    daysOfWeek: null,
+    startTime: null,
+    endTime: null,
+    needsReview: false,
     active: true,
     createdAt: now,
     createdBy: null,
@@ -882,15 +896,13 @@ describe('PaymentForm — split mode', () => {
     const receipt1 = { ...makeReceipt(), paymentMethod: 'cash' as const };
     const receipt2 = { ...makeReceipt(), paymentMethod: 'cash' as const };
     const processors = makeProcessors({
-      processSplitPayment: vi
-        .fn()
-        .mockResolvedValue(
-          ok({
-            paymentGroupId: 'group-y',
-            paymentIds: ['p1', 'p2'],
-            receipts: [receipt1, receipt2],
-          })
-        ),
+      processSplitPayment: vi.fn().mockResolvedValue(
+        ok({
+          paymentGroupId: 'group-y',
+          paymentIds: ['p1', 'p2'],
+          receipts: [receipt1, receipt2],
+        })
+      ),
     });
     renderForm(processors);
     await openSplitMode(user);

@@ -16,8 +16,15 @@ export {
 
 export {
   evaluateBestPromotion,
+  getStoreLocalDowAndTime,
   type PromotionPricingProduct,
   type PromotionMatch,
 } from './model/promotion-pricing';
 
-export type { Promotion, PromotionCreate, PromotionUpdate } from './model/types';
+export type {
+  Promotion,
+  PromotionCreate,
+  PromotionUpdate,
+  PromotionTarget,
+  PromotionTargetInput,
+} from './model/types';

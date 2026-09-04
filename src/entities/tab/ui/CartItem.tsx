@@ -43,8 +43,7 @@ export function CartItem({
   const handleResolveConflict = () => {
     if (!activePromotions || !appSettings) return;
     const daysUntilExpiry =
-      nearExpiryAlerts?.find(alert => alert.productId === item.product.id)?.daysUntilExpiry ??
-      null;
+      nearExpiryAlerts?.find(alert => alert.productId === item.product.id)?.daysUntilExpiry ?? null;
     const match = evaluateBestPromotion(
       {
         productId: item.product.id,
@@ -55,7 +54,8 @@ export function CartItem({
       new Date(),
       appSettings.nearExpiry.discountPercent,
       daysUntilExpiry,
-      appSettings.nearExpiry.thresholdDays
+      appSettings.nearExpiry.thresholdDays,
+      appSettings.general.timezone
     );
     resolveConflict(
       item.tempId,
@@ -85,7 +85,11 @@ export function CartItem({
           </POSButton>
         </div>
 
-        {nearExpiry ? <Badge className="mb-2 bg-pos-warning text-amber-950 dark:text-amber-100">{t('cartItem.nearExpiry', { days: nearExpiry.daysUntilExpiry })}</Badge> : null}
+        {nearExpiry ? (
+          <Badge className="mb-2 bg-pos-warning text-amber-950 dark:text-amber-100">
+            {t('cartItem.nearExpiry', { days: nearExpiry.daysUntilExpiry })}
+          </Badge>
+        ) : null}
 
         {item.priceConflict ? (
           <POSButton
