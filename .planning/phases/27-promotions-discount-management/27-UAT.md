@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 27-promotions-discount-management
 source: [27-01-SUMMARY.md, 27-02-SUMMARY.md, 27-03-SUMMARY.md, 27-04-SUMMARY.md, 27-05-SUMMARY.md, 27-06-SUMMARY.md, 27-07-SUMMARY.md]
 started: 2026-09-03T00:00:00Z
-updated: 2026-09-03T00:00:00Z
+updated: 2026-09-03T01:00:00Z
 ---
 
 ## Current Test
@@ -166,10 +166,47 @@ blocked: 0
   reason: "User reported: New Promotion Dialoge is very basic. first of all it shouldn't be any dialoge , it should be a screen which gives more space to add more features and better layout , One Promtions could be applied to multiple products from multipe categories so a search options and multi select should be there , A promotion could be blank also just having discount ,a very generic one , such as Friends & Family Promotion applying 20% flat , Validaty options is serious out of logic , What is last 7 days i mean ? its not report its promotions for upcoming days , Time based Promotions should be also there , such as every day or someday or on selected days of week or month , promotions could be applied to lets say from 4PM to 6 PM , flat 20% Off , It shouldn't be on the same screen , it could be multiple screen and flow. a Wizard will do it i believe and on exit it should validate if everything s alright. percentage of discount text box is uneditable , 0 stays always. it needs to be rethinked and redesigned"
   severity: major
   test: 8
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: |
+    Two distinct causes:
+    Part A (functional bug — percent field stuck at 0): PromotionFormDialog.tsx:58 holds
+    discountValue as number-typed state (useState(0)), coerced via Number(e.target.value) on
+    every keystroke with no string buffer. Clearing the field yields Number('')===0, which
+    React redisplays as the literal "0"; new digits insert before the persistent 0 instead of
+    replacing it (e.g. typing "20" produces "020"). NearExpirySettingsTab.tsx's sibling percent
+    field (string state, coerce only at submit) does not exhibit this — confirms the pattern,
+    not number inputs generally, is the defect.
+    Part B (scope/architecture gaps — by design, not bugs):
+    1. Scope cardinality: promotions.product_id/category_id are singular nullable FKs under an
+       XOR CHECK (promotions_exactly_one_target) — no multi-select possible without schema change.
+    2. Blank/unscoped promotion: same XOR CHECK actively rejects both NULL — a store-wide flat
+       discount is currently impossible to save.
+    3. Validity semantics: PromotionFormDialog reuses Reports' DateRangePicker, whose only
+       presets (Today/Yesterday/Last 7 Days/This Month) all clamp `to` at today — zero
+       forward-looking presets, hence "what is last 7 days" confusion.
+    4. Time-of-day/day-of-week recurrence: promotions table has only starts_at/ends_at
+       timestamptz — no recurrence columns or UI exist anywhere; net-new capability.
+    5. Screen vs dialog: /promotions is a real routed page, but the create/edit form itself is
+       a fixed-width Radix Dialog with every field in one non-paginated block, validated only
+       on final Save — no wizard/step structure.
+  artifacts:
+    - path: "src/features/manage-promotions/ui/PromotionFormDialog.tsx"
+      issue: "Part A: number-typed discountValue state (line 58) + per-keystroke Number() coercion (lines 272-281) causes the stuck-at-0 bug. Part B: single-value Select/CategoryTreePicker (lines 201-240, no multi-select), single non-paginated form validated only at Save (lines 106-320), DateRangePicker reused as-is with no forward-looking presets (lines 293-303)."
+    - path: "supabase/migrations/20260901000001_promotions_schema.sql"
+      issue: "promotions_exactly_one_target XOR CHECK (lines 47-49) blocks both multi-target and blank/unscoped promotions; product_id/category_id are singular FKs (lines 33-34), no recurrence columns."
+    - path: "src/shared/lib/domain.ts"
+      issue: "PromotionSchema (lines 1647-1675) mirrors the XOR scope constraint and has no recurrence fields."
+    - path: "src/shared/ui/DateRangePicker.tsx"
+      issue: "Presets (lines 20-57) are all backward-looking (Today/Yesterday/Last 7 Days/This Month); PromotionFormDialog is one of only two consumers, wired with zero promotion-appropriate presets added."
+    - path: "src/widgets/SettingsTabsPanel/tabs/NearExpirySettingsTab.tsx"
+      issue: "Reference pattern for the Part A fix — string-state percent field (line 15), coerced to Number() only at save (line 49)."
+  missing:
+    - "String-buffered discount-value input (mirror NearExpirySettingsTab's pattern), coerce to Number only at submit/validation time"
+    - "Multi-select product/category scope (schema: replace singular FK + XOR CHECK with a junction table or array column supporting 0..N products and 0..N categories)"
+    - "Explicit 'no target restriction' / store-wide scope option, valid to save with zero products and zero categories"
+    - "Forward-looking date-range presets and/or copy for promotion validity (distinct from the Reports DateRangePicker's backward-looking presets)"
+    - "Recurring time-of-day and day-of-week promotion windows (new schema columns + UI — net-new capability, not a regression)"
+    - "Multi-step wizard flow (screen, not dialog) with per-step and on-exit validation"
+  debug_session: ".planning/debug/promotion-dialog-ux-and-scope-gaps.md"
 
 - gap_id: G-27-13
   truth: "After a correct manager PIN unlocks the ad-hoc discount section and a discount amount is set, submitting the payment succeeds — the server does not re-reject it for missing manager authorization."
@@ -177,7 +214,45 @@ blocked: 0
   reason: "User reported: while applying the discount on payment page , when turned on the button for discount it ask for PIN , after entering he correct PIN and discount , when processing the payment , it throws error that it still requires manager PIN but it never asks."
   severity: blocker
   test: 13
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: |
+    ManagerPinDialog (src/features/manager-pin-gate/ui/ManagerPinDialog.tsx) matches the entered
+    PIN against eligible staff but its onSuccess() callback is zero-argument — it never tells the
+    caller WHICH staff member's PIN matched, only that some eligible PIN was entered. The actual
+    payment RPC (process_direct_sale_atomic, via CheckoutPanel -> useCheckoutSale ->
+    process-direct-sale edge function) always runs as the CURRENTLY LOGGED-IN cashier
+    (p_staff_id resolved server-side from the session JWT), never as the manager who typed
+    their PIN. The RPC's manager-override re-check
+    (process_direct_sale_atomic_promotions.sql:127-133) checks role_permissions for
+    'apply_custom_discount' against p_staff_id — the cashier's own id — and cashiers structurally
+    never have that permission (rbac.ts: apply_custom_discount is MANAGER_EXTRA-only). The client
+    faithfully sends managerOverride:true; the server still rejects, because no manager ever
+    actually authorized the request from the server's point of view — only the cashier's own
+    identity was ever checked. This is a pre-existing structural property of the ManagerPinDialog
+    pattern (confirmed by 27-04-SUMMARY.md's own decisions log), not something Phase 27 introduced
+    in isolation — every ManagerPinDialog consumer (refund, reopen_tab, edit_paid_tab, close_tab,
+    apply_custom_discount) shares the same defect. Phase 27's own E2E suite sidesteps it by
+    logging in AS a manager, so the realistic cashier-operates/manager-authorizes scenario was
+    never exercised until this UAT pass.
+    Secondary, independent finding (PaymentPane/reopened-tab path only): process-payment edge
+    function's BodySchema never declares discount/managerOverride fields at all (Zod silently
+    strips them), and process_payment_atomic/process_split_payment_atomic have no
+    p_manager_override parameter or authorization check whatsoever, unlike
+    process_direct_sale_atomic — a different failure mode (silent underpayment) on that screen,
+    not the reported error, but should be closed in the same pass.
+  artifacts:
+    - path: "src/features/manager-pin-gate/ui/ManagerPinDialog.tsx"
+      issue: "onSuccess() is zero-argument — discards the matched staff identity, the structural defect shared by every consumer of this dialog."
+    - path: "supabase/migrations/20260901000002_process_direct_sale_atomic_promotions.sql"
+      issue: "Manager-override role re-check (lines 127-133) is keyed on p_staff_id (the acting cashier), not on any distinct authorizing-manager identity."
+    - path: "src/shared/lib/rbac.ts"
+      issue: "Confirms apply_custom_discount is MANAGER_EXTRA-only and absent from CASHIER_ACTIONS (lines 40-62) — cashiers can never pass the re-check regardless of PIN entry."
+    - path: "supabase/functions/process-payment/index.ts"
+      issue: "BodySchema never declares discountScope/discountType/discountValue/discountAmount/managerOverride — Zod silently strips them before the RPC call (secondary gap, PaymentPane path only)."
+    - path: "supabase/migrations/20260902000001_close_tab_accounts_for_adhoc_discount.sql"
+      issue: "process_payment_atomic/process_split_payment_atomic have no p_manager_override parameter or authorization check at all, unlike process_direct_sale_atomic (secondary gap, PaymentPane path only)."
+  missing:
+    - "ManagerPinDialog.onSuccess must surface the matched staff's identity (e.g. onSuccess: (staffId: string) => void) instead of discarding it"
+    - "A distinct authorizing-manager parameter (e.g. p_manager_staff_id) threaded from the PIN dialog through to the RPC, checked instead of/alongside p_staff_id for the manager-override authorization"
+    - "Scope decision: fix ManagerPinDialog's contract globally (affects refund/reopen_tab/edit_paid_tab/close_tab too) vs narrowly for apply_custom_discount only — needs an explicit call, not an assumption"
+    - "process_payment_atomic/process_split_payment_atomic + process-payment edge function need the same discount+manager-override wiring process_direct_sale_atomic already has, to close the reopened-tab (PaymentPane) path gap"
+  debug_session: ".planning/debug/adhoc-discount-manager-pin-rejected-after-entry.md"
