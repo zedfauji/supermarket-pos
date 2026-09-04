@@ -33,7 +33,13 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        # --force: @storybook/addon-vitest@10.3.5's peerDependency on vitest
+        # is "^3.0.0 || ^4.0.0" and does not yet support vitest 5 — an
+        # accepted tradeoff (see 2602972) to clear npm audit's 5 critical
+        # Storybook-browser-testing-chain findings. This only affects
+        # test:storybook (RUN_STORYBOOK_TESTS-gated), never this job's own
+        # `npm run test`.
+        run: npm ci --force
 
       - name: Typecheck
         run: npm run typecheck
@@ -88,7 +94,13 @@ jobs:
           workspaces: src-tauri
 
       - name: Install dependencies
-        run: npm ci
+        # --force: @storybook/addon-vitest@10.3.5's peerDependency on vitest
+        # is "^3.0.0 || ^4.0.0" and does not yet support vitest 5 — an
+        # accepted tradeoff (see 2602972) to clear npm audit's 5 critical
+        # Storybook-browser-testing-chain findings. This only affects
+        # test:storybook (RUN_STORYBOOK_TESTS-gated), never this job's own
+        # `npm run test`.
+        run: npm ci --force
 
       - name: Build broker
         working-directory: broker
