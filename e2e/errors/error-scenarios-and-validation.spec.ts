@@ -476,19 +476,18 @@ test.describe('Field Validation', () => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: WHO_ARE_YOU_RE })).toBeVisible({ timeout: 30_000 });
 
-    // Click on the first staff member — scoped to the EmployeeSelector's own
-    // container (the heading's nearest common ancestor with the button list),
+    // Click on the first staff member — scoped to the page's <main> landmark,
     // not a bare page-wide getByRole('button') (39-06 triage finding: the
     // broad locator was resolving to the persistent AI-assistant panel's
     // "Ver menú" toggle button, which sits outside the viewport and caused
     // the 15s click timeout — same overlay documented in helpers/auth.ts's
     // logout() and e2e/24-waitlist.spec.ts's T6/T7 dialog-title-filter
-    // comments).
-    const employeeSection = page
-      .locator('div')
-      .filter({ has: page.getByRole('heading', { name: WHO_ARE_YOU_RE }) })
-      .last();
-    const firstStaffBtn = employeeSection.getByRole('button').first();
+    // comments). The previous `div.filter({ has: heading }).last()` locator
+    // stopped resolving once the AI assistant panel (also always-mounted,
+    // also containing arbitrary generic <div>s) started rendering directly
+    // alongside the login page's content — <main> is the one landmark role
+    // unique to the actual page body, immune to sibling-panel DOM changes.
+    const firstStaffBtn = page.getByRole('main').getByRole('button').first();
     await firstStaffBtn.click();
 
     // Enter only 5 digits (not a full 6-digit PIN)
