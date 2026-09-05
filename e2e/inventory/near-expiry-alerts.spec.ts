@@ -17,7 +17,12 @@ test.describe('Near-expiry settings', () => {
     const savedValue = await threshold.inputValue();
     const updatedValue = savedValue === '22' ? '21' : '22';
     await threshold.fill(updatedValue);
+    const saveRequest = page.waitForResponse(
+      response =>
+        response.url().includes('/rest/v1/settings') && response.request().method() === 'POST'
+    );
     await page.getByRole('button', { name: /save alert window|guardar ventana/i }).click();
+    expect((await saveRequest).ok()).toBe(true);
     await page.reload();
     await page.getByRole('tab', { name: /near expiry|próxima caducidad/i }).click();
     await expect(threshold).toHaveValue(updatedValue);
