@@ -145,6 +145,26 @@ export async function resetTestState(): Promise<void> {
   // every reset; promotion_targets cascades on delete (verified via a select
   // count after this ran locally — zero orphaned targets).
   await admin.from('promotions').delete().like('name', 'E2E %');
+
+  // Genuine app bug found this session, out of scope to fix here (lives in
+  // entities/inventory/model/queries.ts, off-limits per this plan's rules):
+  // useInventoryLog() parses every one of the last 100 stock_movements rows
+  // with InventoryLogSchema, whose `reason` field is the narrower
+  // InventoryAdjustReasonSchema (sale/manual_adjustment/waste/delivery/
+  // correction/physical_count/expired) — it does not include 'refund', even
+  // though refund.spec.ts (and the real process-refund feature) legitimately
+  // write stock_movements rows with reason='refund' via StockMovementSchema's
+  // wider StockMovementReasonSchema. One row's Zod parse throws inside the
+  // fetch loop's try/catch, whose `return err(...)` aborts the WHOLE fetch —
+  // not just that row — so the Movements/Change log tab silently renders "No
+  // log entries." with zero error surfaced, for every user, the moment any
+  // refund lands in the most recent 100 ledger rows. Confirmed live via the
+  // REST response (200, correct embedded rows) vs. the rendered UI (empty)
+  // while building e2e/inventory/inventory-hub.spec.ts. Sweeping leaked
+  // 'refund' rows here — same pattern as the promotions sweep above — keeps
+  // every OTHER spec's Movements-tab assertions from tripping over
+  // refund.spec.ts's own fixtures; it does not fix the underlying schema bug.
+  await admin.from('stock_movements').delete().eq('reason', 'refund');
 }
 
 /**
