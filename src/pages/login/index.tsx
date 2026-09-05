@@ -30,17 +30,17 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-dvh bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       {/* Brand panel */}
-      <aside className="relative hidden overflow-hidden bg-primary text-primary-foreground lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="relative hidden overflow-hidden bg-ink text-ink-foreground lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_100%,var(--brand)_0%,transparent_60%)] opacity-50"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklch,var(--primary)_60%,transparent))]"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklch,var(--color-ink)_60%,transparent))]"
         />
         <div className="relative flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
+          <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-ink-foreground/10 ring-1 ring-ink-foreground/15">
             <LogoImage
               alt={t('common.logoAlt')}
               className="size-full object-cover"
@@ -49,7 +49,7 @@ export default function LoginPage() {
           </div>
           <div className="leading-tight">
             <p className="text-sm font-semibold tracking-tight">{t('login.brand')}</p>
-            <p className="text-xs text-primary-foreground/60">
+            <p className="text-xs text-ink-foreground/60">
               {t('login.terminal', { id: TERMINAL_ID })}
             </p>
           </div>
@@ -57,12 +57,12 @@ export default function LoginPage() {
 
         <div className="relative space-y-6">
           <div className="space-y-2">
-            <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-primary-foreground/60 uppercase">
+            <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-ink-foreground/60 uppercase">
               {dateLabel}
             </p>
-            <LiveTimeDisplay className="block text-6xl font-semibold tracking-tight text-primary-foreground tabular-nums" />
+            <LiveTimeDisplay className="block text-6xl font-semibold tracking-tight text-ink-foreground tabular-nums" />
           </div>
-          <p className="max-w-sm text-sm leading-relaxed text-primary-foreground/70 text-pretty">
+          <p className="max-w-sm text-sm leading-relaxed text-ink-foreground/70 text-pretty">
             {t('login.tagline')}
           </p>
         </div>

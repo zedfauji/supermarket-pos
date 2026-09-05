@@ -32,6 +32,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  /* Always-dark brand slab (login hero) — same in both schemes. */
+  --color-ink: oklch(0.17 0.012 260);
+  --color-ink-foreground: oklch(0.96 0.005 250);
 
   /* Action colours */
   --color-primary: var(--primary);
