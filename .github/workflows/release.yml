@@ -80,11 +80,12 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: install Rust stable
-        shell: pwsh
-        run: |
-          rustup toolchain install stable --profile minimal
-          rustup default stable
-          rustup show
+        # `rustup ...` via raw shell assumed a global PATH entry that isn't
+        # present for this runner's job process ("rustup: not recognized",
+        # run 33933068086) — dtolnay/rust-toolchain already resolves this
+        # reliably in ci.yml's tauri-build job on this exact same runner, so
+        # use the same action here instead of chasing the raw-PATH gap.
+        uses: dtolnay/rust-toolchain@stable
 
       - name: install frontend dependencies
         env:
