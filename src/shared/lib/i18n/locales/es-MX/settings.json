@@ -5,12 +5,29 @@
     "hardware": "Hardware",
     "email": "Recibos por correo",
     "backup": "Respaldo",
-    "products": "Productos",
     "billing": "Facturación",
     "nearExpiry": "Próxima caducidad",
     "lockTimeout": "Bloqueo automático"
   },
   "noPermission": "No tienes permiso para ver la configuración.",
+  "navLabel": "Secciones de configuración",
+  "groups": {
+    "personal": "Personal",
+    "store": "Tienda",
+    "receipts": "Recibos y hardware",
+    "stock": "Reglas de inventario",
+    "security": "Seguridad y datos"
+  },
+  "descriptions": {
+    "language": "Qué idioma usa tu cuenta",
+    "general": "Nombre, dirección, zona horaria y moneda",
+    "billing": "Impuestos, métodos de pago y etiquetas",
+    "hardware": "Impresora de recibos, ancho de papel y cajón",
+    "email": "Remitente y correos de prueba",
+    "nearExpiry": "Ventana de alerta y descuento automático",
+    "lockTimeout": "Tiempo inactivo antes de bloquear la pantalla",
+    "backup": "Respaldos manuales y restauración"
+  },
   "language": {
     "heading": "Idioma",
     "fieldLabel": "Idioma de la interfaz",
