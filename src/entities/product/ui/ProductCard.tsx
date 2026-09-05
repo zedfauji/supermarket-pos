@@ -34,7 +34,7 @@ export function ProductCard({ product, category, onSelect, className }: ProductC
       disabled={unavailable}
       onClick={handleClick}
       className={cn(
-        'group/card relative h-auto min-h-[8.25rem] w-full flex-col items-stretch justify-between gap-3 overflow-hidden rounded-xl border-border bg-card p-3.5 text-left font-normal shadow-xs',
+        'group/card relative h-auto min-h-[6.75rem] w-full flex-col items-stretch justify-between gap-3 overflow-hidden rounded-xl border-border bg-card p-3 text-left font-normal shadow-xs',
         'transition-[transform,box-shadow,border-color] duration-150 ease-out-quart',
         'hover:-translate-y-px hover:border-brand/50 hover:bg-card hover:shadow-md',
         'active:translate-y-0 active:scale-[0.985] active:shadow-xs',
@@ -70,12 +70,12 @@ export function ProductCard({ product, category, onSelect, className }: ProductC
         )}
       </div>
 
-      <h3 className="line-clamp-2 w-full text-[0.9375rem] leading-snug font-semibold tracking-tight text-foreground">
+      <h3 className="line-clamp-2 w-full text-sm leading-snug font-semibold tracking-tight text-foreground">
         {product.name}
       </h3>
 
       <div className="flex w-full items-end justify-between gap-2">
-        <MoneyDisplay amount={displayPrice} size="lg" className="leading-none" />
+        <MoneyDisplay amount={displayPrice} size="md" className="leading-none" />
         {unavailable ? (
           <Badge variant="muted">{t('productCard.outOfStock')}</Badge>
         ) : product.barcode ? (

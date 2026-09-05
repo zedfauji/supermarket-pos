@@ -271,7 +271,15 @@
     "saleComplete": "Sale complete — {{amount}}",
     "itemCount_one": "{{count}} item",
     "itemCount_other": "{{count}} items",
-    "scanHint": "Scan a barcode or type to search"
+    "scanHint": "Scan a barcode or type to search",
+    "clearCart": "Clear cart",
+    "clearCartTitle": "Clear the cart?",
+    "clearCartBody": "All lines are removed. Nothing has been charged.",
+    "clearCartConfirm": "Clear",
+    "itemsLine_one": "{{count}} item",
+    "itemsLine_other": "{{count}} items",
+    "subtotal": "Subtotal",
+    "scanReady": "Scanner ready"
   },
   "holdSale": {
     "badge": "Sale held",
