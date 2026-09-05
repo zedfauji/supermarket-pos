@@ -247,7 +247,7 @@ function PaymentHistoryList({
           </h2>
           <div className="flex gap-3">
             <div className="rounded-xl border border-border bg-card px-4 py-2 shadow-xs">
-              <p className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <p className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                 {t('paymentPane.todayTile')}
               </p>
               <div className="flex items-baseline gap-2">
@@ -258,7 +258,7 @@ function PaymentHistoryList({
               </div>
             </div>
             <div className="rounded-xl border border-border bg-card px-4 py-2 shadow-xs">
-              <p className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <p className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                 {t('paymentPane.refundsTodayTile')}
               </p>
               <div className="flex items-baseline gap-2">
@@ -325,7 +325,7 @@ function PaymentHistoryList({
                       amount={Math.abs(payment.amount)}
                       negative={payment.isRefund === true}
                       size="md"
-                      className={cn('w-24 shrink-0', payment.isRefund && 'text-destructive')}
+                      className="w-24 shrink-0"
                     />
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div className="flex items-center gap-1.5">

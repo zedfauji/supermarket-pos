@@ -359,8 +359,8 @@ export function CheckoutPanel() {
           <div className="shrink-0 space-y-3 border-t border-border bg-background/60 p-4 backdrop-blur-sm">
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <dt>{t('checkoutPanel.itemsLine', { count: itemCount })}</dt>
-                <dd>{t('checkoutPanel.subtotal')}</dd>
+                <dt>{t('checkoutPanel.subtotal')}</dt>
+                <dd>{t('checkoutPanel.itemsLine', { count: itemCount })}</dd>
               </div>
               <div className="flex items-end justify-between">
                 <dt className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">

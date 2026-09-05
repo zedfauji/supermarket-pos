@@ -82,9 +82,9 @@ export default function PromotionsPage() {
     /* eslint-disable react-hooks/set-state-in-effect -- deep-link → dialog sync */
     if (!editId) return;
     const target = promotions.find(p => p.id === editId);
-    if (target) setDialog({ open: true, promotion: target });
+    if (target && target.id !== dialog.promotion?.id) setDialog({ open: true, promotion: target });
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [editId, promotions]);
+  }, [editId, promotions, dialog.promotion?.id]);
 
   function closeDialog() {
     setDialog({ open: false, promotion: null });

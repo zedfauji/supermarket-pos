@@ -181,6 +181,11 @@ export default function ReportsPage() {
 
   const dateRange = { from: fromDateStr(fromStr, false), to: fromDateStr(toStr, true) };
 
+  function handleDateChange(f: string, tStr: string) {
+    setFromStr(f);
+    setToStr(tStr);
+  }
+
   return (
     <PageContainer title={t('reports.title')} width="fluid">
       <Tabs
@@ -217,14 +222,7 @@ export default function ReportsPage() {
                   <p className="text-sm text-muted-foreground">{t(r.descKey)}</p>
                 </div>
                 {r.usesDateRange && (
-                  <DateRangePicker
-                    fromStr={fromStr}
-                    toStr={toStr}
-                    onChange={(f, tStr) => {
-                      setFromStr(f);
-                      setToStr(tStr);
-                    }}
-                  />
+                  <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
                 )}
               </div>
               {r.render(dateRange)}

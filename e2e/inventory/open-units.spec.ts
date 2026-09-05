@@ -17,7 +17,7 @@
  * comment at that step (also documented in 27-08-SUMMARY.md).
  *
  * Fixtures: two brand-new catalog products (package + loose piece) are created
- * through the real Settings → Catalog → Products UI (not seeded directly) so D-02/D-03
+ * through the real Inventory → Catalog → Products UI (not seeded directly) so D-02/D-03
  * persistence is genuinely exercised. Their id's inventory row has no UI path to
  * create it (no "add to inventory" flow exists anywhere in the app — a product's
  * inventory row is bootstrapped by an admin action outside this feature's scope), so

@@ -8,7 +8,7 @@
  * UI text & role references are derived from reading:
  *   - e2e/helpers/auth.ts (loginAs/logout conventions)
  *   - src/shared/ui/DataTable.tsx + src/shared/ui/SearchInput.tsx (search/filter row)
- *   - src/widgets/InventoryPagePanel.tsx (category filter toolbar, batch-adjustment dialog form)
+ *   - src/widgets/InventoryPagePanel/ui/StockTab.tsx (category filter toolbar, batch-adjustment dialog form)
  *   - src/entities/inventory/ui/InventoryRow.tsx (SortHeader column-header buttons)
  *   - e2e/payments/refund.spec.ts (RefundSheet PIN-gate flow, seedPaidTab/enterManagerPin pattern)
  *   - .planning/phases/32-touch-target-focus-visible-sweep/32-CONTEXT.md (D-11, D-12, D-13)
@@ -286,7 +286,7 @@ test.describe('Focus Tab Order (FOCUS-03)', () => {
     const deltaInput = page.getByLabel(/quantity delta|delta de cantidad/i);
     await expect(deltaInput).toBeFocused();
 
-    // The Reason <select> (InventoryPagePanel.tsx) sits between the delta
+    // The Reason <select> (InventoryPagePanel/ui/StockTab.tsx) sits between the delta
     // input and the dialog footer buttons — a real Tab stop the pre-existing
     // version of this test omitted, causing this exact assertion to fail
     // against the current UI (Rule 1 fix).
