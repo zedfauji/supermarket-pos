@@ -337,6 +337,7 @@
     "reasonFilterLabel": "Filtrar por motivo",
     "reasonFilterAll": "Todos los motivos",
     "reasonOptionSale": "Venta",
+    "reasonOptionRefund": "Reembolso",
     "noLogEntriesBody": "Aquí aparecen los movimientos de inventario por ventas, entregas y ajustes.",
     "nearExpiryDescription": "Productos dentro de la ventana de alerta de caducidad, los más próximos primero.",
     "daysBadge_one": "{{count}} día",

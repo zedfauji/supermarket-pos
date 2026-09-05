@@ -10,8 +10,10 @@ import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
 
-// Reason enum values come from InventoryAdjustReasonSchema (domain.ts); the
-// label keys already exist for the batch-adjustment reason picker.
+// Reason enum values come from StockMovementReasonSchema (domain.ts) — the
+// ledger's own enum, which is wider than InventoryAdjustReasonSchema. Reasons
+// with no entry here (retired bar-pos ones like prep_production) render their
+// raw value rather than being mislabelled as something else.
 /* eslint-disable i18next/no-literal-string -- i18n key lookup table, not UI copy */
 const REASON_LABEL_KEY: Record<string, string> = {
   waste: 'inventoryPagePanel.reasonOptionWaste',
@@ -21,6 +23,7 @@ const REASON_LABEL_KEY: Record<string, string> = {
   manual_adjustment: 'inventoryPagePanel.reasonOptionManualAdjustment',
   physical_count: 'inventoryPagePanel.reasonOptionPhysicalCount',
   sale: 'inventoryPagePanel.reasonOptionSale',
+  refund: 'inventoryPagePanel.reasonOptionRefund',
 };
 /* eslint-enable i18next/no-literal-string */
 
@@ -28,6 +31,7 @@ const FILTERS = [
   'all',
   'delivery',
   'sale',
+  'refund',
   'waste',
   'expired',
   'correction',
@@ -42,7 +46,7 @@ function shortId(id: string): string {
 
 export function MovementsTab() {
   const { t, i18n } = useTranslation('wAdmin');
-  const { data: logs, isLoading } = useInventoryLog();
+  const { data: logs, isLoading, resultError } = useInventoryLog();
   const { data: inventory } = useInventory();
   const { data: staff } = useStaffList();
   const [filter, setFilter] = useState<ReasonFilter>('all');
@@ -74,6 +78,12 @@ export function MovementsTab() {
         title={t('inventoryPagePanel.changeLogTitle')}
         description={t('inventoryPagePanel.changeLogDescription')}
       />
+      {/* A failed fetch must never masquerade as an empty ledger. */}
+      {resultError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {resultError.message}
+        </p>
+      ) : null}
       <div
         className="flex flex-wrap gap-1.5"
         role="group"
@@ -96,7 +106,7 @@ export function MovementsTab() {
           </Button>
         ))}
       </div>
-      {!isLoading && visible.length === 0 ? (
+      {!isLoading && !resultError && visible.length === 0 ? (
         <EmptyState
           icon={ArrowDownUp}
           title={t('inventoryPagePanel.noLogEntries')}
@@ -122,40 +132,49 @@ export function MovementsTab() {
                   </TableCell>
                 </TableRow>
               ) : (
-                visible.map(log => (
-                  <TableRow key={log.id}>
-                    <TableCell className="text-sm whitespace-nowrap">
-                      {formatter.format(log.createdAt)}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {productNames.get(log.productId) ?? (
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {shortId(log.productId)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        'text-right font-semibold tabular-nums',
-                        log.quantityDelta > 0 ? 'text-success-strong' : 'text-destructive'
-                      )}
-                    >
-                      {log.quantityDelta > 0 ? `+${String(log.quantityDelta)}` : String(log.quantityDelta)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="muted">
-                        {t(REASON_LABEL_KEY[log.reason] ?? 'inventoryPagePanel.reasonOptionManualAdjustment')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {staffNames.get(log.staffId) ?? (
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {shortId(log.staffId)}
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                visible.map(log => {
+                  // productId is nullable on stock_movements (ingredient-only
+                  // movements); reasons with no label key show their raw value
+                  // rather than borrowing another reason's label.
+                  const productName =
+                    log.productId !== null ? productNames.get(log.productId) : undefined;
+                  const reasonKey = REASON_LABEL_KEY[log.reason];
+                  return (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {formatter.format(log.createdAt)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {productName ?? (
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {/* eslint-disable-next-line i18next/no-literal-string -- typographic placeholder, not translatable copy */}
+                            {log.productId !== null ? shortId(log.productId) : '—'}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          'text-right font-semibold tabular-nums',
+                          log.quantityDelta > 0 ? 'text-success-strong' : 'text-destructive'
+                        )}
+                      >
+                        {log.quantityDelta > 0
+                          ? `+${String(log.quantityDelta)}`
+                          : String(log.quantityDelta)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="muted">{reasonKey ? t(reasonKey) : log.reason}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {staffNames.get(log.staffId) ?? (
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {shortId(log.staffId)}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

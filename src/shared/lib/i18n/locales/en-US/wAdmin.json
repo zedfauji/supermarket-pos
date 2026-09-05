@@ -337,6 +337,7 @@
     "reasonFilterLabel": "Filter by reason",
     "reasonFilterAll": "All reasons",
     "reasonOptionSale": "Sale",
+    "reasonOptionRefund": "Refund",
     "noLogEntriesBody": "Stock movements from sales, deliveries and adjustments show up here.",
     "nearExpiryDescription": "Products inside the near-expiry alert window, soonest first.",
     "daysBadge_one": "{{count}} day",
