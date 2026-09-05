@@ -414,10 +414,12 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
 
       expect(await getInventoryQtyByProductId(packageProductId)).toBe(1);
 
-      // D-09 / Task 2 regression: the Stock tab's pre-existing content is untouched.
+      // D-09 / Task 2 regression: the Stock tab's pre-existing content is
+      // untouched. "Change log" is no longer part of this check — Counter UX
+      // pass 2 split it into its own Movements tab (InventoryPagePanel/ui/
+      // MovementsTab.tsx), covered by e2e/inventory/inventory-hub.spec.ts.
       await page.getByRole('tab', { name: 'Stock' }).click();
       await expect(page.getByRole('heading', { name: 'On-hand levels' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Change log' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Adjust' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Export CSV' })).toBeVisible();
       await page.getByRole('tab', { name: 'Open Units' }).click();
