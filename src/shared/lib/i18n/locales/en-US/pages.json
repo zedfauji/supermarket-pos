@@ -35,6 +35,7 @@
   },
   "reports": {
     "title": "Reports",
+    "navLabel": "Report sections",
     "groups": {
       "sales": "Sales",
       "inventoryAnalytics": "Inventory Analytics",
@@ -53,6 +54,19 @@
       "staff": "Staff Performance",
       "paymentMethods": "Payment Methods",
       "refundsReg": "Refunds Register"
+    },
+    "descriptions": {
+      "session": "Cash reconciliation, totals and top products for one register session",
+      "products": "Units, revenue and margin per product",
+      "hourly": "Sales volume by hour of day",
+      "categories": "Revenue split by category",
+      "paymentMethods": "Cash, card and transfer totals",
+      "inventoryAnalytics": "Valuation, shrinkage, expiry loss and turnover",
+      "staff": "Sales and transactions per staff member",
+      "voids": "Refunded and voided sales",
+      "deletionsPre": "Lines removed from carts before payment",
+      "deletionsPost": "Edits made to paid tickets",
+      "refundsReg": "Every refund with reason and approver"
     }
   },
   "settings": {

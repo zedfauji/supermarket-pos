@@ -35,6 +35,7 @@
   },
   "reports": {
     "title": "Reportes",
+    "navLabel": "Secciones de reportes",
     "groups": {
       "sales": "Ventas",
       "inventoryAnalytics": "Análisis de inventario",
@@ -53,6 +54,19 @@
       "staff": "Desempeño del personal",
       "paymentMethods": "Métodos de pago",
       "refundsReg": "Registro de reembolsos"
+    },
+    "descriptions": {
+      "session": "Conciliación de efectivo, totales y productos top de una sesión de caja",
+      "products": "Unidades, ingresos y margen por producto",
+      "hourly": "Volumen de ventas por hora del día",
+      "categories": "Ingresos por categoría",
+      "paymentMethods": "Totales en efectivo, tarjeta y transferencia",
+      "inventoryAnalytics": "Valuación, mermas, pérdida por caducidad y rotación",
+      "staff": "Ventas y transacciones por persona",
+      "voids": "Ventas reembolsadas y anuladas",
+      "deletionsPre": "Partidas eliminadas del carrito antes de pagar",
+      "deletionsPost": "Ediciones a tickets ya pagados",
+      "refundsReg": "Cada reembolso con motivo y quién lo autorizó"
     }
   },
   "settings": {
