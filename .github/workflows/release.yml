@@ -79,6 +79,18 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Prefer Git Bash over the WSL bash.exe stub
+        # dtolnay/rust-toolchain's internal script needs a real /bin/bash. On this
+        # runner, C:\Windows\System32 (containing the WSL launcher stub bash.exe)
+        # comes before Git's bin dir on PATH, and the default WSL distro here
+        # has no usable /bin/bash — that combination fails with
+        # "execvpe(/bin/bash) failed: No such file or directory" (run
+        # 33933903058, same issue ci.yml's tauri-build job already carries this
+        # fix for). Prepending Git's real bash.exe to PATH via GITHUB_PATH fixes
+        # resolution for every later step in this job.
+        shell: pwsh
+        run: echo 'C:\Program Files\Git\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: install Rust stable
         # `rustup ...` via raw shell assumed a global PATH entry that isn't
         # present for this runner's job process ("rustup: not recognized",
