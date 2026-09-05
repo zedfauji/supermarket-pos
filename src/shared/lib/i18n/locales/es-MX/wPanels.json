@@ -105,7 +105,22 @@
     "pinRequired": "Se requiere PIN para procesar el pago.",
     "verifyPinToProcessPayment": "Verificar PIN para procesar el pago",
     "methodDateSeparator": "{{method}} · {{date}}",
-    "filterByIdPlaceholder": "Filtrar por ID…"
+    "filterByIdPlaceholder": "Filtrar por ID…",
+    "todayTile": "Hoy",
+    "refundsTodayTile": "Reembolsos de hoy",
+    "paymentsCount_one": "{{count}} pago",
+    "paymentsCount_other": "{{count}} pagos",
+    "filterAll": "Todos",
+    "filterCash": "Efectivo",
+    "filterCard": "Tarjeta",
+    "filterTransfer": "Transferencia",
+    "filterRefunds": "Reembolsos",
+    "filterLabel": "Filtrar por método",
+    "dayToday": "Hoy",
+    "dayYesterday": "Ayer",
+    "refundBadge": "Reembolso",
+    "awaitingCount_one": "{{count}} en espera",
+    "awaitingCount_other": "{{count}} en espera"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} producto",

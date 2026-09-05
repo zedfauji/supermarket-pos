@@ -65,6 +65,13 @@ vi.mock('@entities/refund', () => ({
   useRefundsByPayment: vi.fn().mockReturnValue({ data: [] }),
 }));
 
+// PaymentHistoryList now reads settings for per-method payment labels — stub
+// it so mounting PaymentPane doesn't hit the real Supabase-backed query hook.
+vi.mock('@entities/settings', () => ({
+  useSettings: () => ({ data: undefined }),
+  useReceiptSettings: () => ({ data: undefined }),
+}));
+
 // ManagerPinDialog: expose a simplified version that calls onSuccess immediately
 // when the test fires a click on the "Verify PIN" sentinel button, without
 // requiring a real keypad interaction.

@@ -12,12 +12,16 @@ import { ReprintButton } from '@features/reprint-receipt';
 import type { Payment } from '@entities/payment';
 import { usePayments } from '@entities/payment';
 import { useRefundsByPayment } from '@entities/refund';
+import { useSettings } from '@entities/settings';
 import { useStaffStore } from '@entities/staff/model/store';
-import { tabKeys, useTab } from '@entities/tab/model/queries';
+import { tabKeys, useTab, useTabs } from '@entities/tab/model/queries';
 import type { Tab } from '@entities/tab/model/types';
+import { cn } from '@shared/lib/utils';
 import { POSButton } from '@shared/ui';
 import { MoneyDisplay } from '@shared/ui/MoneyDisplay';
 import { SearchInput } from '@shared/ui/SearchInput';
+import { Badge } from '@shared/ui/badge';
+import { Button } from '@shared/ui/button';
 import { EditReopenedItemsPanel } from './EditReopenedItemsPanel';
 import { TabPaymentList } from './TabPaymentList';
 
@@ -127,6 +131,12 @@ function EditItemsButton({ payment, onEditItems }: EditItemsButtonProps) {
   );
 }
 
+type MethodFilter = 'all' | 'cash' | 'card' | 'bank_transfer' | 'refunds';
+
+function dayKey(d: Date): string {
+  return `${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function PaymentHistoryList({
   onRefund,
   onEdit,
@@ -138,12 +148,15 @@ function PaymentHistoryList({
   onReopen: (tabId: string) => void;
   onEditItems: (tabId: string) => void;
 }) {
-  const { t } = useTranslation('wPanels');
+  const { t, i18n } = useTranslation('wPanels');
+  const { t: tOrders } = useTranslation('featOrders');
   const { data: payments, isLoading } = usePayments();
+  const { data: appSettings } = useSettings();
   const [searchParams] = useSearchParams();
   const idParam = searchParams.get('id');
   const [filterValue, setFilterValue] = useState(() => (idParam ?? '').trim());
   const [seededIdParam, setSeededIdParam] = useState(idParam);
+  const [methodFilter, setMethodFilter] = useState<MethodFilter>('all');
 
   // Re-seed the filter when ?id= changes on an already-mounted PaymentPane
   // (e.g. SPA navigation from AuditLogTable/EditHistoryTable without a full remount).
@@ -153,6 +166,20 @@ function PaymentHistoryList({
     setSeededIdParam(idParam);
     setFilterValue(idParam.trim());
   }
+
+  const methodLabel = (method: Payment['method']): string => {
+    const labels = appSettings?.paymentLabels;
+    if (method === 'cash') return labels?.cash ?? t('paymentForm.defaultLabelCash');
+    if (method === 'card') return labels?.card ?? t('paymentForm.defaultLabelCard');
+    if (method === 'rappi') return labels?.rappi ?? t('paymentForm.defaultLabelRappi');
+    return tOrders('checkoutSale.bankTransferMethodLabel');
+  };
+  const timeFmt = new Intl.DateTimeFormat(i18n.language, { hour: 'numeric', minute: '2-digit' });
+  const dayFmt = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' });
+  const todayKey = dayKey(new Date());
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = dayKey(yesterday);
 
   if (isLoading) {
     return (
@@ -170,58 +197,159 @@ function PaymentHistoryList({
     );
   }
 
-  const visiblePayments = filterValue
-    ? payments.filter(p => p.id.includes(filterValue.trim()))
-    : payments;
+  const todays = payments.filter(p => dayKey(p.processedAt) === todayKey);
+  const todaySales = todays.filter(p => !p.isRefund);
+  const todayRefunds = todays.filter(p => p.isRefund);
+  const sum = (list: Payment[]) => Math.round(list.reduce((s, p) => s + p.amount, 0) * 100) / 100;
+
+  const visiblePayments = payments.filter(p => {
+    if (filterValue && !p.id.includes(filterValue.trim())) return false;
+    if (methodFilter === 'refunds') return p.isRefund;
+    if (methodFilter === 'all') return true;
+    return !p.isRefund && p.method === methodFilter;
+  });
+
+  const groups = new Map<string, Payment[]>();
+  for (const p of visiblePayments) {
+    const key = dayKey(p.processedAt);
+    const list = groups.get(key);
+    if (list) list.push(p);
+    else groups.set(key, [p]);
+  }
+  const dayLabel = (key: string, sample: Date) =>
+    key === todayKey
+      ? t('paymentPane.dayToday')
+      : key === yesterdayKey
+        ? t('paymentPane.dayYesterday')
+        : dayFmt.format(sample);
+
+  const FILTERS: { key: MethodFilter; label: string }[] = [
+    { key: 'all', label: t('paymentPane.filterAll') },
+    { key: 'cash', label: t('paymentPane.filterCash') },
+    { key: 'card', label: t('paymentPane.filterCard') },
+    { key: 'bank_transfer', label: t('paymentPane.filterTransfer') },
+    { key: 'refunds', label: t('paymentPane.filterRefunds') },
+  ];
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="border-b border-border px-5 py-4">
-        <h2 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-          {t('paymentPane.recentPayments')}
-        </h2>
-        <SearchInput
-          value={filterValue}
-          onChange={setFilterValue}
-          placeholder={t('paymentPane.filterByIdPlaceholder')}
-          className="mt-2"
-        />
+      <div className="space-y-4 border-b border-border px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            {t('paymentPane.recentPayments')}
+          </h2>
+          <div className="flex gap-3">
+            <div className="rounded-xl border border-border bg-card px-4 py-2 shadow-xs">
+              <p className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                {t('paymentPane.todayTile')}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <MoneyDisplay amount={sum(todaySales)} size="lg" />
+                <span className="text-xs text-muted-foreground">
+                  {t('paymentPane.paymentsCount', { count: todaySales.length })}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-2 shadow-xs">
+              <p className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                {t('paymentPane.refundsTodayTile')}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <MoneyDisplay
+                  amount={Math.abs(sum(todayRefunds))}
+                  negative={todayRefunds.length > 0}
+                  size="lg"
+                />
+                <span className="text-xs text-muted-foreground">
+                  {t('paymentPane.paymentsCount', { count: todayRefunds.length })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            value={filterValue}
+            onChange={setFilterValue}
+            placeholder={t('paymentPane.filterByIdPlaceholder')}
+            className="w-64"
+          />
+          <div
+            className="flex flex-wrap gap-1.5"
+            role="group"
+            aria-label={t('paymentPane.filterLabel')}
+          >
+            {FILTERS.map(f => (
+              <Button
+                key={f.key}
+                type="button"
+                size="sm"
+                variant={methodFilter === f.key ? 'default' : 'outline'}
+                aria-pressed={methodFilter === f.key}
+                onClick={() => {
+                  setMethodFilter(f.key);
+                }}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
       {visiblePayments.length === 0 ? (
         <div className="flex flex-1 items-center justify-center p-8">
           <p className="text-center text-muted-foreground">{t('paymentPane.noPaymentRecords')}</p>
         </div>
       ) : (
-        <div className="divide-y divide-border">
-          {visiblePayments.map(payment => (
-            <div
-              key={payment.id}
-              data-testid={`payment-row-${payment.id}`}
-              className="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
-            >
-              <div className="flex flex-col gap-0.5">
-                <MoneyDisplay amount={payment.amount} size="sm" />
-                <span className="text-xs text-muted-foreground capitalize">
-                  {t('paymentPane.methodDateSeparator', {
-                    method: payment.method,
-                    date: payment.processedAt.toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    }),
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ReprintButton payment={payment} />
-                <EditTicketButton payment={payment} onEdit={onEdit} />
-                <ReopenTabButton payment={payment} onReopen={onReopen} />
-                <EditItemsButton payment={payment} onEditItems={onEditItems} />
-                <RefundButton payment={payment} onRefund={onRefund} />
-              </div>
+        [...groups.entries()].map(([key, list]) => (
+          <section key={key} aria-label={dayLabel(key, list[0]?.processedAt ?? new Date())}>
+            <h3 className="sticky top-0 z-10 border-b border-border bg-background/90 px-5 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur-sm">
+              {dayLabel(key, list[0]?.processedAt ?? new Date())}
+            </h3>
+            <div className="divide-y divide-border">
+              {list.map(payment => (
+                <div
+                  key={payment.id}
+                  data-testid={`payment-row-${payment.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex min-w-0 items-center gap-4">
+                    <MoneyDisplay
+                      amount={Math.abs(payment.amount)}
+                      negative={payment.isRefund === true}
+                      size="md"
+                      className={cn('w-24 shrink-0', payment.isRefund && 'text-destructive')}
+                    />
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        {payment.isRefund && (
+                          <Badge variant="destructive">{t('paymentPane.refundBadge')}</Badge>
+                        )}
+                        <Badge variant="muted">{methodLabel(payment.method)}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {timeFmt.format(payment.processedAt)}
+                        </span>
+                      </div>
+                      <span
+                        className="font-mono text-[0.6875rem] text-muted-foreground/80"
+                        title={payment.id}
+                      >
+                        {payment.id.slice(0, 8)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ReprintButton payment={payment} />
+                    <EditTicketButton payment={payment} onEdit={onEdit} />
+                    <ReopenTabButton payment={payment} onReopen={onReopen} />
+                    <EditItemsButton payment={payment} onEditItems={onEditItems} />
+                    <RefundButton payment={payment} onRefund={onRefund} />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </section>
+        ))
       )}
     </div>
   );
@@ -231,6 +359,8 @@ export function PaymentPane() {
   const { t } = useTranslation('wPanels');
   const currentStaff = useStaffStore(s => s.currentStaff);
   const queryClient = useQueryClient();
+  const { data: tabs } = useTabs();
+  const openCount = (tabs ?? []).filter(tab => tab.status === 'open').length;
 
   const [selectedTab, setSelectedTab] = useState<Tab | null>(null);
   const [pinVerified, setPinVerified] = useState(false);
@@ -268,11 +398,21 @@ export function PaymentPane() {
   return (
     <div className="flex size-full overflow-hidden">
       {/* Left panel — tab list */}
-      <div className="flex w-80 shrink-0 flex-col border-r border-border bg-muted/30">
-        <div className="border-b border-border px-5 py-4">
+      <div
+        className={cn(
+          'flex shrink-0 flex-col border-r border-border bg-muted/30',
+          openCount > 0 ? 'w-72' : 'w-56'
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             {t('paymentPane.tabsAwaitingPayment')}
           </h2>
+          {openCount > 0 && (
+            <Badge variant="brand" className="tabular-nums">
+              {t('paymentPane.awaitingCount', { count: openCount })}
+            </Badge>
+          )}
         </div>
         <TabPaymentList selectedTabId={selectedTab?.id} onSelect={handleSelectTab} />
       </div>

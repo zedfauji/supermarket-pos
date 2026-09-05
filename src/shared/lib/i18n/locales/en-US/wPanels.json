@@ -105,7 +105,22 @@
     "pinRequired": "PIN required to process payment.",
     "verifyPinToProcessPayment": "Verify PIN to Process Payment",
     "methodDateSeparator": "{{method}} · {{date}}",
-    "filterByIdPlaceholder": "Filter by ID…"
+    "filterByIdPlaceholder": "Filter by ID…",
+    "todayTile": "Today",
+    "refundsTodayTile": "Refunds today",
+    "paymentsCount_one": "{{count}} payment",
+    "paymentsCount_other": "{{count}} payments",
+    "filterAll": "All",
+    "filterCash": "Cash",
+    "filterCard": "Card",
+    "filterTransfer": "Transfer",
+    "filterRefunds": "Refunds",
+    "filterLabel": "Filter by method",
+    "dayToday": "Today",
+    "dayYesterday": "Yesterday",
+    "refundBadge": "Refund",
+    "awaitingCount_one": "{{count}} waiting",
+    "awaitingCount_other": "{{count}} waiting"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} item",
