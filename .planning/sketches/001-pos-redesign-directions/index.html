@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>POS Redesign — 5 Directions v2</title>
+<title>POS Redesign — 5 Directions v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
@@ -16,250 +16,369 @@ body{background:#000;color:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-s
 button{font:inherit;cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
 input{font:inherit}
 svg{display:block}
-.ic{width:18px;height:18px;stroke-width:2px;flex-shrink:0}
-.ic-sm{width:14px;height:14px}
-.ic-lg{width:26px;height:26px}
+.ic{width:17px;height:17px;stroke-width:2px;flex-shrink:0}
+.ic-sm{width:13px;height:13px}
+.ic-lg{width:24px;height:24px}
 ::selection{background:rgba(255,255,255,.2)}
 @property --angle{syntax:'<angle>';inherits:false;initial-value:0deg}
 @keyframes spin-angle{to{--angle:360deg}}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,122,26,.45)}50%{box-shadow:0 0 0 10px rgba(255,122,26,0)}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite}
 
 /* ============================= TOP VARIANT NAV ============================= */
-#variant-nav{position:fixed;top:0;left:0;right:0;height:44px;z-index:9998;background:#000;border-bottom:1px solid #262626;display:flex;align-items:stretch;overflow-x:auto;font-size:12.5px;font-weight:600;letter-spacing:.01em;font-family:'Plus Jakarta Sans',sans-serif}
+#variant-nav{position:fixed;top:0;left:0;right:0;height:44px;z-index:9998;background:#000;border-bottom:1px solid #262626;display:flex;align-items:stretch;overflow-x:auto;font-size:12.5px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif}
 #variant-nav .variant-tab{background:none;border:none;border-right:1px solid #1c1c1c;color:#8a8a8a;padding:0 18px;white-space:nowrap;transition:background .15s ease,color .15s ease}
 #variant-nav .variant-tab:hover{color:#e5e5e5;background:#111}
 #variant-nav .variant-tab.active{color:#fff;background:#1a1a1a;box-shadow:inset 0 -2px 0 #fff}
 
-/* ============================= VARIANT SECTION ============================= */
-.variant{min-height:calc(100vh - 44px);position:relative}
-.v-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;position:sticky;top:44px;z-index:50}
-.v-toolbar-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.55;font-weight:700}
-.screen-tabs{display:flex;gap:4px;position:relative}
-.screen-tab{border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;opacity:.5;transition:.2s ease;position:relative}
-.screen-tab:hover{opacity:.85}
-.screen-tab.active{opacity:1}
-.screen{padding:10px 28px 72px;position:relative;z-index:1}
-.screen[data-entered] .stagger>*{animation:rise .45s cubic-bezier(.16,1,.3,1) both}
+/* ============================= APP SHELL ============================= */
+.variant{min-height:calc(100vh - 44px)}
+.app-shell{display:flex;min-height:calc(100vh - 44px)}
+.sidebar{width:210px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:44px;height:calc(100vh - 44px);padding:18px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px}
+.brand-mark{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-name{font-weight:800;font-size:14px;line-height:1.15}
+.brand-sub{font-size:10.5px;opacity:.5}
+.side-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.side-link{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-size:13.5px;font-weight:600;border:none;background:none;text-align:left;position:relative;transition:.15s ease}
+.side-foot{padding:12px 8px 4px;display:flex;align-items:center;gap:10px;font-size:12px}
+.side-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+.side-status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
 
-/* grain overlay (shared, opt-in via .grain on variant root) */
-.grain{position:relative}
-.grain::before{content:'';position:fixed;top:44px;left:0;right:0;bottom:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;z-index:5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.main{flex:1;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 30px;position:sticky;top:44px;z-index:20}
+.topbar-title{font-size:17px;font-weight:800}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:none;display:flex;align-items:center;justify-content:center;position:relative}
+.badge-dot{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%}
+.content{padding:6px 30px 70px}
+.screen[hidden]{display:none}
 
-/* ============================= SHARED SKELETON ============================= */
-.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;opacity:.5;margin:0 0 6px}
-.h1{font-size:34px;font-weight:800;margin:0 0 4px;letter-spacing:-0.02em;line-height:1.05}
-.sub{opacity:.55;font-size:14px;margin:0 0 22px}
+/* ============================= HOME DASHBOARD ============================= */
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:700;opacity:.5;margin:0 0 6px}
+.h1{font-size:26px;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;line-height:1.1}
+.sub{opacity:.55;font-size:13.5px;margin:0 0 20px}
+.alert-pill{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;margin-bottom:20px;font-size:12.5px;font-weight:600;border-radius:999px}
 
-.alert-strip{display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:22px;font-size:13px;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{padding:16px 18px;border-radius:16px;position:relative;overflow:hidden}
+.stat-label{font-size:11px;opacity:.55;font-weight:600;margin-bottom:6px}
+.stat-value{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat-trend{font-size:11px;margin-top:4px;font-weight:600}
 
-.home-grid{display:grid;gap:12px}
-.tile{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:18px;cursor:pointer;user-select:none;transition:transform .15s cubic-bezier(.2,.8,.2,1),filter .15s ease,box-shadow .15s ease;position:relative;overflow:hidden}
-.tile:active{transform:scale(.96)}
-.tile-icon{display:flex}
-.tile-label{font-weight:700;font-size:15px}
-.tile-meta{font-size:12px;opacity:.5}
+.home-cols{display:grid;grid-template-columns:1fr 1.5fr;gap:16px}
+.cta-card{padding:24px;border-radius:18px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.cta-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.cta-btn{border:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:8px}
+.activity-card{padding:8px 20px;border-radius:18px}
+.activity-row{display:flex;align-items:center;gap:12px;padding:13px 0}
+.activity-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+.activity-name{font-weight:700;font-size:13px}
+.activity-meta{font-size:11.5px;opacity:.5}
+.activity-amount{font-weight:800;font-size:13.5px;margin-left:auto;font-variant-numeric:tabular-nums}
+.status-pill{padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;margin-left:10px;white-space:nowrap}
 
-.pos-layout{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
-@media (max-width:900px){.pos-layout{grid-template-columns:1fr}}
-.search-row{display:flex;gap:10px;margin-bottom:18px}
-.search-input{flex:1;padding:13px 16px;border-radius:10px;font-size:14.5px;border:none;outline:none}
-.scan-btn{padding:13px 18px;border-radius:10px;font-weight:700;border:none;white-space:nowrap;display:flex;align-items:center;gap:8px}
+/* ============================= POS / CHECKOUT ============================= */
+.cat-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.cat-pill{padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;border:none;transition:.15s ease}
+.pos-layout{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+@media (max-width:980px){.pos-layout{grid-template-columns:1fr}}
+.search-row{display:flex;gap:10px;margin-bottom:16px}
+.search-input{flex:1;padding:12px 16px;border-radius:12px;font-size:14px;border:none;outline:none}
+.scan-btn{padding:12px 18px;border-radius:12px;font-weight:700;border:none;white-space:nowrap;display:flex;align-items:center;gap:8px}
 
-.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.product-card{padding:13px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column;gap:9px;position:relative}
-.product-card:active{transform:scale(.96)}
-.cat-dot{width:8px;height:8px;border-radius:99px;flex-shrink:0}
-.product-name{font-weight:700;font-size:13px;line-height:1.3}
-.product-price{font-weight:800;font-size:14.5px;margin-top:auto;font-variant-numeric:tabular-nums}
-.product-stock{font-size:11px;opacity:.48}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px}
+.product-card{padding:14px 10px 12px;cursor:pointer;transition:transform .15s ease;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;position:relative}
+.product-card:active{transform:scale(.95)}
+.product-photo{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:2px;position:relative}
+.product-qty-badge{position:absolute;top:-2px;right:-2px;min-width:19px;height:19px;padding:0 4px;border-radius:999px;font-size:10.5px;font-weight:800;display:none;align-items:center;justify-content:center}
+.product-add-btn{position:absolute;bottom:10px;right:10px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none}
+.product-name{font-weight:700;font-size:12.5px;line-height:1.25}
+.product-price{font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+.product-stock{font-size:10px;opacity:.45}
 
-.cart-panel{padding:18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:114px}
-.cart-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13.5px}
-.cart-title-icons{display:flex;align-items:center;gap:6px;opacity:.6;cursor:pointer}
-.cart-item{display:flex;align-items:center;gap:10px;padding:10px 0}
-.cart-item-name{flex:1;font-size:13.5px;font-weight:600}
-.cart-item-unit{font-size:11px;opacity:.48}
-.qty-group{display:flex;align-items:center;gap:6px}
-.qty-btn{width:26px;height:26px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center}
-.qty-val{min-width:18px;text-align:center;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
-.line-total{font-weight:700;font-size:13px;min-width:54px;text-align:right;font-variant-numeric:tabular-nums}
-.cart-totals{display:flex;flex-direction:column;gap:6px;font-size:13.5px;padding-top:10px}
+.ticket-panel{padding:18px;border-radius:18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:112px}
+.ticket-head{display:flex;justify-content:space-between;align-items:baseline}
+.ticket-num{font-weight:800;font-size:14px}
+.ticket-clear{font-size:11.5px;opacity:.55;cursor:pointer;display:flex;align-items:center;gap:4px}
+.ticket-field{padding:9px 12px;border-radius:10px;font-size:12.5px;border:none;width:100%;outline:none}
+.cart-item{display:flex;align-items:center;gap:10px;padding:9px 0}
+.cart-item-name{flex:1;font-size:13px;font-weight:600}
+.cart-item-unit{font-size:10.5px;opacity:.45}
+.qty-group{display:flex;align-items:center;gap:6px;border-radius:999px;padding:2px}
+.qty-btn{width:22px;height:22px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center}
+.qty-val{min-width:16px;text-align:center;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+.line-total{font-weight:700;font-size:12.5px;min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.cart-totals{display:flex;flex-direction:column;gap:6px;font-size:13px;padding-top:8px}
 .cart-totals .row{display:flex;justify-content:space-between}
 .cart-totals .row .val{font-variant-numeric:tabular-nums}
-.cart-totals .row.total{font-size:19px;font-weight:800;padding-top:8px}
-.btn-primary-lg{border:none;padding:16px;border-radius:12px;font-weight:800;font-size:15px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;position:relative}
+.cart-totals .row.total{font-size:18px;font-weight:800;padding-top:6px}
+.btn-pill-lg{border:none;padding:15px;border-radius:999px;font-weight:800;font-size:14.5px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;position:relative}
 
-.payment-layout{display:grid;grid-template-columns:1fr 340px;gap:26px}
-@media (max-width:900px){.payment-layout{grid-template-columns:1fr}}
-.tender-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
-.tender-btn{padding:22px 12px;border-radius:14px;border:none;display:flex;flex-direction:column;align-items:center;gap:9px;font-weight:700;font-size:13.5px;transition:.2s ease;position:relative}
-.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px}
-.key{padding:16px;border-radius:10px;border:none;font-weight:700;font-size:17px;text-align:center;transition:transform .1s ease}
-.quick-cash{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.chip{padding:8px 14px;border-radius:999px;border:none;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
-.order-summary{padding:20px;border-radius:14px;position:relative;overflow:hidden}
+/* ============================= PAYMENT ============================= */
+.payment-layout{display:grid;grid-template-columns:1fr 320px;gap:24px}
+@media (max-width:980px){.payment-layout{grid-template-columns:1fr}}
+.tender-seg{display:flex;padding:4px;border-radius:999px;margin-bottom:20px;gap:4px}
+.tender-btn{flex:1;padding:12px 8px;border-radius:999px;border:none;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:12.5px;transition:.2s ease;position:relative}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:300px}
+.key{padding:15px;border-radius:12px;border:none;font-weight:700;font-size:16px;text-align:center;transition:transform .1s ease}
+.quick-cash{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.chip{padding:7px 14px;border-radius:999px;border:none;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+.order-summary{padding:20px;border-radius:18px;position:relative}
 
-.receipt-wrap{display:flex;justify-content:center;padding:24px 0}
-.receipt{width:100%;max-width:380px;padding:26px;display:flex;flex-direction:column;gap:11px;position:relative}
-.receipt-line{display:flex;justify-content:space-between;font-size:13px}
-.receipt-actions{display:flex;gap:10px;margin-top:16px}
-.receipt-actions button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px}
+/* ============================= RECEIPT ============================= */
+.receipt-wrap{display:flex;justify-content:center;padding:20px 0}
+.receipt{width:100%;max-width:370px;padding:26px;display:flex;flex-direction:column;gap:11px;position:relative;border-radius:18px}
+.receipt-line{display:flex;justify-content:space-between;font-size:12.5px}
+.receipt-actions{display:flex;gap:10px;margin-top:14px}
+.receipt-actions button{flex:1;padding:12px;border-radius:999px;border:none;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px}
 
-/* border-trail animated ring — real "border beam" technique */
+/* border-trail animated ring */
 .trail{position:relative}
 .trail::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--angle,0deg),transparent 55%,var(--trail-c,#fff) 78%,transparent 92%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin-angle 2.4s linear infinite;pointer-events:none}
-
-/* spotlight-follow — hover glow tracking cursor */
+/* spotlight-follow */
 .spotlight{position:relative;overflow:hidden}
-.spotlight::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .35s ease;background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.14),transparent 70%)}
+.spotlight::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s ease;background:radial-gradient(200px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.13),transparent 70%)}
 .spotlight:hover::after{opacity:1}
 
-/* ============================= TOAST ============================= */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.3,1.1);z-index:9999;border:1px solid #333;display:flex;align-items:center;gap:8px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.3,1.1);z-index:9999;border:1px solid #333;display:flex;align-items:center;gap:8px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#sketch-tools{position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:.5;transition:opacity .2s;display:flex;gap:10px;align-items:center}
+#sketch-tools:hover{opacity:1}
+#sketch-tools button{background:#222;color:#fff;border:1px solid #444;border-radius:5px;padding:3px 8px;font-size:11px}
 
 /* ============================= A. TACTILE BIG-TOUCH RETAIL ============================= */
-#v-a{--bg:#241a12;--surface:#2f2216;--surface2:#3a2a1a;--text:#fdf3e7;--muted:#c9ac8c;--primary:#ff7a1a;--primary-text:#1a0f05;--accent:#ffb347;--danger:#ff5a5a;--border:#4a3520;--radius:22px;--radius-sm:16px;--shadow:0 12px 28px -6px rgba(0,0,0,.55);background:radial-gradient(ellipse at top,#2c2015,var(--bg) 55%);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif}
-#v-a .v-toolbar{background:rgba(36,26,18,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-#v-a .screen-tab{color:var(--muted);border-radius:14px}
-#v-a .screen-tab.active{background:var(--primary);color:var(--primary-text)}
-#v-a .alert-strip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--accent)}
-#v-a .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:118px}
-#v-a .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-#v-a .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:linear-gradient(155deg,var(--primary),#e0620a);color:var(--primary-text);animation:pulse-glow 3.5s ease-in-out infinite}
-#v-a .tile-meta{color:var(--muted)}
-#v-a .tile.tile-primary .tile-meta{color:rgba(26,15,5,.65)}
-#v-a .search-input{background:var(--surface);color:var(--text);border:2px solid var(--border);border-radius:var(--radius-sm)}
+#v-a{--bg:#241a12;--surface:#2f2216;--surface2:#3a2a1a;--surface3:#443118;--text:#fdf3e7;--muted:#c9ac8c;--primary:#ff7a1a;--primary-text:#1a0f05;--accent:#ffb347;--success:#5fc46a;--danger:#ff5a5a;--border:#4a3520;--radius:18px;background:radial-gradient(ellipse at top left,#2c2015,var(--bg) 60%);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+#v-a .sidebar{background:var(--surface);border-right:1px solid var(--border)}
+#v-a .brand-mark{background:var(--primary);color:var(--primary-text)}
+#v-a .side-link{color:var(--muted)}
+#v-a .side-link.active{background:var(--primary);color:var(--primary-text)}
+#v-a .side-link:hover:not(.active){background:var(--surface2);color:var(--text)}
+#v-a .side-foot{border-top:1px solid var(--border)}
+#v-a .side-avatar{background:var(--surface2);color:var(--accent)}
+#v-a .topbar{background:rgba(36,26,18,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+#v-a .icon-btn{background:var(--surface2);color:var(--text)}
+#v-a .badge-dot{background:var(--primary);border:2px solid var(--surface2)}
+#v-a .alert-pill{background:var(--surface2);border:1px solid var(--border);color:var(--accent)}
+#v-a .stat-card{background:var(--surface);border:1px solid var(--border)}
+#v-a .stat-trend.up{color:var(--success)}
+#v-a .stat-trend.warn{color:var(--accent)}
+#v-a .cta-card{background:linear-gradient(155deg,var(--primary),#e0620a);color:var(--primary-text)}
+#v-a .cta-icon{background:rgba(26,15,5,.2)}
+#v-a .cta-btn{background:var(--primary-text);color:var(--primary)}
+#v-a .activity-card{background:var(--surface);border:1px solid var(--border)}
+#v-a .activity-row{border-bottom:1px solid var(--border)}
+#v-a .activity-row:last-child{border-bottom:none}
+#v-a .activity-avatar{background:var(--surface2);color:var(--accent)}
+#v-a .activity-meta{color:var(--muted)}
+#v-a .status-pill.paid{background:rgba(95,196,106,.15);color:var(--success)}
+#v-a .status-pill.refund{background:rgba(255,90,90,.15);color:var(--danger)}
+#v-a .cat-pill{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+#v-a .cat-pill.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+#v-a .search-input{background:var(--surface);color:var(--text);border:2px solid var(--border)}
 #v-a .search-input::placeholder{color:var(--muted)}
-#v-a .scan-btn{background:var(--primary);color:var(--primary-text);border-radius:var(--radius-sm)}
-#v-a .product-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow)}
+#v-a .scan-btn{background:var(--primary);color:var(--primary-text)}
+#v-a .product-card{background:var(--surface);border:1px solid var(--border)}
+#v-a .product-photo{background:var(--surface3);color:var(--accent)}
+#v-a .product-qty-badge{background:var(--primary);color:var(--primary-text)}
+#v-a .product-add-btn{background:var(--primary);color:var(--primary-text)}
 #v-a .product-price{color:var(--accent)}
 #v-a .product-stock{color:var(--muted)}
-#v-a .cart-panel{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius)}
+#v-a .ticket-panel{background:var(--surface);border:1px solid var(--border)}
+#v-a .ticket-field{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 #v-a .cart-item{border-bottom:1px solid var(--border)}
 #v-a .cart-item-unit{color:var(--muted)}
-#v-a .qty-btn{background:var(--surface2);color:var(--text)}
+#v-a .qty-group{background:var(--surface2)}
+#v-a .qty-btn{background:var(--surface3);color:var(--text)}
 #v-a .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
 #v-a .cart-totals .row.total{color:var(--text)}
-#v-a .btn-primary-lg{background:var(--primary);color:var(--primary-text);box-shadow:0 10px 24px -6px rgba(255,122,26,.55)}
-#v-a .tender-btn{background:var(--surface);border:2px solid var(--border);color:var(--text)}
-#v-a .tender-btn.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary);--trail-c:var(--accent)}
-#v-a .keypad .key{background:var(--surface);color:var(--text);border:2px solid var(--border)}
-#v-a .keypad .key:active{transform:scale(.9)}
+#v-a .btn-pill-lg{background:var(--primary);color:var(--primary-text);box-shadow:0 10px 22px -6px rgba(255,122,26,.5)}
+#v-a .tender-seg{background:var(--surface)}
+#v-a .tender-btn{color:var(--muted)}
+#v-a .tender-btn.active{background:var(--primary);color:var(--primary-text);--trail-c:var(--accent)}
+#v-a .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border)}
 #v-a .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
-#v-a .order-summary{background:var(--surface);border:2px solid var(--border)}
-#v-a .receipt{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-a .order-summary{background:var(--surface);border:1px solid var(--border)}
+#v-a .receipt{background:var(--surface);border:1px solid var(--border)}
 #v-a .receipt-line{color:var(--muted)}
 #v-a .receipt-actions button{background:var(--surface2);color:var(--text)}
 #v-a .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
 
 /* ============================= B. DATA-DENSE PRO TERMINAL ============================= */
-#v-b{--bg:#0a0d12;--surface:#12161d;--surface2:#181e27;--text:#e6edf3;--muted:#71808f;--primary:#3fb950;--primary-text:#04150a;--accent:#58a6ff;--danger:#f85149;--border:#212932;--radius:5px;--radius-sm:4px;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans','IBM Plex Mono',monospace}
-#v-b .screen{padding-top:2px}
-#v-b .v-toolbar{background:rgba(10,13,18,.92);border-bottom:1px solid var(--border)}
-#v-b .v-toolbar-title{font-family:'IBM Plex Mono',monospace}
-#v-b .screen-tab{color:var(--muted);border-radius:4px;font-size:12px;font-family:'IBM Plex Mono',monospace}
-#v-b .screen-tab.active{background:var(--surface2);color:var(--accent);box-shadow:inset 0 0 0 1px var(--border)}
-#v-b .alert-strip{background:#1c150a;border:1px solid #3d2a0e;border-radius:var(--radius);color:#f0a53c;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
-#v-b .home-grid{grid-template-columns:1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-#v-b .tile{background:var(--surface);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:13px 16px}
-#v-b .tile-label{font-size:13.5px;font-family:'IBM Plex Sans',sans-serif}
-#v-b .tile-meta{color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace}
-#v-b .tile-key{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-family:'IBM Plex Mono',monospace}
-#v-b .tile:hover{background:var(--surface2)}
-#v-b .tile.tile-primary{border-left:2px solid var(--primary)}
-#v-b .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace;font-size:13px}
-#v-b .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:'IBM Plex Mono',monospace}
-#v-b .product-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12.5px;font-family:'IBM Plex Mono',monospace}
-#v-b .product-table th{text-align:left;padding:9px 10px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
-#v-b .product-table td{padding:9px 10px;border-top:1px solid var(--border)}
-#v-b .product-table tr{cursor:pointer;transition:background .1s}
-#v-b .product-table tr:hover td{background:var(--surface2)}
-#v-b .product-table .price{color:var(--primary);font-weight:700}
-#v-b .product-table .stock-low{color:var(--danger)}
-#v-b .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-#v-b .cart-item{border-bottom:1px solid var(--border);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
+#v-b{--bg:#0a0d12;--surface:#12161d;--surface2:#181e27;--surface3:#1e252f;--text:#e6edf3;--muted:#71808f;--primary:#3fb950;--primary-text:#04150a;--accent:#58a6ff;--success:#3fb950;--danger:#f85149;--border:#212932;--radius:6px;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans','IBM Plex Mono',monospace}
+#v-b .sidebar{background:var(--surface);border-right:1px solid var(--border)}
+#v-b .brand-mark{background:var(--surface2);color:var(--primary);border:1px solid var(--border)}
+#v-b .brand-name,#v-b .topbar-title{font-family:'IBM Plex Mono',monospace}
+#v-b .side-link{color:var(--muted);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+#v-b .side-link.active{background:var(--surface2);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
+#v-b .side-link:hover:not(.active){background:var(--surface2)}
+#v-b .side-foot{border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace}
+#v-b .side-avatar{background:var(--surface2);color:var(--accent);border-radius:4px}
+#v-b .topbar{background:rgba(10,13,18,.92);border-bottom:1px solid var(--border)}
+#v-b .icon-btn{background:var(--surface2);color:var(--text);border-radius:4px;border:1px solid var(--border)}
+#v-b .badge-dot{background:var(--danger);border:2px solid var(--surface2)}
+#v-b .alert-pill{background:#1c150a;border:1px solid #3d2a0e;color:#f0a53c;border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px}
+#v-b .stat-value{font-family:'IBM Plex Mono',monospace}
+#v-b .stat-trend.up{color:var(--success)}
+#v-b .stat-trend.warn{color:#f0a53c}
+#v-b .cta-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px}
+#v-b .cta-icon{background:var(--surface3);color:var(--primary);border-radius:4px}
+#v-b .cta-btn{background:var(--primary);color:var(--primary-text);border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .activity-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace}
+#v-b .activity-row{border-bottom:1px solid var(--border)}
+#v-b .activity-row:last-child{border-bottom:none}
+#v-b .activity-avatar{background:var(--surface2);color:var(--accent);border-radius:4px}
+#v-b .activity-meta{color:var(--muted)}
+#v-b .status-pill{border-radius:4px}
+#v-b .status-pill.paid{background:rgba(63,185,80,.15);color:var(--success)}
+#v-b .status-pill.refund{background:rgba(248,81,73,.15);color:var(--danger)}
+#v-b .cat-pill{background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+#v-b .cat-pill.active{background:var(--surface2);color:var(--accent);border-color:var(--accent)}
+#v-b .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px}
+#v-b .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+#v-b .product-card{background:var(--surface);border:1px solid var(--border);border-radius:6px}
+#v-b .product-photo{background:var(--surface3);color:var(--accent);border-radius:6px}
+#v-b .product-qty-badge{background:var(--primary);color:var(--primary-text);border-radius:4px}
+#v-b .product-add-btn{background:var(--surface3);color:var(--primary);border:1px solid var(--border);border-radius:4px}
+#v-b .product-price{color:var(--primary);font-family:'IBM Plex Mono',monospace}
+#v-b .product-stock{color:var(--muted)}
+#v-b .ticket-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px}
+#v-b .ticket-field{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .cart-item{border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px}
 #v-b .cart-item-unit{color:var(--muted)}
-#v-b .qty-btn{background:var(--surface2);color:var(--text);border-radius:3px}
+#v-b .qty-group{background:var(--surface2);border-radius:4px}
+#v-b .qty-btn{background:var(--surface3);color:var(--text);border-radius:3px}
 #v-b .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace}
 #v-b .cart-totals .row.total{color:var(--primary)}
-#v-b .btn-primary-lg{background:var(--primary);color:var(--primary-text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
-#v-b .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
-#v-b .tender-btn.active{background:var(--surface2);color:var(--accent);border-color:var(--accent);--trail-c:var(--accent)}
-#v-b .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
-#v-b .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:3px;font-family:'IBM Plex Mono',monospace}
-#v-b .order-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
-#v-b .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
+#v-b .btn-pill-lg{background:var(--primary);color:var(--primary-text);border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .tender-seg{background:var(--surface);border:1px solid var(--border);border-radius:4px}
+#v-b .tender-btn{color:var(--muted);border-radius:3px;font-family:'IBM Plex Mono',monospace}
+#v-b .tender-btn.active{background:var(--surface2);color:var(--accent);--trail-c:var(--accent)}
+#v-b .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace}
+#v-b .order-summary{background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace}
+#v-b .receipt{background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace}
 #v-b .receipt-line{color:var(--muted);font-size:12px}
-#v-b .receipt-actions button{background:var(--surface2);color:var(--text);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace}
+#v-b .receipt-actions button{background:var(--surface2);color:var(--text);border-radius:4px;font-family:'IBM Plex Mono',monospace}
 #v-b .receipt-actions button.primary{background:var(--primary);color:var(--primary-text)}
 
-/* ============================= C. CARD-BASED MODERN SAAS ============================= */
-#v-c{--bg:#131420;--surface:#1b1d2c;--surface2:#232537;--text:#f2f3f7;--muted:#8f92a8;--primary:#7c6ff0;--primary-text:#0d0a1f;--accent:#39d1c4;--danger:#ff6b81;--border:#2a2c3f;--radius:20px;--radius-sm:14px;--shadow:0 20px 40px -14px rgba(0,0,0,.55);background:radial-gradient(circle at 15% -10%,#241f3d,var(--bg) 55%);color:var(--text);font-family:'Manrope',system-ui,sans-serif}
-#v-c .v-toolbar{background:rgba(19,20,32,.7);backdrop-filter:blur(14px)}
-#v-c .screen-tab{color:var(--muted);border-radius:999px}
-#v-c .screen-tab.active{background:var(--surface2);color:var(--text);box-shadow:0 0 0 1px var(--border)}
-#v-c .alert-strip{background:linear-gradient(90deg,rgba(124,111,240,.16),rgba(57,209,196,.08));border:1px solid var(--border);border-radius:999px;color:var(--accent)}
-#v-c .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:112px}
-#v-c .tile{background:linear-gradient(155deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-#v-c .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
-#v-c .tile-meta{color:var(--muted)}
-#v-c .tile.tile-primary .tile-meta{color:rgba(13,10,31,.65)}
-#v-c .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:14px}
-#v-c .scan-btn{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:14px}
-#v-c .product-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 10px 22px -12px rgba(0,0,0,.5)}
+/* ============================= C. STRUCTURED SAAS BACKOFFICE ============================= */
+#v-c{--bg:#f7f7fa;--surface:#ffffff;--surface2:#f0f0f6;--surface3:#e8e8f2;--text:#16161f;--muted:#6b6b80;--primary:#6a53f5;--primary-text:#ffffff;--accent:#0ea394;--success:#1a9e6b;--danger:#e0294a;--border:#e6e6ef;--radius:16px;background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif}
+#v-c .sidebar{background:var(--surface);border-right:1px solid var(--border)}
+#v-c .brand-mark{background:var(--primary);color:#fff}
+#v-c .side-link{color:var(--muted)}
+#v-c .side-link.active{background:var(--surface2);color:var(--primary)}
+#v-c .side-link:hover:not(.active){background:var(--surface2)}
+#v-c .side-foot{border-top:1px solid var(--border)}
+#v-c .side-avatar{background:var(--surface2);color:var(--primary)}
+#v-c .topbar{background:rgba(247,247,250,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+#v-c .icon-btn{background:var(--surface2);color:var(--text)}
+#v-c .badge-dot{background:var(--danger);border:2px solid var(--surface2)}
+#v-c .alert-pill{background:#fff4e5;border:1px solid #ffe0b3;color:#b3690a}
+#v-c .stat-card{background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 2px rgba(20,20,40,.04)}
+#v-c .stat-trend.up{color:var(--success)}
+#v-c .stat-trend.warn{color:#b3690a}
+#v-c .cta-card{background:linear-gradient(135deg,var(--primary),#8f7bff);color:#fff}
+#v-c .cta-icon{background:rgba(255,255,255,.18)}
+#v-c .cta-btn{background:#fff;color:var(--primary)}
+#v-c .activity-card{background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 2px rgba(20,20,40,.04)}
+#v-c .activity-row{border-bottom:1px solid var(--border)}
+#v-c .activity-row:last-child{border-bottom:none}
+#v-c .activity-avatar{background:var(--surface2);color:var(--primary)}
+#v-c .activity-meta{color:var(--muted)}
+#v-c .status-pill.paid{background:#e6f6ee;color:var(--success)}
+#v-c .status-pill.refund{background:#fde8ec;color:var(--danger)}
+#v-c .cat-pill{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+#v-c .cat-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+#v-c .search-input{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+#v-c .search-input::placeholder{color:var(--muted)}
+#v-c .scan-btn{background:var(--surface2);color:var(--primary);border:1px solid var(--border)}
+#v-c .product-card{background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 3px rgba(20,20,40,.05)}
+#v-c .product-photo{background:var(--surface2);color:var(--primary)}
+#v-c .product-qty-badge{background:var(--primary);color:#fff}
+#v-c .product-add-btn{background:var(--primary);color:#fff}
 #v-c .product-price{color:var(--accent)}
 #v-c .product-stock{color:var(--muted)}
-#v-c .cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-c .ticket-panel{background:var(--surface);border:1px solid var(--border);box-shadow:0 4px 20px -8px rgba(20,20,40,.08)}
+#v-c .ticket-field{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 #v-c .cart-item{border-bottom:1px solid var(--border)}
 #v-c .cart-item-unit{color:var(--muted)}
-#v-c .qty-btn{background:var(--surface2);color:var(--text)}
+#v-c .qty-group{background:var(--surface2)}
+#v-c .qty-btn{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 #v-c .cart-totals{color:var(--muted);border-top:1px solid var(--border)}
 #v-c .cart-totals .row.total{color:var(--text)}
-#v-c .btn-primary-lg{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text);box-shadow:0 14px 28px -10px rgba(124,111,240,.55)}
-#v-c .tender-btn{background:var(--surface);border:1px solid var(--border);color:var(--text)}
-#v-c .tender-btn.active{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text);border-color:transparent}
+#v-c .btn-pill-lg{background:linear-gradient(135deg,var(--primary),#8f7bff);color:#fff;box-shadow:0 12px 24px -8px rgba(106,83,245,.45)}
+#v-c .tender-seg{background:var(--surface2)}
+#v-c .tender-btn{color:var(--muted)}
+#v-c .tender-btn.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);--trail-c:var(--primary)}
 #v-c .keypad .key{background:var(--surface);color:var(--text);border:1px solid var(--border)}
-#v-c .chip{background:var(--surface2);color:var(--accent);border:1px solid var(--border)}
-#v-c .order-summary{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
-#v-c .receipt{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+#v-c .chip{background:var(--surface2);color:var(--primary);border:1px solid var(--border)}
+#v-c .order-summary{background:var(--surface);border:1px solid var(--border);box-shadow:0 4px 20px -8px rgba(20,20,40,.08)}
+#v-c .receipt{background:var(--surface);border:1px solid var(--border);box-shadow:0 12px 30px -10px rgba(20,20,40,.12)}
 #v-c .receipt-line{color:var(--muted)}
 #v-c .receipt-actions button{background:var(--surface2);color:var(--text)}
-#v-c .receipt-actions button.primary{background:linear-gradient(135deg,var(--primary),#5b4fd6);color:var(--primary-text)}
+#v-c .receipt-actions button.primary{background:linear-gradient(135deg,var(--primary),#8f7bff);color:#fff}
 
 /* ============================= D. MINIMAL / EDITORIAL ============================= */
-#v-d{--bg:#15140f;--surface:#1b1a14;--surface2:#211f18;--text:#ece7de;--muted:#94896f;--primary:#ece7de;--primary-text:#15140f;--accent:#c9a24b;--danger:#c96b4b;--border:#332e22;--radius:2px;--radius-sm:2px;background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif}
-#v-d .v-toolbar{background:rgba(21,20,15,.92);border-bottom:1px solid var(--border)}
-#v-d .v-toolbar-title{font-family:'IBM Plex Sans',sans-serif}
-#v-d .screen-tab{color:var(--muted);border-radius:0;font-family:'IBM Plex Sans',sans-serif;text-transform:uppercase;font-size:10.5px;letter-spacing:.1em}
-#v-d .screen-tab.active{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
-#v-d .h1{font-weight:500;font-family:'Fraunces',Georgia,serif;font-optical-sizing:auto}
+#v-d{--bg:#15140f;--surface:#1b1a14;--surface2:#211f18;--surface3:#282619;--text:#ece7de;--muted:#94896f;--primary:#ece7de;--primary-text:#15140f;--accent:#c9a24b;--success:#8fae6b;--danger:#c96b4b;--border:#332e22;--radius:2px;background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif}
+#v-d .sidebar{background:var(--bg);border-right:1px solid var(--border)}
+#v-d .brand-mark{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0}
+#v-d .brand-name{font-family:'Fraunces',Georgia,serif;font-weight:500}
+#v-d .side-link{color:var(--muted);border-radius:0;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px}
+#v-d .side-link.active{color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
+#v-d .side-link:hover:not(.active){color:var(--text)}
+#v-d .side-foot{border-top:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
+#v-d .side-avatar{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:50%}
+#v-d .topbar{background:rgba(21,20,15,.92);border-bottom:1px solid var(--border)}
+#v-d .topbar-title{font-family:'Fraunces',Georgia,serif;font-weight:500}
+#v-d .icon-btn{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:0}
+#v-d .badge-dot{background:var(--accent);border:2px solid var(--bg)}
+#v-d .alert-pill{background:transparent;border:1px solid var(--border);color:var(--accent);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
+#v-d .h1{font-weight:500}
 #v-d .eyebrow,#v-d .sub{font-family:'IBM Plex Sans',sans-serif}
-#v-d .alert-strip{background:transparent;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;color:var(--accent);font-family:'IBM Plex Sans',sans-serif;font-size:12px}
-#v-d .home-grid{grid-template-columns:1fr;gap:0;border-top:1px solid var(--border)}
-#v-d .tile{background:transparent;border-radius:0;border-bottom:1px solid var(--border);flex-direction:row;align-items:center;justify-content:space-between;padding:22px 4px}
-#v-d .tile-icon{color:var(--accent);opacity:.85}
-#v-d .tile-label{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:500;transition:transform .2s ease}
-#v-d .tile:hover .tile-label{transform:translateX(6px)}
-#v-d .tile-meta{color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:11.5px}
+#v-d .stat-card{background:transparent;border:1px solid var(--border);border-radius:0}
+#v-d .stat-label,#v-d .stat-trend{font-family:'IBM Plex Sans',sans-serif}
+#v-d .stat-value{font-family:'Fraunces',Georgia,serif;font-weight:500}
+#v-d .stat-trend.up{color:var(--success)}
+#v-d .stat-trend.warn{color:var(--accent)}
+#v-d .cta-card{background:transparent;border:1px solid var(--accent);border-radius:0}
+#v-d .cta-icon{background:transparent;border:1px solid var(--border);border-radius:0;color:var(--accent)}
+#v-d .cta-btn{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
+#v-d .activity-card{background:transparent;border:1px solid var(--border);border-radius:0}
+#v-d .activity-row{border-bottom:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
+#v-d .activity-row:last-child{border-bottom:none}
+#v-d .activity-avatar{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:50%}
+#v-d .activity-meta{color:var(--muted)}
+#v-d .status-pill{border-radius:0;border:1px solid currentColor}
+#v-d .status-pill.paid{color:var(--success)}
+#v-d .status-pill.refund{color:var(--danger)}
+#v-d .cat-tabs{border-bottom:1px solid var(--border)}
+#v-d .cat-pill{background:transparent;color:var(--muted);border-radius:0;font-family:'IBM Plex Sans',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+#v-d .cat-pill.active{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
 #v-d .search-input{background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif;padding-left:0}
 #v-d .scan-btn{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
-#v-d .product-grid{grid-template-columns:1fr;gap:0}
-#v-d .product-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;flex-direction:row;align-items:center;justify-content:space-between;padding:17px 2px}
-#v-d .product-name{font-family:'Fraunces',Georgia,serif;font-size:16.5px;font-weight:400}
+#v-d .product-grid{grid-template-columns:1fr}
+#v-d .product-card{background:transparent;border:none;border-bottom:1px solid var(--border);flex-direction:row;align-items:center;text-align:left;padding:15px 2px}
+#v-d .product-photo{width:38px;height:38px;background:transparent;border:1px solid var(--border);color:var(--accent)}
+#v-d .product-add-btn{position:static;margin-left:auto;background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:50%}
+#v-d .product-qty-badge{background:var(--accent);color:var(--primary-text)}
+#v-d .product-name{font-family:'Fraunces',Georgia,serif;font-size:15.5px;font-weight:400}
 #v-d .product-price{font-family:'IBM Plex Sans',sans-serif;color:var(--accent)}
 #v-d .product-stock{color:var(--muted);font-family:'IBM Plex Sans',sans-serif}
-#v-d .cart-panel{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0;padding-left:22px}
+#v-d .ticket-panel{background:transparent;border:none;border-left:1px solid var(--border);padding-left:20px;border-radius:0}
+#v-d .ticket-field{background:transparent;border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .cart-item{border-bottom:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
 #v-d .cart-item-unit{color:var(--muted)}
-#v-d .qty-btn{background:transparent;border:1px solid var(--border);border-radius:0;color:var(--text)}
+#v-d .qty-group{background:transparent;border:1px solid var(--border);border-radius:0}
+#v-d .qty-btn{background:transparent;border-radius:0;color:var(--text)}
 #v-d .cart-totals{color:var(--muted);border-top:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif}
-#v-d .cart-totals .row.total{color:var(--text);font-family:'Fraunces',Georgia,serif;font-size:24px;font-weight:500}
-#v-d .btn-primary-lg{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'IBM Plex Sans',sans-serif;letter-spacing:.04em}
-#v-d .tender-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
-#v-d .tender-btn.active{border-color:var(--accent);color:var(--accent)}
+#v-d .cart-totals .row.total{color:var(--text);font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:500}
+#v-d .btn-pill-lg{background:var(--accent);color:var(--primary-text);border-radius:0;font-family:'IBM Plex Sans',sans-serif;letter-spacing:.04em}
+#v-d .tender-seg{background:transparent;border:1px solid var(--border);border-radius:0}
+#v-d .tender-btn{color:var(--text);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
+#v-d .tender-btn.active{background:var(--surface2);color:var(--accent);--trail-c:var(--accent)}
 #v-d .keypad .key{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:0;font-family:'Fraunces',Georgia,serif}
 #v-d .chip{background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
 #v-d .order-summary{background:transparent;border:1px solid var(--border);border-radius:0;font-family:'IBM Plex Sans',sans-serif}
@@ -269,53 +388,72 @@ svg{display:block}
 #v-d .receipt-actions button.primary{background:var(--accent);color:var(--primary-text);border-color:var(--accent)}
 
 /* ============================= E. BOLD NEO-BRUTALIST ============================= */
-#v-e{--bg:#0a0a0a;--surface:#fff200;--surface2:#111111;--text:#f5f5f5;--muted:#999;--primary:#ff2d55;--primary-text:#fff;--accent:#00e5ff;--danger:#ff2d55;--border:#000;--radius:0px;--shadow:6px 6px 0 #000;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif}
-#v-e .v-toolbar{background:#000;border-bottom:3px solid var(--surface)}
-#v-e .v-toolbar-title{font-family:'Archivo Black',sans-serif}
-#v-e .screen-tab{color:var(--muted);border-radius:0;font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:11px;border:2px solid transparent}
-#v-e .screen-tab.active{background:var(--surface);color:#0a0a0a;border:2px solid #000}
-#v-e .h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-weight:400;letter-spacing:-0.01em}
-#v-e .alert-strip{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow);font-weight:700;text-transform:uppercase;font-size:12px;font-family:'Space Grotesk',sans-serif}
-#v-e .home-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:112px}
-#v-e .tile{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow)}
-#v-e .tile:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
-#v-e .tile.tile-primary{grid-column:span 2;grid-row:span 2;background:var(--primary);border-color:#000;color:#fff}
-#v-e .tile-label{text-transform:uppercase;font-weight:700;font-family:'Space Grotesk',sans-serif}
-#v-e .tile-meta{color:var(--surface);font-weight:600}
-#v-e .tile.tile-primary .tile-meta{color:#fff}
+#v-e{--bg:#0a0a0a;--surface:#111111;--surface2:#181818;--surface3:#1f1f1f;--text:#f5f5f5;--muted:#999;--primary:#ff2d55;--primary-text:#fff;--accent:#fff200;--accent2:#00e5ff;--success:#00e58a;--danger:#ff2d55;--border:#000;--radius:0px;--shadow:5px 5px 0 #000;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif}
+#v-e .sidebar{background:#000;border-right:3px solid var(--accent)}
+#v-e .brand-mark{background:var(--accent);color:#000;border-radius:0}
+#v-e .brand-name{font-family:'Archivo Black',sans-serif;font-size:13px;text-transform:uppercase}
+#v-e .side-link{color:var(--muted);border-radius:0;text-transform:uppercase;font-size:12px;border:2px solid transparent}
+#v-e .side-link.active{background:var(--primary);color:#fff;border-color:#000;box-shadow:var(--shadow)}
+#v-e .side-link:hover:not(.active){color:var(--accent)}
+#v-e .side-foot{border-top:3px solid var(--accent)}
+#v-e .side-avatar{background:var(--accent);color:#000;border-radius:0}
+#v-e .topbar{background:#000;border-bottom:3px solid var(--accent)}
+#v-e .topbar-title{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:15px}
+#v-e .icon-btn{background:var(--surface2);color:var(--accent);border:2px solid var(--accent);border-radius:0}
+#v-e .badge-dot{background:var(--primary);border:2px solid #000}
+#v-e .alert-pill{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow);font-weight:700;text-transform:uppercase}
+#v-e .h1{font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-weight:400}
+#v-e .stat-card{background:var(--surface2);border:3px solid var(--accent);border-radius:0}
+#v-e .stat-trend.up{color:var(--success)}
+#v-e .stat-trend.warn{color:var(--accent)}
+#v-e .cta-card{background:var(--primary);color:#fff;border:3px solid #000;border-radius:0;box-shadow:var(--shadow)}
+#v-e .cta-icon{background:rgba(0,0,0,.25);border-radius:0}
+#v-e .cta-btn{background:#000;color:var(--accent);border-radius:0;text-transform:uppercase}
+#v-e .activity-card{background:var(--surface2);border:3px solid var(--accent);border-radius:0}
+#v-e .activity-row{border-bottom:2px dashed var(--border)}
+#v-e .activity-row:last-child{border-bottom:none}
+#v-e .activity-avatar{background:#000;color:var(--accent);border-radius:0;border:1px solid var(--accent)}
+#v-e .activity-meta{color:var(--muted)}
+#v-e .status-pill{border-radius:0;text-transform:uppercase;font-weight:700}
+#v-e .status-pill.paid{background:var(--success);color:#000}
+#v-e .status-pill.refund{background:var(--primary);color:#fff}
+#v-e .cat-pill{background:var(--surface2);color:var(--text);border:2px solid var(--accent);border-radius:0;text-transform:uppercase;font-size:11px}
+#v-e .cat-pill.active{background:var(--accent);color:#000;border-color:#000}
 #v-e .search-input{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:700}
-#v-e .scan-btn{background:var(--accent);color:#000;border:3px solid #000;border-radius:0;font-weight:700;text-transform:uppercase}
-#v-e .product-card{background:var(--surface2);color:#fff;border:3px solid var(--surface);border-radius:0;box-shadow:var(--shadow)}
-#v-e .product-card:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
+#v-e .scan-btn{background:var(--accent2);color:#000;border:3px solid #000;border-radius:0;font-weight:700;text-transform:uppercase}
+#v-e .product-card{background:var(--surface2);color:#fff;border:3px solid var(--accent);border-radius:0}
+#v-e .product-card:active{transform:translate(3px,3px)}
+#v-e .product-photo{background:#000;color:var(--accent);border-radius:0;border:2px solid var(--accent)}
+#v-e .product-qty-badge{background:var(--primary);color:#fff;border-radius:0}
+#v-e .product-add-btn{background:var(--accent);color:#000;border-radius:0}
 #v-e .product-name{text-transform:uppercase;font-weight:700}
-#v-e .product-price{color:var(--surface);font-weight:700}
+#v-e .product-price{color:var(--accent)}
 #v-e .product-stock{color:var(--muted)}
-#v-e .cart-panel{background:#fff;color:#000;border:3px solid #000;border-radius:0;box-shadow:var(--shadow)}
+#v-e .ticket-panel{background:#fff;color:#000;border:3px solid #000;border-radius:0;box-shadow:var(--shadow)}
+#v-e .ticket-field{background:#f2f2f2;color:#000;border:2px solid #000;border-radius:0}
+#v-e .ticket-clear{color:#000}
 #v-e .cart-item{border-bottom:2px dashed #000}
 #v-e .cart-item-unit{color:#666}
+#v-e .qty-group{background:#eee;border-radius:0}
 #v-e .qty-btn{background:#000;color:#fff;border-radius:0}
 #v-e .cart-totals{color:#000;border-top:3px solid #000}
-#v-e .cart-totals .row.total{color:var(--primary);font-weight:700}
-#v-e .btn-primary-lg{background:var(--primary);color:#fff;border-radius:0;border:3px solid #000;box-shadow:var(--shadow);text-transform:uppercase;font-weight:700}
-#v-e .btn-primary-lg:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
-#v-e .tender-btn{background:var(--surface2);border:3px solid var(--surface);color:#fff;border-radius:0;text-transform:uppercase}
-#v-e .tender-btn.active{background:var(--accent);color:#000;border-color:#000;--trail-c:var(--primary)}
+#v-e .cart-totals .row.total{color:var(--primary)}
+#v-e .btn-pill-lg{background:var(--primary);color:#fff;border-radius:0;border:3px solid #000;box-shadow:var(--shadow);text-transform:uppercase}
+#v-e .btn-pill-lg:active{transform:translate(3px,3px);box-shadow:0 0 0 #000}
+#v-e .tender-seg{background:var(--surface2);border:2px solid var(--accent);border-radius:0}
+#v-e .tender-btn{color:#fff;border-radius:0;text-transform:uppercase}
+#v-e .tender-btn.active{background:var(--accent);color:#000;--trail-c:var(--primary)}
 #v-e .keypad .key{background:#fff;color:#000;border:3px solid #000;border-radius:0;font-weight:700}
-#v-e .keypad .key:active{transform:translate(3px,3px)}
-#v-e .chip{background:var(--surface);color:#000;border:2px solid #000;border-radius:0;font-weight:700}
-#v-e .order-summary{background:var(--surface2);border:3px solid var(--surface);color:#fff}
-#v-e .order-summary .cart-totals{color:#ccc;border-top:3px solid var(--surface)}
-#v-e .order-summary .cart-totals .row.total{color:var(--surface)}
-#v-e .receipt{background:#fff;color:#000;border:3px solid #000;box-shadow:var(--shadow)}
-#v-e .receipt::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:14px;background:repeating-linear-gradient(115deg,#0a0a0a 0 8px,transparent 8px 16px)}
+#v-e .keypad .key:active{transform:translate(2px,2px)}
+#v-e .chip{background:var(--accent);color:#000;border:2px solid #000;border-radius:0;font-weight:700}
+#v-e .order-summary{background:var(--surface2);border:3px solid var(--accent);border-radius:0;color:#fff}
+#v-e .order-summary .cart-totals{color:#ccc;border-top:3px solid var(--accent)}
+#v-e .order-summary .cart-totals .row.total{color:var(--accent)}
+#v-e .receipt{background:#fff;color:#000;border:3px solid #000;box-shadow:var(--shadow);border-radius:0}
+#v-e .receipt::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;height:12px;background:repeating-linear-gradient(115deg,#0a0a0a 0 8px,transparent 8px 16px)}
 #v-e .receipt-line{color:#333;font-weight:600}
-#v-e .receipt-actions button{background:#000;color:#fff;border-radius:0;text-transform:uppercase;font-weight:700}
+#v-e .receipt-actions button{background:#000;color:#fff;border-radius:0;text-transform:uppercase}
 #v-e .receipt-actions button.primary{background:var(--primary)}
-
-/* ============================= SKETCH TOOLBAR ============================= */
-#sketch-tools{position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:.5;transition:opacity .2s;display:flex;gap:10px;align-items:center}
-#sketch-tools:hover{opacity:1}
-#sketch-tools button{background:#222;color:#fff;border:1px solid #444;border-radius:5px;padding:3px 8px;font-size:11px}
 </style>
 </head>
 <body>
@@ -323,356 +461,148 @@ svg{display:block}
 <div id="variant-nav">
   <button class="variant-tab active" data-variant-target="a">A · Tactile Big-Touch</button>
   <button class="variant-tab" data-variant-target="b">B · Data-Dense Pro Terminal</button>
-  <button class="variant-tab" data-variant-target="c">C · Card-Based Modern SaaS</button>
+  <button class="variant-tab" data-variant-target="c">C · Structured SaaS Backoffice</button>
   <button class="variant-tab" data-variant-target="d">D · Minimal / Editorial</button>
   <button class="variant-tab" data-variant-target="e">E · Bold Neo-Brutalist</button>
 </div>
 
-<!-- ================================================================== -->
-<!-- VARIANT A — TACTILE BIG-TOUCH RETAIL -->
-<!-- ================================================================== -->
-<section class="variant grain" id="v-a" data-variant="a">
-  <header class="v-toolbar">
-    <div class="v-toolbar-title">A · Tactile Big-Touch Retail</div>
-    <nav class="screen-tabs">
-      <button class="screen-tab active" data-screen="home">Home</button>
-      <button class="screen-tab" data-screen="pos">POS · Checkout</button>
-      <button class="screen-tab" data-screen="payment">Payment</button>
-      <button class="screen-tab" data-screen="receipt">Receipt</button>
-    </nav>
-  </header>
-
-  <div class="screen screen-home" data-screen-panel="home">
-    <p class="eyebrow">Buenos días, Maria</p>
-    <h1 class="h1">Tienda Kishan Imports</h1>
-    <p class="sub">Caja abierta · Turno desde 8:00 AM</p>
-    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 productos por vencer en 14 días — revisar Inventario</div>
-    <div class="home-grid stagger">
-      <div class="tile tile-primary magnetic" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">POS · Venta</div><div class="tile-meta">Iniciar cobro</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">Inventario</div><div class="tile-meta">318 productos</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">Proveedores</div><div class="tile-meta">2 envíos pendientes</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">Personal</div><div class="tile-meta">5 activos hoy</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">Reportes</div><div class="tile-meta">Ventas del día</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">Pagos</div><div class="tile-meta">Historial</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 en caja</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">Configuración</div><div class="tile-meta">Recibos, hardware</div></div>
-    </div>
-  </div>
-
-  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
-    <div class="pos-layout">
-      <div>
-        <div class="search-row">
-          <input class="search-input" placeholder="Buscar o escanear producto…">
-          <button class="scan-btn"><i data-lucide="scan-line" class="ic"></i>Escanear</button>
-        </div>
-        <div class="product-grid stagger" id="a-products"></div>
-      </div>
-      <aside class="cart-panel" id="a-cart"></aside>
-    </div>
-  </div>
-
-  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1">Cobrar $28.62</h1>
-    <div class="payment-layout" id="a-payment"></div>
-  </div>
-
-  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap" id="a-receipt"></div>
-  </div>
-</section>
-
-<!-- ================================================================== -->
-<!-- VARIANT B — DATA-DENSE PRO TERMINAL -->
-<!-- ================================================================== -->
-<section class="variant" id="v-b" data-variant="b" style="display:none">
-  <header class="v-toolbar">
-    <div class="v-toolbar-title">B · Data-Dense Pro Terminal</div>
-    <nav class="screen-tabs">
-      <button class="screen-tab active" data-screen="home">home</button>
-      <button class="screen-tab" data-screen="pos">pos.checkout</button>
-      <button class="screen-tab" data-screen="payment">payment</button>
-      <button class="screen-tab" data-screen="receipt">receipt</button>
-    </nav>
-  </header>
-
-  <div class="screen screen-home" data-screen-panel="home">
-    <p class="eyebrow">session: maria.g · terminal-01</p>
-    <h1 class="h1" style="font-size:20px;font-family:'IBM Plex Mono',monospace">kishan-imports // pos</h1>
-    <p class="sub">caja: open · $1,240.50 · uptime 6h12m</p>
-    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 sku expiring ≤14d — see inventory.alerts</div>
-    <div class="home-grid stagger">
-      <div class="tile tile-primary" data-goto="pos"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="shopping-cart" class="ic"></i><div><div class="tile-label">pos / checkout</div><div class="tile-meta">start a new sale</div></div></div><div class="tile-key">F1</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="package" class="ic"></i><div><div class="tile-label">inventory</div><div class="tile-meta">318 sku · 6 below reorder pt.</div></div></div><div class="tile-key">F2</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="truck" class="ic"></i><div><div class="tile-label">suppliers</div><div class="tile-meta">2 shipments pending receive</div></div></div><div class="tile-key">F3</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="users" class="ic"></i><div><div class="tile-label">staff</div><div class="tile-meta">5 clocked in</div></div></div><div class="tile-key">F4</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="bar-chart-3" class="ic"></i><div><div class="tile-label">reports</div><div class="tile-meta">today: $2,481.30 / 61 sales</div></div></div><div class="tile-key">F5</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="credit-card" class="ic"></i><div><div class="tile-label">payments</div><div class="tile-meta">history + refunds</div></div></div><div class="tile-key">F6</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="banknote" class="ic"></i><div><div class="tile-label">caja</div><div class="tile-meta">open since 08:00</div></div></div><div class="tile-key">F7</div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" class="ic"></i><div><div class="tile-label">settings</div><div class="tile-meta">receipt, hardware, locale</div></div></div><div class="tile-key">F8</div></div>
-    </div>
-  </div>
-
-  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
-    <div class="pos-layout">
-      <div>
-        <div class="search-row">
-          <input class="search-input" placeholder="scan barcode / search sku or name…">
-          <button class="scan-btn">[F9] scan</button>
-        </div>
-        <table class="product-table stagger">
-          <thead><tr><th>sku</th><th>name</th><th>price</th><th>stock</th></tr></thead>
-          <tbody id="b-products"></tbody>
-        </table>
-      </div>
-      <aside class="cart-panel" id="b-cart"></aside>
-    </div>
-  </div>
-
-  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1" style="font-size:18px;font-family:'IBM Plex Mono',monospace">charge $28.62</h1>
-    <div class="payment-layout" id="b-payment"></div>
-  </div>
-
-  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap" id="b-receipt"></div>
-  </div>
-</section>
-
-<!-- ================================================================== -->
-<!-- VARIANT C — CARD-BASED MODERN SAAS -->
-<!-- ================================================================== -->
-<section class="variant" id="v-c" data-variant="c" style="display:none">
-  <header class="v-toolbar">
-    <div class="v-toolbar-title">C · Card-Based Modern SaaS</div>
-    <nav class="screen-tabs">
-      <button class="screen-tab active" data-screen="home">Home</button>
-      <button class="screen-tab" data-screen="pos">Checkout</button>
-      <button class="screen-tab" data-screen="payment">Payment</button>
-      <button class="screen-tab" data-screen="receipt">Receipt</button>
-    </nav>
-  </header>
-
-  <div class="screen screen-home" data-screen-panel="home">
-    <p class="eyebrow">Good afternoon</p>
-    <h1 class="h1">Hi Maria 👋</h1>
-    <p class="sub">Kishan Imports · Caja open since 8:00 AM</p>
-    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 items expiring within 14 days · Review inventory</div>
-    <div class="home-grid stagger">
-      <div class="tile tile-primary spotlight tilt" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">New Sale</div><div class="tile-meta">Start checkout</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">Inventory</div><div class="tile-meta">318 products tracked</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in today</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 balance</div></div>
-      <div class="tile spotlight tilt"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">Settings</div><div class="tile-meta">Receipts &amp; hardware</div></div>
-    </div>
-  </div>
-
-  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
-    <div class="pos-layout">
-      <div>
-        <div class="search-row">
-          <input class="search-input" placeholder="Search products or scan a barcode">
-          <button class="scan-btn"><i data-lucide="scan-line" class="ic"></i>Scan</button>
-        </div>
-        <div class="product-grid stagger" id="c-products"></div>
-      </div>
-      <aside class="cart-panel" id="c-cart"></aside>
-    </div>
-  </div>
-
-  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1">Take Payment</h1>
-    <p class="sub">Total due $28.62</p>
-    <div class="payment-layout" id="c-payment"></div>
-  </div>
-
-  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap" id="c-receipt"></div>
-  </div>
-</section>
-
-<!-- ================================================================== -->
-<!-- VARIANT D — MINIMAL / EDITORIAL -->
-<!-- ================================================================== -->
-<section class="variant" id="v-d" data-variant="d" style="display:none">
-  <header class="v-toolbar">
-    <div class="v-toolbar-title">D · Minimal / Editorial</div>
-    <nav class="screen-tabs">
-      <button class="screen-tab active" data-screen="home">Home</button>
-      <button class="screen-tab" data-screen="pos">Checkout</button>
-      <button class="screen-tab" data-screen="payment">Payment</button>
-      <button class="screen-tab" data-screen="receipt">Receipt</button>
-    </nav>
-  </header>
-
-  <div class="screen screen-home" data-screen-panel="home">
-    <p class="eyebrow">Kishan Imports</p>
-    <h1 class="h1">Good afternoon, Maria.</h1>
-    <p class="sub">Caja open since 8:00 AM — five staff on shift.</p>
-    <div class="alert-strip">Four items expire within fourteen days.</div>
-    <div class="home-grid stagger">
-      <div class="tile" data-goto="pos"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="shopping-cart" class="ic tile-icon"></i><div><div class="tile-label">New sale</div><div class="tile-meta">Begin checkout</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="package" class="ic tile-icon"></i><div><div class="tile-label">Inventory</div><div class="tile-meta">318 products</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="truck" class="ic tile-icon"></i><div><div class="tile-label">Suppliers</div><div class="tile-meta">2 shipments pending</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="users" class="ic tile-icon"></i><div><div class="tile-label">Staff</div><div class="tile-meta">5 clocked in</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="bar-chart-3" class="ic tile-icon"></i><div><div class="tile-label">Reports</div><div class="tile-meta">$2,481.30 today</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="credit-card" class="ic tile-icon"></i><div><div class="tile-label">Payments</div><div class="tile-meta">History &amp; refunds</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="banknote" class="ic tile-icon"></i><div><div class="tile-label">Caja</div><div class="tile-meta">$1,240.50 in drawer</div></div></div></div>
-      <div class="tile"><div style="display:flex;align-items:center;gap:14px"><i data-lucide="settings" class="ic tile-icon"></i><div><div class="tile-label">Settings</div><div class="tile-meta">Receipts, hardware</div></div></div></div>
-    </div>
-  </div>
-
-  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
-    <div class="pos-layout">
-      <div>
-        <div class="search-row">
-          <input class="search-input" placeholder="Search or scan a product">
-          <button class="scan-btn">Scan</button>
-        </div>
-        <div class="product-grid stagger" id="d-products"></div>
-      </div>
-      <aside class="cart-panel" id="d-cart"></aside>
-    </div>
-  </div>
-
-  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1">$28.62 due</h1>
-    <div class="payment-layout" id="d-payment"></div>
-  </div>
-
-  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap" id="d-receipt"></div>
-  </div>
-</section>
-
-<!-- ================================================================== -->
-<!-- VARIANT E — BOLD NEO-BRUTALIST -->
-<!-- ================================================================== -->
-<section class="variant grain" id="v-e" data-variant="e" style="display:none">
-  <header class="v-toolbar">
-    <div class="v-toolbar-title">E · Bold Neo-Brutalist</div>
-    <nav class="screen-tabs">
-      <button class="screen-tab active" data-screen="home">HOME</button>
-      <button class="screen-tab" data-screen="pos">CHECKOUT</button>
-      <button class="screen-tab" data-screen="payment">PAYMENT</button>
-      <button class="screen-tab" data-screen="receipt">RECEIPT</button>
-    </nav>
-  </header>
-
-  <div class="screen screen-home" data-screen-panel="home">
-    <p class="eyebrow" style="color:var(--surface)">KISHAN IMPORTS</p>
-    <h1 class="h1">HEY MARIA</h1>
-    <p class="sub" style="color:#ccc">CAJA OPEN · 8:00 AM · 5 STAFF ON SHIFT</p>
-    <div class="alert-strip"><i data-lucide="alert-triangle" class="ic ic-sm"></i>4 ITEMS EXPIRE IN 14 DAYS — CHECK INVENTORY</div>
-    <div class="home-grid stagger">
-      <div class="tile tile-primary" data-goto="pos"><div class="tile-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div><div class="tile-label">NEW SALE</div><div class="tile-meta">START CHECKOUT</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="package" class="ic-lg"></i></div><div class="tile-label">INVENTORY</div><div class="tile-meta">318 PRODUCTS</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="truck" class="ic-lg"></i></div><div class="tile-label">SUPPLIERS</div><div class="tile-meta">2 PENDING</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="users" class="ic-lg"></i></div><div class="tile-label">STAFF</div><div class="tile-meta">5 CLOCKED IN</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="bar-chart-3" class="ic-lg"></i></div><div class="tile-label">REPORTS</div><div class="tile-meta">$2,481.30</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="credit-card" class="ic-lg"></i></div><div class="tile-label">PAYMENTS</div><div class="tile-meta">HISTORY</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="banknote" class="ic-lg"></i></div><div class="tile-label">CAJA</div><div class="tile-meta">$1,240.50</div></div>
-      <div class="tile"><div class="tile-icon"><i data-lucide="settings" class="ic-lg"></i></div><div class="tile-label">SETTINGS</div><div class="tile-meta">HARDWARE</div></div>
-    </div>
-  </div>
-
-  <div class="screen screen-pos" data-screen-panel="pos" style="display:none">
-    <div class="pos-layout">
-      <div>
-        <div class="search-row">
-          <input class="search-input" placeholder="SEARCH OR SCAN…">
-          <button class="scan-btn">SCAN</button>
-        </div>
-        <div class="product-grid stagger" id="e-products"></div>
-      </div>
-      <aside class="cart-panel" id="e-cart"></aside>
-    </div>
-  </div>
-
-  <div class="screen screen-payment" data-screen-panel="payment" style="display:none">
-    <h1 class="h1">CHARGE $28.62</h1>
-    <div class="payment-layout" id="e-payment"></div>
-  </div>
-
-  <div class="screen screen-receipt" data-screen-panel="receipt" style="display:none">
-    <div class="receipt-wrap" id="e-receipt"></div>
-  </div>
-</section>
+<section class="variant" id="v-a" data-variant="a"></section>
+<section class="variant" id="v-b" data-variant="b" hidden></section>
+<section class="variant" id="v-c" data-variant="c" hidden></section>
+<section class="variant" id="v-d" data-variant="d" hidden></section>
+<section class="variant" id="v-e" data-variant="e" hidden></section>
 
 <div id="sketch-tools">
-  <span>Sketch 001 · v2</span>
-  <button onclick="alert('5 full-system directions, real icons (lucide), real type pairings, hand-built spotlight/tilt/magnetic/border-trail/sliding-number motion. Switch via top bar.')">?</button>
+  <span>Sketch 001 · v3</span>
+  <button onclick="alert('Rebuilt on real POS reference patterns: sidebar nav (not tile-launcher), category pill tabs, circular product tiles w/ qty badge, pill ticket/charge buttons, stat-card dashboard, status pills. Refs: SlabPixel Green Grounds Coffee, Robin Holesinsky Register, Hatypo PayPoint (Dribbble).')">?</button>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============================= SHARED DATA ============================= */
 const PRODUCTS = [
-  {sku:'8901030',name:'Tata Salt 1kg',price:2.50,stock:42,cat:'spice'},
-  {sku:'8901234',name:'Basmati Rice 5kg',price:12.00,stock:18,cat:'grain'},
-  {sku:'8901555',name:'Toor Dal 1kg',price:4.25,stock:30,cat:'grain'},
-  {sku:'8901777',name:'MDH Garam Masala 100g',price:3.10,stock:55,cat:'spice'},
-  {sku:'8901999',name:'Amul Ghee 500ml',price:9.50,stock:12,cat:'dairy'},
-  {sku:'8902111',name:'Britannia Marie Biscuits',price:1.75,stock:80,cat:'snack'},
-  {sku:'8902222',name:'Haldiram Namkeen 200g',price:2.90,stock:27,cat:'snack'},
-  {sku:'8902333',name:'Red Label Tea 250g',price:3.40,stock:33,cat:'beverage'},
+  {sku:'8901030',name:'Tata Salt 1kg',price:2.50,stock:42,cat:'spice',icon:'flame'},
+  {sku:'8901234',name:'Basmati Rice 5kg',price:12.00,stock:18,cat:'grain',icon:'wheat'},
+  {sku:'8901555',name:'Toor Dal 1kg',price:4.25,stock:30,cat:'grain',icon:'wheat'},
+  {sku:'8901777',name:'MDH Garam Masala 100g',price:3.10,stock:55,cat:'spice',icon:'flame'},
+  {sku:'8901999',name:'Amul Ghee 500ml',price:9.50,stock:12,cat:'dairy',icon:'milk'},
+  {sku:'8902111',name:'Britannia Marie Biscuits',price:1.75,stock:80,cat:'snack',icon:'cookie'},
+  {sku:'8902222',name:'Haldiram Namkeen 200g',price:2.90,stock:27,cat:'snack',icon:'cookie'},
+  {sku:'8902333',name:'Red Label Tea 250g',price:3.40,stock:33,cat:'beverage',icon:'cup-soda'},
 ];
-const CAT_COLOR = {spice:'#f5a524',grain:'#2ecc71',dairy:'#4aa8ff',snack:'#ff5da2',beverage:'#a78bfa'};
+const CATS = [
+  {key:'all',label:'All'},{key:'spice',label:'Spice'},{key:'grain',label:'Grain'},
+  {key:'dairy',label:'Dairy'},{key:'snack',label:'Snack'},{key:'beverage',label:'Beverage'},
+];
 const CART = [
   {sku:'8901030',name:'Tata Salt 1kg',price:2.50,qty:2},
   {sku:'8901234',name:'Basmati Rice 5kg',price:12.00,qty:1},
   {sku:'8901999',name:'Amul Ghee 500ml',price:9.50,qty:1},
 ];
-
+const ACTIVITY = [
+  {name:'James O.',ticket:'#4820',amount:18.40,time:'5 min ago',status:'paid'},
+  {name:'Walk-in',ticket:'#4819',amount:42.10,time:'12 min ago',status:'paid'},
+  {name:'Priya S.',ticket:'#4818',amount:9.75,time:'28 min ago',status:'refund'},
+  {name:'Walk-in',ticket:'#4817',amount:63.20,time:'41 min ago',status:'paid'},
+];
 function fmt(n){ return '$'+n.toFixed(2); }
+function initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 
-function productGridHTML(){
+const NAV = [
+  {key:'home',icon:'layout-dashboard'},{key:'pos',icon:'shopping-cart'},{key:'inventory',icon:'package'},
+  {key:'suppliers',icon:'truck'},{key:'staff',icon:'users'},{key:'reports',icon:'bar-chart-3'},
+  {key:'payments',icon:'credit-card'},{key:'settings',icon:'settings'},
+];
+
+/* per-variant copy + effect-class config */
+const V = {
+  a: { lang:'es', store:'Kishan Imports', cashier:'Maria', greetPrefix:'Buenos días,', caja:'Caja abierta',
+    nav:{home:'Inicio',pos:'Ventas',inventory:'Inventario',suppliers:'Proveedores',staff:'Personal',reports:'Reportes',payments:'Pagos',settings:'Config.'},
+    alert:'4 productos por vencer en 14 días', statLabels:['Ventas de hoy','Órdenes','Bajo stock','Saldo en caja'],
+    statVals:['$2,481.30','61','6 items','$1,240.50'], statTrends:['+12% vs ayer','','revisar','—'],
+    ctaTitle:'Nueva Venta',ctaSub:'Iniciar cobro',ctaBtn:'Comenzar', activityTitle:'Actividad reciente',
+    catAll:'Todo', search:'Buscar o escanear…', scan:'Escanear', ticket:'Ticket', clear:'Vaciar', customer:'Cliente (opcional)',
+    subtotal:'Subtotal', tax:'Impuesto (8%)', total:'Total', charge:'Cobrar', cash:'Efectivo', card:'Tarjeta', split:'Dividir',
+    exact:'Exacto', confirm:'Completar Venta', paid:'Pagado', refund:'Reembolso', heading:'Venta Completa',
+    print:'Imprimir', email:'Email', newSale:'Nueva Venta', each:'c/u' },
+  b: { lang:'term', store:'kishan-imports', cashier:'maria.g', greetPrefix:'session:', caja:'caja: open',
+    nav:{home:'home',pos:'pos.checkout',inventory:'inventory',suppliers:'suppliers',staff:'staff',reports:'reports',payments:'payments',settings:'settings'},
+    alert:'4 sku expiring <=14d — see inventory.alerts', statLabels:['today.sales','orders','low_stock','caja.balance'],
+    statVals:['$2,481.30','61','6','$1,240.50'], statTrends:['+12%','','warn','—'],
+    ctaTitle:'new_sale()',ctaSub:'F1 · start checkout',ctaBtn:'run', activityTitle:'recent_activity',
+    catAll:'all', search:'scan barcode / search sku or name…', scan:'[F9] scan', ticket:'ticket', clear:'clear', customer:'customer (optional)',
+    subtotal:'subtotal', tax:'tax (8%)', total:'total', charge:'[F12] charge', cash:'cash', card:'card', split:'split',
+    exact:'exact', confirm:'complete_sale()', paid:'paid', refund:'refund', heading:'sale_complete',
+    print:'print', email:'email', newSale:'new_sale()', each:'/ea' },
+  c: { lang:'en', store:'Kishan Imports', cashier:'Maria', greetPrefix:'Good afternoon,', caja:'Caja open',
+    nav:{home:'Home',pos:'Checkout',inventory:'Inventory',suppliers:'Suppliers',staff:'Staff',reports:'Reports',payments:'Payments',settings:'Settings'},
+    alert:'4 items expiring within 14 days', statLabels:["Today's sales",'Orders','Low stock','Caja balance'],
+    statVals:['$2,481.30','61','6 items','$1,240.50'], statTrends:['+12% vs yesterday','','review','—'],
+    ctaTitle:'New Sale',ctaSub:'Start a checkout',ctaBtn:'Start sale', activityTitle:'Recent activity',
+    catAll:'All', search:'Search products or scan a barcode', scan:'Scan', ticket:'Ticket', clear:'Clear', customer:'Customer name (optional)',
+    subtotal:'Subtotal', tax:'Tax (8%)', total:'Total', charge:'Charge', cash:'Cash', card:'Card', split:'Split',
+    exact:'Exact', confirm:'Confirm Payment', paid:'Paid', refund:'Refunded', heading:'Payment Successful',
+    print:'Print', email:'Email', newSale:'New Sale', each:'each' },
+  d: { lang:'en', store:'Kishan Imports', cashier:'Maria', greetPrefix:'Good afternoon,', caja:'Caja open',
+    nav:{home:'Home',pos:'Checkout',inventory:'Inventory',suppliers:'Suppliers',staff:'Staff',reports:'Reports',payments:'Payments',settings:'Settings'},
+    alert:'Four items expire within fourteen days', statLabels:["Today's sales",'Orders','Low stock','Caja balance'],
+    statVals:['$2,481.30','61','6 items','$1,240.50'], statTrends:['+12% vs yesterday','','review','—'],
+    ctaTitle:'New sale',ctaSub:'Begin checkout',ctaBtn:'Begin', activityTitle:'Recent activity',
+    catAll:'All', search:'Search or scan a product', scan:'Scan', ticket:'Ticket', clear:'Clear', customer:'Customer name (optional)',
+    subtotal:'Subtotal', tax:'Tax', total:'Total', charge:'Continue', cash:'Cash', card:'Card', split:'Split',
+    exact:'Exact', confirm:'Confirm payment', paid:'Paid', refund:'Refunded', heading:'Thank you.',
+    print:'Print', email:'Email', newSale:'New sale', each:'each' },
+  e: { lang:'en', store:'KISHAN IMPORTS', cashier:'MARIA', greetPrefix:'HEY,', caja:'CAJA OPEN',
+    nav:{home:'HOME',pos:'CHECKOUT',inventory:'INVENTORY',suppliers:'SUPPLIERS',staff:'STAFF',reports:'REPORTS',payments:'PAYMENTS',settings:'SETTINGS'},
+    alert:'4 ITEMS EXPIRE IN 14 DAYS — CHECK INVENTORY', statLabels:['SALES TODAY','ORDERS','LOW STOCK','CAJA BALANCE'],
+    statVals:['$2,481.30','61','6 ITEMS','$1,240.50'], statTrends:['+12%','','WARN','—'],
+    ctaTitle:'NEW SALE',ctaSub:'START CHECKOUT',ctaBtn:'GO', activityTitle:'RECENT ACTIVITY',
+    catAll:'ALL', search:'SEARCH OR SCAN…', scan:'SCAN', ticket:'TICKET', clear:'CLEAR', customer:'CUSTOMER (OPTIONAL)',
+    subtotal:'SUBTOTAL', tax:'TAX (8%)', total:'TOTAL', charge:'CHARGE', cash:'CASH', card:'CARD', split:'SPLIT',
+    exact:'EXACT', confirm:'COMPLETE SALE', paid:'PAID', refund:'REFUND', heading:'SALE COMPLETE',
+    print:'PRINT', email:'EMAIL', newSale:'NEW SALE', each:'EA' },
+};
+
+function catPillsHTML(t){
+  return CATS.map((c,i)=>`<button class="cat-pill${i===0?' active':''}" data-cat="${c.key}">${i===0?t.catAll:c.key==='spice'?(t.lang==='es'?'Especias':t.lang==='term'?'spice':c.label):c.label}</button>`).join('');
+}
+function productGridHTML(t){
   return PRODUCTS.map(p=>`
-    <div class="product-card spotlight" data-price="${p.price}" data-name="${p.name}">
-      <div style="display:flex;align-items:center;gap:7px"><span class="cat-dot" style="background:${CAT_COLOR[p.cat]}"></span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;opacity:.5">${p.cat}</span></div>
+    <div class="product-card spotlight" data-cat="${p.cat}" data-price="${p.price}" data-name="${p.name}">
+      <div class="product-photo"><i data-lucide="${p.icon}" class="ic"></i><span class="product-qty-badge">0</span></div>
       <div class="product-name">${p.name}</div>
       <div class="product-price">${fmt(p.price)}</div>
-      <div class="product-stock">${p.stock} in stock</div>
+      <div class="product-stock">${p.stock} ${t.lang==='es'?'en stock':t.lang==='term'?'in_stock':'in stock'}</div>
+      <button class="product-add-btn"><i data-lucide="plus" class="ic-sm"></i></button>
     </div>`).join('');
 }
-function productTableHTML(){
-  return PRODUCTS.map(p=>`
-    <tr data-price="${p.price}" data-name="${p.name}">
-      <td>${p.sku}</td>
-      <td><span class="cat-dot" style="background:${CAT_COLOR[p.cat]};display:inline-block;margin-right:7px"></span>${p.name}</td>
-      <td class="price">${fmt(p.price)}</td>
-      <td class="${p.stock<15?'stock-low':''}">${p.stock}</td>
-    </tr>`).join('');
-}
-function cartHTML(labels){
+function ticketHTML(t){
   const rows = CART.map(c=>`
     <div class="cart-item" data-price="${c.price}">
-      <div><div class="cart-item-name">${c.name}</div><div class="cart-item-unit">${fmt(c.price)} ${labels.each}</div></div>
+      <div><div class="cart-item-name">${c.name}</div><div class="cart-item-unit">${fmt(c.price)} ${t.each}</div></div>
       <div class="qty-group"><button class="qty-btn qty-dec">−</button><span class="qty-val">${c.qty}</span><button class="qty-btn qty-inc">+</button></div>
       <div class="line-total">${fmt(c.price*c.qty)}</div>
     </div>`).join('');
   return `
-    <div class="cart-title"><span>${labels.title}</span><span class="cart-title-icons"><i data-lucide="trash-2" class="ic-sm"></i></span></div>
+    <div class="ticket-head"><span class="ticket-num">${t.ticket} #0142</span><span class="ticket-clear"><i data-lucide="trash-2" class="ic-sm"></i>${t.clear}</span></div>
+    <input class="ticket-field" placeholder="${t.customer}">
     ${rows}
     <div class="cart-totals">
-      <div class="row"><span>${labels.subtotal}</span><span class="val subtotal-val">$26.50</span></div>
-      <div class="row"><span>${labels.tax}</span><span class="val tax-val">$2.12</span></div>
-      <div class="row total"><span>${labels.total}</span><span class="val total-val">$28.62</span></div>
+      <div class="row"><span>${t.subtotal}</span><span class="val subtotal-val">$26.50</span></div>
+      <div class="row"><span>${t.tax}</span><span class="val tax-val">$2.12</span></div>
+      <div class="row total"><span>${t.total}</span><span class="val total-val">$28.62</span></div>
     </div>
-    <button class="btn-primary-lg magnetic" data-goto="payment">${labels.cta}</button>`;
+    <button class="btn-pill-lg magnetic" data-goto="payment"><i data-lucide="lock" class="ic-sm"></i>${t.charge} $28.62</button>`;
 }
-function paymentHTML(labels){
+function paymentHTML(t){
   return `
     <div>
-      <div class="tender-grid">
-        <button class="tender-btn active trail" style="--trail-c:currentColor"><i data-lucide="banknote" class="ic"></i>${labels.cash}</button>
-        <button class="tender-btn"><i data-lucide="credit-card" class="ic"></i>${labels.card}</button>
-        <button class="tender-btn"><i data-lucide="layers" class="ic"></i>${labels.split}</button>
+      <div class="tender-seg">
+        <button class="tender-btn active trail" style="--trail-c:currentColor"><i data-lucide="banknote" class="ic"></i>${t.cash}</button>
+        <button class="tender-btn"><i data-lucide="credit-card" class="ic"></i>${t.card}</button>
+        <button class="tender-btn"><i data-lucide="layers" class="ic"></i>${t.split}</button>
       </div>
-      <div class="quick-cash"><button class="chip">$30.00</button><button class="chip">$40.00</button><button class="chip">$50.00</button><button class="chip">${labels.exact}</button></div>
+      <div class="quick-cash"><button class="chip">$30.00</button><button class="chip">$40.00</button><button class="chip">$50.00</button><button class="chip">${t.exact}</button></div>
       <div class="keypad">
         <button class="key">1</button><button class="key">2</button><button class="key">3</button>
         <button class="key">4</button><button class="key">5</button><button class="key">6</button>
@@ -682,136 +612,186 @@ function paymentHTML(labels){
     </div>
     <div class="order-summary">
       <div class="cart-totals">
-        <div class="row"><span>${labels.subtotal}</span><span class="val">$26.50</span></div>
-        <div class="row"><span>${labels.tax}</span><span class="val">$2.12</span></div>
-        <div class="row total"><span>${labels.total}</span><span class="val">$28.62</span></div>
+        <div class="row"><span>${t.subtotal}</span><span class="val">$26.50</span></div>
+        <div class="row"><span>${t.tax}</span><span class="val">$2.12</span></div>
+        <div class="row total"><span>${t.total}</span><span class="val">$28.62</span></div>
       </div>
-      <button class="btn-primary-lg btn-complete-sale magnetic" style="margin-top:16px"><i data-lucide="check-circle-2" class="ic"></i>${labels.confirm}</button>
+      <button class="btn-pill-lg btn-complete-sale magnetic" style="margin-top:16px"><i data-lucide="check-circle-2" class="ic"></i>${t.confirm}</button>
     </div>`;
 }
-function receiptHTML(labels){
+function receiptHTML(t){
   return `
     <div class="receipt">
-      <div style="text-align:center"><i data-lucide="check-circle-2" class="ic-lg" style="margin:0 auto 8px;color:${labels.checkColor}"></i><h1 class="h1" style="font-size:20px">${labels.heading}</h1><p class="sub">${labels.ticket}</p></div>
+      <div style="text-align:center"><i data-lucide="check-circle-2" class="ic-lg" style="margin:0 auto 8px;color:var(--success,var(--primary))"></i><h1 class="h1" style="font-size:19px">${t.heading}</h1><p class="sub">${t.ticket} #0142 · ${t.lang==='es'?'Hoy, 2:14 PM':t.lang==='term'?'2026-09-04 14:14':'Today, 2:14 PM'}</p></div>
       <div class="receipt-line"><span>Tata Salt 1kg ×2</span><span>$5.00</span></div>
       <div class="receipt-line"><span>Basmati Rice 5kg ×1</span><span>$12.00</span></div>
       <div class="receipt-line"><span>Amul Ghee 500ml ×1</span><span>$9.50</span></div>
       <div class="cart-totals">
-        <div class="row"><span>${labels.subtotal}</span><span class="val">$26.50</span></div>
-        <div class="row"><span>${labels.tax}</span><span class="val">$2.12</span></div>
-        <div class="row total"><span>${labels.total}</span><span class="val">$28.62</span></div>
+        <div class="row"><span>${t.subtotal}</span><span class="val">$26.50</span></div>
+        <div class="row"><span>${t.tax}</span><span class="val">$2.12</span></div>
+        <div class="row total"><span>${t.total}</span><span class="val">$28.62</span></div>
       </div>
-      <p class="sub" style="margin:2px 0 0">${labels.paid}</p>
+      <p class="sub" style="margin:2px 0 0">${t.paid} ${t.cash} · ${t.lang==='es'?'Cambio':t.lang==='term'?'change:':'Change'} $1.38</p>
       <div class="receipt-actions">
-        <button><i data-lucide="printer" class="ic-sm"></i>${labels.print}</button>
-        <button><i data-lucide="mail" class="ic-sm"></i>${labels.email}</button>
-        <button class="primary" data-goto="home"><i data-lucide="rotate-cw" class="ic-sm"></i>${labels.newSale}</button>
+        <button><i data-lucide="printer" class="ic-sm"></i>${t.print}</button>
+        <button><i data-lucide="mail" class="ic-sm"></i>${t.email}</button>
+        <button class="primary" data-goto="home"><i data-lucide="rotate-cw" class="ic-sm"></i>${t.newSale}</button>
+      </div>
+    </div>`;
+}
+function activityHTML(t){
+  return ACTIVITY.map(a=>`
+    <div class="activity-row">
+      <div class="activity-avatar">${a.name==='Walk-in'?'<i data-lucide="user" class="ic-sm"></i>':initials(a.name)}</div>
+      <div><div class="activity-name">${a.name}</div><div class="activity-meta">${t.ticket} ${a.ticket} · ${a.time}</div></div>
+      <div class="activity-amount">${fmt(a.amount)}</div>
+      <span class="status-pill ${a.status}">${a.status==='paid'?t.paid:t.refund}</span>
+    </div>`).join('');
+}
+function homeHTML(t){
+  return `
+    <p class="eyebrow">${t.greetPrefix} ${t.cashier}</p>
+    <h1 class="h1">${t.store}</h1>
+    <p class="sub">${t.caja} · 8:00 AM</p>
+    <div class="alert-pill"><i data-lucide="alert-triangle" class="ic-sm"></i>${t.alert}</div>
+    <div class="stat-grid">
+      ${t.statLabels.map((l,i)=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value">${t.statVals[i]}</div>${t.statTrends[i]?`<div class="stat-trend ${i===0?'up':i===2?'warn':''}">${t.statTrends[i]}</div>`:''}</div>`).join('')}
+    </div>
+    <div class="home-cols">
+      <div class="cta-card spotlight tilt">
+        <div class="cta-icon"><i data-lucide="shopping-cart" class="ic-lg"></i></div>
+        <div><div style="font-weight:800;font-size:17px">${t.ctaTitle}</div><div style="opacity:.75;font-size:12.5px">${t.ctaSub}</div></div>
+        <button class="cta-btn magnetic" data-goto="pos">${t.ctaBtn}<i data-lucide="arrow-right" class="ic-sm"></i></button>
+      </div>
+      <div class="activity-card">
+        <div style="padding:14px 0 4px;font-weight:700;font-size:13px;opacity:.7">${t.activityTitle}</div>
+        ${activityHTML(t)}
+      </div>
+    </div>`;
+}
+function sidebarHTML(t, storeInitial){
+  return `
+    <div class="brand"><div class="brand-mark"><i data-lucide="store" class="ic"></i></div><div><div class="brand-name">${t.store}</div><div class="brand-sub">${t.lang==='term'?'terminal-01':'POS'}</div></div></div>
+    <nav class="side-nav">
+      ${NAV.map(n=>`<button class="side-link${n.key==='home'?' active':''}" data-screen="${n.key}"><i data-lucide="${n.icon}" class="ic"></i>${t.nav[n.key]}</button>`).join('')}
+    </nav>
+    <div class="side-foot"><div class="side-avatar">${initials(t.cashier)}</div><div><div style="font-weight:700"><span class="side-status-dot" style="background:var(--success,#3fb950)"></span>${t.cashier}</div></div></div>`;
+}
+function topbarHTML(t){
+  return `
+    <div class="topbar-title" data-title="home">${t.nav.home}</div>
+    <div class="topbar-right">
+      <button class="icon-btn"><i data-lucide="search" class="ic"></i></button>
+      <button class="icon-btn"><i data-lucide="bell" class="ic"></i><span class="badge-dot"></span></button>
+    </div>`;
+}
+function variantHTML(t){
+  return `
+    <div class="app-shell">
+      <aside class="sidebar">${sidebarHTML(t)}</aside>
+      <div class="main">
+        <div class="topbar">${topbarHTML(t)}</div>
+        <div class="content">
+          <div class="screen" data-screen-panel="home">${homeHTML(t)}</div>
+          <div class="screen" data-screen-panel="pos" hidden>
+            <div class="cat-tabs">${catPillsHTML(t)}</div>
+            <div class="pos-layout">
+              <div>
+                <div class="search-row"><input class="search-input" placeholder="${t.search}"><button class="scan-btn"><i data-lucide="scan-line" class="ic"></i>${t.scan}</button></div>
+                <div class="product-grid">${productGridHTML(t)}</div>
+              </div>
+              <aside class="ticket-panel">${ticketHTML(t)}</aside>
+            </div>
+          </div>
+          <div class="screen" data-screen-panel="payment" hidden>
+            <h1 class="h1">${t.charge} $28.62</h1>
+            <div class="payment-layout">${paymentHTML(t)}</div>
+          </div>
+          <div class="screen" data-screen-panel="receipt" hidden>
+            <div class="receipt-wrap">${receiptHTML(t)}</div>
+          </div>
+        </div>
       </div>
     </div>`;
 }
 
-/* Populate each variant's dynamic regions */
-document.getElementById('a-products').innerHTML = productGridHTML();
-document.getElementById('a-cart').innerHTML = cartHTML({title:'Carrito · 3 productos',each:'c/u',subtotal:'Subtotal',tax:'Impuesto (8%)',total:'Total',cta:'Cobrar $28.62'});
-document.getElementById('a-payment').innerHTML = paymentHTML({cash:'Efectivo',card:'Tarjeta',split:'Dividir',exact:'Exacto',subtotal:'Subtotal',tax:'Impuesto',total:'Total',confirm:'Completar Venta'});
-document.getElementById('a-receipt').innerHTML = receiptHTML({heading:'Venta Completa',ticket:'Ticket #4821 · Hoy, 2:14 PM',subtotal:'Subtotal',tax:'Impuesto',total:'Total',paid:'Pagado en efectivo · Cambio $1.38',print:'Imprimir',email:'Email',newSale:'Nueva Venta',checkColor:'var(--primary)'});
-
-document.getElementById('b-products').innerHTML = productTableHTML();
-document.getElementById('b-cart').innerHTML = cartHTML({title:'cart[3]',each:'/ea',subtotal:'subtotal',tax:'tax(8%)',total:'total',cta:'[F12] charge $28.62'});
-document.getElementById('b-payment').innerHTML = paymentHTML({cash:'cash [F1]',card:'card [F2]',split:'split [F3]',exact:'exact',subtotal:'subtotal',tax:'tax',total:'total',confirm:'complete_sale()'});
-document.getElementById('b-receipt').innerHTML = receiptHTML({heading:'ticket #4821',ticket:'2026-09-04 14:14:02 · terminal-01',subtotal:'subtotal',tax:'tax',total:'total',paid:'tender: cash · change: $1.38',print:'print',email:'email',newSale:'new_sale()',checkColor:'var(--primary)'});
-
-document.getElementById('c-products').innerHTML = productGridHTML();
-document.getElementById('c-cart').innerHTML = cartHTML({title:'Order · 3 items',each:'each',subtotal:'Subtotal',tax:'Tax (8%)',total:'Total',cta:'Continue to Payment'});
-document.getElementById('c-payment').innerHTML = paymentHTML({cash:'Cash',card:'Card',split:'Split',exact:'Exact',subtotal:'Subtotal',tax:'Tax',total:'Total',confirm:'Confirm Payment'});
-document.getElementById('c-receipt').innerHTML = receiptHTML({heading:'Payment Successful',ticket:'Order #4821 · Today, 2:14 PM',subtotal:'Subtotal',tax:'Tax',total:'Total',paid:'Paid by cash · Change $1.38',print:'Print',email:'Email',newSale:'New Sale',checkColor:'var(--accent)'});
-
-document.getElementById('d-products').innerHTML = productGridHTML();
-document.getElementById('d-cart').innerHTML = cartHTML({title:'Order — 3 items',each:'each',subtotal:'Subtotal',tax:'Tax',total:'Total',cta:'Continue'});
-document.getElementById('d-payment').innerHTML = paymentHTML({cash:'Cash',card:'Card',split:'Split',exact:'Exact',subtotal:'Subtotal',tax:'Tax',total:'Total',confirm:'Confirm payment'});
-document.getElementById('d-receipt').innerHTML = receiptHTML({heading:'Thank you.',ticket:'Ticket No. 4821 — Today, 2:14 PM',subtotal:'Subtotal',tax:'Tax',total:'Total',paid:'Paid in cash — change $1.38',print:'Print',email:'Email',newSale:'New sale',checkColor:'var(--accent)'});
-
-document.getElementById('e-products').innerHTML = productGridHTML();
-document.getElementById('e-cart').innerHTML = cartHTML({title:'CART · 3',each:'EA',subtotal:'SUBTOTAL',tax:'TAX (8%)',total:'TOTAL',cta:'CHARGE $28.62'});
-document.getElementById('e-payment').innerHTML = paymentHTML({cash:'CASH',card:'CARD',split:'SPLIT',exact:'EXACT',subtotal:'SUBTOTAL',tax:'TAX',total:'TOTAL',confirm:'COMPLETE SALE'});
-document.getElementById('e-receipt').innerHTML = receiptHTML({heading:'SALE COMPLETE',ticket:'TICKET #4821 — TODAY 2:14 PM',subtotal:'SUBTOTAL',tax:'TAX',total:'TOTAL',paid:'PAID CASH — CHANGE $1.38',print:'PRINT',email:'EMAIL',newSale:'NEW SALE',checkColor:'var(--primary)'});
-
-/* uppercase product/cart text content for variant E only (post-hoc, cheap) */
-document.querySelectorAll('#v-e .product-name, #v-e .cart-item-name, #v-e .cart-item-unit, #v-e .product-stock').forEach(el=>{ el.textContent = el.textContent.toUpperCase(); });
+Object.keys(V).forEach(key=>{
+  document.getElementById('v-'+key).innerHTML = variantHTML(V[key]);
+});
 
 /* ============================= INTERACTIVITY ============================= */
 function showToast(msg){
   const t=document.getElementById('toast');
   t.innerHTML = '<i data-lucide="check" class="ic-sm"></i>'+msg;
-  if(window.lucide) lucide.createIcons({attrs:{class:'ic ic-sm'}});
+  if(window.lucide) lucide.createIcons();
   t.classList.add('show');
   clearTimeout(showToast._t);
   showToast._t=setTimeout(()=>t.classList.remove('show'),1500);
 }
-
 function animateValue(el, to, prefix){
   prefix = prefix===undefined ? '$' : prefix;
   const from = parseFloat((el.dataset.val||el.textContent||'0').replace(/[^0-9.\-]/g,'')) || 0;
-  const start = performance.now();
-  el.dataset.val = to;
-  const dur = 400;
+  const start = performance.now(); el.dataset.val = to; const dur=380;
   function tick(now){
-    const p = Math.min(1,(now-start)/dur);
-    const eased = 1-Math.pow(1-p,3);
-    const val = from + (to-from)*eased;
-    el.textContent = prefix+val.toFixed(2);
+    const p=Math.min(1,(now-start)/dur); const eased=1-Math.pow(1-p,3);
+    el.textContent=prefix+(from+(to-from)*eased).toFixed(2);
     if(p<1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 }
-
 function switchScreen(variant, screenName){
-  variant.querySelectorAll('.screen-tab').forEach(t=>t.classList.toggle('active', t.dataset.screen===screenName));
-  variant.querySelectorAll('.screen').forEach(s=>{
-    const active = s.dataset.screenPanel===screenName;
-    s.style.display = active ? '' : 'none';
-    if(active){ s.removeAttribute('data-entered'); void s.offsetWidth; s.setAttribute('data-entered',''); }
-  });
+  variant.querySelectorAll('.side-link').forEach(l=>l.classList.toggle('active', l.dataset.screen===screenName));
+  const navObj = V[variant.dataset.variant].nav;
+  const titleEl = variant.querySelector('.topbar-title');
+  if(titleEl && navObj[screenName]) titleEl.textContent = navObj[screenName];
+  variant.querySelectorAll('.screen').forEach(s=>{ s.hidden = s.dataset.screenPanel!==screenName; });
 }
-
 function recalcCart(variant){
   let subtotal=0;
   variant.querySelectorAll('.cart-item').forEach(row=>{
-    const price=parseFloat(row.dataset.price);
-    const qty=parseInt(row.querySelector('.qty-val').textContent,10);
-    subtotal+=price*qty;
-    animateValue(row.querySelector('.line-total'), price*qty);
+    const price=parseFloat(row.dataset.price), qty=parseInt(row.querySelector('.qty-val').textContent,10);
+    subtotal+=price*qty; animateValue(row.querySelector('.line-total'), price*qty);
   });
   const tax=subtotal*0.08, total=subtotal+tax;
   variant.querySelectorAll('.subtotal-val').forEach(el=>animateValue(el, subtotal));
   variant.querySelectorAll('.tax-val').forEach(el=>animateValue(el, tax));
   variant.querySelectorAll('.total-val').forEach(el=>animateValue(el, total));
 }
-
-document.querySelectorAll('.variant').forEach(variant=>{
-  variant.querySelectorAll('.screen-tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>switchScreen(variant, tab.dataset.screen));
+function wireVariant(variant){
+  variant.querySelectorAll('.side-link, [data-goto]').forEach(el=>{
+    el.addEventListener('click', ()=>switchScreen(variant, el.dataset.screen||el.dataset.goto));
   });
-  variant.querySelectorAll('[data-goto]').forEach(el=>{
-    el.addEventListener('click', ()=>switchScreen(variant, el.dataset.goto));
+  variant.querySelectorAll('.cat-pill').forEach(pill=>{
+    pill.addEventListener('click', ()=>{
+      variant.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+      const cat = pill.dataset.cat;
+      variant.querySelectorAll('.product-card').forEach(card=>{
+        card.style.display = (cat==='all'||card.dataset.cat===cat) ? '' : 'none';
+      });
+    });
   });
   variant.querySelectorAll('.qty-inc,.qty-dec').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
-      const row=btn.closest('.cart-item');
-      const qtyEl=row.querySelector('.qty-val');
+      const row=btn.closest('.cart-item'), qtyEl=row.querySelector('.qty-val');
       let qty=parseInt(qtyEl.textContent,10);
       qty = btn.classList.contains('qty-inc') ? qty+1 : Math.max(1,qty-1);
-      qtyEl.textContent=qty;
-      recalcCart(variant);
+      qtyEl.textContent=qty; recalcCart(variant);
     });
   });
-  variant.querySelectorAll('.product-card, .product-table tbody tr').forEach(el=>{
-    el.addEventListener('click', ()=>showToast((el.dataset.name||'Item')+' added'));
+  variant.querySelectorAll('.product-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const badge = card.querySelector('.product-qty-badge');
+      const n = (parseInt(badge.textContent,10)||0)+1;
+      badge.textContent = n; badge.style.display='flex';
+      showToast((card.dataset.name||'Item')+' added');
+    });
   });
   variant.querySelectorAll('.tender-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      variant.querySelectorAll('.tender-btn').forEach(b=>{b.classList.remove('active','trail')});
+      variant.querySelectorAll('.tender-btn').forEach(b=>b.classList.remove('active','trail'));
       btn.classList.add('active','trail');
     });
   });
@@ -821,17 +801,13 @@ document.querySelectorAll('.variant').forEach(variant=>{
   variant.querySelectorAll('.btn-complete-sale').forEach(btn=>{
     const original=btn.innerHTML;
     btn.addEventListener('click', ()=>{
-      btn.innerHTML='<i data-lucide="loader-2" class="ic spin"></i> Processing…';
+      btn.innerHTML='<i data-lucide="loader-2" class="ic spin"></i> …';
       if(window.lucide) lucide.createIcons();
-      setTimeout(()=>{
-        switchScreen(variant,'receipt');
-        btn.innerHTML=original;
-        if(window.lucide) lucide.createIcons();
-        showToast('Sale complete');
-      }, 550);
+      setTimeout(()=>{ switchScreen(variant,'receipt'); btn.innerHTML=original; if(window.lucide) lucide.createIcons(); showToast('Sale complete'); }, 500);
     });
   });
-});
+}
+document.querySelectorAll('.variant').forEach(wireVariant);
 
 /* spotlight-follow cursor */
 document.addEventListener('pointermove', (e)=>{
@@ -841,45 +817,35 @@ document.addEventListener('pointermove', (e)=>{
   el.style.setProperty('--mx', (e.clientX-r.left)+'px');
   el.style.setProperty('--my', (e.clientY-r.top)+'px');
 });
-
 /* tilt on hover */
 document.querySelectorAll('.tilt').forEach(el=>{
   el.addEventListener('mousemove', e=>{
     const r=el.getBoundingClientRect();
     const px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
-    el.style.transform=`perspective(700px) rotateX(${(-py*7).toFixed(2)}deg) rotateY(${(px*7).toFixed(2)}deg) translateZ(2px)`;
+    el.style.transform=`perspective(700px) rotateX(${(-py*6).toFixed(2)}deg) rotateY(${(px*6).toFixed(2)}deg)`;
   });
   el.addEventListener('mouseleave', ()=>{ el.style.transform=''; });
 });
-
 /* magnetic buttons */
 document.querySelectorAll('.magnetic').forEach(el=>{
   el.addEventListener('mousemove', e=>{
     const r=el.getBoundingClientRect();
-    const mx=(e.clientX-r.left-r.width/2)*0.2, my=(e.clientY-r.top-r.height/2)*0.3;
+    const mx=(e.clientX-r.left-r.width/2)*0.18, my=(e.clientY-r.top-r.height/2)*0.25;
     el.style.transform=`translate(${mx.toFixed(1)}px, ${my.toFixed(1)}px)`;
   });
   el.addEventListener('mouseleave', ()=>{ el.style.transform=''; });
 });
-
 /* top-level variant switcher */
 document.querySelectorAll('#variant-nav .variant-tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
     const target = tab.dataset.variantTarget;
     document.querySelectorAll('#variant-nav .variant-tab').forEach(t=>t.classList.toggle('active', t===tab));
-    document.querySelectorAll('.variant').forEach(v=>{ v.style.display = (v.dataset.variant===target) ? '' : 'none'; });
+    document.querySelectorAll('.variant').forEach(v=>{ v.hidden = v.dataset.variant!==target; });
     window.scrollTo({top:0,behavior:'instant'});
   });
 });
 
-/* icon spin keyframe (added via JS to avoid unused CSS warnings) */
-const styleTag=document.createElement('style');
-styleTag.textContent='.spin{animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}';
-document.head.appendChild(styleTag);
-
 if(window.lucide){ lucide.createIcons(); }
-document.querySelector('.screen-home[data-screen-panel]')?.setAttribute('data-entered','');
-document.querySelectorAll('.screen[data-screen-panel="home"]').forEach(s=>s.setAttribute('data-entered',''));
 </script>
 </body>
 </html>
