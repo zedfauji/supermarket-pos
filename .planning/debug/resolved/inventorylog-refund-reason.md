@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: resolved
 trigger: "Fix useInventoryLog wrong reason schema dropping refund rows. useInventoryLog() (src/entities/inventory/model/queries.ts ~433-484) fetches last 100 stock_movements rows and parses each with InventoryLogSchema.parse({..., reason: row.reason, ...}). InventoryLogSchema's reason field is InventoryAdjustReasonSchema (domain.ts ~98): only 'sale'|'manual_adjustment'|'waste'|'delivery'|'correction'|'physical_count'|'expired'. stock_movements rows can legitimately have reason:'refund' (written by process-refund, exercised by e2e/payments/refund.spec.ts), which belongs to the wider StockMovementReasonSchema (domain.ts ~118, used by StockMovementSchema ~674) that also includes 'refund' plus already-removed bar-pos values. Bug: in the fetch loop (queries.ts ~466-480), InventoryLogSchema.parse(...) throwing for one row causes the catch block to return err(unknownError(e)) from the WHOLE queryFn, not skip just that row. MovementsTab.tsx only destructures { data: logs, isLoading } and never reads resultError, so the failure is silent — tab renders 'No log entries.' with no indication anything failed, even though the REST response contains the rows fine. User wants investigation, the appropriate fix applied (option a: parse against StockMovementSchema/StockMovementReasonSchema since that matches the real value space, adjusting InventoryLog consumer usage in MovementsTab.tsx; vs option b: skip-and-log the bad row plus surface resultError), and a unit test in src/entities/inventory asserting a stock_movements row with reason='refund' is NOT dropped by useInventoryLog(). Do not touch supabase/ or rbac.ts."
 created: 2026-09-05T00:00:00Z
 updated: 2026-09-05T00:00:00Z
@@ -74,3 +74,43 @@ started: "Not dated by reporter — discovered via direct network inspection con
   checked: "e2e/helpers/supabase.ts:151-168"
   found: "A prior session confirmed this live (REST 200 with rows vs. empty UI) while writing e2e/inventory/inventory-hub.spec.ts, and added `admin.from('stock_movements').delete().eq('reason','refund')` to resetTestData as a test-only containment, explicitly noting the real fix was out of scope for that plan."
   implication: "Independent reproduction by direct network inspection. That sweep is a workaround that hides the bug from E2E and should be removed once the fix lands."
+
+- timestamp: 2026-09-05
+  checked: "TDD red phase — new describe('useInventoryLog') block in src/entities/inventory/model/queries.test.ts, run against unmodified queries.ts"
+  found: "3 of 4 new tests FAILED (refund row, null product_id row, malformed-row skip) — all with `result.current.data` never becoming defined, i.e. the queryFn returned err and the whole batch was discarded. The 4th (fetch-error surfacing) passed, since that path already returned a Result correctly."
+  implication: "Falsification test executed and did NOT falsify: the mechanism is exactly as hypothesised, and one refund row demonstrably discards its batch-mates."
+
+## Resolution
+
+root_cause: "useInventoryLog() validated stock_movements rows with InventoryLogSchema instead of StockMovementSchema — the schema domain.ts declares for that table. Two field-level mismatches (reason: InventoryAdjustReasonSchema has no 'refund'; productId: non-nullable while the column is nullable since migration 20260426000010) made real ledger rows unparseable; the restore_inventory_on_refund_item trigger writes a reason='refund' row on every refund. AND-gate, three necessary conditions: (1) a refund row inside the last-100 window [data], (2) the narrow schema making it throw [code], (3) the loop's catch doing `return err(...)` from the queryFn rather than skipping the row, which converted one bad row into a total batch loss [code]. A fourth condition made it invisible rather than merely broken: MovementsTab.tsx never read the resultError the hook already exposed, so every failure rendered as the 'No log entries.' empty state."
+
+fix: "queries.ts — parse each row with StockMovementSchema via safeParse; on failure log inventory.log.row_parse_failed and skip that row only, so no single row can ever blank the ledger again; queryFn return type widened from Result<InventoryLog[]> to Result<StockMovement[]>. (InventoryLogSchema is left in place at queries.ts:382, the adjust-inventory mutation's read-back of the row it just wrote — that call site controls its own input and its narrow value space is genuinely correct.) MovementsTab.tsx — consume resultError and render it via the same `role=alert` destructive-text pattern StockTab.tsx:314 already uses, suppress the empty state while an error is showing, handle the now-nullable productId, add a 'refund' reason label + filter chip, and fall back to the raw reason string instead of mislabelling unknown reasons as 'Manual Adjustment'. wAdmin catalogs — added reasonOptionRefund (en-US 'Refund' / es-MX 'Reembolso'). e2e/helpers/supabase.ts — the refund sweep stays (test-data isolation between specs) but its comment no longer claims an unfixed app bug and now points at the unit-test regression guard."
+
+verification:
+  signal_regression_test:
+    result: pass
+    evidence: "RED: 3 new tests failed against unmodified code. GREEN after fix: 11/11 in queries.test.ts."
+  signal_mutation_at_fix_site:
+    result: pass
+    evidence: "Mutation A (reinstate `return err(...)` inside the loop) → 'skips a genuinely malformed row' FAILED. Mutation B (swap StockMovementSchema back to InventoryLogSchema) → 'keeps a row with reason=refund' and 'keeps a row whose product_id is null' both FAILED. Each half of the fix is independently guarded; no surviving mutant."
+  signal_full_unit_suite:
+    result: pass
+    evidence: "npm run test — 144 files passed, 1410 tests passed, 0 failed."
+  signal_typecheck_lint:
+    result: pass
+    evidence: "npm run typecheck clean; npm run lint (eslint src --max-warnings 0) clean. The 27 eslint errors in e2e/helpers/supabase.ts are pre-existing (reproduced with the file stashed) and outside the lint gate's `src` scope."
+  signal_no_deletion_only_diff:
+    result: pass
+    evidence: "Substantive schema + error-handling change plus new coverage: 343 insertions across 7 files."
+  guardrail_verdict: accepted
+  not_covered: "No Playwright assertion was added for the rendered Movements tab. E2E cannot be executed in this session (needs the dev server plus real Supabase E2E credentials), and shipping an unrun spec is worse than shipping none. The defect is a client-side Zod parse, which the mutation-verified unit test pins at exactly the fault site."
+
+files_changed:
+  - "src/entities/inventory/model/queries.ts — StockMovementSchema + safeParse skip-and-log; return type now Result<StockMovement[]>"
+  - "src/entities/inventory/model/queries.test.ts — new describe('useInventoryLog') with 4 tests (refund row, null productId, malformed-row skip, fetch-error surfacing)"
+  - "src/widgets/InventoryPagePanel/ui/MovementsTab.tsx — surfaces resultError, nullable productId, refund label + filter, honest unknown-reason fallback"
+  - "src/shared/lib/i18n/locales/en-US/wAdmin.json — reasonOptionRefund"
+  - "src/shared/lib/i18n/locales/es-MX/wAdmin.json — reasonOptionRefund"
+  - "e2e/helpers/supabase.ts — comment now describes the sweep as test isolation, not a live app bug"
+
+commit: 36193d7
