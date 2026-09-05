@@ -74,6 +74,9 @@
     "amount": "Monto",
     "amountTendered": "Monto entregado",
     "changeDue": "Cambio a entregar",
+    "quickTenderExact": "Exacto",
+    "quickTender": "Recibir {{amount}}",
+    "quickTenderGroup": "Cobro rápido",
     "referenceOptional": "N.º de referencia (opcional)",
     "terminalReceiptPlaceholder": "Recibo de terminal / código de autorización",
     "splitRowCharges": "Cargos: {{amount}}",
@@ -105,7 +108,22 @@
     "pinRequired": "Se requiere PIN para procesar el pago.",
     "verifyPinToProcessPayment": "Verificar PIN para procesar el pago",
     "methodDateSeparator": "{{method}} · {{date}}",
-    "filterByIdPlaceholder": "Filtrar por ID…"
+    "filterByIdPlaceholder": "Filtrar por ID…",
+    "todayTile": "Hoy",
+    "refundsTodayTile": "Reembolsos de hoy",
+    "paymentsCount_one": "{{count}} pago",
+    "paymentsCount_other": "{{count}} pagos",
+    "filterAll": "Todos",
+    "filterCash": "Efectivo",
+    "filterCard": "Tarjeta",
+    "filterTransfer": "Transferencia",
+    "filterRefunds": "Devoluciones",
+    "filterLabel": "Filtrar por método",
+    "dayToday": "Hoy",
+    "dayYesterday": "Ayer",
+    "refundBadge": "Reembolso",
+    "awaitingCount_one": "{{count}} en espera",
+    "awaitingCount_other": "{{count}} en espera"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} producto",
@@ -253,7 +271,15 @@
     "saleComplete": "Venta completada — {{amount}}",
     "itemCount_one": "{{count}} artículo",
     "itemCount_other": "{{count}} artículos",
-    "scanHint": "Escanea un código o escribe para buscar"
+    "scanHint": "Escanea un código o escribe para buscar",
+    "clearCart": "Vaciar carrito",
+    "clearCartTitle": "¿Vaciar el carrito?",
+    "clearCartBody": "Se quitan todas las partidas. No se ha cobrado nada.",
+    "clearCartConfirm": "Vaciar",
+    "itemsLine_one": "{{count}} artículo",
+    "itemsLine_other": "{{count}} artículos",
+    "subtotal": "Subtotal",
+    "scanReady": "Escáner listo"
   },
   "holdSale": {
     "badge": "Venta en espera",
@@ -300,7 +326,15 @@
     "unitPiece": "Se vende por pieza",
     "stockCount": "{{count}} en existencia",
     "skuLabel": "SKU",
-    "barcodeLabel": "Código de barras"
+    "barcodeLabel": "Código de barras",
+    "scannedEyebrow": "Producto escaneado",
+    "perKg": "por kg",
+    "each": "c/u",
+    "total": "Total",
+    "promoPrice": "Precio promo",
+    "wasPrice": "Antes {{price}}",
+    "scanAgainHint": "Vuelve a apuntar el escáner al código de barras.",
+    "scannedCode": "Código escaneado"
   },
   "appShell": {
     "home": "Inicio",

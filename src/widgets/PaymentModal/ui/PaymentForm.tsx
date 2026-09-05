@@ -120,6 +120,9 @@ const DEFAULT_TAX_RATE_PERCENT = 16;
 // unavailable — evaluateBestPromotion always needs a timezone argument.
 const DEFAULT_TIMEZONE = 'America/Mexico_City';
 
+// MXN cash notes offered as one-tap quick-tender amounts alongside the exact-total button.
+const QUICK_TENDER_AMOUNTS = [100, 200, 500, 1000] as const;
+
 export type PaymentProcessors = {
   processCashPayment: typeof processCashPayment;
   processCardPayment: typeof processCardPayment;
@@ -752,612 +755,651 @@ export function PaymentForm({
   return (
     <>
       <ScrollArea className="flex-1 p-4 sm:px-6">
-        <div className="space-y-5 pb-2">
-          <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
-            <div>
-              <h3 className="text-lg font-semibold tracking-tight">{tab.customerName}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('paymentForm.itemTypesAndTotal', {
-                  itemTypeCount: groupedItems.length,
-                  plural: groupedItems.length !== 1 ? 's' : '',
-                  itemCount: tab.items.reduce((s, i) => s + i.quantity, 0),
-                })}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {groupedItems.map(item => (
-                <div
-                  key={`${item.productId}::${item.modifierIds.join(',')}`}
-                  className="flex items-start justify-between gap-2 text-sm"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {item.quantity > 1 ? `${String(item.quantity)}× ` : ''}
-                      {item.productName}
-                    </p>
-                    {item.discountAmount > 0 && (
-                      <p
-                        className="text-xs font-medium text-success-strong"
-                        data-testid="line-item-discount-badge"
-                      >
-                        {item.discountRate != null
-                          ? t('paymentForm.lineItemDiscountRate', { rate: item.discountRate })
-                          : t('paymentForm.lineItemDiscountAmount', {
-                              amount: formatMoney(item.discountAmount),
-                            })}
-                      </p>
-                    )}
-                  </div>
-                  <MoneyDisplay amount={item.lineTotal} size="sm" />
-                </div>
-              ))}
-              <div className="flex justify-between border-t border-border pt-2 font-semibold">
-                <span>{t('paymentForm.itemsSubtotal')}</span>
-                <MoneyDisplay amount={itemsSubtotal} size="sm" />
+        <div className="grid gap-5 pb-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+          <div className="order-1 space-y-5 lg:order-2 lg:sticky lg:top-0">
+            <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">{tab.customerName}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t('paymentForm.itemTypesAndTotal', {
+                    itemTypeCount: groupedItems.length,
+                    plural: groupedItems.length !== 1 ? 's' : '',
+                    itemCount: tab.items.reduce((s, i) => s + i.quantity, 0),
+                  })}
+                </p>
               </div>
-            </div>
-          </section>
+              <div className="space-y-2">
+                {groupedItems.map(item => (
+                  <div
+                    key={`${item.productId}::${item.modifierIds.join(',')}`}
+                    className="flex items-start justify-between gap-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">
+                        {item.quantity > 1 ? `${String(item.quantity)}× ` : ''}
+                        {item.productName}
+                      </p>
+                      {item.discountAmount > 0 && (
+                        <p
+                          className="text-xs font-medium text-success-strong"
+                          data-testid="line-item-discount-badge"
+                        >
+                          {item.discountRate != null
+                            ? t('paymentForm.lineItemDiscountRate', { rate: item.discountRate })
+                            : t('paymentForm.lineItemDiscountAmount', {
+                                amount: formatMoney(item.discountAmount),
+                              })}
+                        </p>
+                      )}
+                    </div>
+                    <MoneyDisplay amount={item.lineTotal} size="sm" />
+                  </div>
+                ))}
+                <div className="flex justify-between border-t border-border pt-2 font-semibold">
+                  <span>{t('paymentForm.itemsSubtotal')}</span>
+                  <MoneyDisplay amount={itemsSubtotal} size="sm" />
+                </div>
+              </div>
+            </section>
 
-          {method !== 'rappi' &&
-            processors.processBankTransferPayment &&
-            activePromotionOptions.length > 0 && (
+            {method !== 'rappi' &&
+              processors.processBankTransferPayment &&
+              activePromotionOptions.length > 0 && (
+                <section
+                  className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
+                  data-testid="apply-promotion-section"
+                >
+                  <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
+                    {t('featOrders:applyPromotion.label')}
+                  </Label>
+                  <Select
+                    value={selectedPromotionId ?? ''}
+                    onValueChange={value => {
+                      setSelectedPromotionId(value);
+                    }}
+                  >
+                    <SelectTrigger
+                      id="apply-promotion-select"
+                      data-testid="apply-promotion-select"
+                      disabled={isProcessing}
+                    >
+                      <SelectValue placeholder={t('featOrders:applyPromotion.placeholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activePromotionOptions.map(promo => (
+                        <SelectItem key={promo.id} value={promo.id}>
+                          {promo.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </section>
+              )}
+
+            {method !== 'rappi' && (
               <section
                 className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
-                data-testid="apply-promotion-section"
+                data-testid="discount-section"
               >
-                <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
-                  {t('featOrders:applyPromotion.label')}
-                </Label>
-                <Select
-                  value={selectedPromotionId ?? ''}
-                  onValueChange={value => {
-                    setSelectedPromotionId(value);
-                  }}
-                >
-                  <SelectTrigger
-                    id="apply-promotion-select"
-                    data-testid="apply-promotion-select"
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <Label htmlFor="discount-toggle" className="text-sm font-semibold">
+                      {t('paymentForm.discount')}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t('paymentForm.discountDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="discount-toggle"
+                    checked={discountExpanded}
                     disabled={isProcessing}
-                  >
-                    <SelectValue placeholder={t('featOrders:applyPromotion.placeholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activePromotionOptions.map(promo => (
-                      <SelectItem key={promo.id} value={promo.id}>
-                        {promo.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    onCheckedChange={checked => {
+                      if (checked) {
+                        // Phase 27 (PROMO-05): expanding the ad-hoc discount
+                        // section now requires a manager PIN first — the
+                        // Switch itself stays visually off until onSuccess
+                        // flips discountExpanded (a fresh PIN entry is
+                        // required every time the section is re-expanded).
+                        setPinPurpose('discount');
+                        setPinDialogOpen(true);
+                      } else {
+                        setDiscountExpanded(false);
+                        setManagerOverride(false);
+                        setAuthorizingManagerPin(undefined);
+                      }
+                    }}
+                  />
+                </div>
+                <div
+                  className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${
+                    discountExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="space-y-2 pt-2">
+                      <div className="flex gap-2">
+                        {/* Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired —
+                            'all' is DiscountScope's only remaining member, so this is a
+                            non-interactive label rather than a scope picker. */}
+                        <div
+                          data-testid="discount-scope-all"
+                          className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
+                        >
+                          {t('paymentForm.discountScopeAll')}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {/* eslint-disable-next-line i18next/no-literal-string -- fixed discount-type enum identifiers, not UI copy */}
+                        {(['percent', 'fixed'] as const).map(type => (
+                          <POSButton
+                            key={type}
+                            type="button"
+                            touchSize="large"
+                            variant={discountType === type ? 'default' : 'outline'}
+                            disabled={isProcessing}
+                            data-testid={`discount-type-${type}`}
+                            onClick={() => {
+                              setDiscountType(type);
+                            }}
+                            className="flex-1"
+                          >
+                            {type === 'percent'
+                              ? t('paymentForm.discountTypePercent')
+                              : t('paymentForm.discountTypeFixed')}
+                          </POSButton>
+                        ))}
+                      </div>
+                      <MoneyInput
+                        label={
+                          discountType === 'percent'
+                            ? t('paymentForm.discountPercentLabel')
+                            : t('paymentForm.discountAmountLabel')
+                        }
+                        value={discountValue}
+                        onChange={setDiscountValue}
+                        disabled={isProcessing}
+                        data-testid="discount-value-input"
+                      />
+                      {discountAmount > 0 && (
+                        <p
+                          className="text-sm font-medium text-success-strong"
+                          data-testid="discount-applied-label"
+                        >
+                          {t('paymentForm.discountApplied', {
+                            amount: formatMoney(discountAmount),
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </section>
             )}
 
-          {method !== 'rappi' && (
-            <section
-              className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
-              data-testid="discount-section"
-            >
-              <div className="flex items-center justify-between gap-2">
+            {method === 'rappi' && (
+              <section className="rounded-xl border border-dashed border-border-strong bg-muted/30 p-4 text-sm text-muted-foreground">
+                {t('paymentForm.rappiCollectedNotice')}
+              </section>
+            )}
+
+            <section className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>{t('paymentForm.subtotal')}</span>
+                <MoneyDisplay amount={baseSubtotal} size="sm" />
+              </div>
+              {discountAmount > 0 && (
+                <>
+                  <div
+                    className="flex items-center justify-between text-sm font-medium text-success-strong"
+                    data-testid="discount-row"
+                  >
+                    <span>
+                      {t('paymentForm.discountRow', {
+                        detail:
+                          discountType === 'percent'
+                            ? `${String(discountValue)}%`
+                            : t('paymentForm.discountRowFixed'),
+                      })}
+                    </span>
+                    <span>
+                      -<MoneyDisplay amount={discountAmount} size="sm" />
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{t('paymentForm.afterDiscount')}</span>
+                    <MoneyDisplay amount={afterDiscount} size="sm" />
+                  </div>
+                </>
+              )}
+              {method !== 'rappi' && (
+                <div
+                  className="flex items-center justify-between text-sm text-muted-foreground"
+                  data-testid="tax-row"
+                >
+                  <span>{t('paymentForm.taxLabel', { rate: taxRatePercent })}</span>
+                  <MoneyDisplay amount={taxAmount} size="sm" />
+                </div>
+              )}
+              <div
+                className="flex items-center justify-between border-t border-border pt-3 text-lg font-semibold"
+                data-testid="total-row"
+              >
+                <span>{t('paymentForm.total')}</span>
+                <MoneyDisplay amount={runningTotal} size="xl" />
+              </div>
+            </section>
+          </div>
+          <div className="order-2 space-y-5 lg:order-1">
+            <section className="space-y-3">
+              <h4 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                {t('paymentForm.paymentMethod')}
+              </h4>
+
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-4 shadow-xs">
                 <div>
-                  <Label htmlFor="discount-toggle" className="text-sm font-semibold">
-                    {t('paymentForm.discount')}
+                  <Label htmlFor="split-mode-toggle" className="text-sm font-semibold">
+                    {t('paymentForm.splitPayment')}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    {t('paymentForm.discountDescription')}
+                    {t('paymentForm.splitPaymentDescription')}
                   </p>
                 </div>
                 <Switch
-                  id="discount-toggle"
-                  checked={discountExpanded}
+                  id="split-mode-toggle"
+                  checked={isSplitMode}
                   disabled={isProcessing}
-                  onCheckedChange={checked => {
-                    if (checked) {
-                      // Phase 27 (PROMO-05): expanding the ad-hoc discount
-                      // section now requires a manager PIN first — the
-                      // Switch itself stays visually off until onSuccess
-                      // flips discountExpanded (a fresh PIN entry is
-                      // required every time the section is re-expanded).
-                      setPinPurpose('discount');
-                      setPinDialogOpen(true);
-                    } else {
-                      setDiscountExpanded(false);
-                      setManagerOverride(false);
-                      setAuthorizingManagerPin(undefined);
-                    }
-                  }}
+                  onCheckedChange={setIsSplitMode}
                 />
               </div>
-              <div
-                className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${
-                  discountExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="space-y-2 pt-2">
-                    <div className="flex gap-2">
-                      {/* Phase 27 (PROMO-05): pool_only/consumptions_only scopes retired —
-                          'all' is DiscountScope's only remaining member, so this is a
-                          non-interactive label rather than a scope picker. */}
-                      <div
-                        data-testid="discount-scope-all"
-                        className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
-                      >
-                        {t('paymentForm.discountScopeAll')}
+
+              {isSplitMode ? (
+                <div className="space-y-3">
+                  {splitRows.map((row, index) => (
+                    <div
+                      key={row.id}
+                      className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">
+                          {t('paymentForm.paymentNumber', { number: index + 1 })}
+                        </span>
+                        {splitRows.length > 2 && (
+                          <POSButton
+                            type="button"
+                            variant="ghost"
+                            touchSize="xl"
+                            focusEmphasis="high"
+                            aria-label={`Remove payment ${String(index + 1)}`}
+                            disabled={isProcessing}
+                            className="px-2 text-destructive"
+                            onClick={() => {
+                              dispatchSplitRows({ type: 'REMOVE_ROW', rowId: row.id });
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </POSButton>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {/* eslint-disable-next-line i18next/no-literal-string -- fixed discount-type enum identifiers, not UI copy */}
-                      {(['percent', 'fixed'] as const).map(type => (
-                        <POSButton
-                          key={type}
-                          type="button"
-                          touchSize="large"
-                          variant={discountType === type ? 'default' : 'outline'}
-                          disabled={isProcessing}
-                          data-testid={`discount-type-${type}`}
-                          onClick={() => {
-                            setDiscountType(type);
-                          }}
-                          className="flex-1"
-                        >
-                          {type === 'percent'
-                            ? t('paymentForm.discountTypePercent')
-                            : t('paymentForm.discountTypeFixed')}
-                        </POSButton>
-                      ))}
-                    </div>
-                    <MoneyInput
-                      label={
-                        discountType === 'percent'
-                          ? t('paymentForm.discountPercentLabel')
-                          : t('paymentForm.discountAmountLabel')
-                      }
-                      value={discountValue}
-                      onChange={setDiscountValue}
-                      disabled={isProcessing}
-                      data-testid="discount-value-input"
-                    />
-                    {discountAmount > 0 && (
-                      <p
-                        className="text-sm font-medium text-success-strong"
-                        data-testid="discount-applied-label"
-                      >
-                        {t('paymentForm.discountApplied', { amount: formatMoney(discountAmount) })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
 
-          {method === 'rappi' && (
-            <section className="rounded-xl border border-dashed border-border-strong bg-muted/30 p-4 text-sm text-muted-foreground">
-              {t('paymentForm.rappiCollectedNotice')}
-            </section>
-          )}
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        {enabledMethods.cash && (
+                          <POSButton
+                            type="button"
+                            touchSize="large"
+                            variant={row.method === 'cash' ? 'default' : 'outline'}
+                            disabled={isProcessing}
+                            onClick={() => {
+                              dispatchSplitRows({
+                                type: 'SET_METHOD',
+                                rowId: row.id,
+                                method: 'cash',
+                              });
+                            }}
+                          >
+                            {paymentLabels.cash}
+                          </POSButton>
+                        )}
+                        {enabledMethods.bbvaCard && (
+                          <POSButton
+                            type="button"
+                            touchSize="large"
+                            variant={row.method === 'card' ? 'default' : 'outline'}
+                            disabled={isProcessing}
+                            onClick={() => {
+                              dispatchSplitRows({
+                                type: 'SET_METHOD',
+                                rowId: row.id,
+                                method: 'card',
+                              });
+                            }}
+                          >
+                            {paymentLabels.card}
+                          </POSButton>
+                        )}
+                        {isRappiTab && enabledMethods.rappi && (
+                          <POSButton
+                            type="button"
+                            touchSize="large"
+                            variant={row.method === 'rappi' ? 'default' : 'outline'}
+                            disabled={isProcessing}
+                            onClick={() => {
+                              dispatchSplitRows({
+                                type: 'SET_METHOD',
+                                rowId: row.id,
+                                method: 'rappi',
+                              });
+                            }}
+                          >
+                            {paymentLabels.rappi}
+                          </POSButton>
+                        )}
+                      </div>
 
-          <section className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{t('paymentForm.subtotal')}</span>
-              <MoneyDisplay amount={baseSubtotal} size="sm" />
-            </div>
-            {discountAmount > 0 && (
-              <>
-                <div
-                  className="flex items-center justify-between text-sm font-medium text-success-strong"
-                  data-testid="discount-row"
-                >
-                  <span>
-                    {t('paymentForm.discountRow', {
-                      detail:
-                        discountType === 'percent'
-                          ? `${String(discountValue)}%`
-                          : t('paymentForm.discountRowFixed'),
-                    })}
-                  </span>
-                  <span>
-                    -<MoneyDisplay amount={discountAmount} size="sm" />
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>{t('paymentForm.afterDiscount')}</span>
-                  <MoneyDisplay amount={afterDiscount} size="sm" />
-                </div>
-              </>
-            )}
-            {method !== 'rappi' && (
-              <div
-                className="flex items-center justify-between text-sm text-muted-foreground"
-                data-testid="tax-row"
-              >
-                <span>{t('paymentForm.taxLabel', { rate: taxRatePercent })}</span>
-                <MoneyDisplay amount={taxAmount} size="sm" />
-              </div>
-            )}
-            <div
-              className="flex items-center justify-between border-t border-border pt-3 text-lg font-semibold"
-              data-testid="total-row"
-            >
-              <span>{t('paymentForm.total')}</span>
-              <MoneyDisplay amount={runningTotal} size="lg" />
-            </div>
-          </section>
+                      <MoneyInput
+                        label={t('paymentForm.amount')}
+                        value={row.amount}
+                        onChange={value => {
+                          dispatchSplitRows({ type: 'SET_AMOUNT', rowId: row.id, value });
+                        }}
+                        disabled={isProcessing}
+                      />
 
-          <section className="space-y-3">
-            <h4 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              {t('paymentForm.paymentMethod')}
-            </h4>
-
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-4 shadow-xs">
-              <div>
-                <Label htmlFor="split-mode-toggle" className="text-sm font-semibold">
-                  {t('paymentForm.splitPayment')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('paymentForm.splitPaymentDescription')}
-                </p>
-              </div>
-              <Switch
-                id="split-mode-toggle"
-                checked={isSplitMode}
-                disabled={isProcessing}
-                onCheckedChange={setIsSplitMode}
-              />
-            </div>
-
-            {isSplitMode ? (
-              <div className="space-y-3">
-                {splitRows.map((row, index) => (
-                  <div
-                    key={row.id}
-                    className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">
-                        {t('paymentForm.paymentNumber', { number: index + 1 })}
-                      </span>
-                      {splitRows.length > 2 && (
-                        <POSButton
-                          type="button"
-                          variant="ghost"
-                          touchSize="xl"
-                          focusEmphasis="high"
-                          aria-label={`Remove payment ${String(index + 1)}`}
-                          disabled={isProcessing}
-                          className="px-2 text-destructive"
-                          onClick={() => {
-                            dispatchSplitRows({ type: 'REMOVE_ROW', rowId: row.id });
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </POSButton>
+                      {row.method === 'cash' && (
+                        <>
+                          <MoneyInput
+                            label={t('paymentForm.amountTendered')}
+                            value={row.tenderedAmount}
+                            onChange={value => {
+                              dispatchSplitRows({ type: 'SET_TENDERED', rowId: row.id, value });
+                            }}
+                            disabled={isProcessing}
+                          />
+                          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-sm font-medium">
+                            <span>{t('paymentForm.changeDue')}</span>
+                            <MoneyDisplay
+                              amount={Math.max(
+                                0,
+                                Math.round((row.tenderedAmount - row.amount) * 100) / 100
+                              )}
+                              size="sm"
+                            />
+                          </div>
+                        </>
                       )}
-                    </div>
 
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      {enabledMethods.cash && (
-                        <POSButton
-                          type="button"
-                          touchSize="large"
-                          variant={row.method === 'cash' ? 'default' : 'outline'}
-                          disabled={isProcessing}
-                          onClick={() => {
-                            dispatchSplitRows({
-                              type: 'SET_METHOD',
-                              rowId: row.id,
-                              method: 'cash',
-                            });
-                          }}
-                        >
-                          {paymentLabels.cash}
-                        </POSButton>
-                      )}
-                      {enabledMethods.bbvaCard && (
-                        <POSButton
-                          type="button"
-                          touchSize="large"
-                          variant={row.method === 'card' ? 'default' : 'outline'}
-                          disabled={isProcessing}
-                          onClick={() => {
-                            dispatchSplitRows({
-                              type: 'SET_METHOD',
-                              rowId: row.id,
-                              method: 'card',
-                            });
-                          }}
-                        >
-                          {paymentLabels.card}
-                        </POSButton>
-                      )}
-                      {isRappiTab && enabledMethods.rappi && (
-                        <POSButton
-                          type="button"
-                          touchSize="large"
-                          variant={row.method === 'rappi' ? 'default' : 'outline'}
-                          disabled={isProcessing}
-                          onClick={() => {
-                            dispatchSplitRows({
-                              type: 'SET_METHOD',
-                              rowId: row.id,
-                              method: 'rappi',
-                            });
-                          }}
-                        >
-                          {paymentLabels.rappi}
-                        </POSButton>
-                      )}
-                    </div>
-
-                    <MoneyInput
-                      label={t('paymentForm.amount')}
-                      value={row.amount}
-                      onChange={value => {
-                        dispatchSplitRows({ type: 'SET_AMOUNT', rowId: row.id, value });
-                      }}
-                      disabled={isProcessing}
-                    />
-
-                    {row.method === 'cash' && (
-                      <>
-                        <MoneyInput
-                          label={t('paymentForm.amountTendered')}
-                          value={row.tenderedAmount}
-                          onChange={value => {
-                            dispatchSplitRows({ type: 'SET_TENDERED', rowId: row.id, value });
-                          }}
-                          disabled={isProcessing}
-                        />
-                        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-sm font-medium">
-                          <span>{t('paymentForm.changeDue')}</span>
-                          <MoneyDisplay
-                            amount={Math.max(
-                              0,
-                              Math.round((row.tenderedAmount - row.amount) * 100) / 100
-                            )}
-                            size="sm"
+                      {row.method === 'card' && (
+                        <div className="space-y-2">
+                          <Label htmlFor={`split-card-ref-${row.id}`}>
+                            {t('paymentForm.referenceOptional')}
+                          </Label>
+                          <Input
+                            id={`split-card-ref-${row.id}`}
+                            value={row.cardReference}
+                            onChange={e => {
+                              dispatchSplitRows({
+                                type: 'SET_CARD_REF',
+                                rowId: row.id,
+                                value: e.target.value,
+                              });
+                            }}
+                            placeholder={t('paymentForm.terminalReceiptPlaceholder')}
+                            maxLength={64}
+                            disabled={isProcessing}
+                            autoComplete="off"
                           />
                         </div>
-                      </>
-                    )}
+                      )}
 
-                    {row.method === 'card' && (
-                      <div className="space-y-2">
-                        <Label htmlFor={`split-card-ref-${row.id}`}>
-                          {t('paymentForm.referenceOptional')}
-                        </Label>
-                        <Input
-                          id={`split-card-ref-${row.id}`}
-                          value={row.cardReference}
-                          onChange={e => {
-                            dispatchSplitRows({
-                              type: 'SET_CARD_REF',
-                              rowId: row.id,
-                              value: e.target.value,
-                            });
-                          }}
-                          placeholder={t('paymentForm.terminalReceiptPlaceholder')}
-                          maxLength={64}
-                          disabled={isProcessing}
-                          autoComplete="off"
-                        />
-                      </div>
-                    )}
+                      <p className="text-xs text-muted-foreground">
+                        {t('paymentForm.splitRowCharges', {
+                          amount: formatMoney(row.amount),
+                        })}
+                      </p>
+                    </div>
+                  ))}
 
-                    <p className="text-xs text-muted-foreground">
-                      {t('paymentForm.splitRowCharges', {
-                        amount: formatMoney(row.amount),
-                      })}
-                    </p>
-                  </div>
-                ))}
+                  <POSButton
+                    type="button"
+                    variant="outline"
+                    disabled={isProcessing || splitRows.length >= 4}
+                    onClick={() => {
+                      const defaultMethod: SplitPayMethod = enabledMethods.cash
+                        ? 'cash'
+                        : enabledMethods.bbvaCard
+                          ? 'card'
+                          : 'rappi';
+                      dispatchSplitRows({ type: 'ADD_ROW', defaultMethod });
+                    }}
+                  >
+                    {t('paymentForm.addPaymentMethod')}
+                  </POSButton>
 
-                <POSButton
-                  type="button"
-                  variant="outline"
-                  disabled={isProcessing || splitRows.length >= 4}
-                  onClick={() => {
-                    const defaultMethod: SplitPayMethod = enabledMethods.cash
-                      ? 'cash'
-                      : enabledMethods.bbvaCard
-                        ? 'card'
-                        : 'rappi';
-                    dispatchSplitRows({ type: 'ADD_ROW', defaultMethod });
-                  }}
-                >
-                  {t('paymentForm.addPaymentMethod')}
-                </POSButton>
-
-                <div
-                  className={`rounded-xl border p-4 ${
-                    splitRemaining === 0
-                      ? 'border-success bg-success-soft'
-                      : 'border-border bg-card'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-sm font-semibold">
-                    <span>
-                      {splitRemaining > 0
-                        ? t('paymentForm.remainingToPay')
-                        : splitRemaining === 0
-                          ? t('paymentForm.fullyAllocated')
-                          : t('paymentForm.overBy', {
-                              amount: formatMoney(Math.abs(splitRemaining)),
-                            })}
-                    </span>
-                    {splitRemaining >= 0 && <MoneyDisplay amount={splitRemaining} size="sm" />}
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      splitRemaining === 0
+                        ? 'border-success bg-success-soft'
+                        : 'border-border bg-card'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-sm font-semibold">
+                      <span>
+                        {splitRemaining > 0
+                          ? t('paymentForm.remainingToPay')
+                          : splitRemaining === 0
+                            ? t('paymentForm.fullyAllocated')
+                            : t('paymentForm.overBy', {
+                                amount: formatMoney(Math.abs(splitRemaining)),
+                              })}
+                      </span>
+                      {splitRemaining >= 0 && <MoneyDisplay amount={splitRemaining} size="sm" />}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-3">
-                {enabledMethods.cash && (
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {enabledMethods.cash && (
+                    <POSButton
+                      type="button"
+                      touchSize="xl"
+                      variant={method === 'cash' ? 'default' : 'outline'}
+                      disabled={isProcessing}
+                      data-testid="payment-btn-cash"
+                      onClick={() => {
+                        setMethod('cash');
+                      }}
+                    >
+                      {paymentLabels.cash}
+                    </POSButton>
+                  )}
+                  {enabledMethods.bbvaCard && (
+                    <POSButton
+                      type="button"
+                      touchSize="xl"
+                      variant={method === 'card' ? 'default' : 'outline'}
+                      disabled={isProcessing}
+                      data-testid="payment-btn-card"
+                      onClick={() => {
+                        setMethod('card');
+                      }}
+                    >
+                      {paymentLabels.card}
+                    </POSButton>
+                  )}
+                  {isRappiTab && enabledMethods.rappi && (
+                    <POSButton
+                      type="button"
+                      touchSize="xl"
+                      variant={method === 'rappi' ? 'default' : 'outline'}
+                      disabled={isProcessing}
+                      data-testid="payment-btn-rappi"
+                      onClick={() => {
+                        setMethod('rappi');
+                      }}
+                    >
+                      {paymentLabels.rappi}
+                    </POSButton>
+                  )}
+                  {processors.processBankTransferPayment && (
+                    <POSButton
+                      type="button"
+                      touchSize="xl"
+                      variant={method === 'bank_transfer' ? 'default' : 'outline'}
+                      disabled={isProcessing}
+                      data-testid="payment-btn-bank-transfer"
+                      onClick={() => {
+                        setMethod('bank_transfer');
+                      }}
+                    >
+                      {t('featOrders:checkoutSale.bankTransferMethodLabel')}
+                    </POSButton>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {!isSplitMode && method === 'cash' && (
+              <section className="space-y-3">
+                <MoneyInput
+                  label={t('paymentForm.amountTendered')}
+                  value={tenderedAmount}
+                  onChange={setTenderedAmount}
+                  disabled={isProcessing}
+                />
+                <div
+                  className="grid grid-cols-5 gap-2"
+                  role="group"
+                  aria-label={t('paymentForm.quickTenderGroup')}
+                >
                   <POSButton
                     type="button"
-                    touchSize="xl"
-                    variant={method === 'cash' ? 'default' : 'outline'}
+                    variant="outline"
+                    touchSize="large"
                     disabled={isProcessing}
-                    data-testid="payment-btn-cash"
+                    data-testid="quick-tender-exact"
                     onClick={() => {
-                      setMethod('cash');
+                      setTenderedAmount(runningTotal);
                     }}
                   >
-                    {paymentLabels.cash}
+                    {t('paymentForm.quickTenderExact')}
                   </POSButton>
-                )}
-                {enabledMethods.bbvaCard && (
+                  {QUICK_TENDER_AMOUNTS.map(amount => (
+                    <POSButton
+                      key={amount}
+                      type="button"
+                      variant="outline"
+                      touchSize="large"
+                      disabled={isProcessing}
+                      data-testid={`quick-tender-${String(amount)}`}
+                      aria-label={t('paymentForm.quickTender', { amount: formatMoney(amount) })}
+                      onClick={() => {
+                        setTenderedAmount(amount);
+                      }}
+                    >
+                      {formatMoney(amount)}
+                    </POSButton>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm font-medium">
+                  <span>{t('paymentForm.changeDue')}</span>
+                  <MoneyDisplay amount={changeDue} size="lg" />
+                </div>
+              </section>
+            )}
+
+            {!isSplitMode && method === 'card' && (
+              <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
+                <p className="text-sm font-medium">{t('paymentForm.processOnBbvaTerminal')}</p>
+                <MoneyInput
+                  label={t('paymentForm.chargeAmount')}
+                  value={effectiveCardAmount}
+                  onChange={setCardChargeOverride}
+                  disabled={isProcessing}
+                />
+                {cardChargeOverride !== null && (
                   <POSButton
                     type="button"
-                    touchSize="xl"
-                    variant={method === 'card' ? 'default' : 'outline'}
-                    disabled={isProcessing}
-                    data-testid="payment-btn-card"
+                    variant="ghost"
+                    touchSize="default"
+                    data-testid="card-override-reset"
+                    className="text-xs text-muted-foreground underline"
                     onClick={() => {
-                      setMethod('card');
+                      setCardChargeOverride(null);
                     }}
                   >
-                    {paymentLabels.card}
+                    {t('paymentForm.resetToComputed', { amount: formatMoney(runningTotal) })}
                   </POSButton>
                 )}
-                {isRappiTab && enabledMethods.rappi && (
-                  <POSButton
-                    type="button"
-                    touchSize="xl"
-                    variant={method === 'rappi' ? 'default' : 'outline'}
-                    disabled={isProcessing}
-                    data-testid="payment-btn-rappi"
-                    onClick={() => {
-                      setMethod('rappi');
+                <div className="space-y-2">
+                  <Label htmlFor="card-ref">{t('paymentForm.referenceOptional')}</Label>
+                  <Input
+                    id="card-ref"
+                    value={cardReference}
+                    onChange={e => {
+                      setCardReference(e.target.value);
                     }}
-                  >
-                    {paymentLabels.rappi}
-                  </POSButton>
-                )}
-                {processors.processBankTransferPayment && (
-                  <POSButton
-                    type="button"
-                    touchSize="xl"
-                    variant={method === 'bank_transfer' ? 'default' : 'outline'}
+                    placeholder={t('paymentForm.terminalReceiptPlaceholder')}
+                    maxLength={64}
                     disabled={isProcessing}
-                    data-testid="payment-btn-bank-transfer"
-                    onClick={() => {
-                      setMethod('bank_transfer');
+                    autoComplete="off"
+                  />
+                </div>
+              </section>
+            )}
+
+            {!isSplitMode && method === 'bank_transfer' && (
+              <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
+                <div className="space-y-2">
+                  <Label htmlFor="bank-transfer-customer-name">
+                    {t('featOrders:checkoutSale.customerNameLabel')}
+                  </Label>
+                  <Input
+                    id="bank-transfer-customer-name"
+                    value={customerName}
+                    onChange={e => {
+                      setCustomerName(e.target.value);
                     }}
-                  >
-                    {t('featOrders:checkoutSale.bankTransferMethodLabel')}
-                  </POSButton>
-                )}
+                    placeholder={t('featOrders:checkoutSale.defaultCustomerName')}
+                    maxLength={100}
+                    disabled={isProcessing}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bank-transfer-customer-phone">
+                    {t('featOrders:checkoutSale.customerPhoneLabel')}
+                  </Label>
+                  <Input
+                    id="bank-transfer-customer-phone"
+                    value={customerPhone}
+                    onChange={e => {
+                      setCustomerPhone(e.target.value);
+                    }}
+                    placeholder={t('featOrders:checkoutSale.customerPhonePlaceholder')}
+                    maxLength={30}
+                    disabled={isProcessing}
+                    autoComplete="off"
+                    data-testid="bank-transfer-phone-input"
+                  />
+                </div>
+              </section>
+            )}
+
+            {errorMessage && (
+              <div
+                className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive-soft p-3.5 text-sm text-destructive"
+                role="alert"
+                data-testid="payment-error-alert"
+              >
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <span>{errorMessage}</span>
               </div>
             )}
-          </section>
-
-          {!isSplitMode && method === 'cash' && (
-            <section className="space-y-3">
-              <MoneyInput
-                label={t('paymentForm.amountTendered')}
-                value={tenderedAmount}
-                onChange={setTenderedAmount}
-                disabled={isProcessing}
-              />
-              <div className="flex items-center justify-between rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm font-medium">
-                <span>{t('paymentForm.changeDue')}</span>
-                <MoneyDisplay amount={changeDue} size="lg" />
-              </div>
-            </section>
-          )}
-
-          {!isSplitMode && method === 'card' && (
-            <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
-              <p className="text-sm font-medium">{t('paymentForm.processOnBbvaTerminal')}</p>
-              <MoneyInput
-                label={t('paymentForm.chargeAmount')}
-                value={effectiveCardAmount}
-                onChange={setCardChargeOverride}
-                disabled={isProcessing}
-              />
-              {cardChargeOverride !== null && (
-                <POSButton
-                  type="button"
-                  variant="ghost"
-                  touchSize="default"
-                  data-testid="card-override-reset"
-                  className="text-xs text-muted-foreground underline"
-                  onClick={() => {
-                    setCardChargeOverride(null);
-                  }}
-                >
-                  {t('paymentForm.resetToComputed', { amount: formatMoney(runningTotal) })}
-                </POSButton>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="card-ref">{t('paymentForm.referenceOptional')}</Label>
-                <Input
-                  id="card-ref"
-                  value={cardReference}
-                  onChange={e => {
-                    setCardReference(e.target.value);
-                  }}
-                  placeholder={t('paymentForm.terminalReceiptPlaceholder')}
-                  maxLength={64}
-                  disabled={isProcessing}
-                  autoComplete="off"
-                />
-              </div>
-            </section>
-          )}
-
-          {!isSplitMode && method === 'bank_transfer' && (
-            <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
-              <div className="space-y-2">
-                <Label htmlFor="bank-transfer-customer-name">
-                  {t('featOrders:checkoutSale.customerNameLabel')}
-                </Label>
-                <Input
-                  id="bank-transfer-customer-name"
-                  value={customerName}
-                  onChange={e => {
-                    setCustomerName(e.target.value);
-                  }}
-                  placeholder={t('featOrders:checkoutSale.defaultCustomerName')}
-                  maxLength={100}
-                  disabled={isProcessing}
-                  autoComplete="off"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bank-transfer-customer-phone">
-                  {t('featOrders:checkoutSale.customerPhoneLabel')}
-                </Label>
-                <Input
-                  id="bank-transfer-customer-phone"
-                  value={customerPhone}
-                  onChange={e => {
-                    setCustomerPhone(e.target.value);
-                  }}
-                  placeholder={t('featOrders:checkoutSale.customerPhonePlaceholder')}
-                  maxLength={30}
-                  disabled={isProcessing}
-                  autoComplete="off"
-                  data-testid="bank-transfer-phone-input"
-                />
-              </div>
-            </section>
-          )}
-
-          {errorMessage && (
-            <div
-              className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive-soft p-3.5 text-sm text-destructive"
-              role="alert"
-              data-testid="payment-error-alert"
-            >
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
+          </div>
         </div>
       </ScrollArea>
 
-      <div className="space-y-2 border-t border-border bg-background px-4 py-3 sm:px-6 sm:py-4">
+      <div className="flex flex-col gap-2 border-t border-border bg-background px-4 py-3 sm:flex-row-reverse sm:items-center sm:px-6 sm:py-4">
         <ProtectedAction
           action="close_tab"
           currentRole={currentRole}
@@ -1369,7 +1411,7 @@ export function PaymentForm({
             focusEmphasis="high"
             disabled={isProcessing || (isSplitMode ? !canSubmitSplit : !canSubmit)}
             variant="brand"
-            className="w-full"
+            className="w-full sm:flex-1"
             onClick={() => {
               if (isSplitMode) {
                 void handleSplitPrimary();
@@ -1393,7 +1435,7 @@ export function PaymentForm({
             type="button"
             touchSize="large"
             variant="outline"
-            className="w-full"
+            className="w-full sm:w-auto"
             disabled={isProcessing}
             onClick={onClose}
           >

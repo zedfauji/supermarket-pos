@@ -1,4 +1,4 @@
-import { PackageSearch, ScanBarcode, Search } from 'lucide-react';
+import { PackageSearch } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/useAddLooseWeightItem';
@@ -11,7 +11,6 @@ import { ProductCard } from '@entities/product/ui/ProductCard';
 import type { PromotionMatch } from '@entities/promotion';
 import type { Category, Product } from '@shared/lib/domain';
 import { ProductGridSkeleton } from '@shared/ui';
-import { Input } from '@shared/ui/input';
 
 export function ProductGrid({
   onSelect,
@@ -92,30 +91,6 @@ export function ProductGrid({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* Search / scan bar */}
-      <div className="group/search relative shrink-0">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-4 size-[1.125rem] -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-brand"
-          aria-hidden="true"
-        />
-        <Input
-          value={search}
-          onChange={event => {
-            onSearchChange(event.target.value);
-          }}
-          placeholder={t('checkoutPanel.searchPlaceholder')}
-          aria-label={t('checkoutPanel.searchPlaceholder')}
-          className="h-12 rounded-xl pr-12 pl-11 text-base shadow-sm"
-          autoComplete="off"
-        />
-        <span
-          className="pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 items-center gap-1.5 text-xs text-muted-foreground sm:flex"
-          aria-hidden="true"
-        >
-          <ScanBarcode className="size-4" />
-        </span>
-      </div>
-
       <CategoryTabs
         categories={categories}
         activeCategory={activeCategory}
@@ -139,7 +114,7 @@ export function ProductGrid({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid grid-cols-3 gap-2.5 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {matches.map(product => (
               <ProductCard
                 key={product.id}

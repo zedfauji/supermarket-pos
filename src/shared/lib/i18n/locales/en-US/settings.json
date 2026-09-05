@@ -5,12 +5,29 @@
     "hardware": "Hardware",
     "email": "Email Receipts",
     "backup": "Backup",
-    "products": "Products",
     "billing": "Billing",
     "nearExpiry": "Near Expiry",
     "lockTimeout": "Auto-Lock Timeout"
   },
   "noPermission": "You do not have permission to view settings.",
+  "navLabel": "Settings sections",
+  "groups": {
+    "personal": "Personal",
+    "store": "Store",
+    "receipts": "Receipts & hardware",
+    "stock": "Stock rules",
+    "security": "Security & data"
+  },
+  "descriptions": {
+    "language": "Which language your account uses",
+    "general": "Store name, address, timezone, currency",
+    "billing": "Tax, payment methods, button labels",
+    "hardware": "Receipt printer, paper width, cash drawer",
+    "email": "Sender address and test emails",
+    "nearExpiry": "Alert window and automatic discount",
+    "lockTimeout": "Idle time before the screen locks",
+    "backup": "Manual snapshots and restore"
+  },
   "language": {
     "heading": "Language",
     "fieldLabel": "Interface language",

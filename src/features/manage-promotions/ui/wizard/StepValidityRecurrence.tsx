@@ -72,9 +72,12 @@ export function StepValidityRecurrence({
 
       {recurring && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {DAY_KEYS.map((key, day) => (
-              <label key={key} className="flex items-center gap-1 text-sm">
+              <label
+                key={key}
+                className="flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-3 text-sm shadow-xs transition-colors has-data-[state=checked]:border-brand has-data-[state=checked]:bg-brand-soft has-data-[state=checked]:text-brand-strong"
+              >
                 <Checkbox
                   checked={(daysOfWeek ?? []).includes(day)}
                   disabled={disabled}

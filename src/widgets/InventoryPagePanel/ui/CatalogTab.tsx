@@ -10,16 +10,19 @@ type Props = {
   currentRole: UserRole | null;
 };
 
-export function ProductsSettingsTab({ currentRole }: Props) {
+/**
+ * Product catalog management (products, categories, modifiers, modifier
+ * groups). Lived under Settings › Products until the 2026-09 UX pass; it is
+ * inventory work, so it now renders as the Inventory page's "Catalog" tab.
+ */
+export function CatalogTab({ currentRole }: Props) {
   const { t } = useTranslation('wAdmin');
   return (
     <ProtectedAction action="manage_products" currentRole={currentRole}>
       <div className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold">{t('productsSettingsTab.title')}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t('productsSettingsTab.description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('productsSettingsTab.description')}</p>
         </div>
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="mb-4">
@@ -34,14 +37,12 @@ export function ProductsSettingsTab({ currentRole }: Props) {
             <CatalogProductsTab />
           </TabsContent>
           <TabsContent value="categories">
-            {/* Category tree editor: supports 3-level hierarchy (S1-08) */}
             <CategoryTreeEditor />
           </TabsContent>
           <TabsContent value="modifiers">
             <CatalogModifiersTab />
           </TabsContent>
           <TabsContent value="modifier-groups">
-            {/* Modifier group editor: admin CRUD + modifier attachment (S1-09) */}
             <ModifierGroupEditor />
           </TabsContent>
         </Tabs>

@@ -90,17 +90,19 @@ test.describe('Migrated-promotion review flag (D-11/D-12)', () => {
     // own duplicate "New Promotion" action button in addition to the page
     // header's — the header one is always first in DOM order (28-05 fix).
     await page.getByRole('button', { name: /new promotion/i }).first().click();
-    await expect(page).toHaveURL(/\/promotions\/new$/);
+    const dialog = page.getByRole('dialog', { name: /new promotion/i });
+    await expect(dialog).toBeVisible();
 
     await page.getByLabel(/^name/i).fill(name);
     // Discount type defaults to "Percent" with the string-buffered percent
-    // field defaulting to "0" — set a valid value before advancing.
+    // field defaulting to "0" — set a valid value before saving. Every
+    // section is visible at once, so Create can be clicked directly.
     await page.getByLabel(/discount percent/i).fill('15');
-    await page.getByRole('button', { name: /^next$/i }).click();
-    await page.getByRole('button', { name: /^next$/i }).click();
-    await page.getByRole('button', { name: /^next$/i }).click();
     await page.getByRole('button', { name: /create promotion/i }).click();
 
+    // Wait for the dialog to actually close (real signal the create
+    // mutation resolved) before reading the list back via the UI.
+    await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/promotions$/);
 
     await page.getByPlaceholder(/search/i).fill(name);

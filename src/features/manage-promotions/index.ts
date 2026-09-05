@@ -1,7 +1,8 @@
 /**
  * manage-promotions feature public API.
  *
- * Import from here: `import { PromotionWizardPage } from '@features/manage-promotions'`
+ * Import from here: `import { PromotionDialog } from '@features/manage-promotions'`
  */
 
-export { PromotionWizardPage } from './ui/PromotionWizardPage';
+export { PromotionDialog } from './ui/PromotionDialog';
+export type { PromotionDialogProps } from './ui/PromotionDialog';

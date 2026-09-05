@@ -2,8 +2,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useSettings } from '@entities/settings';
-import type { Inventory, InventoryAlert, InventoryLog, NearExpiryAlert, Product } from '@shared/lib/domain';
-import { CategorySchema, InventoryAlertSchema, NearExpiryAlertSchema, ProductSchema } from '@shared/lib/domain';
+import type {
+  Inventory,
+  InventoryAlert,
+  InventoryLog,
+  NearExpiryAlert,
+  Product,
+  StockMovement,
+} from '@shared/lib/domain';
+import {
+  CategorySchema,
+  InventoryAlertSchema,
+  NearExpiryAlertSchema,
+  ProductSchema,
+  StockMovementSchema,
+} from '@shared/lib/domain';
 import { logger } from '@shared/lib/logger-instance';
 import {
   err,
@@ -433,7 +446,7 @@ export function useMutationAdjustInventory() {
 export function useInventoryLog(productId?: string) {
   const query = useQuery({
     queryKey: inventoryKeys.log(productId),
-    queryFn: async (): Promise<Result<InventoryLog[]>> => {
+    queryFn: async (): Promise<Result<StockMovement[]>> => {
       const base = supabase
         .from('stock_movements')
         .select(
@@ -462,21 +475,31 @@ export function useInventoryLog(productId?: string) {
         return res;
       }
 
-      const logs: InventoryLog[] = [];
+      // This reads the stock_movements ledger, so it must be parsed with
+      // StockMovementSchema — NOT InventoryLogSchema, whose narrower
+      // InventoryAdjustReason enum has no 'refund' and whose productId is
+      // non-nullable. Parsing with the wrong schema threw on every refund row,
+      // and the throw discarded the entire 100-row batch (silent empty log).
+      const logs: StockMovement[] = [];
       for (const row of res.data) {
-        try {
-          logs.push(
-            InventoryLogSchema.parse({
-              id: row.id,
-              productId: row.product_id,
-              quantityDelta: row.quantity_delta,
-              reason: row.reason,
-              staffId: row.staff_id,
-              createdAt: new Date(row.created_at),
-            })
-          );
-        } catch (e) {
-          return err(unknownError(e));
+        const parsed = StockMovementSchema.safeParse({
+          id: row.id,
+          productId: row.product_id,
+          quantityDelta: row.quantity_delta,
+          reason: row.reason,
+          staffId: row.staff_id,
+          createdAt: new Date(row.created_at),
+        });
+        if (parsed.success) {
+          logs.push(parsed.data);
+        } else {
+          // Skip the offending row only — one unparseable ledger row must never
+          // blank the whole Movements tab again.
+          logger.warn('inventory.log.row_parse_failed', {
+            id: String(row.id),
+            reason: String(row.reason),
+            issues: parsed.error.issues.map(i => i.path.join('.')).join(','),
+          });
         }
       }
       return ok(logs);

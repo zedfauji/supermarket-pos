@@ -50,9 +50,9 @@ function endOfDay(str: string): Date {
  * Review step of the promotion wizard (D-07 final step, D-09 live preview).
  * Read-only summary of every prior-step value, plus a live computed-price
  * example via evaluateBestPromotion against the first catalog product
- * matching the wizard's in-progress (unsaved) scope. The final Create/Save
- * action lives in PromotionWizardPage's Nav bar (outside the Tabs, already
- * pinned below this step's own scrollable content region).
+ * matching the wizard's in-progress (unsaved) scope. Rendered in
+ * PromotionDialog's summary rail; the Create/Save action lives in the
+ * dialog's footer.
  */
 export function StepReview({
   name,
@@ -135,7 +135,7 @@ export function StepReview({
   });
 
   return (
-    <div className="max-h-[60vh] space-y-4 overflow-y-auto">
+    <div className="space-y-4">
       <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">{t('promotionWizard.review.nameLabel')}</span>

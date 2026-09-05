@@ -35,6 +35,13 @@ async function injectPdfSaveMocks(page: Page): Promise<void> {
       writtenByteLength: 0,
     };
     (window as unknown as Record<string, unknown>)['__TAURI__'] = {};
+    // CheckoutPanel's isTauri()-guarded listen() effect mounts on /pos and its
+    // cleanup synchronously reads this global before ever calling invoke()
+    // (see e2e/helpers/tauriPeekMock.ts) — without it, unmount throws
+    // "Cannot read properties of undefined (reading 'unregisterListener')".
+    (window as unknown as Record<string, unknown>)['__TAURI_EVENT_PLUGIN_INTERNALS__'] = {
+      unregisterListener: () => undefined,
+    };
 
     function getState(): {
       saveDialogCalled: boolean;

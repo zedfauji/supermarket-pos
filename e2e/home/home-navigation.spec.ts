@@ -115,11 +115,12 @@ test.describe('Home Dashboard Navigation', () => {
     // authenticated role — including cashier — can self-serve their own
     // locale (CLAUDE.md "i18n / Multi-Language": "Self-service via Settings
     // > Language, open to every authenticated role including bartender").
-    // The actual admin-only surfaces (General/Hardware/Email/Backup/Products/
-    // Billing) are conditionally excluded from the tab list entirely for a
-    // role without `manage_settings`/`manage_products` — verify that gate
-    // here instead of a page-level redirect or blocking dialog that was
-    // never the actual design.
+    // The actual admin-only surfaces (General/Hardware/Email/Backup/Billing —
+    // Products now lives under Inventory › Catalog) are conditionally
+    // excluded from the tab list entirely for a role without
+    // `manage_settings`/`manage_products` — verify that gate here instead of
+    // a page-level redirect or blocking dialog that was never the actual
+    // design.
     await loginAs(page, 'cashier');
     await page.goto('/settings');
 
@@ -127,8 +128,8 @@ test.describe('Home Dashboard Navigation', () => {
     // the Language tab as "Idioma", not "Language") — assert the tab COUNT
     // instead of matching a specific translated label. Exactly one tab
     // (the always-pushed, role-agnostic Language tab) confirms none of the
-    // 6 admin-only tabs (General/Hardware/Email/Backup/Products/Billing)
-    // rendered.
+    // 5 admin-only tabs (General/Hardware/Email/Backup/Billing — Products
+    // now lives under Inventory › Catalog) rendered.
     const tabs = page.getByRole('tab');
     await expect(tabs).toHaveCount(1, { timeout: 10_000 });
     await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');

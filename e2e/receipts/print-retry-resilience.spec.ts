@@ -31,6 +31,13 @@ async function injectPrinterMock(page: Page, failUntilAttempt: number): Promise<
   await page.addInitScript(failUntil => {
     (window as unknown as Record<string, unknown>)['__printMockState'] = { attempts: 0 };
     (window as unknown as Record<string, unknown>)['__TAURI__'] = {};
+    // CheckoutPanel's isTauri()-guarded listen() effect mounts on /pos and its
+    // cleanup synchronously reads this global before ever calling invoke()
+    // (see e2e/helpers/tauriPeekMock.ts) — without it, unmount throws
+    // "Cannot read properties of undefined (reading 'unregisterListener')".
+    (window as unknown as Record<string, unknown>)['__TAURI_EVENT_PLUGIN_INTERNALS__'] = {
+      unregisterListener: () => undefined,
+    };
 
     const callbacks = new Map<number, (arg: unknown) => void>();
 

@@ -47,9 +47,6 @@ vi.mock('./tabs/EmailReceiptsSettingsTab', () => ({
 vi.mock('./tabs/BackupSettingsTab', () => ({
   BackupSettingsTab: () => <div>Backup tab content</div>,
 }));
-vi.mock('./tabs/ProductsSettingsTab', () => ({
-  ProductsSettingsTab: () => <div>Products tab content</div>,
-}));
 vi.mock('./tabs/BillingSettingsTab', () => ({
   BillingSettingsTab: () => <div>Billing tab content</div>,
 }));
@@ -68,7 +65,7 @@ describe('SettingsTabsPanel', () => {
 
     render(<SettingsTabsPanel />);
 
-    expect(screen.getByRole('tab', { name: 'Products' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Products' })).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Billing' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'General' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Backup' })).not.toBeInTheDocument();
@@ -82,7 +79,7 @@ describe('SettingsTabsPanel', () => {
     render(<SettingsTabsPanel />);
 
     expect(screen.getByRole('tab', { name: 'General' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Products' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Products' })).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Backup' })).toBeInTheDocument();
   });
 

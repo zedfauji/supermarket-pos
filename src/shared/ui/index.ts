@@ -65,6 +65,8 @@ export type { DataTableProps } from './DataTable';
 // Navigation
 export { DateRangePicker } from './DateRangePicker';
 export type { DateRangePickerProps } from './DateRangePicker';
+export { VerticalTabsList, VerticalTabsGroupLabel, VerticalTabsTrigger } from './vertical-tabs';
+export type { VerticalTabsTriggerProps } from './vertical-tabs';
 
 // Layout
 export { PageContainer } from './PageContainer';

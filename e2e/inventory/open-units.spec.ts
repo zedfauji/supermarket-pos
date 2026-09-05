@@ -17,7 +17,7 @@
  * comment at that step (also documented in 27-08-SUMMARY.md).
  *
  * Fixtures: two brand-new catalog products (package + loose piece) are created
- * through the real Settings → Catalog → Products UI (not seeded directly) so D-02/D-03
+ * through the real Inventory → Catalog → Products UI (not seeded directly) so D-02/D-03
  * persistence is genuinely exercised. Their id's inventory row has no UI path to
  * create it (no "add to inventory" flow exists anywhere in the app — a product's
  * inventory row is bootstrapped by an admin action outside this feature's scope), so
@@ -269,8 +269,8 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
     // reopen, confirm persisted.
     // -------------------------------------------------------------------
     await test.step('Step 1: configure package product (units-per-package = 20)', async () => {
-      await page.goto('/settings');
-      await page.getByRole('tab', { name: 'Products' }).click();
+      await page.goto('/inventory');
+      await page.getByRole('tab', { name: 'Catalog' }).click();
       await expect(page.getByRole('button', { name: 'Add product' })).toBeVisible({ timeout: 15_000 });
       await page.getByRole('button', { name: 'Add product' }).click();
 

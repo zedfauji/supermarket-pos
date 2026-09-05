@@ -290,14 +290,11 @@
     "onHandLevelsTitle": "Niveles en existencia",
     "onHandLevelsDescription": "Ordena columnas, filtra por categoría, ajusta cantidades rápidamente.",
     "noInventoryRecords": "Aún no hay registros de inventario.",
-    "noRowsForCategory": "No hay filas para esta categoría. Elige \"Todas las categorías\" para ver todo.",
     "changeLogTitle": "Registro de cambios",
     "changeLogDescription": "Ajustes manuales y del sistema recientes (últimos 100).",
     "columnWhen": "Cuándo",
-    "columnProductId": "ID de producto",
     "columnDelta": "Delta",
     "columnReason": "Motivo",
-    "columnStaffId": "ID de personal",
     "loading": "Cargando…",
     "noLogEntries": "No hay registros.",
     "batchAdjustmentTitle": "Ajuste por lote",
@@ -316,12 +313,35 @@
     "cancel": "Cancelar",
     "apply": "Aplicar",
     "stockTabLabel": "Existencias",
+    "catalogTabLabel": "Catálogo",
     "openUnitsTabLabel": "Unidades abiertas",
     "nearExpiryTabLabel": "Próxima caducidad",
     "nothingExpiringSoonTitle": "Nada próximo a caducar",
     "nothingExpiringSoonBody": "No hay productos dentro de la ventana de próxima caducidad.",
     "expiryDate": "Fecha de caducidad",
-    "daysRemaining": "Días restantes"
+    "daysRemaining": "Días restantes",
+    "movementsTabLabel": "Movimientos",
+    "searchPlaceholder": "Buscar producto, SKU o código de barras…",
+    "filterAllSkus": "Todos los SKU",
+    "nearExpiry": "Próxima caducidad",
+    "stockValue": "Valor del inventario (a costo)",
+    "stockValueHint_one": "{{count}} producto sin precio de costo",
+    "stockValueHint_other": "{{count}} productos sin precio de costo",
+    "quickLinksLabel": "Ir a",
+    "quickLinkReceive": "Recibir envío",
+    "quickLinkPurchaseOrders": "Órdenes de compra",
+    "quickLinkCatalog": "Catálogo",
+    "noRowsForFilter": "Ningún producto coincide con estos filtros.",
+    "columnProduct": "Producto",
+    "columnStaff": "Personal",
+    "reasonFilterLabel": "Filtrar por motivo",
+    "reasonFilterAll": "Todos los motivos",
+    "reasonOptionSale": "Venta",
+    "reasonOptionRefund": "Reembolso",
+    "noLogEntriesBody": "Aquí aparecen los movimientos de inventario por ventas, entregas y ajustes.",
+    "nearExpiryDescription": "Productos dentro de la ventana de alerta de caducidad, los más próximos primero.",
+    "daysBadge_one": "{{count}} día",
+    "daysBadge_other": "{{count}} días"
   },
   "nearExpirySettingsTab": {
     "title": "Alertas de próxima caducidad",
@@ -476,8 +496,8 @@
     "previewHelper": "Refleja tus cambios sin guardar exactamente como se imprimirán."
   },
   "productsSettingsTab": {
-    "title": "Gestión de productos",
-    "description": "Administra productos, categorías, modificadores y grupos de modificadores. Los cambios se aplican de inmediato al guardar.",
+    "title": "Catálogo",
+    "description": "Productos, categorías, modificadores y grupos de modificadores de la tienda. Los cambios se aplican de inmediato al guardar.",
     "tabProducts": "Productos",
     "tabCategories": "Categorías",
     "tabModifiers": "Modificadores",
@@ -544,7 +564,14 @@
     "emptyBody": "Crea una promoción para descontar automáticamente un producto, categoría o subcategoría.",
     "loadError": "No se pudieron cargar las promociones. Verifica tu conexión e intenta de nuevo.",
     "deleteTitle": "¿Eliminar esta promoción?",
-    "deleteBody": "Las ventas que ya la usaron conservan su descuento registrado — esto solo evita que se aplique a ventas futuras."
+    "deleteBody": "Las ventas que ya la usaron conservan su descuento registrado — esto solo evita que se aplique a ventas futuras.",
+    "hint": "Las promociones se aplican automáticamente al cobrar; si varias coinciden, gana el mejor precio.",
+    "statusFilterLabel": "Filtrar por estado",
+    "statActive": "Activas ahora",
+    "statScheduled": "Programadas",
+    "statExpired": "Vencidas",
+    "statInactive": "Pausadas",
+    "statNeedsReview": "Requieren revisión"
   },
   "promotionFormDialog": {
     "createTitle": "Nueva promoción",
@@ -620,5 +647,17 @@
       "previewLabel": "Ejemplo: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
       "noPreview": "Ningún producto coincide actualmente con el alcance de esta promoción, así que no hay un ejemplo disponible."
     }
+  },
+  "promotionDialog": {
+    "subtitleCreate": "Define el descuento, elige a qué aplica y cuándo corre. El cobro lo aplica automáticamente.",
+    "subtitleEdit": "Los cambios aplican solo a ventas futuras: las ventas completadas conservan el precio cobrado.",
+    "sectionBasics": "Datos",
+    "sectionBasicsHint": "Un nombre corto que el personal reconozca y cuánto se descuenta.",
+    "sectionScope": "Aplica a",
+    "sectionScopeHint": "A toda la tienda o solo a productos y categorías específicos.",
+    "sectionWhen": "Cuándo",
+    "sectionWhenHint": "Fechas de vigencia y, opcionalmente, días y horario.",
+    "summaryTitle": "Resumen",
+    "cancel": "Cancelar"
   }
 }

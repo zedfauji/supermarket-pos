@@ -26,9 +26,6 @@ const AuditPage = lazy(() => import('../pages/audit'));
 const EditHistoryPage = lazy(() => import('../pages/edit-history'));
 const PurchaseOrdersPage = lazy(() => import('../pages/purchase-orders'));
 const PromotionsPage = lazy(() => import('../pages/promotions'));
-const PromotionWizardPage = lazy(() =>
-  import('@features/manage-promotions').then(m => ({ default: m.PromotionWizardPage }))
-);
 
 function LoadingFallback() {
   return (
@@ -109,22 +106,6 @@ export function Router() {
               element={
                 <PromotionsRoute>
                   <PromotionsPage />
-                </PromotionsRoute>
-              }
-            />
-            <Route
-              path="/promotions/new"
-              element={
-                <PromotionsRoute>
-                  <PromotionWizardPage />
-                </PromotionsRoute>
-              }
-            />
-            <Route
-              path="/promotions/:id/edit"
-              element={
-                <PromotionsRoute>
-                  <PromotionWizardPage />
                 </PromotionsRoute>
               }
             />

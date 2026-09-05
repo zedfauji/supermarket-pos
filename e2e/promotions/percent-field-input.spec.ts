@@ -27,9 +27,18 @@ import { getServiceClient, resetTestState } from '../helpers/supabase';
  * `PromotionFormDialog` this spec originally drove was deleted in 28-01 and
  * replaced by the `PromotionWizardPage` route (`/promotions/new`) — same
  * string-buffered percent field, new page instead of a dialog.
+ *
+ * Rewritten again for Counter UX pass 2, Task 6: the wizard route was
+ * replaced by the single-screen `PromotionDialog` on `/promotions` — same
+ * string-buffered percent field, no page navigation.
  */
 
 const seededPromotionIds: string[] = [];
+// Backstop for the id-based cleanup above: a test that fails between the UI
+// create (line ~80 below) and the id lookup below never pushes to
+// seededPromotionIds, leaking the row. Every name this spec hands to the UI
+// is recorded here up front so afterEach can also sweep by name.
+const uiCreatedPromotionNames: string[] = [];
 
 test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part A)', () => {
   test.beforeEach(async () => {
@@ -38,14 +47,20 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
   });
 
   test.afterEach(async () => {
-    if (seededPromotionIds.length === 0) return;
     const admin = getServiceClient();
-    await admin.from('promotions').delete().in('id', seededPromotionIds);
-    seededPromotionIds.length = 0;
+    if (seededPromotionIds.length > 0) {
+      await admin.from('promotions').delete().in('id', seededPromotionIds);
+      seededPromotionIds.length = 0;
+    }
+    if (uiCreatedPromotionNames.length > 0) {
+      await admin.from('promotions').delete().in('name', uiCreatedPromotionNames);
+      uiCreatedPromotionNames.length = 0;
+    }
   });
 
   test('typing "20" into the percent field displays "20" and saves discount_value=20', async ({ page }) => {
     const promoName = `E2E percent-field-input ${randomUUID()}`;
+    uiCreatedPromotionNames.push(promoName);
 
     await page.goto('/');
     await loginAs(page, 'admin');
@@ -55,7 +70,8 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
     // own duplicate "New Promotion" action button in addition to the page
     // header's — the header one is always first in DOM order.
     await page.getByRole('button', { name: /new promotion/i }).first().click();
-    await expect(page).toHaveURL(/\/promotions\/new$/);
+    const dialog = page.getByRole('dialog', { name: /new promotion/i });
+    await expect(dialog).toBeVisible();
 
     await page.getByLabel(/^name/i).fill(promoName);
 
@@ -69,16 +85,15 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
     // Proves the fix: displays exactly "20", not "020" or stuck at "0".
     await expect(percentInput).toHaveValue('20');
 
-    // Advance through the remaining 3 steps: Scope defaults to store-wide
-    // (no picker interaction needed), Validity defaults to a valid date
-    // range with recurrence off, Review just confirms and creates.
-    await page.getByRole('button', { name: /^next$/i }).click(); // Basics -> Scope
-    await expect(page.getByRole('checkbox', { name: /store-wide/i })).toBeChecked();
-    await page.getByRole('button', { name: /^next$/i }).click(); // Scope -> Validity
-    await expect(page.getByRole('switch', { name: /recurring/i })).toBeVisible();
-    await page.getByRole('button', { name: /^next$/i }).click(); // Validity -> Review
-
+    // Every section is visible at once — Scope defaults to store-wide (no
+    // picker interaction needed) and Validity defaults to a valid date
+    // range with recurrence off, so Create can be clicked directly.
     await page.getByRole('button', { name: /create promotion/i }).click();
+    // Wait for the dialog to actually close (real signal the create mutation
+    // resolved) before reading the DB — the URL never changes in the dialog
+    // flow, so a bare `toHaveURL` check here is a no-op that races the
+    // still-in-flight insert.
+    await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/promotions$/);
 
     const admin = getServiceClient();

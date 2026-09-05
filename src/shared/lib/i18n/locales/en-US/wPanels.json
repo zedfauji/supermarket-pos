@@ -74,6 +74,9 @@
     "amount": "Amount",
     "amountTendered": "Amount tendered",
     "changeDue": "Change due",
+    "quickTenderExact": "Exact",
+    "quickTender": "Tender {{amount}}",
+    "quickTenderGroup": "Quick tender",
     "referenceOptional": "Reference # (optional)",
     "terminalReceiptPlaceholder": "Terminal receipt / auth code",
     "splitRowCharges": "Charges: {{amount}}",
@@ -105,7 +108,22 @@
     "pinRequired": "PIN required to process payment.",
     "verifyPinToProcessPayment": "Verify PIN to Process Payment",
     "methodDateSeparator": "{{method}} · {{date}}",
-    "filterByIdPlaceholder": "Filter by ID…"
+    "filterByIdPlaceholder": "Filter by ID…",
+    "todayTile": "Today",
+    "refundsTodayTile": "Refunds today",
+    "paymentsCount_one": "{{count}} payment",
+    "paymentsCount_other": "{{count}} payments",
+    "filterAll": "All",
+    "filterCash": "Cash",
+    "filterCard": "Card",
+    "filterTransfer": "Transfer",
+    "filterRefunds": "Returns",
+    "filterLabel": "Filter by method",
+    "dayToday": "Today",
+    "dayYesterday": "Yesterday",
+    "refundBadge": "Refund",
+    "awaitingCount_one": "{{count}} waiting",
+    "awaitingCount_other": "{{count}} waiting"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} item",
@@ -253,7 +271,15 @@
     "saleComplete": "Sale complete — {{amount}}",
     "itemCount_one": "{{count}} item",
     "itemCount_other": "{{count}} items",
-    "scanHint": "Scan a barcode or type to search"
+    "scanHint": "Scan a barcode or type to search",
+    "clearCart": "Clear cart",
+    "clearCartTitle": "Clear the cart?",
+    "clearCartBody": "All lines are removed. Nothing has been charged.",
+    "clearCartConfirm": "Clear",
+    "itemsLine_one": "{{count}} item",
+    "itemsLine_other": "{{count}} items",
+    "subtotal": "Subtotal",
+    "scanReady": "Scanner ready"
   },
   "holdSale": {
     "badge": "Sale held",
@@ -300,7 +326,15 @@
     "unitPiece": "Sold by piece",
     "stockCount": "{{count}} in stock",
     "skuLabel": "SKU",
-    "barcodeLabel": "Barcode"
+    "barcodeLabel": "Barcode",
+    "scannedEyebrow": "Scanned product",
+    "perKg": "per kg",
+    "each": "each",
+    "total": "Total",
+    "promoPrice": "Promo price",
+    "wasPrice": "Was {{price}}",
+    "scanAgainHint": "Point the scanner at the barcode again.",
+    "scannedCode": "Scanned code"
   },
   "appShell": {
     "home": "Home",

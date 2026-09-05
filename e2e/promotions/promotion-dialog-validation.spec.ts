@@ -6,16 +6,17 @@ import { requireIntegrationEnv } from '../helpers/requireEnv';
 import { findRoleStaffId, getServiceClient, resetTestState } from '../helpers/supabase';
 
 /**
- * Phase 28 (Promotion Management Redesign), Plan 04 — D-07/D-08/D-09/D-10:
- * proves the full 4-step promotion wizard end to end against the real
- * running app (no mocks, per CLAUDE.md's mandatory-automated-testing
- * policy):
- *  - Basics/Scope/Validity all block forward navigation while invalid,
- *    unblock once valid (D-08, generalized from 28-03's Scope-only gate).
- *  - The Review step's live price preview shows a real, cross-checkable
- *    computed discount (D-09), and the final Create action persists.
- *  - Edit mode allows immediate navigation to any of the 4 steps with zero
- *    forward-gating (D-10).
+ * Phase 28 (Promotion Management Redesign) D-07/D-08/D-09/D-10, updated for
+ * the single-screen `PromotionDialog` (Counter UX pass 2, Task 6) that
+ * replaced the 4-step wizard routes: every section (Basics/Applies
+ * to/When) is visible at once, so there is no forward-navigation gate left
+ * to test — instead:
+ *  - Create is blocked per-section while any section is invalid, with the
+ *    same validation messages the wizard used (D-08).
+ *  - The summary rail's live price preview shows a real, cross-checkable
+ *    computed discount (D-09), and Create persists the promotion.
+ *  - The `?edit=<id>` deep link opens the dialog with every section
+ *    visible immediately — there is no step gating to bypass (D-10).
  */
 
 const seededProductIds: string[] = [];
@@ -61,7 +62,7 @@ async function seedProduct(
   return { productId: product.id as string, categoryId: category.id as string, name };
 }
 
-test.describe('Promotion wizard — forward-navigation gate + live preview (D-07/D-08/D-09/D-10)', () => {
+test.describe('Promotion dialog — validation, live preview, deep links (D-07/D-08/D-09/D-10)', () => {
   test.beforeEach(async ({ page }) => {
     requireIntegrationEnv();
     await resetTestState();
@@ -89,7 +90,7 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
     }
   });
 
-  test('blocks forward navigation on every gated step, shows the live preview, and creates the promotion', async ({
+  test('blocks Create on every invalid section, shows the live preview, and creates the promotion', async ({
     page,
   }) => {
     const admin = getServiceClient();
@@ -99,66 +100,50 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
     uiCreatedPromotionNames.push(name);
 
     await page.goto('/promotions');
-    // .first(): when the promotions table is empty, EmptyState renders its
-    // own duplicate "New Promotion" action button in addition to the page
-    // header's — the header one is always first in DOM order (28-05 fix,
-    // surfaced once the shared local DB genuinely has zero promotion rows).
     await page.getByRole('button', { name: /new promotion/i }).first().click();
-    await expect(page).toHaveURL(/\/promotions\/new$/);
+    const dialog = page.getByRole('dialog', { name: /new promotion/i });
+    await expect(dialog).toBeVisible();
 
-    // D-08: an empty name blocks Next on the Basics step.
-    await page.getByRole('button', { name: /^next$/i }).click();
-    await expect(page.getByText(/name is required/i)).toBeVisible();
+    // Empty name blocks Create.
+    await dialog.getByRole('button', { name: /create promotion/i }).click();
+    await expect(dialog.getByText(/name is required/i)).toBeVisible();
 
-    await page.getByLabel(/^name/i).fill(name);
-    await page.getByLabel(/discount percent/i).fill('20');
-    await page.getByRole('button', { name: /^next$/i }).click();
+    await dialog.getByLabel(/^name/i).fill(name);
+    await dialog.getByLabel(/discount percent/i).fill('20');
 
-    // Now on the Scope step (Store-wide checkbox only renders here).
-    await expect(page.getByRole('checkbox', { name: /store-wide/i })).toBeVisible();
+    // Unchecking store-wide with nothing selected blocks Create.
+    await dialog.getByRole('checkbox', { name: /store-wide/i }).uncheck();
+    await dialog.getByRole('button', { name: /create promotion/i }).click();
+    await expect(dialog.getByText(/select at least one product or category/i)).toBeVisible();
 
-    // D-08: unchecking store-wide with nothing selected blocks Next.
-    await page.getByRole('checkbox', { name: /store-wide/i }).uncheck();
-    await page.getByRole('button', { name: /^next$/i }).click();
-    await expect(page.getByText(/select at least one product or category/i)).toBeVisible();
-
-    // Select the seeded product as the scope target, then advance.
-    await page.getByRole('button', { name: /select products or categories/i }).click();
+    await dialog.getByRole('button', { name: /select products or categories/i }).click();
     await page.getByPlaceholder(/search products or categories/i).fill(product.name);
     await page.getByRole('option', { name: new RegExp(product.name, 'i') }).click();
     await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: /^next$/i }).click();
 
-    // Now on the Validity & Recurrence step.
-    await expect(page.getByRole('switch', { name: /recurring/i })).toBeVisible();
+    // Invalid time window blocks Create.
+    await dialog.getByRole('switch', { name: /recurring/i }).click();
+    await dialog.getByLabel(/start time/i).fill('18:00');
+    await dialog.getByLabel(/end time/i).fill('16:00');
+    await dialog.getByRole('button', { name: /create promotion/i }).click();
+    await expect(dialog.getByText(/end time must be after start time/i)).toBeVisible();
 
-    // D-05: an invalid time window (end <= start) blocks Next.
-    await page.getByRole('switch', { name: /recurring/i }).click();
-    await page.getByLabel(/start time/i).fill('18:00');
-    await page.getByLabel(/end time/i).fill('16:00');
-    await page.getByRole('button', { name: /^next$/i }).click();
-    await expect(page.getByText(/end time must be after start time/i)).toBeVisible();
+    await dialog.getByLabel(/start time/i).fill('00:00');
+    await dialog.getByLabel(/end time/i).fill('23:59');
 
-    // Fix the time window and advance to Review.
-    await page.getByLabel(/start time/i).fill('00:00');
-    await page.getByLabel(/end time/i).fill('23:59');
-    await page.getByRole('button', { name: /^next$/i }).click();
-
-    // D-09: the live preview shows a real, cross-checkable computed
-    // discounted price for the entered configuration (20% off $100 -> $80.00,
-    // independently hand-computed here — not a duplicate of the app's own
-    // evaluateBestPromotion implementation).
+    // Live preview in the summary rail: 20% off $100 -> $80.00.
     const expectedDiscounted = round2(basePrice * (1 - 20 / 100));
-    await expect(page.getByText(new RegExp(expectedDiscounted.toFixed(2)))).toBeVisible();
-    await expect(page.getByText(new RegExp(product.name))).toBeVisible();
+    await expect(dialog.getByText(new RegExp(expectedDiscounted.toFixed(2)))).toBeVisible();
+    await expect(dialog.getByText(new RegExp(product.name)).first()).toBeVisible();
 
-    await page.getByRole('button', { name: /create promotion/i }).click();
+    await dialog.getByRole('button', { name: /create promotion/i }).click();
+    await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/promotions$/);
     await page.getByPlaceholder(/search/i).fill(name);
     await expect(page.getByRole('row', { name: new RegExp(name, 'i') })).toBeVisible();
   });
 
-  test('edit mode allows immediate navigation to any step, no forward-gating (D-10)', async ({
+  test('edit deep link opens the dialog with every section visible (no step gating)', async ({
     page,
   }) => {
     const admin = getServiceClient();
@@ -183,17 +168,14 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
     const promotionId = data.id as string;
     seededPromotionIds.push(promotionId);
 
-    await page.goto(`/promotions/${promotionId}/edit`);
-    await expect(page.getByRole('tab', { name: /review/i })).toBeVisible();
-
-    for (const stepName of [/basics/i, /^scope$/i, /validity/i, /^review$/i]) {
-      await expect(page.getByRole('tab', { name: stepName })).toBeEnabled();
-    }
-
-    // Direct jump straight to Review, bypassing Scope/Validity entirely —
-    // no forward-gating in edit mode (D-10).
-    await page.getByRole('tab', { name: /^review$/i }).click();
-    await expect(page.getByText(name)).toBeVisible();
+    await page.goto(`/promotions?edit=${promotionId}`);
+    const dialog = page.getByRole('dialog', { name: /edit promotion/i });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.getByLabel(/^name/i)).toHaveValue(name);
+    await expect(dialog.getByRole('heading', { name: /basics/i })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /applies to/i })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /when/i })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /save changes/i })).toBeEnabled();
   });
 
   test('edit mode blocks Save when the admin leaves Scope in an invalid state, does not silently wipe an existing scope to store-wide', async ({
@@ -231,28 +213,22 @@ test.describe('Promotion wizard — forward-navigation gate + live preview (D-07
       .insert({ promotion_id: promotionId, product_id: product.productId });
     if (targetErr) throw new Error(targetErr.message);
 
-    await page.goto(`/promotions/${promotionId}/edit`);
-    await page.getByRole('tab', { name: /^scope$/i }).click();
+    await page.goto(`/promotions?edit=${promotionId}`);
+    const dialog = page.getByRole('dialog', { name: /edit promotion/i });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
     // Prefilled from promotion.targets (28-03): store-wide starts unchecked,
     // with the seeded product already selected as a chip.
-    await expect(page.getByRole('checkbox', { name: /store-wide/i })).not.toBeChecked();
+    await expect(dialog.getByRole('checkbox', { name: /store-wide/i })).not.toBeChecked();
 
     // Remove the only selected target without picking a replacement — Scope
     // is now invalid (D-08: "select at least one product or category").
-    await page.getByRole('button', { name: new RegExp(`remove ${product.name}`, 'i') }).click();
+    await dialog.getByRole('button', { name: new RegExp(`remove ${product.name}`, 'i') }).click();
+    await dialog.getByRole('button', { name: /save changes/i }).click();
 
-    // D-10: no forward-gating in edit mode, so this tab click succeeds even
-    // though Scope is invalid.
-    await page.getByRole('tab', { name: /^review$/i }).click();
-    await page.getByRole('button', { name: /save changes/i }).click();
-
-    // Save must be blocked: the admin is bounced back to Scope with the
-    // same validation error Next would have shown, never silently persisted.
-    await expect(page.getByRole('tab', { name: /^scope$/i })).toHaveAttribute(
-      'data-state',
-      'active'
-    );
-    await expect(page.getByText(/select at least one product or category/i)).toBeVisible();
+    // Save must be blocked: the dialog stays open with the same validation
+    // error Create would have shown, never silently persisted.
+    await expect(dialog.getByText(/select at least one product or category/i)).toBeVisible();
+    await expect(dialog).toBeVisible();
 
     // The promotion's original scope (one product, not store-wide) survived
     // untouched server-side — this is the actual data-integrity assertion.

@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { ArrowRight, PauseCircle, ScanBarcode, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Eraser, PauseCircle, ScanBarcode, Search, ShoppingBag } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -28,14 +28,21 @@ import { formatMoney } from '@shared/lib/format';
 import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
-import { Badge, MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';
+import { Badge, ConfirmDialog, MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
 
 export function CheckoutPanel() {
   const { t } = useTranslation('wPanels');
   const weightEntry = useAddLooseWeightItem();
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [editingWeightItemId, setEditingWeightItemId] = useState<string | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
   // Scanning is only safe on the ordinary cart screen: while payment/receipt
   // UI is mounted (paymentOpen) or a weight dialog owns the register
   // (weightEntry.isOpen for add, editingWeightItemId for edit), a scan must
@@ -209,7 +216,7 @@ export function CheckoutPanel() {
   if (paymentOpen) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-muted/30">
-        <div className="mx-auto flex size-full min-h-0 max-w-3xl flex-col border-x border-border bg-background shadow-lg">
+        <div className="mx-auto flex size-full min-h-0 max-w-5xl flex-col border-x border-border bg-background shadow-lg">
           <PaymentForm
             tab={syntheticTab}
             staffId={staffId}
@@ -234,113 +241,179 @@ export function CheckoutPanel() {
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]">
-      {/* Catalogue */}
-      <section className="flex min-h-0 flex-col gap-3 p-4 lg:p-5">
-        <HoldSaleBanner />
-        <ProductGrid
-          weightEntry={weightEntry}
-          search={search}
-          onSearchChange={setSearch}
-          resolvePromotionMatch={resolvePromotionMatch}
-          onSelect={product => {
-            const match = resolvePromotionMatch(product);
-            addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
-          }}
-        />
-      </section>
-
-      {/* Cart */}
-      <aside className="flex min-h-0 flex-col border-l border-border bg-card">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <ShoppingBag className="size-[1.125rem] text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-base font-semibold tracking-tight">
-              {t('checkoutPanel.cartTitle')}
-            </h2>
-          </div>
-          {itemCount > 0 && (
-            <Badge variant="muted" className="tabular-nums">
-              {t('checkoutPanel.itemCount', { count: itemCount })}
-            </Badge>
-          )}
-        </div>
-
-        {items.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-              <ScanBarcode className="size-6" aria-hidden="true" strokeWidth={1.75} />
-            </div>
-            <div className="space-y-1">
-              <p className="font-medium">{t('checkoutPanel.emptyCart')}</p>
-              <p className="text-sm text-muted-foreground text-pretty">
-                {t('checkoutPanel.emptyCartDescription')}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="flex flex-col gap-2 p-3">
-              {items.map(item => (
-                <CartItem
-                  key={item.tempId}
-                  item={item}
-                  onQuantitySet={quantity => {
-                    setLineQuantity(item.tempId, quantity);
-                  }}
-                  onRemove={() => {
-                    removeItem(item.tempId);
-                  }}
-                  onNotesChange={notes => {
-                    setItemNotes(item.tempId, notes);
-                  }}
-                  {...(item.weightGrams != null
-                    ? {
-                        onEditWeight: () => {
-                          setEditingWeightItemId(item.tempId);
-                        },
-                      }
-                    : {})}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-
-        <div className="shrink-0 space-y-3 border-t border-border bg-background/60 p-4 backdrop-blur-sm">
-          <div className="flex items-end justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="block text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                {t('checkoutPanel.cartTotal')}
-              </span>
-              <MoneyDisplay amount={total} size="xl" className="text-[2rem] leading-none" />
-            </div>
-            <POSButton
-              type="button"
-              variant="outline"
-              touchSize="default"
-              disabled={items.length === 0 || isHeld}
-              onClick={holdCart}
-            >
-              <PauseCircle className="size-4" aria-hidden="true" />
-              {t('checkoutPanel.hold')}
-            </POSButton>
-          </div>
-          <POSButton
-            type="button"
-            variant="brand"
-            touchSize="xl"
-            className="w-full justify-between px-6"
-            disabled={items.length === 0 || !staffId || hasPriceConflict}
-            onClick={() => {
-              setPaymentOpen(true);
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-background">
+      {/* Toolbar: search/scan + held sale */}
+      <div className="flex items-center gap-4 border-b border-border bg-card px-4 py-3 lg:px-5">
+        <div className="group/search relative min-w-0 flex-1">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-4 size-[1.125rem] -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-brand"
+            aria-hidden="true"
+          />
+          <Input
+            ref={searchRef}
+            value={search}
+            onChange={event => {
+              setSearch(event.target.value);
             }}
+            placeholder={t('checkoutPanel.searchPlaceholder')}
+            aria-label={t('checkoutPanel.searchPlaceholder')}
+            className="h-12 rounded-xl pr-36 pl-11 text-base shadow-xs"
+            autoComplete="off"
+          />
+          <span
+            className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground sm:flex"
+            aria-hidden="true"
           >
-            <span>{t('checkoutPanel.processPayment')}</span>
-            <ArrowRight className="size-5" aria-hidden="true" />
-          </POSButton>
+            <ScanBarcode className="size-3.5" />
+            {t('checkoutPanel.scanReady')}
+          </span>
         </div>
-      </aside>
+        <HoldSaleBanner />
+      </div>
+
+      <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,28rem)]">
+        {/* Catalogue */}
+        <section className="flex min-h-0 flex-col gap-3 p-4 lg:p-5">
+          <ProductGrid
+            weightEntry={weightEntry}
+            search={search}
+            onSearchChange={setSearch}
+            resolvePromotionMatch={resolvePromotionMatch}
+            onSelect={product => {
+              const match = resolvePromotionMatch(product);
+              addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
+            }}
+          />
+        </section>
+
+        {/* Cart */}
+        <aside className="flex min-h-0 flex-col border-l border-border bg-card">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
+            <div className="flex items-center gap-2.5">
+              <ShoppingBag className="size-[1.125rem] text-muted-foreground" aria-hidden="true" />
+              <h2 className="text-base font-semibold tracking-tight">
+                {t('checkoutPanel.cartTitle')}
+              </h2>
+              {itemCount > 0 && (
+                <Badge variant="muted" className="tabular-nums">
+                  {t('checkoutPanel.itemCount', { count: itemCount })}
+                </Badge>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive"
+              disabled={items.length === 0}
+              onClick={() => {
+                setClearOpen(true);
+              }}
+            >
+              <Eraser className="size-4" aria-hidden="true" />
+              {t('checkoutPanel.clearCart')}
+            </Button>
+          </div>
+
+          {items.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                <ScanBarcode className="size-6" aria-hidden="true" strokeWidth={1.75} />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium">{t('checkoutPanel.emptyCart')}</p>
+                <p className="text-sm text-muted-foreground text-pretty">
+                  {t('checkoutPanel.emptyCartDescription')}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="flex flex-col gap-2 p-3">
+                {items.map(item => (
+                  <CartItem
+                    key={item.tempId}
+                    item={item}
+                    onQuantitySet={quantity => {
+                      setLineQuantity(item.tempId, quantity);
+                    }}
+                    onRemove={() => {
+                      removeItem(item.tempId);
+                    }}
+                    onNotesChange={notes => {
+                      setItemNotes(item.tempId, notes);
+                    }}
+                    {...(item.weightGrams != null
+                      ? {
+                          onEditWeight: () => {
+                            setEditingWeightItemId(item.tempId);
+                          },
+                        }
+                      : {})}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+
+          <div className="shrink-0 space-y-3 border-t border-border bg-background/60 p-4 backdrop-blur-sm">
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <dt>{t('checkoutPanel.subtotal')}</dt>
+                <dd>{t('checkoutPanel.itemsLine', { count: itemCount })}</dd>
+              </div>
+              <div className="flex items-end justify-between">
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  {t('checkoutPanel.cartTotal')}
+                </dt>
+                <dd>
+                  <MoneyDisplay amount={total} size="xl" className="text-[2.5rem] leading-none" />
+                </dd>
+              </div>
+            </dl>
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+              <POSButton
+                type="button"
+                variant="outline"
+                touchSize="xl"
+                disabled={items.length === 0 || isHeld}
+                onClick={holdCart}
+              >
+                <PauseCircle className="size-5" aria-hidden="true" />
+                {t('checkoutPanel.hold')}
+              </POSButton>
+              <POSButton
+                type="button"
+                variant="brand"
+                touchSize="xl"
+                className="justify-between px-6"
+                disabled={items.length === 0 || !staffId || hasPriceConflict}
+                onClick={() => {
+                  setPaymentOpen(true);
+                }}
+              >
+                <span>{t('checkoutPanel.processPayment')}</span>
+                <ArrowRight className="size-5" aria-hidden="true" />
+              </POSButton>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <ConfirmDialog
+        open={clearOpen}
+        title={t('checkoutPanel.clearCartTitle')}
+        description={t('checkoutPanel.clearCartBody')}
+        confirmLabel={t('checkoutPanel.clearCartConfirm')}
+        variant="destructive"
+        onCancel={() => {
+          setClearOpen(false);
+        }}
+        onConfirm={() => {
+          clearCart();
+          setClearOpen(false);
+        }}
+      />
       {editingWeightItem?.weightGrams != null && (
         <WeightEntryDialog
           open

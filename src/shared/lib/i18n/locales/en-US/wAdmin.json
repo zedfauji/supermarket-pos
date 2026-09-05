@@ -290,14 +290,11 @@
     "onHandLevelsTitle": "On-hand levels",
     "onHandLevelsDescription": "Sort columns, filter by category, quick-adjust quantities.",
     "noInventoryRecords": "No inventory records yet.",
-    "noRowsForCategory": "No rows for this category. Choose \"All categories\" to see everything.",
     "changeLogTitle": "Change log",
     "changeLogDescription": "Recent manual and system adjustments (last 100).",
     "columnWhen": "When",
-    "columnProductId": "Product ID",
     "columnDelta": "Delta",
     "columnReason": "Reason",
-    "columnStaffId": "Staff ID",
     "loading": "Loading…",
     "noLogEntries": "No log entries.",
     "batchAdjustmentTitle": "Batch adjustment",
@@ -316,12 +313,35 @@
     "cancel": "Cancel",
     "apply": "Apply",
     "stockTabLabel": "Stock",
+    "catalogTabLabel": "Catalog",
     "openUnitsTabLabel": "Open Units",
     "nearExpiryTabLabel": "Near Expiry",
     "nothingExpiringSoonTitle": "Nothing expiring soon",
     "nothingExpiringSoonBody": "No products are within the near-expiry window.",
     "expiryDate": "Expiry date",
-    "daysRemaining": "Days remaining"
+    "daysRemaining": "Days remaining",
+    "movementsTabLabel": "Movements",
+    "searchPlaceholder": "Search product, SKU or barcode…",
+    "filterAllSkus": "All SKUs",
+    "nearExpiry": "Near expiry",
+    "stockValue": "Stock value (at cost)",
+    "stockValueHint_one": "{{count}} product without a cost price",
+    "stockValueHint_other": "{{count}} products without a cost price",
+    "quickLinksLabel": "Go to",
+    "quickLinkReceive": "Receive shipment",
+    "quickLinkPurchaseOrders": "Purchase orders",
+    "quickLinkCatalog": "Catalog",
+    "noRowsForFilter": "No products match these filters.",
+    "columnProduct": "Product",
+    "columnStaff": "Staff",
+    "reasonFilterLabel": "Filter by reason",
+    "reasonFilterAll": "All reasons",
+    "reasonOptionSale": "Sale",
+    "reasonOptionRefund": "Refund",
+    "noLogEntriesBody": "Stock movements from sales, deliveries and adjustments show up here.",
+    "nearExpiryDescription": "Products inside the near-expiry alert window, soonest first.",
+    "daysBadge_one": "{{count}} day",
+    "daysBadge_other": "{{count}} days"
   },
   "nearExpirySettingsTab": {
     "title": "Near expiry alerts",
@@ -476,8 +496,8 @@
     "previewHelper": "Reflects your unsaved changes exactly as they will print."
   },
   "productsSettingsTab": {
-    "title": "Product Management",
-    "description": "Manage products, categories, modifiers, and modifier groups. Changes are applied immediately after save.",
+    "title": "Catalog",
+    "description": "Products, categories, modifiers and modifier groups sold at this store. Changes apply immediately after save.",
     "tabProducts": "Products",
     "tabCategories": "Categories",
     "tabModifiers": "Modifiers",
@@ -544,7 +564,14 @@
     "emptyBody": "Create a promotion to automatically discount a product, category, or subcategory.",
     "loadError": "Couldn't load promotions. Check your connection and try again.",
     "deleteTitle": "Delete this promotion?",
-    "deleteBody": "Sales that already used it keep their recorded discount — this only stops it from applying to future sales."
+    "deleteBody": "Sales that already used it keep their recorded discount — this only stops it from applying to future sales.",
+    "hint": "Promotions apply automatically at checkout; when several match, the best price wins.",
+    "statusFilterLabel": "Filter by status",
+    "statActive": "Active now",
+    "statScheduled": "Scheduled",
+    "statExpired": "Expired",
+    "statInactive": "Paused",
+    "statNeedsReview": "Needs review"
   },
   "promotionFormDialog": {
     "createTitle": "New Promotion",
@@ -620,5 +647,17 @@
       "previewLabel": "Example: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
       "noPreview": "No product currently matches this promotion's scope, so no live example is available."
     }
+  },
+  "promotionDialog": {
+    "subtitleCreate": "Set the discount, choose what it applies to and when it runs. Checkout applies it automatically.",
+    "subtitleEdit": "Changes apply to future sales only — completed sales keep the price they were charged.",
+    "sectionBasics": "Basics",
+    "sectionBasicsHint": "A short name staff will recognise, and how much comes off.",
+    "sectionScope": "Applies to",
+    "sectionScopeHint": "Store-wide, or only specific products and categories.",
+    "sectionWhen": "When",
+    "sectionWhenHint": "Active dates, plus optional weekdays and hours.",
+    "summaryTitle": "Summary",
+    "cancel": "Cancel"
   }
 }

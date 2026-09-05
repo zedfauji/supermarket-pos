@@ -134,15 +134,15 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
   // =========================================================================
   test('T1: admin sees Settings with Categories and Modifier Groups tabs', async ({ page }) => {
     await loginAs(page, 'admin');
-    await page.goto('/settings');
+    await page.goto('/inventory');
 
-    // Settings heading visible
-    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({ timeout: 20_000 });
+    // Inventory heading visible
+    await expect(page.getByRole('heading', { name: 'Inventory' })).toBeVisible({ timeout: 20_000 });
 
-    // Products tab is visible and accessible
-    await page.getByRole('tab', { name: 'Products' }).click();
+    // Catalog tab is visible and accessible
+    await page.getByRole('tab', { name: 'Catalog' }).click();
 
-    // Sub-tabs inside ProductsSettingsTab
+    // Sub-tabs inside CatalogTab
     await expect(page.getByRole('tab', { name: 'Categories' })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('tab', { name: 'Modifier Groups' })).toBeVisible({ timeout: 10_000 });
 
@@ -154,8 +154,8 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
   // =========================================================================
   test('T2: admin creates root category "Beers" — visible in tree', async ({ page }) => {
     await loginAs(page, 'admin');
-    await page.goto('/settings');
-    await page.getByRole('tab', { name: 'Products' }).click();
+    await page.goto('/inventory');
+    await page.getByRole('tab', { name: 'Catalog' }).click();
     await page.getByRole('tab', { name: 'Categories' }).click();
 
     // Click "Add root category"
@@ -178,8 +178,8 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
   // =========================================================================
   test('T3: admin creates child "Regular" under Beers', async ({ page }) => {
     await loginAs(page, 'admin');
-    await page.goto('/settings');
-    await page.getByRole('tab', { name: 'Products' }).click();
+    await page.goto('/inventory');
+    await page.getByRole('tab', { name: 'Catalog' }).click();
     await page.getByRole('tab', { name: 'Categories' }).click();
 
     // Create root Beers first
@@ -214,8 +214,8 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
   // =========================================================================
   test('T4: admin creates grandchild "Corona" under Regular', async ({ page }) => {
     await loginAs(page, 'admin');
-    await page.goto('/settings');
-    await page.getByRole('tab', { name: 'Products' }).click();
+    await page.goto('/inventory');
+    await page.getByRole('tab', { name: 'Catalog' }).click();
     await page.getByRole('tab', { name: 'Categories' }).click();
 
     // Create root Beers
@@ -267,8 +267,8 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
     page,
   }) => {
     await loginAs(page, 'admin');
-    await page.goto('/settings');
-    await page.getByRole('tab', { name: 'Products' }).click();
+    await page.goto('/inventory');
+    await page.getByRole('tab', { name: 'Catalog' }).click();
     await page.getByRole('tab', { name: 'Categories' }).click();
 
     // Build Beers → Regular → Corona tree
@@ -350,30 +350,22 @@ test.describe('Settings: Category Tree + Combo Flag + Modifier Groups RLS', () =
   });
 
   // =========================================================================
-  // T8: Bartender UI — Settings shows only the role-agnostic Language tab,
-  //     Products/Categories management stays inaccessible (39-07, updated
-  //     from a stale full-page redirect assertion — justified in
-  //     39-07-LEDGER.md). Phase 21 intentionally opened the `/settings` route
-  //     itself to every authenticated role so bartenders can self-service
-  //     their locale (src/widgets/SettingsTabsPanel/index.tsx:33-43, CLAUDE.md
-  //     "i18n / Multi-Language"); the security property this test protects —
-  //     bartenders cannot manage products/categories — is now enforced by
-  //     per-tab RBAC gating (`canManageProducts`) rather than a route redirect.
+  // T8: Cashier UI — the Catalog tab (products/categories management) is
+  //     absent on Inventory (39-07, updated from a stale Settings-tab
+  //     assertion — the catalog moved to Inventory › Catalog in the 2026-09
+  //     UX pass). The security property this test protects — cashiers cannot
+  //     manage products/categories — is enforced by per-tab RBAC gating
+  //     (`canManageProducts`) on the Inventory page.
   // =========================================================================
-  test('T8: bartender sees only the Language tab on Settings — Products tab is absent', async ({
-    page,
-  }) => {
+  test('T8: cashier sees no Catalog tab on Inventory', async ({ page }) => {
     await loginAs(page, 'cashier');
-    await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({ timeout: 15_000 });
+    await page.goto('/inventory');
+    await expect(page.getByRole('heading', { name: /inventory|inventario/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
-    // Self-service Language tab is the only tab a bartender sees, and it is
-    // selected by default.
-    await expect(page.getByRole('tab', { name: 'Idioma' })).toBeVisible({ timeout: 10_000 });
-
-    // Products/Categories management remains gated — no "Products" tab exists
-    // for a bartender.
-    await expect(page.getByRole('tab', { name: 'Products' })).toHaveCount(0);
+    // Catalog management remains gated — no "Catalog" tab exists for a cashier.
+    await expect(page.getByRole('tab', { name: /^(Catalog|Catálogo)$/ })).toHaveCount(0);
 
     await logout(page);
   });

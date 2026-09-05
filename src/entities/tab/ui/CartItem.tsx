@@ -70,7 +70,7 @@ export function CartItem({
   return (
     <div
       data-testid="cart-line"
-      className="group/line flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-xs transition-colors hover:border-border-strong animate-fade-in"
+      className="group/line flex flex-col gap-2 rounded-lg border border-border bg-card p-2.5 shadow-xs transition-colors hover:border-border-strong animate-fade-in"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1 space-y-1">
