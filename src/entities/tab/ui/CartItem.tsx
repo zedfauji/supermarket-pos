@@ -68,7 +68,10 @@ export function CartItem({
       ? Math.round(((item.product.basePrice - item.unitPrice) / item.product.basePrice) * 100)
       : null;
   return (
-    <div className="group/line flex flex-col gap-3 rounded-xl border border-border bg-background p-3 shadow-xs transition-colors hover:border-border-strong animate-fade-in">
+    <div
+      data-testid="cart-line"
+      className="group/line flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-xs transition-colors hover:border-border-strong animate-fade-in"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1 space-y-1">
           <h4 className="truncate text-sm font-semibold tracking-tight">{item.product.name}</h4>

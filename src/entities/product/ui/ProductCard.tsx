@@ -80,7 +80,7 @@ export function ProductCard({ product, category, onSelect, className }: ProductC
           <Badge variant="muted">{t('productCard.outOfStock')}</Badge>
         ) : product.barcode ? (
           <span className="truncate font-mono text-[0.6875rem] text-muted-foreground/80">
-            {product.barcode}
+            {t('productCard.barcodeLabel', { code: product.barcode })}
           </span>
         ) : null}
       </div>

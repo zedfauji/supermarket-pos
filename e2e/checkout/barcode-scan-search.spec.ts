@@ -123,10 +123,11 @@ test.describe('Product search (manual, non-scan)', () => {
       );
     }
 
-    const categoryTab = page.getByRole('button', { name: `Filter by ${category.name}` });
+    // CategoryTabs renders Radix tabs (role="tab", aria-selected), not toggle buttons.
+    const categoryTab = page.getByRole('tab', { name: `Filter by ${category.name}` });
     await categoryTab.focus();
     await categoryTab.press('Enter');
-    await expect(categoryTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(categoryTab).toHaveAttribute('aria-selected', 'true');
     const productCards = page.locator('button[aria-label^="Select "]');
     await expect(productCards).toHaveCount(categoryProducts.length);
 

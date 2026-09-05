@@ -215,7 +215,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
                 <div
                   key={item.orderItemId}
                   className={
-                    'rounded-xl border border-border bg-card p-4 space-y-2 shadow-xs transition-opacity' +
+                    'rounded-lg border border-border bg-card p-3 space-y-2 shadow-xs transition-opacity' +
                     (fullyRefunded ? ' opacity-50' : '')
                   }
                   title={fullyRefunded ? t('processRefund.fullyRefunded') : undefined}
