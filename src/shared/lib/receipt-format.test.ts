@@ -33,16 +33,22 @@ function baseReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
 
 describe('buildThermalReceiptText', () => {
   it('centers bar name and uses Bar fallback when barName empty', () => {
-    const firstLine = buildThermalReceiptText(baseReceipt({ barName: '' }), 'es-MX', defaultReceiptSettings()).split(
-      '\n'
-    )[0];
+    const firstLine = buildThermalReceiptText(
+      baseReceipt({ barName: '' }),
+      'es-MX',
+      defaultReceiptSettings()
+    ).split('\n')[0];
     expect(firstLine?.trim()).toBe('Bar');
     expect(firstLine?.length).toBe(32);
   });
 
   it('wraps long barAddress in 32-char chunks', () => {
     const addr = 'A'.repeat(70);
-    const text = buildThermalReceiptText(baseReceipt({ barAddress: addr }), 'es-MX', defaultReceiptSettings());
+    const text = buildThermalReceiptText(
+      baseReceipt({ barAddress: addr }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
     expect(text).toContain('A'.repeat(32));
     expect(text).toContain('A'.repeat(6));
   });
@@ -203,8 +209,80 @@ describe('buildThermalReceiptText', () => {
     expect(text).not.toContain('1× Jamón');
   });
 
+  it('uses printer-safe ASCII x separators for unit and weighted item lines', () => {
+    const text = buildThermalReceiptText(
+      baseReceipt({
+        items: [
+          { name: 'Cerveza', quantity: 2, unitPrice: 45, lineTotal: 90 },
+          { name: 'Jamón', quantity: 1, unitPrice: 37.5, lineTotal: 37.5, weightGrams: 375 },
+        ],
+      }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
+
+    expect(text).toContain('2x Cerveza');
+    expect(text).toContain('0.375kg x Jamón');
+    expect(text).not.toContain('×');
+  });
+
+  it('prints both a line-item promotion and a sale-level discount', () => {
+    const promotedItem: ReceiptData['items'][number] = {
+      name: 'Cerveza',
+      quantity: 2,
+      unitPrice: 45,
+      lineTotal: 90,
+      promotionId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      discountRate: 10,
+      discountAmount: 10,
+    };
+    const text = buildThermalReceiptText(
+      baseReceipt({
+        items: [promotedItem],
+        subtotal: 90,
+        total: 85,
+        discountAmount: 5,
+        discountScope: 'all',
+        discountType: 'fixed',
+        discountValue: 5,
+      }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
+
+    expect(text).toMatch(/Promoción.*10%.*-.*\$10\.00/);
+    expect(text).toMatch(/Descuento.*-.*\$5\.00/);
+  });
+
+  it('omits promotion and sale-discount lines when their amounts are zero or absent', () => {
+    const text = buildThermalReceiptText(
+      baseReceipt({
+        items: [
+          {
+            name: 'Cerveza',
+            quantity: 1,
+            unitPrice: 45,
+            lineTotal: 45,
+            discountRate: 0,
+            discountAmount: 0,
+          },
+        ],
+        discountAmount: 0,
+      }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
+
+    expect(text).not.toContain('Promoción');
+    expect(text).not.toContain('Descuento');
+  });
+
   it('includes receipt number footer', () => {
-    const text = buildThermalReceiptText(baseReceipt({ receiptNumber: 'ABCD12' }), 'es-MX', defaultReceiptSettings());
+    const text = buildThermalReceiptText(
+      baseReceipt({ receiptNumber: 'ABCD12' }),
+      'es-MX',
+      defaultReceiptSettings()
+    );
     expect(text).toContain('#ABCD12');
   });
 
@@ -311,9 +389,7 @@ describe('buildThermalReceiptText', () => {
     expect(text).toContain('Food');
     expect(text).toContain('Drinks');
     expect(text).toContain('  + Extra cheese');
-    const maxByteWidth = Math.max(
-      ...text.split('\n').map(l => new TextEncoder().encode(l).length)
-    );
+    const maxByteWidth = Math.max(...text.split('\n').map(l => new TextEncoder().encode(l).length));
     expect(maxByteWidth).toBeLessThanOrEqual(32);
   });
 
@@ -345,24 +421,44 @@ describe('buildThermalReceiptText', () => {
   // ---------------------------------------------------------------------
 
   it('settings.paperWidthChars=40 produces a divider() of exactly 40 UTF-8 bytes, not 32', () => {
-    const text = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings({ paperWidthChars: 40 }));
+    const text = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings({ paperWidthChars: 40 })
+    );
     const dividerLine = text.split('\n').find(l => l.startsWith('-'));
     expect(dividerLine).toBeDefined();
     expect(new TextEncoder().encode(dividerLine ?? '').length).toBe(40);
   });
 
   it('settings.showCashierName toggles the cashier line', () => {
-    const withCashier = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings({ showCashierName: true }));
+    const withCashier = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings({ showCashierName: true })
+    );
     expect(withCashier).toContain('Luis');
-    const withoutCashier = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings({ showCashierName: false }));
+    const withoutCashier = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings({ showCashierName: false })
+    );
     expect(withoutCashier).not.toContain('Cajero');
     expect(withoutCashier).not.toContain('Luis');
   });
 
   it('settings.showCustomerName toggles the customer line', () => {
-    const withCustomer = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings({ showCustomerName: true }));
+    const withCustomer = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings({ showCustomerName: true })
+    );
     expect(withCustomer).toContain('Ana');
-    const withoutCustomer = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings({ showCustomerName: false }));
+    const withoutCustomer = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings({ showCustomerName: false })
+    );
     expect(withoutCustomer).not.toContain('Cliente');
     expect(withoutCustomer).not.toContain('Ana');
   });
@@ -440,8 +536,8 @@ describe('buildThermalReceiptText', () => {
       'es-MX',
       defaultReceiptSettings({ footerText: footer })
     );
-    const footerLines = text.split('\n').filter((l) => l.includes('á'));
-    const rejoined = footerLines.map((l) => l.trimEnd()).join('');
+    const footerLines = text.split('\n').filter(l => l.includes('á'));
+    const rejoined = footerLines.map(l => l.trimEnd()).join('');
     expect(rejoined).toBe(footer);
   });
 
@@ -474,7 +570,11 @@ describe('buildThermalReceiptText', () => {
       'es-MX',
       defaultReceiptSettings({ footerText: '' })
     );
-    const withFooterUnset = buildThermalReceiptText(baseReceipt(), 'es-MX', defaultReceiptSettings());
+    const withFooterUnset = buildThermalReceiptText(
+      baseReceipt(),
+      'es-MX',
+      defaultReceiptSettings()
+    );
     expect(withoutFooter.split('\n').length).toBe(withFooterUnset.split('\n').length);
   });
 });
@@ -648,8 +748,8 @@ describe('buildPreChequeText', () => {
       }),
       'es-MX'
     );
-    expect(text).toContain('Tequila');
-    expect(text).toContain('3');
+    expect(text).toContain('3x Tequila');
+    expect(text).not.toContain('×');
   });
 
   // ---------------------------------------------------------------------

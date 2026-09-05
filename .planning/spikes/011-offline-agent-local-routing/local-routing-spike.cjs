@@ -34,6 +34,27 @@ function executeReadOnlyTool(request) {
   return todaySales;
 }
 
+function isSpanish(text) {
+  return /\b(muestra|ventas|hoy|las|ayer)\b|[¿¡]/iu.test(text);
+}
+
+function unsupportedDateAnswer(userQuery) {
+  if (!/\b(yesterday|ayer)\b/iu.test(userQuery)) return null;
+  return isSpanish(userQuery)
+    ? 'Solo puedo mostrar las ventas de hoy.'
+    : "I can only show today's sales.";
+}
+
+function formatAnswer(userQuery, { grossCents, transactions, currency }) {
+  const spanish = isSpanish(userQuery);
+  const amount = new Intl.NumberFormat(spanish ? 'es-MX' : 'en-US', {
+    style: 'currency', currency, currencyDisplay: 'code',
+  }).format(grossCents / 100);
+  return spanish
+    ? `Las ventas brutas de hoy son ${amount}, con ${transactions} transacciones.`
+    : `Today's gross sales are ${amount}, across ${transactions} transactions.`;
+}
+
 async function localChat(messages, format) {
   const start = performance.now();
   const response = await fetch(endpoint, {
@@ -54,22 +75,25 @@ function toolPrompt(text) {
 
 async function run() {
   const userQuery = process.env.SPIKE_QUERY || 'Show today\'s sales.';
+  const refusal = unsupportedDateAnswer(userQuery);
+  if (refusal) {
+    console.log(JSON.stringify({ model, request: null, result: null, answer: refusal, metrics: {} }, null, 2));
+    return;
+  }
   const requestResult = await localChat(toolPrompt(userQuery), toolSchema);
   const request = parseToolRequest(JSON.parse(requestResult.content));
   const result = executeReadOnlyTool(request);
-  const answerResult = await localChat([
-    { role: 'system', content: 'Reply as one plain-text sentence in the user\'s language. Use only the result. State gross sales, transaction count, currency, and date. Never output JSON or Markdown.' },
-    { role: 'user', content: `User asked: ${userQuery}. Tool result: ${JSON.stringify(result)}` },
-  ]);
-  const tokensPerSecond = answerResult.evalCount && answerResult.evalDurationNs
-    ? Number((answerResult.evalCount / (answerResult.evalDurationNs / 1e9)).toFixed(2)) : null;
-  console.log(JSON.stringify({ model, request, result, answer: answerResult.content, metrics: { toolRequestMs: requestResult.elapsedMs, answerMs: answerResult.elapsedMs, answerTokensPerSecond: tokensPerSecond } }, null, 2));
+  console.log(JSON.stringify({ model, request, result, answer: formatAnswer(userQuery, result), metrics: { toolRequestMs: requestResult.elapsedMs } }, null, 2));
 }
 
 function selfCheck() {
   assert.deepEqual(parseToolRequest({ tool: 'reports.today_sales', arguments: { date: 'today' } }), { tool: 'reports.today_sales', arguments: { date: 'today' } });
   assert.throws(() => parseToolRequest({ tool: 'sql.query', arguments: { sql: 'select 1' } }));
   assert.throws(() => parseToolRequest({ tool: 'reports.today_sales', arguments: { date: 'yesterday' } }));
+  assert.equal(formatAnswer('Show today\'s sales.', todaySales), "Today's gross sales are USD 1,234.56, across 37 transactions.");
+  assert.equal(formatAnswer('Muestra las ventas de hoy.', todaySales), 'Las ventas brutas de hoy son USD 1,234.56, con 37 transacciones.');
+  assert.equal(unsupportedDateAnswer('Show yesterday\'s sales.'), "I can only show today's sales.");
+  assert.equal(unsupportedDateAnswer('Muestra las ventas de ayer.'), 'Solo puedo mostrar las ventas de hoy.');
   console.log('local-routing-spike self-check passed');
 }
 
@@ -78,4 +102,4 @@ if (require.main === module) {
   else run().catch((error) => { console.error(error); process.exitCode = 1; });
 }
 
-module.exports = { parseToolRequest, executeReadOnlyTool };
+module.exports = { parseToolRequest, executeReadOnlyTool, formatAnswer, unsupportedDateAnswer };

@@ -52,7 +52,8 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
       .select('id')
       .eq('email', STAFF_EMAIL)
       .maybeSingle();
-    if (!staffProfile?.id) throw new Error(`No "${STAFF_EMAIL}" profile found — run npm run setup:dev`);
+    if (!staffProfile?.id)
+      throw new Error(`No "${STAFF_EMAIL}" profile found — run npm run setup:dev`);
     STAFF_ID = staffProfile.id;
 
     const { data: product } = await testDb.from('products').select('id').limit(1).maybeSingle();
@@ -129,6 +130,8 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
         quantity: 2,
         unit_price: 10,
         modifier_price_delta: 0,
+        discount_rate: 10,
+        discount_amount: 2,
       },
       {
         id: IT_ITEM_VOIDED,
@@ -157,6 +160,10 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
         tendered_amount: 20,
         processed_by: STAFF_ID,
         idempotency_key: `it-receipt-single-${IT_TAB_SINGLE}`,
+        discount_scope: 'all',
+        discount_type: 'fixed',
+        discount_value: 1,
+        discount_amount: 1,
       },
       {
         tab_id: IT_TAB_SPLIT,
@@ -186,7 +193,10 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
       .from('order_items')
       .delete()
       .in('id', [IT_ITEM_SINGLE, IT_ITEM_VOIDED, IT_ITEM_SPLIT]);
-    await testDb.from('orders').delete().in('id', [IT_ORDER_SINGLE, IT_ORDER_VOIDED, IT_ORDER_SPLIT]);
+    await testDb
+      .from('orders')
+      .delete()
+      .in('id', [IT_ORDER_SINGLE, IT_ORDER_VOIDED, IT_ORDER_SPLIT]);
     await testDb.from('tabs').delete().in('id', [IT_TAB_SINGLE, IT_TAB_SPLIT]);
     await testDb.from('caja_sessions').delete().eq('id', IT_CAJA_ID);
     await testDb.from('shifts').delete().eq('id', IT_SHIFT_ID);
@@ -210,6 +220,12 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
     expect(receipt.items[0]?.quantity).toBe(2);
     expect(receipt.items[0]?.unitPrice).toBe(10);
     expect(receipt.items[0]?.lineTotal).toBe(20);
+    expect(receipt.items[0]?.discountRate).toBe(10);
+    expect(receipt.items[0]?.discountAmount).toBe(2);
+    expect(receipt.discountScope).toBe('all');
+    expect(receipt.discountType).toBe('fixed');
+    expect(receipt.discountValue).toBe(1);
+    expect(receipt.discountAmount).toBe(1);
     expect(receipt.tenderedAmount).toBe(20);
     expect(receipt.changeAmount).toBe(0);
     expect(receipt.tenders).toHaveLength(1);
@@ -244,7 +260,11 @@ describe('useReceiptDataForPayment — integration (real Supabase)', () => {
     // live billing settings (CR-01), so derive the expectation the same way
     // fetchReceiptDataForPayment does rather than hardcoding a pre-tax-split
     // value.
-    const { data: billingRow } = await testDb.from('settings').select('value').eq('key', 'billing').maybeSingle();
+    const { data: billingRow } = await testDb
+      .from('settings')
+      .select('value')
+      .eq('key', 'billing')
+      .maybeSingle();
     const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
     const expected = decomposeTax(50, billing?.taxRatePercent ?? 16, billing?.taxInclusive ?? true);
     expect(receipt.total).toBe(50);

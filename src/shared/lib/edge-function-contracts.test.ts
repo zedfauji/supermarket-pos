@@ -58,6 +58,32 @@ describe('ReceiptDataSchema — Sprint 2 discount fields', () => {
     const r = ReceiptDataSchema.safeParse(validReceiptData());
     expect(r.success).toBe(true);
   });
+
+  it('accepts persisted promotion snapshots on receipt items', () => {
+    const r = ReceiptDataSchema.safeParse({
+      ...validReceiptData(),
+      items: [
+        {
+          name: 'Beer',
+          quantity: 1,
+          unitPrice: 8,
+          lineTotal: 8,
+          promotionId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          discountRate: 20,
+          discountAmount: 2,
+        },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects a negative receipt-item promotion amount', () => {
+    const r = ReceiptDataSchema.safeParse({
+      ...validReceiptData(),
+      items: [{ name: 'Beer', quantity: 1, unitPrice: 10, lineTotal: 10, discountAmount: -1 }],
+    });
+    expect(r.success).toBe(false);
+  });
 });
 
 describe('AgentProxyRequestSchema', () => {
@@ -344,7 +370,10 @@ describe('AdminResetPinRequestSchema / AdminResetPinSuccessSchema / mapAdminRese
   });
 
   it('rejects a non-uuid targetStaffId', () => {
-    const r = AdminResetPinRequestSchema.safeParse({ targetStaffId: 'not-a-uuid', newPin: '123456' });
+    const r = AdminResetPinRequestSchema.safeParse({
+      targetStaffId: 'not-a-uuid',
+      newPin: '123456',
+    });
     expect(r.success).toBe(false);
   });
 
