@@ -566,7 +566,14 @@
     "emptyBody": "Create a promotion to automatically discount a product, category, or subcategory.",
     "loadError": "Couldn't load promotions. Check your connection and try again.",
     "deleteTitle": "Delete this promotion?",
-    "deleteBody": "Sales that already used it keep their recorded discount — this only stops it from applying to future sales."
+    "deleteBody": "Sales that already used it keep their recorded discount — this only stops it from applying to future sales.",
+    "hint": "Promotions apply automatically at checkout; when several match, the best price wins.",
+    "statusFilterLabel": "Filter by status",
+    "statActive": "Active now",
+    "statScheduled": "Scheduled",
+    "statExpired": "Expired",
+    "statInactive": "Paused",
+    "statNeedsReview": "Needs review"
   },
   "promotionFormDialog": {
     "createTitle": "New Promotion",
@@ -642,5 +649,17 @@
       "previewLabel": "Example: {{productName}} — {{originalPrice}} → {{discountedPrice}}",
       "noPreview": "No product currently matches this promotion's scope, so no live example is available."
     }
+  },
+  "promotionDialog": {
+    "subtitleCreate": "Set the discount, choose what it applies to and when it runs. Checkout applies it automatically.",
+    "subtitleEdit": "Changes apply to future sales only — completed sales keep the price they were charged.",
+    "sectionBasics": "Basics",
+    "sectionBasicsHint": "A short name staff will recognise, and how much comes off.",
+    "sectionScope": "Applies to",
+    "sectionScopeHint": "Store-wide, or only specific products and categories.",
+    "sectionWhen": "When",
+    "sectionWhenHint": "Active dates, plus optional weekdays and hours.",
+    "summaryTitle": "Summary",
+    "cancel": "Cancel"
   }
 }

@@ -1,9 +1,9 @@
 /* eslint-disable import/order, @typescript-eslint/no-confusing-void-expression */
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Percent, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   usePromotions,
@@ -11,8 +11,11 @@ import {
   useMutationDeletePromotion,
   type Promotion,
 } from '@entities/promotion';
+import { PromotionDialog } from '@features/manage-promotions';
+import { cn } from '@shared/lib/utils';
 import {
   Badge,
+  Button,
   ConfirmDialog,
   DataTable,
   EmptyState,
@@ -24,7 +27,9 @@ import {
 } from '@shared/ui';
 import type { StatusBadgeProps } from '@shared/ui';
 
-function derivePromotionStatus(p: Promotion): StatusBadgeProps['status'] {
+type PromotionStatus = 'promo_active' | 'promo_scheduled' | 'promo_expired' | 'promo_inactive';
+
+function derivePromotionStatus(p: Promotion): PromotionStatus {
   const now = new Date();
   if (!p.active) return 'promo_inactive';
   if (p.startsAt > now) return 'promo_scheduled';
@@ -35,13 +40,18 @@ function derivePromotionStatus(p: Promotion): StatusBadgeProps['status'] {
 export default function PromotionsPage() {
   const { t } = useTranslation('pages');
   const { t: tAdmin } = useTranslation('wAdmin');
-  const navigate = useNavigate();
   const { data: fetchedPromotions, isLoading, resultError } = usePromotions();
   const updateMutation = useMutationUpdatePromotion();
   const deleteMutation = useMutationDeletePromotion();
 
   const [lastGoodPromotions, setLastGoodPromotions] = useState<Promotion[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ open: boolean; promotion: Promotion | null }>({
+    open: false,
+    promotion: null,
+  });
+  const [statusFilter, setStatusFilter] = useState<StatusBadgeProps['status'] | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- fetch-failure backstop:
@@ -59,9 +69,50 @@ export default function PromotionsPage() {
   // clearing the table to blank (must_haves backstop truth).
   const promotions = fetchedPromotions ?? lastGoodPromotions;
 
-  function openCreateDialog() {
-    void navigate('/promotions/new');
+  const wantsNew = searchParams.get('new') === '1';
+  const editId = searchParams.get('edit');
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- deep-link → dialog sync */
+    if (wantsNew) setDialog({ open: true, promotion: null });
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [wantsNew]);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- deep-link → dialog sync */
+    if (!editId) return;
+    const target = promotions.find(p => p.id === editId);
+    if (target) setDialog({ open: true, promotion: target });
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [editId, promotions]);
+
+  function closeDialog() {
+    setDialog({ open: false, promotion: null });
+    if (wantsNew || editId) setSearchParams({}, { replace: true });
   }
+
+  function openCreateDialog() {
+    setDialog({ open: true, promotion: null });
+  }
+
+  const counts = useMemo(() => {
+    const c = {
+      promo_active: 0,
+      promo_scheduled: 0,
+      promo_expired: 0,
+      promo_inactive: 0,
+      needsReview: 0,
+    };
+    for (const p of promotions) {
+      c[derivePromotionStatus(p)] += 1;
+      if (p.needsReview) c.needsReview += 1;
+    }
+    return c;
+  }, [promotions]);
+
+  const visiblePromotions = statusFilter
+    ? promotions.filter(p => derivePromotionStatus(p) === statusFilter)
+    : promotions;
 
   const columns: ColumnDef<Promotion>[] = [
     {
@@ -143,7 +194,7 @@ export default function PromotionsPage() {
               aria-label={tAdmin('promotionsListPanel.edit')}
               onClick={e => {
                 e.stopPropagation();
-                void navigate(`/promotions/${p.id}/edit`);
+                setDialog({ open: true, promotion: p });
               }}
             >
               <Pencil className="size-4" />
@@ -175,9 +226,60 @@ export default function PromotionsPage() {
         </POSButton>
       }
     >
+      <p className="text-sm text-muted-foreground">{tAdmin('promotionsListPanel.hint')}</p>
+
+      <div
+        className="flex flex-wrap gap-3"
+        role="group"
+        aria-label={tAdmin('promotionsListPanel.statusFilterLabel')}
+      >
+        {(
+          /* eslint-disable i18next/no-literal-string -- status keys + Tailwind
+             class lookup table, not UI copy (labels are t()-wrapped above) */
+          [
+            ['promo_active', tAdmin('promotionsListPanel.statActive'), 'text-success-strong'],
+            ['promo_scheduled', tAdmin('promotionsListPanel.statScheduled'), 'text-brand-strong'],
+            ['promo_expired', tAdmin('promotionsListPanel.statExpired'), 'text-destructive'],
+            ['promo_inactive', tAdmin('promotionsListPanel.statInactive'), 'text-muted-foreground'],
+          ] as const
+          /* eslint-enable i18next/no-literal-string */
+        ).map(([status, label, tone]) => (
+          <Button
+            key={status}
+            type="button"
+            variant="ghost"
+            aria-pressed={statusFilter === status}
+            onClick={() => {
+              setStatusFilter(prev => (prev === status ? null : status));
+            }}
+            className={cn(
+              'h-auto min-w-[9rem] flex-col items-start gap-1 rounded-xl border border-border bg-card px-4 py-3 text-left shadow-xs hover:border-border-strong hover:bg-card',
+              statusFilter === status && 'border-brand ring-2 ring-brand/30'
+            )}
+          >
+            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              {label}
+            </span>
+            <span className={cn('text-numeric text-2xl font-semibold', tone)}>
+              {counts[status]}
+            </span>
+          </Button>
+        ))}
+        {counts.needsReview > 0 && (
+          <div className="flex min-w-[9rem] flex-col gap-1 rounded-xl border border-warning/40 bg-warning-soft px-4 py-3">
+            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-warning-strong uppercase">
+              {tAdmin('promotionsListPanel.statNeedsReview')}
+            </span>
+            <span className="text-numeric text-2xl font-semibold text-warning-strong">
+              {counts.needsReview}
+            </span>
+          </div>
+        )}
+      </div>
+
       <DataTable
         columns={columns}
-        data={promotions}
+        data={visiblePromotions}
         isLoading={isLoading}
         searchable
         emptyState={
@@ -202,6 +304,14 @@ export default function PromotionsPage() {
         onConfirm={() => {
           if (deleteId) void deleteMutation.mutateAsync(deleteId);
           setDeleteId(null);
+        }}
+      />
+
+      <PromotionDialog
+        open={dialog.open}
+        promotion={dialog.promotion}
+        onOpenChange={open => {
+          if (!open) closeDialog();
         }}
       />
     </PageContainer>
