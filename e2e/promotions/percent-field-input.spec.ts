@@ -34,6 +34,11 @@ import { getServiceClient, resetTestState } from '../helpers/supabase';
  */
 
 const seededPromotionIds: string[] = [];
+// Backstop for the id-based cleanup above: a test that fails between the UI
+// create (line ~80 below) and the id lookup below never pushes to
+// seededPromotionIds, leaking the row. Every name this spec hands to the UI
+// is recorded here up front so afterEach can also sweep by name.
+const uiCreatedPromotionNames: string[] = [];
 
 test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part A)', () => {
   test.beforeEach(async () => {
@@ -42,14 +47,20 @@ test.describe('Promotion percent-discount field accepts typed input (G-27-8 Part
   });
 
   test.afterEach(async () => {
-    if (seededPromotionIds.length === 0) return;
     const admin = getServiceClient();
-    await admin.from('promotions').delete().in('id', seededPromotionIds);
-    seededPromotionIds.length = 0;
+    if (seededPromotionIds.length > 0) {
+      await admin.from('promotions').delete().in('id', seededPromotionIds);
+      seededPromotionIds.length = 0;
+    }
+    if (uiCreatedPromotionNames.length > 0) {
+      await admin.from('promotions').delete().in('name', uiCreatedPromotionNames);
+      uiCreatedPromotionNames.length = 0;
+    }
   });
 
   test('typing "20" into the percent field displays "20" and saves discount_value=20', async ({ page }) => {
     const promoName = `E2E percent-field-input ${randomUUID()}`;
+    uiCreatedPromotionNames.push(promoName);
 
     await page.goto('/');
     await loginAs(page, 'admin');

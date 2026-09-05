@@ -133,6 +133,18 @@ export async function resetTestState(): Promise<void> {
   if (pinnedIds.length > 0) {
     await admin.from('profiles').update({ locale: 'en-US' }).in('id', pinnedIds);
   }
+
+  // A promotion spec that fails between "create via UI" and "look up the new
+  // row's id" leaves that row behind — its own afterEach only knows ids it
+  // captured, so a UI-created row it never saw stays LIVE forever. A single
+  // leaked store-wide promotion discounts every sale in every other spec
+  // (found live in this session: two leaked "E2E percent-field-input <uuid>"
+  // rows broke refund.spec.ts, reopen-closed-ticket.spec.ts and
+  // promotion-deleted-mid-cart.spec.ts with AMOUNT_MISMATCH/stale-price
+  // failures). Sweep any row named by the "E2E " test-data convention on
+  // every reset; promotion_targets cascades on delete (verified via a select
+  // count after this ran locally — zero orphaned targets).
+  await admin.from('promotions').delete().like('name', 'E2E %');
 }
 
 /**
