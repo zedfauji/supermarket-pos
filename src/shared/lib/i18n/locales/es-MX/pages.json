@@ -28,6 +28,11 @@
       "payments": "Pagos",
       "refunds": "Reembolsos",
       "bankTransfers": "Transferencias bancarias"
+    },
+    "descriptions": {
+      "payments": "Cobra tickets en espera y revisa cada pago completado",
+      "refunds": "Todos los reembolsos procesados en esta terminal",
+      "bankTransfers": "Confirma o disputa transferencias bancarias pendientes"
     }
   },
   "rbac": {

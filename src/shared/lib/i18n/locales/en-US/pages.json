@@ -28,6 +28,11 @@
       "payments": "Payments",
       "refunds": "Refunds",
       "bankTransfers": "Bank Transfers"
+    },
+    "descriptions": {
+      "payments": "Charge waiting tickets and review every completed payment",
+      "refunds": "Every refund processed on this terminal",
+      "bankTransfers": "Confirm or dispute pending bank transfers"
     }
   },
   "rbac": {
