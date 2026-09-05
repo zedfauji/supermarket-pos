@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -387,6 +387,104 @@ describe('PaymentPane', () => {
     expect(screen.getByTestId('payment-row-payment-aaa')).toBeInTheDocument();
     expect(screen.queryByTestId('payment-row-payment-bbb')).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText(/filter by id/i)).toHaveValue('payment-aaa');
+  });
+
+  // ── 12. Day-grouped history: today/refund tiles, ordering, method filters ──
+  describe('payment history: tiles, day ordering, and method filters', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    function loadFixture() {
+      const cash1 = makePayment({
+        id: 'payment-cash-1',
+        tabId: 'tab-1',
+        amount: 100,
+        method: 'cash',
+        processedAt: new Date(),
+      });
+      const cash2 = makePayment({
+        id: 'payment-cash-2',
+        tabId: 'tab-2',
+        amount: 50,
+        method: 'cash',
+        processedAt: new Date(),
+      });
+      const card1 = makePayment({
+        id: 'payment-card-1',
+        tabId: 'tab-3',
+        amount: 30,
+        method: 'card',
+        processedAt: yesterday,
+      });
+      const refund1 = makePayment({
+        id: 'payment-refund-1',
+        tabId: 'tab-1',
+        amount: -20,
+        method: 'cash',
+        isRefund: true,
+        processedAt: new Date(),
+      });
+      mockPaymentsLoaded([cash1, cash2, card1, refund1]);
+      return { cash1, cash2, card1, refund1 };
+    }
+
+    it('shows the Today tile sum/count for non-refund payments and the Refunds-today tile for refunds', () => {
+      loadFixture();
+      renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      // Scope each tile's assertions to its own card — individual payment
+      // rows below render the same "20.00" text as the refund tile's total,
+      // so a page-wide getByText would be ambiguous.
+      const todayTile = screen.getByText('Today', { selector: 'p' }).closest('div');
+      const refundTile = screen.getByText('Refunds today', { selector: 'p' }).closest('div');
+      expect(todayTile).not.toBeNull();
+      expect(refundTile).not.toBeNull();
+
+      expect(within(todayTile as HTMLElement).getByText(/150\.00/)).toBeInTheDocument();
+      expect(within(todayTile as HTMLElement).getByText(/2 payments/i)).toBeInTheDocument();
+      expect(within(refundTile as HTMLElement).getByText(/20\.00/)).toBeInTheDocument();
+      expect(within(refundTile as HTMLElement).getByText(/1 payment\b/i)).toBeInTheDocument();
+    });
+
+    it('renders a Today day header before a Yesterday day header', () => {
+      loadFixture();
+      renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      // Scope by accessible name to the two day-group headers specifically —
+      // the left panel's empty-state ("No tabs waiting for payment") is also
+      // an <h3> (via the shared EmptyState component) and would otherwise be
+      // picked up as headings[0].
+      const headings = screen.getAllByRole('heading', { level: 3, name: /^(today|yesterday)$/i });
+      expect(headings).toHaveLength(2);
+      expect(headings[0]).toHaveTextContent(/today/i);
+      expect(headings[1]).toHaveTextContent(/yesterday/i);
+    });
+
+    it('clicking the Refunds filter chip shows only the refund row', async () => {
+      const user = userEvent.setup();
+      const { cash1, cash2, refund1 } = loadFixture();
+      renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      const refundsChip = screen.getByRole('button', { name: 'Refunds', pressed: false });
+      await user.click(refundsChip);
+
+      expect(screen.getByRole('button', { name: 'Refunds', pressed: true })).toBeInTheDocument();
+      expect(screen.getByTestId(`payment-row-${refund1.id}`)).toBeInTheDocument();
+      expect(screen.queryByTestId(`payment-row-${cash1.id}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`payment-row-${cash2.id}`)).not.toBeInTheDocument();
+    });
+
+    it('clicking the Card filter chip shows only the card row', async () => {
+      const user = userEvent.setup();
+      const { cash1, cash2, card1, refund1 } = loadFixture();
+      renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      await user.click(screen.getByRole('button', { name: 'Card', pressed: false }));
+
+      expect(screen.getByTestId(`payment-row-${card1.id}`)).toBeInTheDocument();
+      expect(screen.queryByTestId(`payment-row-${cash1.id}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`payment-row-${cash2.id}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`payment-row-${refund1.id}`)).not.toBeInTheDocument();
+    });
   });
 
 });

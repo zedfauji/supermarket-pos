@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { PaymentForm } from '@widgets/PaymentModal';
@@ -174,8 +174,13 @@ function PaymentHistoryList({
     if (method === 'rappi') return labels?.rappi ?? t('paymentForm.defaultLabelRappi');
     return tOrders('checkoutSale.bankTransferMethodLabel');
   };
-  const timeFmt = new Intl.DateTimeFormat(i18n.language, { hour: 'numeric', minute: '2-digit' });
-  const dayFmt = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' });
+  const { time: timeFmt, day: dayFmt } = useMemo(
+    () => ({
+      time: new Intl.DateTimeFormat(i18n.language, { hour: 'numeric', minute: '2-digit' }),
+      day: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' }),
+    }),
+    [i18n.language]
+  );
   const todayKey = dayKey(new Date());
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -202,12 +207,14 @@ function PaymentHistoryList({
   const todayRefunds = todays.filter(p => p.isRefund);
   const sum = (list: Payment[]) => Math.round(list.reduce((s, p) => s + p.amount, 0) * 100) / 100;
 
-  const visiblePayments = payments.filter(p => {
-    if (filterValue && !p.id.includes(filterValue.trim())) return false;
-    if (methodFilter === 'refunds') return p.isRefund;
-    if (methodFilter === 'all') return true;
-    return !p.isRefund && p.method === methodFilter;
-  });
+  const visiblePayments = [...payments]
+    .sort((a, b) => b.processedAt.getTime() - a.processedAt.getTime())
+    .filter(p => {
+      if (filterValue && !p.id.includes(filterValue.trim())) return false;
+      if (methodFilter === 'refunds') return p.isRefund;
+      if (methodFilter === 'all') return true;
+      return !p.isRefund && p.method === methodFilter;
+    });
 
   const groups = new Map<string, Payment[]>();
   for (const p of visiblePayments) {
