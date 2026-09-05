@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { initSupabaseClient } from '@shared/lib/supabase';
+import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
 
 interface Props {
   children: React.ReactNode;
@@ -38,7 +39,8 @@ export function AppConfigProvider({ children }: Props) {
 
   if (!ready) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-background">
+        <LoadingSpinner size={28} />
         <p className="text-sm text-muted-foreground">Loading configuration…</p>
       </div>
     );

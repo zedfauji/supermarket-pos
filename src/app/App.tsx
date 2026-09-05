@@ -12,7 +12,18 @@ export function App() {
     <ErrorBoundary>
       <AppConfigProvider>
         <OfflineBanner />
-        <Toaster richColors position="top-right" />
+        <Toaster
+          richColors
+          position="top-right"
+          closeButton
+          toastOptions={{
+            classNames: {
+              toast: 'rounded-xl border-border font-sans shadow-lg',
+              title: 'font-medium',
+              description: 'text-muted-foreground',
+            },
+          }}
+        />
         <Providers>
           <ClockDriftBanner />
           <IdleLockProvider>
