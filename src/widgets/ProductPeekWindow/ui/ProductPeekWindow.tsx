@@ -1,7 +1,7 @@
 import { emit, listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { ImageOff, PackageSearch } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { PackageSearch, ScanBarcode } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WeightEntryDialog } from '@features/add-loose-weight-item/ui/WeightEntryDialog';
@@ -11,12 +11,18 @@ import {
   BARCODE_SCANNED_EVENT,
   PEEK_WINDOW_REFRESH_EVENT,
 } from '@features/open-product-peek-window/model/useProductPeekWindow';
+import { useNearExpiryAlerts } from '@entities/inventory';
 import { getProductRiskFlag } from '@entities/product/model/productRiskFlag';
 import { useConfirmRiskyAdd } from '@entities/product/model/useConfirmRiskyAdd';
+import { evaluateBestPromotion, usePromotions } from '@entities/promotion';
+import { useSettings } from '@entities/settings';
 import type { Product } from '@shared/lib/domain';
+import { formatMoney } from '@shared/lib/format';
 import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
+import { cn } from '@shared/lib/utils';
 import {
+  Badge,
   CardSkeleton,
   EmptyState,
   MoneyDisplay,
@@ -42,13 +48,28 @@ function productStockTier(product: Product): InventoryStockBadgeStatus {
   return 'inv_in_stock';
 }
 
-function PeekWindowShell({ children, footer }: { children: ReactNode; footer: ReactNode }) {
+function PeekWindowShell({
+  header,
+  children,
+  footer,
+}: {
+  header?: ReactNode;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
   return (
     <div className="flex h-screen flex-col bg-background">
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">{children}</div>
-      <div className="flex justify-end gap-2 border-t border-border bg-muted/40 p-4">{footer}</div>
+      {header}
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      <div className="flex items-center gap-2 border-t border-border bg-card p-4">{footer}</div>
     </div>
   );
+}
+
+function washStyle(color: string | undefined): CSSProperties | undefined {
+  if (!color) return undefined;
+  // eslint-disable-next-line i18next/no-literal-string -- CSS color-mix expression, not UI copy
+  return { backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` };
 }
 
 function CloseButton({ onClose }: { onClose: () => void }) {
@@ -63,20 +84,36 @@ function CloseButton({ onClose }: { onClose: () => void }) {
 function LoadingStateView({ onClose }: { onClose: () => void }) {
   return (
     <PeekWindowShell footer={<CloseButton onClose={onClose} />}>
-      <CardSkeleton height={360} />
+      <CardSkeleton height={208} className="rounded-none border-0" />
+      <div className="space-y-5 px-6 py-5">
+        <CardSkeleton height={40} />
+        <CardSkeleton height={120} />
+      </div>
     </PeekWindowShell>
   );
 }
 
 function NotFoundStateView({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation('wPanels');
+  const scannedCode = new URLSearchParams(window.location.search).get('barcode');
   return (
     <PeekWindowShell footer={<CloseButton onClose={onClose} />}>
-      <EmptyState
-        icon={PackageSearch}
-        title={t('featOrders:scanBarcodeToCart.productNotFound')}
-        description={t('productPeekPanel.notFoundBody')}
-      />
+      <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+        <EmptyState
+          icon={PackageSearch}
+          title={t('featOrders:scanBarcodeToCart.productNotFound')}
+          description={t('productPeekPanel.notFoundBody')}
+        />
+        {scannedCode && (
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              {t('productPeekPanel.scannedCode')}
+            </span>
+            <span className="rounded-md bg-muted px-3 py-1 font-mono text-sm">{scannedCode}</span>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">{t('productPeekPanel.scanAgainHint')}</p>
+      </div>
     </PeekWindowShell>
   );
 }
@@ -108,6 +145,26 @@ function PeekProductDetail({
   const { t } = useTranslation('wPanels');
   const [qty, setQty] = useState(1);
   const stockTier = productStockTier(product);
+  const { data: activePromotions } = usePromotions();
+  const { data: appSettings } = useSettings();
+  const { data: nearExpiryAlerts } = useNearExpiryAlerts();
+  const match =
+    activePromotions && appSettings
+      ? evaluateBestPromotion(
+          { productId: product.id, categoryId: product.categoryId, basePrice: product.basePrice },
+          activePromotions,
+          new Date(),
+          appSettings.nearExpiry.discountPercent,
+          nearExpiryAlerts?.find(alert => alert.productId === product.id)?.daysUntilExpiry ?? null,
+          appSettings.nearExpiry.thresholdDays,
+          appSettings.general.timezone
+        )
+      : null;
+  const unitPrice = match?.discountedUnitPrice ?? product.basePrice;
+  const lineTotal = product.soldByWeight ? unitPrice : unitPrice * qty;
+  const meterMax = Math.max((product.lowStockThreshold ?? 0) * 3, 1);
+  const meterPct = Math.min(100, Math.round(((product.quantityOnHand ?? 0) / meterMax) * 100));
+  const initials = product.name.trim().slice(0, 2).toUpperCase();
 
   const commit = () => {
     if (product.soldByWeight) {
@@ -130,70 +187,144 @@ function PeekProductDetail({
   return (
     <>
       <PeekWindowShell
+        header={
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/50 px-5 py-2.5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ScanBarcode className="size-4" aria-hidden="true" />
+              <span className="font-semibold tracking-[0.1em] uppercase">
+                {t('productPeekPanel.scannedEyebrow')}
+              </span>
+            </div>
+            {product.category && (
+              <Badge variant="muted" className="gap-1.5">
+                <span
+                  className="size-2 rounded-full"
+                  style={{ backgroundColor: product.category.color }}
+                  aria-hidden="true"
+                />
+                {product.category.name}
+              </Badge>
+            )}
+          </div>
+        }
         footer={
           <>
+            <div className="mr-auto flex flex-col leading-tight">
+              {qty > 1 && (
+                <>
+                  <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                    {t('productPeekPanel.total')}
+                  </span>
+                  <MoneyDisplay amount={lineTotal} size="lg" />
+                </>
+              )}
+            </div>
             <CloseButton onClose={onClose} />
-            <POSButton type="button" touchSize="xl" onClick={handleAddToCart}>
+            <POSButton
+              type="button"
+              variant="brand"
+              touchSize="xl"
+              className="min-w-44"
+              onClick={handleAddToCart}
+            >
               {t('productPeekPanel.addToCart')}
             </POSButton>
           </>
         }
       >
-        <div className="mx-auto flex aspect-square max-w-[240px] items-center justify-center rounded-2xl border border-border bg-muted">
+        <div
+          className="relative flex h-52 items-center justify-center overflow-hidden bg-muted"
+          style={washStyle(product.category?.color)}
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-1"
+            style={product.category ? { backgroundColor: product.category.color } : undefined}
+          />
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="object-contain size-full" />
+            <img src={product.imageUrl} alt={product.name} className="size-full object-contain p-4" />
           ) : (
             <>
-              <ImageOff className="text-muted-foreground size-10" aria-hidden="true" />
+              <span aria-hidden="true" className="text-6xl font-semibold tracking-tight text-foreground/70">
+                {initials}
+              </span>
               <span className="sr-only">{t('productPeekPanel.noPhoto')}</span>
             </>
           )}
         </div>
 
-        {product.category && (
-          <div className="flex items-center gap-2">
-            <div
-              className="shrink-0 rounded-full size-3"
-              style={{ backgroundColor: product.category.color }}
-              aria-hidden="true"
+        <div className="space-y-5 px-6 py-5">
+          <h1 title={product.name} className="line-clamp-2 text-2xl font-semibold tracking-tight">
+            {product.name}
+          </h1>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <MoneyDisplay
+              amount={unitPrice}
+              size="xl"
+              className={cn('text-4xl', match && 'text-success-strong')}
             />
-            <span className="text-xs text-muted-foreground">{product.category.name}</span>
+            <Badge variant="muted">
+              {product.soldByWeight ? t('productPeekPanel.perKg') : t('productPeekPanel.each')}
+            </Badge>
+            {match && (
+              <div className="flex items-center gap-2">
+                <Badge variant="success">{t('productPeekPanel.promoPrice')}</Badge>
+                <span className="text-sm text-muted-foreground line-through">
+                  {t('productPeekPanel.wasPrice', { price: formatMoney(product.basePrice) })}
+                </span>
+              </div>
+            )}
           </div>
-        )}
 
-        <h3 title={product.name} className="w-full truncate text-2xl font-semibold tracking-tight">
-          {product.name}
-        </h3>
+          <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs">
+            <div className="flex items-center justify-between">
+              <StatusBadge status={stockTier} />
+              <span className="text-sm text-muted-foreground">
+                {t('productPeekPanel.stockCount', { count: product.quantityOnHand ?? 0 })}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <div
+                className={cn(
+                  'h-full rounded-full',
+                  stockTier === 'inv_out_of_stock'
+                    ? 'bg-destructive'
+                    : stockTier === 'inv_low_stock'
+                      ? 'bg-warning'
+                      : 'bg-success'
+                )}
+                style={{ width: `${String(meterPct)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {product.soldByWeight
+                ? t('productPeekPanel.unitWeight')
+                : t('productPeekPanel.unitPiece')}
+            </p>
+          </div>
 
-        <MoneyDisplay amount={product.basePrice} size="xl" className="font-semibold" />
+          <dl className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-muted/50 px-3 py-2">
+              <dt className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                {t('productPeekPanel.skuLabel')}
+              </dt>
+              <dd className="font-mono">
+                <span>{product.sku ?? '—'}</span>
+              </dd>
+            </div>
+            <div className="rounded-lg bg-muted/50 px-3 py-2">
+              <dt className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                {t('productPeekPanel.barcodeLabel')}
+              </dt>
+              <dd className="font-mono">
+                <span>{product.barcode ?? '—'}</span>
+              </dd>
+            </div>
+          </dl>
 
-        <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t('productPeekPanel.skuLabel')}
-            </span>
-            <span>{product.sku ?? '—'}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t('productPeekPanel.barcodeLabel')}
-            </span>
-            <span>{product.barcode ?? '—'}</span>
-          </div>
-          <p className="text-muted-foreground">
-            {product.soldByWeight
-              ? t('productPeekPanel.unitWeight')
-              : t('productPeekPanel.unitPiece')}
-          </p>
-          <div className="flex items-center justify-between">
-            <StatusBadge status={stockTier} />
-            <span className="text-xs text-muted-foreground">
-              {t('productPeekPanel.stockCount', { count: product.quantityOnHand ?? 0 })}
-            </span>
-          </div>
+          {!product.soldByWeight && <QuantityControl value={qty} onChange={setQty} />}
         </div>
-
-        {!product.soldByWeight && <QuantityControl value={qty} onChange={setQty} />}
       </PeekWindowShell>
       {product.soldByWeight && (
         <WeightEntryDialog

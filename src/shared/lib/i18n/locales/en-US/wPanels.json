@@ -326,7 +326,15 @@
     "unitPiece": "Sold by piece",
     "stockCount": "{{count}} in stock",
     "skuLabel": "SKU",
-    "barcodeLabel": "Barcode"
+    "barcodeLabel": "Barcode",
+    "scannedEyebrow": "Scanned product",
+    "perKg": "per kg",
+    "each": "each",
+    "total": "Total",
+    "promoPrice": "Promo price",
+    "wasPrice": "Was {{price}}",
+    "scanAgainHint": "Point the scanner at the barcode again.",
+    "scannedCode": "Scanned code"
   },
   "appShell": {
     "home": "Home",

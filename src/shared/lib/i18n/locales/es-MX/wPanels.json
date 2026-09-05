@@ -326,7 +326,15 @@
     "unitPiece": "Se vende por pieza",
     "stockCount": "{{count}} en existencia",
     "skuLabel": "SKU",
-    "barcodeLabel": "Código de barras"
+    "barcodeLabel": "Código de barras",
+    "scannedEyebrow": "Producto escaneado",
+    "perKg": "por kg",
+    "each": "c/u",
+    "total": "Total",
+    "promoPrice": "Precio promo",
+    "wasPrice": "Antes {{price}}",
+    "scanAgainHint": "Vuelve a apuntar el escáner al código de barras.",
+    "scannedCode": "Código escaneado"
   },
   "appShell": {
     "home": "Inicio",
