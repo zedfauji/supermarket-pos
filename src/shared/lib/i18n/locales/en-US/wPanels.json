@@ -114,7 +114,7 @@
     "filterCash": "Cash",
     "filterCard": "Card",
     "filterTransfer": "Transfer",
-    "filterRefunds": "Refunds",
+    "filterRefunds": "Returns",
     "filterLabel": "Filter by method",
     "dayToday": "Today",
     "dayYesterday": "Yesterday",
