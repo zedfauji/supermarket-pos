@@ -61,7 +61,9 @@ function PeekWindowShell({
     <div className="flex h-screen flex-col bg-background">
       {header}
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-      <div className="flex items-center gap-2 border-t border-border bg-card p-4">{footer}</div>
+      <div className="flex items-center justify-end gap-2 border-t border-border bg-card p-4">
+        {footer}
+      </div>
     </div>
   );
 }
@@ -122,9 +124,11 @@ function ErrorStateView({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation('wPanels');
   return (
     <PeekWindowShell footer={<CloseButton onClose={onClose} />}>
-      <p className="text-sm text-destructive" role="alert">
-        {t('productPeekPanel.loadError')}
-      </p>
+      <div className="px-6 py-10">
+        <p className="text-sm text-destructive" role="alert">
+          {t('productPeekPanel.loadError')}
+        </p>
+      </div>
     </PeekWindowShell>
   );
 }
@@ -163,7 +167,10 @@ function PeekProductDetail({
   const unitPrice = match?.discountedUnitPrice ?? product.basePrice;
   const lineTotal = product.soldByWeight ? unitPrice : unitPrice * qty;
   const meterMax = Math.max((product.lowStockThreshold ?? 0) * 3, 1);
-  const meterPct = Math.min(100, Math.round(((product.quantityOnHand ?? 0) / meterMax) * 100));
+  const meterPct = Math.min(
+    100,
+    Math.max(0, Math.round(((product.quantityOnHand ?? 0) / meterMax) * 100))
+  );
   const initials = product.name.trim().slice(0, 2).toUpperCase();
 
   const commit = () => {
@@ -236,11 +243,13 @@ function PeekProductDetail({
           className="relative flex h-52 items-center justify-center overflow-hidden bg-muted"
           style={washStyle(product.category?.color)}
         >
-          <span
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1"
-            style={product.category ? { backgroundColor: product.category.color } : undefined}
-          />
+          {product.category && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-1"
+              style={{ backgroundColor: product.category.color }}
+            />
+          )}
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="size-full object-contain p-4" />
           ) : (
