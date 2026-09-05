@@ -41,4 +41,17 @@ describe('VerticalTabs', () => {
     render(<Fixture />);
     expect(screen.getByText('Receipts')).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('excludes a text-bearing badge from the accessible name', () => {
+    render(
+      <Tabs defaultValue="hardware" orientation="vertical">
+        <VerticalTabsList aria-label="Settings sections">
+          <VerticalTabsTrigger value="hardware" label="Hardware" badge={<span>7</span>} />
+        </VerticalTabsList>
+        <TabsContent value="hardware">Hardware body</TabsContent>
+      </Tabs>
+    );
+    expect(screen.getByRole('tab', { name: 'Hardware' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /7/ })).not.toBeInTheDocument();
+  });
 });

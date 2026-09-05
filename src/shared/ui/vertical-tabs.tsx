@@ -57,7 +57,7 @@ export interface VerticalTabsTriggerProps
   icon?: LucideIcon;
   /** One-line hint under the label. Decorative — excluded from the accessible name. */
   description?: string;
-  /** Trailing element (count badge). Keep it text-free or it joins the accessible name. */
+  /** Trailing element (count badge). Rendered `aria-hidden` — never joins the accessible name. */
   badge?: React.ReactNode;
 }
 
@@ -78,6 +78,7 @@ export function VerticalTabsTrigger({
         className
       )}
       {...props}
+      aria-label={label}
     >
       <span
         aria-hidden="true"
@@ -100,7 +101,7 @@ export function VerticalTabsTrigger({
           </span>
         )}
       </span>
-      {badge}
+      {badge && <span aria-hidden="true">{badge}</span>}
     </TabsTrigger>
   );
 }
