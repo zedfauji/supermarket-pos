@@ -179,7 +179,9 @@ export function Sidebar({ collapsed, onToggle, toggleHidden }: SidebarProps) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <aside
+      {/* Plain div, not <aside>: e2e specs address the checkout cart as the page's
+          only <aside>, and the <nav> below already provides the landmark. */}
+      <div
         data-testid="app-sidebar"
         data-collapsed={collapsed ? 'true' : 'false'}
         className={cn(
@@ -354,7 +356,7 @@ export function Sidebar({ collapsed, onToggle, toggleHidden }: SidebarProps) {
             void navigate(path);
           }}
         />
-      </aside>
+      </div>
     </TooltipProvider>
   );
 }
