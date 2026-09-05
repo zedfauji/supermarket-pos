@@ -42,7 +42,11 @@ interface CategoryPick {
  * catalog — no fixture/mock products. Scoped to `routing: 'NONE'` categories
  * (every Indian-catalog category, per scripts/seed-dev-data.ts) so a stray
  * pre-Phase-1 bar/pool category left over in a shared dev database can't be
- * picked as the "second" category.
+ * picked as the "second" category, and excludes the "E2E " test-data naming
+ * convention other specs seed under (e.g. promotion specs' own scratch
+ * categories) — a category name that long gets truncated on the 32-column
+ * thermal receipt, which is a real product constraint this test must not
+ * trip over just because some OTHER spec's fixture wasn't cleaned up.
  */
 async function pickTwoCategoryProducts(db: ReturnType<typeof getServiceClient>): Promise<CategoryPick> {
   const { data: modifier, error: modifierErr } = await db
@@ -87,6 +91,7 @@ async function pickTwoCategoryProducts(db: ReturnType<typeof getServiceClient>):
     .select('id, base_price, category_id, categories!inner(id, name, routing)')
     .eq('categories.routing', 'NONE')
     .neq('category_id', (modifierCat as { id: string }).id)
+    .not('categories.name', 'ilike', 'E2E %')
     .eq('is_active', true)
     .limit(1)
     .maybeSingle();
