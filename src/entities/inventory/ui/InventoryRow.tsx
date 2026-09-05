@@ -23,7 +23,7 @@ function SortHeader({ column, title }: { column: Column<Inventory>; title: strin
   return (
     <button
       type="button"
-      className="-ml-2 inline-flex min-h-[44px] items-center gap-1 rounded px-2 py-1 text-left font-medium touch-manipulation hover:bg-muted"
+      className="-ml-2 inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-1 text-left text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase transition-colors touch-manipulation hover:bg-muted hover:text-foreground"
       onClick={e => {
         column.getToggleSortingHandler()?.(e);
       }}
@@ -121,7 +121,12 @@ function QuantityAdjustCell({
         currentRole={currentRole}
         disabled={isThisRowPending}
       >
-        <QuantityControl value={inventory.quantityOnHand} min={0} max={9999} onChange={handleChange} />
+        <QuantityControl
+          value={inventory.quantityOnHand}
+          min={0}
+          max={9999}
+          onChange={handleChange}
+        />
       </ProtectedAction>
     </div>
   );
