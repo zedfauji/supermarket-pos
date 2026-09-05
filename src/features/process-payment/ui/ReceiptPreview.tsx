@@ -27,9 +27,9 @@ export function ReceiptPreview({ receipt, onDone }: ReceiptPreviewProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-heading text-lg font-semibold">{t('processPayment.receiptTitle')}</h2>
+      <h2 className="text-lg font-semibold">{t('processPayment.receiptTitle')}</h2>
       {/* text-[11px] mirrors the 58mm thermal printer's fixed character width (buildThermalReceiptText) — off the UI type ramp deliberately, so the preview's line-wrap matches the physical receipt. */}
-      <pre className="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-[11px] leading-tight whitespace-pre">
+      <pre className="max-h-[50vh] overflow-auto rounded-xl border border-border bg-muted/40 p-4 font-mono text-[11px] leading-tight whitespace-pre">
         {text}
       </pre>
       <div className="flex flex-col flex-wrap gap-2 sm:flex-row">

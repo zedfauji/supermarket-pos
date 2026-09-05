@@ -79,7 +79,7 @@ export function EmailReceiptsSettingsTab({ currentRole }: Props) {
             }}
           />
         </div>
-        <div className="rounded-md border bg-muted/30 p-3 text-sm">
+        <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
           <span className="font-medium">{t('emailReceiptsSettingsTab.resendApiKeyLabel')}</span>{' '}
           {emailStatus.data?.resendConfigured
             ? t('emailReceiptsSettingsTab.configured')

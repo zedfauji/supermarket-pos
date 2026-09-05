@@ -231,6 +231,13 @@
     "managerLabels": {
       "manager": "Manager",
       "admin": "Admin"
+    },
+    "posHint": "Scan, search and charge",
+    "today": "Today",
+    "sections": {
+      "sell": "Point of sale",
+      "stock": "Stock & supply",
+      "manage": "Management"
     }
   },
   "checkoutPanel": {
@@ -243,7 +250,10 @@
     "cartTotal": "Cart total",
     "hold": "Hold",
     "processPayment": "Process payment",
-    "saleComplete": "Sale complete — {{amount}}"
+    "saleComplete": "Sale complete — {{amount}}",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "scanHint": "Scan a barcode or type to search"
   },
   "holdSale": {
     "badge": "Sale held",
@@ -277,7 +287,8 @@
   "employeeSelector": {
     "unknownError": "Unknown error",
     "failedToLoadStaff": "Failed to load staff.",
-    "whoAreYou": "Who are you?"
+    "whoAreYou": "Who are you?",
+    "pickYourName": "Pick your name to continue"
   },
   "productPeekPanel": {
     "windowTitle": "Product Details",
@@ -290,5 +301,23 @@
     "stockCount": "{{count}} in stock",
     "skuLabel": "SKU",
     "barcodeLabel": "Barcode"
+  },
+  "appShell": {
+    "home": "Home",
+    "brand": "Supermarket POS",
+    "terminal": "Terminal {{id}}",
+    "groups": {
+      "sell": "Point of sale",
+      "stock": "Stock & supply",
+      "manage": "Management"
+    },
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "signOut": "Sign out",
+    "onShiftSince": "since {{time}}",
+    "online": "Online",
+    "offline": "Offline",
+    "managerRequired": "Manager access required",
+    "nearExpiryCount": "{{count}} expiring soon"
   }
 }

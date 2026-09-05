@@ -231,6 +231,13 @@
     "managerLabels": {
       "manager": "Gerente",
       "admin": "Administrador"
+    },
+    "posHint": "Escanea, busca y cobra",
+    "today": "Hoy",
+    "sections": {
+      "sell": "Punto de venta",
+      "stock": "Stock y proveedores",
+      "manage": "Administración"
     }
   },
   "checkoutPanel": {
@@ -243,7 +250,10 @@
     "cartTotal": "Total del carrito",
     "hold": "Pausar",
     "processPayment": "Procesar pago",
-    "saleComplete": "Venta completada — {{amount}}"
+    "saleComplete": "Venta completada — {{amount}}",
+    "itemCount_one": "{{count}} artículo",
+    "itemCount_other": "{{count}} artículos",
+    "scanHint": "Escanea un código o escribe para buscar"
   },
   "holdSale": {
     "badge": "Venta en espera",
@@ -277,7 +287,8 @@
   "employeeSelector": {
     "unknownError": "Error desconocido",
     "failedToLoadStaff": "No se pudo cargar el personal.",
-    "whoAreYou": "¿Quién eres?"
+    "whoAreYou": "¿Quién eres?",
+    "pickYourName": "Elige tu nombre para continuar"
   },
   "productPeekPanel": {
     "windowTitle": "Detalles del producto",
@@ -290,5 +301,23 @@
     "stockCount": "{{count}} en existencia",
     "skuLabel": "SKU",
     "barcodeLabel": "Código de barras"
+  },
+  "appShell": {
+    "home": "Inicio",
+    "brand": "Supermarket POS",
+    "terminal": "Terminal {{id}}",
+    "groups": {
+      "sell": "Punto de venta",
+      "stock": "Stock y proveedores",
+      "manage": "Administración"
+    },
+    "collapse": "Contraer menú",
+    "expand": "Expandir menú",
+    "signOut": "Salir",
+    "onShiftSince": "desde {{time}}",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "managerRequired": "Requiere acceso de gerente",
+    "nearExpiryCount": "{{count}} por caducar"
   }
 }

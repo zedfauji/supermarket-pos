@@ -95,7 +95,7 @@ export function ProductSalesPanel({ dateRange }: Props) {
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
       <select
-        className="h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-11 rounded-lg border border-input bg-card px-2 shadow-xs dark:bg-input/20 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
         value={selectedCategory}
         onChange={e => {
           setSelectedCategory(e.target.value);
@@ -120,7 +120,7 @@ export function ProductSalesPanel({ dateRange }: Props) {
           className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
             sortBy === 'revenue'
               ? 'bg-primary text-primary-foreground'
-              : 'border border-input bg-background text-foreground hover:bg-muted'
+              : 'border border-input bg-card text-foreground shadow-xs hover:bg-muted'
           }`}
         >
           {t('productSalesPanel.sortByRevenue')}
@@ -135,7 +135,7 @@ export function ProductSalesPanel({ dateRange }: Props) {
           className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
             sortBy === 'units'
               ? 'bg-primary text-primary-foreground'
-              : 'border border-input bg-background text-foreground hover:bg-muted'
+              : 'border border-input bg-card text-foreground shadow-xs hover:bg-muted'
           }`}
         >
           {t('productSalesPanel.sortByUnits')}
@@ -166,7 +166,7 @@ export function ProductSalesPanel({ dateRange }: Props) {
         const idx = filtered.indexOf(row);
         if (idx < 3 && filtered.length > 0) {
           // eslint-disable-next-line i18next/no-literal-string -- Tailwind class string, not UI copy
-          return 'border-l-2 border-l-pos-highlight bg-pos-highlight/5';
+          return 'border-l-2 border-l-brand bg-brand-soft/60';
         }
         return undefined;
       }}

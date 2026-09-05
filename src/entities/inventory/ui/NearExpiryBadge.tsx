@@ -8,7 +8,10 @@ export function NearExpiryBadge() {
   const { data: alerts, isLoading } = useNearExpiryAlerts();
   if (isLoading || !alerts || alerts.length === 0) return null;
   return (
-    <Badge className="ml-3 tabular-nums bg-pos-warning text-amber-950 dark:text-amber-100" data-testid="near-expiry-badge">
+    <Badge
+      className="ml-3 tabular-nums bg-warning-soft text-warning-strong"
+      data-testid="near-expiry-badge"
+    >
       {t('nearExpiryBadge.count', { count: alerts.length })}
     </Badge>
   );

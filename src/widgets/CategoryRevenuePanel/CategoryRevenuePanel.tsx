@@ -37,7 +37,7 @@ export function CategoryRevenuePanel({ dateRange }: Props) {
       <div className="flex justify-end">
         <ExportButtons reportType="categories" data={exportData} />
       </div>
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>
@@ -52,9 +52,7 @@ export function CategoryRevenuePanel({ dateRange }: Props) {
             {rows.map((row, idx) => (
               <TableRow
                 key={row.categoryId}
-                className={
-                  idx === 0 ? 'border-l-2 border-l-pos-highlight bg-pos-highlight/5' : undefined
-                }
+                className={idx === 0 ? 'border-l-2 border-l-brand bg-brand-soft/60' : undefined}
               >
                 <TableCell className="font-medium">{row.categoryName}</TableCell>
                 <TableCell className="tabular-nums">{row.unitsSold}</TableCell>

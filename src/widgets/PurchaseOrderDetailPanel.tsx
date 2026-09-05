@@ -47,7 +47,10 @@ export function PurchaseOrderDetailPanel({
       </div>
       <div className="max-h-72 space-y-2 overflow-y-auto">
         {po.items?.map(item => (
-          <div className="flex items-center justify-between gap-3 border-b pb-2" key={item.id}>
+          <div
+            className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0"
+            key={item.id}
+          >
             <span className="truncate">{item.product?.name}</span>
             <span className="text-sm text-muted-foreground">{item.quantity}</span>
             <MoneyDisplay amount={item.costPrice} />

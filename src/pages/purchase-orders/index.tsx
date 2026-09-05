@@ -5,7 +5,7 @@ import { PageContainer } from '@shared/ui';
 export default function PurchaseOrdersPage() {
   const { t } = useTranslation('pages');
   return (
-    <PageContainer title={t('purchaseOrders.title')} backTo="/home">
+    <PageContainer title={t('purchaseOrders.title')}>
       <PurchaseOrderListPanel />
     </PageContainer>
   );

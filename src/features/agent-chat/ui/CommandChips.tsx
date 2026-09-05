@@ -21,13 +21,15 @@ export function CommandChips({ onSelect, userRole }: CommandChipsProps) {
 
   return (
     <div className="flex flex-wrap gap-2 px-3 py-2">
-      {chips.map((chip) => (
+      {chips.map(chip => (
         <Button
           key={chip}
           type="button"
           variant="outline"
-          onClick={() => { onSelect(chip); }}
-          className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          onClick={() => {
+            onSelect(chip);
+          }}
+          className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:border-brand/50 hover:bg-brand-soft hover:text-brand-strong"
         >
           {chip}
         </Button>

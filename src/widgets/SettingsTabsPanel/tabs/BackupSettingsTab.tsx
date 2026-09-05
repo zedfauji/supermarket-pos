@@ -84,7 +84,7 @@ export function BackupSettingsTab({ currentRole }: Props) {
               {backupsQuery.data.map(backup => (
                 <div
                   key={backup.id}
-                  className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-medium">{backup.label}</p>

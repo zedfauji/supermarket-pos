@@ -34,13 +34,10 @@ export function RefundsRegister({ dateRange }: Props) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="ml-auto">
-          <ExportButtons
-            reportType="refunds-register"
-            data={{ rows, dateRange }}
-          />
+          <ExportButtons reportType="refunds-register" data={{ rows, dateRange }} />
         </div>
       </div>
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>

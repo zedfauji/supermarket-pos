@@ -48,19 +48,19 @@ const statusConfig: Record<PrintJobStatus, StatusConfig> = {
     icon: CheckCircle2,
     labelKey: 'printJobStatus.completed',
     variant: 'default',
-    className: 'bg-pos-accent text-white hover:opacity-90',
+    className: 'bg-success-soft text-success-strong',
   },
   failed: {
     icon: XCircle,
     labelKey: 'printJobStatus.failed',
     variant: 'destructive',
-    className: 'bg-pos-danger text-white hover:opacity-90',
+    className: 'bg-destructive-soft text-destructive',
   },
   unknown: {
     icon: AlertTriangle,
     labelKey: 'printJobStatus.unknown',
     variant: 'default',
-    className: 'bg-pos-warning text-black hover:opacity-90',
+    className: 'bg-warning-soft text-warning-strong',
   },
   cancelled: { icon: Ban, labelKey: 'printJobStatus.cancelled', variant: 'secondary' },
 };

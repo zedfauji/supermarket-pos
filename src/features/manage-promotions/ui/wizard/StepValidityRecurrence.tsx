@@ -66,11 +66,7 @@ export function StepValidityRecurrence({
       )}
 
       <label className="flex items-center gap-2">
-        <Switch
-          checked={recurring}
-          disabled={disabled}
-          onCheckedChange={onRecurringChange}
-        />
+        <Switch checked={recurring} disabled={disabled} onCheckedChange={onRecurringChange} />
         <span className="text-sm font-medium">{t('promotionWizard.validity.recurringLabel')}</span>
       </label>
 
@@ -100,7 +96,7 @@ export function StepValidityRecurrence({
                 onChange={e => {
                   onStartTimeChange(e.target.value || null);
                 }}
-                className="h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 rounded-lg border border-input bg-card px-2 shadow-xs dark:bg-input/20 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
               />
             </FormField>
             <FormField label={t('promotionWizard.validity.endTimeLabel')}>
@@ -111,7 +107,7 @@ export function StepValidityRecurrence({
                 onChange={e => {
                   onEndTimeChange(e.target.value || null);
                 }}
-                className="h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 rounded-lg border border-input bg-card px-2 shadow-xs dark:bg-input/20 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
               />
             </FormField>
           </div>

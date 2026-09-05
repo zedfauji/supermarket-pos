@@ -21,12 +21,14 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const { t } = useTranslation('common');
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-xs">
       {presets.map(preset => (
         <POSButton
           key={preset.labelKey}
-          variant="outline"
+          variant="ghost"
+          size="sm"
           touchSize="default"
+          className="rounded-lg"
           onClick={() => {
             onChange(preset.from(), preset.to());
           }}
@@ -42,7 +44,7 @@ export function DateRangePicker({
           onChange={e => {
             onChange(e.target.value, toStr);
           }}
-          className="h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-10 rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
         />
       </label>
       <label className="flex items-center gap-2 text-sm">
@@ -53,7 +55,7 @@ export function DateRangePicker({
           onChange={e => {
             onChange(fromStr, e.target.value);
           }}
-          className="h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-10 rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
         />
       </label>
     </div>

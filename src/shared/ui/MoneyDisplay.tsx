@@ -22,10 +22,10 @@ export type MoneyDisplayProps = {
 
 /* eslint-disable i18next/no-literal-string -- Tailwind class-name lookup table, not UI copy */
 const sizeClasses = {
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-xl',
-  xl: 'text-3xl font-bold',
+  sm: 'text-sm font-medium',
+  md: 'text-base font-medium',
+  lg: 'text-xl font-semibold',
+  xl: 'text-3xl font-bold tracking-tight',
 };
 /* eslint-enable i18next/no-literal-string */
 
@@ -52,7 +52,7 @@ export function MoneyDisplay({
   return (
     <span
       className={cn(
-        'font-mono tabular-nums',
+        'text-numeric whitespace-nowrap',
         sizeClasses[size],
         isNegative && 'text-destructive',
         className

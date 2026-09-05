@@ -5,12 +5,8 @@ import { PageContainer } from '@shared/ui';
 export default function RbacPage() {
   const { t } = useTranslation('pages');
   return (
-    <div className="flex h-screen flex-col">
-      <main className="flex-1 overflow-auto">
-        <PageContainer title={t('rbac.title')} backTo="/home">
-          <RBACDashboard />
-        </PageContainer>
-      </main>
-    </div>
+    <PageContainer title={t('rbac.title')}>
+      <RBACDashboard />
+    </PageContainer>
   );
 }

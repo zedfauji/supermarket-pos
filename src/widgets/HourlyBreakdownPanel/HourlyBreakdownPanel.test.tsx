@@ -176,7 +176,7 @@ describe('HourlyBreakdownPanel', () => {
     const allRows = within(tbody).getAllByRole('row');
     const row10 = allRows.find(r => r.textContent?.includes('10:00 AM'));
     expect(row10).toBeDefined();
-    expect(row10!.className).toMatch(/pos-highlight/);
-    expect(row10!.className).not.toMatch(/pos-warning/);
+    expect(row10!.className).toMatch(/brand/);
+    expect(row10!.className).not.toMatch(/warning/);
   });
 });

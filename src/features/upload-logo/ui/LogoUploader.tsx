@@ -52,7 +52,7 @@ export function LogoUploader({ receipt }: Props) {
   }
 
   return (
-    <div className="space-y-4 rounded-lg border p-4">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-xs">
       <h3 className="font-medium">{t('uploadLogo.title')}</h3>
       <p className="text-sm text-muted-foreground">{t('uploadLogo.description')}</p>
 

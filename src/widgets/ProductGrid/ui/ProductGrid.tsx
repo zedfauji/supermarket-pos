@@ -1,3 +1,4 @@
+import { PackageSearch, ScanBarcode, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/useAddLooseWeightItem';
@@ -90,39 +91,66 @@ export function ProductGrid({
   };
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-4">
+    <section className="flex min-h-0 flex-1 flex-col gap-3">
+      {/* Search / scan bar */}
+      <div className="group/search relative shrink-0">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-4 size-[1.125rem] -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-brand"
+          aria-hidden="true"
+        />
+        <Input
+          value={search}
+          onChange={event => {
+            onSearchChange(event.target.value);
+          }}
+          placeholder={t('checkoutPanel.searchPlaceholder')}
+          aria-label={t('checkoutPanel.searchPlaceholder')}
+          className="h-12 rounded-xl pr-12 pl-11 text-base shadow-sm"
+          autoComplete="off"
+        />
+        <span
+          className="pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 items-center gap-1.5 text-xs text-muted-foreground sm:flex"
+          aria-hidden="true"
+        >
+          <ScanBarcode className="size-4" />
+        </span>
+      </div>
+
       <CategoryTabs
         categories={categories}
         activeCategory={activeCategory}
         onChange={category => {
           setActiveCategory(category);
         }}
+        className="shrink-0"
       />
-      <Input
-        value={search}
-        onChange={event => {
-          onSearchChange(event.target.value);
-        }}
-        placeholder={t('checkoutPanel.searchPlaceholder')}
-        aria-label={t('checkoutPanel.searchPlaceholder')}
-      />
-      {matches.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-          <p className="font-medium">{t('checkoutPanel.noProductsFound')}</p>
-          <p className="text-sm">{t('checkoutPanel.noProductsFoundDescription')}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {matches.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              category={product.category ?? fallbackCategory}
-              onSelect={selectProduct}
-            />
-          ))}
-        </div>
-      )}
+
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-2">
+        {matches.length === 0 ? (
+          <div className="flex h-full min-h-[16rem] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border-strong p-8 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <PackageSearch className="size-5" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium">{t('checkoutPanel.noProductsFound')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('checkoutPanel.noProductsFoundDescription')}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {matches.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                category={product.category ?? fallbackCategory}
+                onSelect={selectProduct}
+              />
+            ))}
+          </div>
+        )}
+      </div>
       {weightEntry.product && (
         <WeightEntryDialog
           open={weightEntry.isOpen}

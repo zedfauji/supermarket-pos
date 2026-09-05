@@ -119,7 +119,9 @@ export function MoneyInput({
         </Label>
       )}
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+          $
+        </span>
         <Input
           id={inputId}
           type="text"
@@ -130,7 +132,7 @@ export function MoneyInput({
           onBlur={handleBlur}
           placeholder={placeholder}
           disabled={disabled}
-          className="pl-7 font-mono tabular-nums"
+          className="pl-8 text-numeric font-medium"
           {...(!label ? { 'aria-label': t('moneyInput.amountAria') } : {})}
         />
       </div>

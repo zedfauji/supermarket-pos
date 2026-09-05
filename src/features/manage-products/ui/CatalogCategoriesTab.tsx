@@ -78,7 +78,7 @@ export function CatalogCategoriesTab() {
         </POSButton>
       </div>
 
-      <ul className="divide-y rounded-md border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         {sorted.map((c, index) => (
           <li key={c.id} className="flex flex-wrap items-center gap-3 px-3 py-2">
             <span

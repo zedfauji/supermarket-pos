@@ -43,7 +43,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
 
   const bgClass = cn(
     node.status === 'added'
-      ? 'bg-pos-accent/10'
+      ? 'bg-success-soft'
       : node.status === 'removed'
         ? 'bg-destructive/10'
         : 'bg-transparent'
@@ -51,7 +51,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
 
   const textClass = cn(
     node.status === 'added'
-      ? 'text-pos-accent'
+      ? 'text-success-strong'
       : node.status === 'removed'
         ? 'text-destructive'
         : 'text-muted-foreground'
@@ -61,7 +61,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
 
   const gutterClass = cn(
     node.status === 'added'
-      ? 'text-pos-accent'
+      ? 'text-success-strong'
       : node.status === 'removed'
         ? 'text-destructive'
         : 'text-muted-foreground'
@@ -72,7 +72,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
       <div
         className={cn(
           'flex items-start gap-1 py-1 px-2 font-mono text-xs leading-6 rounded-sm',
-          bgClass,
+          bgClass
         )}
         style={{ paddingLeft: `${String(8 + depth * 16)}px` }}
       >
@@ -90,9 +90,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
             aria-label={`${expanded ? t('jsonDiffViewer.collapse') : t('jsonDiffViewer.expand')} ${node.key}`}
             className="mr-1 size-4 shrink-0 flex items-center justify-center"
           >
-            <ChevronRight
-              className={cn('size-3 transition-transform', expanded && 'rotate-90')}
-            />
+            <ChevronRight className={cn('size-3 transition-transform', expanded && 'rotate-90')} />
           </button>
         ) : (
           <span className="w-4 shrink-0" />
@@ -104,9 +102,7 @@ function DiffLine({ node, depth }: DiffLineProps) {
         {/* Value (leaf nodes) */}
         {!hasChildren && (
           <span className={textClass}>
-            {node.status === 'removed'
-              ? JSON.stringify(node.before)
-              : JSON.stringify(node.after)}
+            {node.status === 'removed' ? JSON.stringify(node.before) : JSON.stringify(node.after)}
           </span>
         )}
       </div>
@@ -151,7 +147,9 @@ export function JsonDiffViewer({ before, after, truncated }: JsonDiffViewerProps
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex gap-4 text-xs text-muted-foreground">
-          <span className="font-semibold uppercase tracking-wide">{t('jsonDiffViewer.before')}</span>
+          <span className="font-semibold uppercase tracking-wide">
+            {t('jsonDiffViewer.before')}
+          </span>
           <span className="font-semibold uppercase tracking-wide">{t('jsonDiffViewer.after')}</span>
         </div>
         <button

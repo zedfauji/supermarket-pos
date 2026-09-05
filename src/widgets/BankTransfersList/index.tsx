@@ -59,7 +59,7 @@ function statusBadgeVariant(status: BankTransferStatus): 'outline' | 'secondary'
 
 function rowHighlightClass(transfer: BankTransfer): string | undefined {
   // eslint-disable-next-line i18next/no-literal-string -- Tailwind class string, not UI copy
-  return isStale(transfer) ? 'border-l-2 border-l-pos-warning bg-pos-warning/5' : undefined;
+  return isStale(transfer) ? 'border-l-2 border-l-warning bg-warning-soft/60' : undefined;
 }
 
 function buildColumns(
@@ -108,7 +108,7 @@ function buildColumns(
         <span
           className={cn(
             'font-mono text-sm',
-            isStale(row.original) ? 'font-semibold text-pos-warning' : 'text-muted-foreground'
+            isStale(row.original) ? 'font-semibold text-warning-strong' : 'text-muted-foreground'
           )}
         >
           {formatElapsed(row.original.createdAt, t)}
@@ -143,7 +143,8 @@ function buildColumns(
         if (transfer.status === 'disputed') {
           return (
             <span className="text-sm text-muted-foreground">
-              {transfer.disputeReason ?? t('bankTransfersList.disputedBy', { name: transfer.disputedByName ?? '' })}
+              {transfer.disputeReason ??
+                t('bankTransfersList.disputedBy', { name: transfer.disputedByName ?? '' })}
             </span>
           );
         }

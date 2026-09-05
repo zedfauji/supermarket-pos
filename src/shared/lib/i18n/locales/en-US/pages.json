@@ -58,7 +58,10 @@
   "settings": {
     "title": "Settings"
   },
-  "suppliers": { "title": "Suppliers", "receive": "Receive Shipment" },
+  "suppliers": {
+    "title": "Suppliers",
+    "receive": "Receive Shipment"
+  },
   "staff": {
     "title": "Staff"
   },
@@ -68,5 +71,10 @@
   "promotions": {
     "title": "Promotions",
     "newPromotion": "New Promotion"
+  },
+  "login": {
+    "brand": "Supermarket POS",
+    "terminal": "Terminal {{id}}",
+    "tagline": "Sign in with your PIN to open the register. Every sale, refund and stock movement is recorded under your name."
   }
 }

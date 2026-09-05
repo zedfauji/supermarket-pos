@@ -50,7 +50,9 @@ export function CatalogModifiersTab() {
   }
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">{t('manageProducts.modifiersTab.loading')}</p>;
+    return (
+      <p className="text-muted-foreground text-sm">{t('manageProducts.modifiersTab.loading')}</p>
+    );
   }
 
   return (
@@ -70,7 +72,7 @@ export function CatalogModifiersTab() {
         </POSButton>
       </div>
 
-      <ul className="divide-y rounded-md border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         {sorted.map(m => (
           <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
             <div>

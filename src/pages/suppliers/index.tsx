@@ -10,7 +10,6 @@ export default function SuppliersPage() {
   return (
     <PageContainer
       title={t('suppliers.title')}
-      backTo="/home"
       actions={
         <POSButton type="button" onClick={() => setOpen(true)}>
           {t('suppliers.receive')}

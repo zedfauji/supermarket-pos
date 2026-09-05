@@ -91,7 +91,7 @@ export function SettingsTabsPanel() {
   const firstTab = tabs[0];
   if (!firstTab) {
     return (
-      <section className="rounded-lg border p-4 text-sm text-muted-foreground">
+      <section className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground shadow-xs">
         {t('noPermission')}
       </section>
     );
@@ -99,9 +99,9 @@ export function SettingsTabsPanel() {
   const defaultTab = firstTab.key;
 
   return (
-    <section className="space-y-4 rounded-lg border p-4">
+    <section className="space-y-4">
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="mb-4 flex h-auto w-full flex-wrap items-center justify-start gap-2 rounded-md bg-muted p-1">
+        <TabsList className="mb-2 flex h-auto w-full flex-wrap items-center justify-start gap-1 rounded-xl bg-muted p-1">
           {tabs.map(tab => (
             <TabsTrigger key={tab.key} value={tab.key}>
               {tab.label}
@@ -109,7 +109,11 @@ export function SettingsTabsPanel() {
           ))}
         </TabsList>
         {tabs.map(tab => (
-          <TabsContent key={tab.key} value={tab.key} className="min-h-[14rem]">
+          <TabsContent
+            key={tab.key}
+            value={tab.key}
+            className="min-h-[14rem] rounded-2xl border border-border bg-card p-6 shadow-xs"
+          >
             {tab.render()}
           </TabsContent>
         ))}

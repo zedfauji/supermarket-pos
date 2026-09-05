@@ -12,7 +12,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   if (isUser) {
     return (
       <div className="flex justify-end px-3 py-1">
-        <div className="max-w-[75%] rounded-2xl bg-primary px-4 py-2 text-sm text-primary-foreground">
+        <div className="max-w-[75%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground shadow-xs">
           {message.content}
         </div>
       </div>
@@ -21,7 +21,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div className="flex justify-start px-3 py-1">
-      <div className="max-w-[85%] rounded-2xl border border-border bg-card px-4 py-2 text-sm text-card-foreground">
+      <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-2.5 text-sm leading-relaxed text-card-foreground shadow-xs">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -29,9 +29,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               const isInline = !className;
               if (isInline) {
                 return (
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-                    {children}
-                  </code>
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>
                 );
               }
               return (

@@ -57,13 +57,13 @@ export function LowStockAlert() {
   return (
     <div
       className={cn(
-        'mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pos-warning/50 bg-pos-warning/10 px-3 py-2 text-sm text-amber-950 dark:border-pos-warning/40 dark:bg-pos-warning/15 dark:text-amber-50'
+        'mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-sm text-amber-950 '
       )}
       role="status"
       aria-label={t('lowStockAlert.lowStockAlertAriaLabel')}
       aria-live="polite"
     >
-      <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+      <AlertTriangle className="size-4 shrink-0 text-warning-strong" aria-hidden />
       <span className="shrink-0 font-medium">{t('lowStockAlert.lowStockLabel')}</span>
       <ul className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {visible.map((a, i) => (
@@ -77,7 +77,7 @@ export function LowStockAlert() {
               variant="ghost"
               touchSize="default"
               size="icon"
-              className="text-amber-900 hover:bg-amber-500/20 dark:text-amber-50"
+              className="text-warning-strong hover:bg-warning/20"
               aria-label={t('lowStockAlert.dismissAlertAriaLabel', { name: a.name })}
               onClick={() => {
                 dismiss(a.productId);

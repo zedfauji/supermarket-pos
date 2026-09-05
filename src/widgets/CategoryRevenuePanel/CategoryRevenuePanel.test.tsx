@@ -137,8 +137,8 @@ describe('CategoryRevenuePanel', () => {
 
     const tbody = document.querySelector('tbody') as HTMLElement;
     const rows = within(tbody).getAllByRole('row');
-    expect(rows[0]?.className).toMatch(/pos-highlight/);
-    expect(rows[1]?.className).not.toMatch(/pos-highlight/);
+    expect(rows[0]?.className).toMatch(/brand/);
+    expect(rows[1]?.className).not.toMatch(/brand/);
   });
 
   it('renders category name and pctTotal correctly', () => {

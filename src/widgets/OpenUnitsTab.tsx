@@ -119,7 +119,7 @@ export function OpenUnitsTab() {
         // the pos-danger token rather than the shared "destructive" utility
         // class so this file's D-06 scope grep isn't tripped by an unrelated
         // error-alert convention.
-        <p className="text-sm text-pos-danger" role="alert">
+        <p className="text-sm text-destructive" role="alert">
           {resultError.message}
         </p>
       ) : null}
@@ -131,7 +131,7 @@ export function OpenUnitsTab() {
           </label>
           <select
             id="open-unit-product"
-            className="h-10 w-full min-w-[16rem] rounded-md border border-input bg-background px-3 text-sm"
+            className="h-10 w-full min-w-[16rem] rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20 text-sm"
             value={selectedPackageProductId}
             onChange={e => {
               setSelectedPackageProductId(e.target.value);

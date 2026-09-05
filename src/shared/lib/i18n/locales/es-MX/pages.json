@@ -58,7 +58,10 @@
   "settings": {
     "title": "Configuración"
   },
-  "suppliers": { "title": "Proveedores", "receive": "Recibir envío" },
+  "suppliers": {
+    "title": "Proveedores",
+    "receive": "Recibir envío"
+  },
   "staff": {
     "title": "Personal"
   },
@@ -68,5 +71,10 @@
   "promotions": {
     "title": "Promociones",
     "newPromotion": "Nueva promoción"
+  },
+  "login": {
+    "brand": "Supermarket POS",
+    "terminal": "Terminal {{id}}",
+    "tagline": "Ingresa tu PIN para abrir la caja. Cada venta, reembolso y movimiento de inventario queda registrado a tu nombre."
   }
 }

@@ -28,22 +28,6 @@ export interface SearchInputProps {
 
 /**
  * SearchInput - Debounced search input with clear button
- *
- * Features:
- * - Debounces onChange calls (default 300ms)
- * - Clear button (X) when value is not empty
- * - Search icon for visual clarity
- * - Accessible with proper ARIA labels
- *
- * @example
- * ```tsx
- * <SearchInput
- *   value={searchQuery}
- *   onChange={setSearchQuery}
- *   placeholder="Search products..."
- *   debounceMs={300}
- * />
- * ```
  */
 export function SearchInput({
   value,
@@ -66,12 +50,10 @@ export function SearchInput({
     (newValue: string) => {
       setLocalValue(newValue);
 
-      // Clear existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // Set new timeout
       timeoutRef.current = setTimeout(() => {
         onChange(newValue);
       }, debounceMs);
@@ -79,7 +61,6 @@ export function SearchInput({
     [onChange, debounceMs]
   );
 
-  // Clear search
   const handleClear = React.useCallback(() => {
     setLocalValue('');
     onChange('');
@@ -88,7 +69,6 @@ export function SearchInput({
     }
   }, [onChange]);
 
-  // Cleanup timeout on unmount
   React.useEffect(() => {
     return () => {
       if (timeoutRef.current !== undefined) {
@@ -98,11 +78,12 @@ export function SearchInput({
   }, []);
 
   return (
-    <div className={cn('relative', className)}>
-      {/* Search Icon */}
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className={cn('group/search relative', className)}>
+      <Search
+        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-brand"
+        aria-hidden="true"
+      />
 
-      {/* Input */}
       <Input
         type="text"
         value={localValue}
@@ -110,21 +91,20 @@ export function SearchInput({
           handleChange(e.target.value);
         }}
         placeholder={placeholder}
-        className="pl-9 pr-9"
+        className="pr-11 pl-10"
         aria-label={t('searchInput.search')}
       />
 
-      {/* Clear Button */}
       {localValue && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1/2 h-11 w-11 -translate-y-1/2 touch-manipulation"
+          className="absolute top-1/2 right-1 size-9 -translate-y-1/2 touch-manipulation rounded-md text-muted-foreground"
           onClick={handleClear}
           aria-label={t('searchInput.clear')}
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       )}
     </div>

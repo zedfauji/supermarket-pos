@@ -94,9 +94,12 @@ export function SupplierListPanel() {
       <POSButton type="button" onClick={() => setOpen(true)}>
         {t('supplierListPanel.newSupplier')}
       </POSButton>
-      <ul className="divide-y rounded-md border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         {suppliers?.map(s => (
-          <li key={s.id} className="flex items-center justify-between gap-3 p-3">
+          <li
+            key={s.id}
+            className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+          >
             <span className="truncate font-medium">{s.name}</span>
             <span className="flex gap-2">
               <POSButton

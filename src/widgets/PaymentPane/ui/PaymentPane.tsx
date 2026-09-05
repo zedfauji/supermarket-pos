@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -32,7 +32,8 @@ function RefundButton({ payment, onRefund }: RefundButtonProps) {
   const refundedTotal = (refunds ?? []).reduce((sum, r) => sum + r.amount, 0);
   const isFullyRefunded = refundedTotal >= payment.amount;
 
-  if (payment.isRefund === true || payment.status === 'reopened_void' || isFullyRefunded) return null;
+  if (payment.isRefund === true || payment.status === 'reopened_void' || isFullyRefunded)
+    return null;
 
   return (
     <POSButton
@@ -175,8 +176,8 @@ function PaymentHistoryList({
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="border-b border-border px-5 py-4">
+        <h2 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
           {t('paymentPane.recentPayments')}
         </h2>
         <SearchInput
@@ -191,36 +192,36 @@ function PaymentHistoryList({
           <p className="text-center text-muted-foreground">{t('paymentPane.noPaymentRecords')}</p>
         </div>
       ) : (
-      <div className="divide-y">
-        {visiblePayments.map(payment => (
-          <div
-            key={payment.id}
-            data-testid={`payment-row-${payment.id}`}
-            className="flex items-center justify-between px-4 py-3 hover:bg-muted/30"
-          >
-            <div className="flex flex-col gap-0.5">
-              <MoneyDisplay amount={payment.amount} size="sm" />
-              <span className="text-xs text-muted-foreground capitalize">
-                {t('paymentPane.methodDateSeparator', {
-                  method: payment.method,
-                  date: payment.processedAt.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  }),
-                })}
-              </span>
+        <div className="divide-y divide-border">
+          {visiblePayments.map(payment => (
+            <div
+              key={payment.id}
+              data-testid={`payment-row-${payment.id}`}
+              className="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
+            >
+              <div className="flex flex-col gap-0.5">
+                <MoneyDisplay amount={payment.amount} size="sm" />
+                <span className="text-xs text-muted-foreground capitalize">
+                  {t('paymentPane.methodDateSeparator', {
+                    method: payment.method,
+                    date: payment.processedAt.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    }),
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ReprintButton payment={payment} />
+                <EditTicketButton payment={payment} onEdit={onEdit} />
+                <ReopenTabButton payment={payment} onReopen={onReopen} />
+                <EditItemsButton payment={payment} onEditItems={onEditItems} />
+                <RefundButton payment={payment} onRefund={onRefund} />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ReprintButton payment={payment} />
-              <EditTicketButton payment={payment} onEdit={onEdit} />
-              <ReopenTabButton payment={payment} onReopen={onReopen} />
-              <EditItemsButton payment={payment} onEditItems={onEditItems} />
-              <RefundButton payment={payment} onRefund={onRefund} />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -267,9 +268,9 @@ export function PaymentPane() {
   return (
     <div className="flex size-full overflow-hidden">
       {/* Left panel — tab list */}
-      <div className="flex w-80 shrink-0 flex-col border-r bg-background">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="flex w-80 shrink-0 flex-col border-r border-border bg-muted/30">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             {t('paymentPane.tabsAwaitingPayment')}
           </h2>
         </div>
@@ -288,23 +289,28 @@ export function PaymentPane() {
         ) : (
           <>
             {/* Right panel header */}
-            <div className="flex items-center gap-3 border-b px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
               <POSButton
                 type="button"
                 variant="ghost"
+                size="icon"
+                className="rounded-full"
                 onClick={handleClearSelection}
                 aria-label={t('paymentPane.backToTabListAriaLabel')}
               >
                 <ArrowLeft className="size-4" />
               </POSButton>
-              <h2 className="font-semibold">{selectedTab.customerName}</h2>
+              <h2 className="text-base font-semibold tracking-tight">{selectedTab.customerName}</h2>
             </div>
 
             {!pinVerified ? (
               /* PIN verification prompt */
               <div className="flex flex-1 items-center justify-center p-8">
-                <div className="flex flex-col items-center gap-4">
-                  <p className="text-muted-foreground">{t('paymentPane.pinRequired')}</p>
+                <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-strong">
+                    <ShieldCheck className="size-6" aria-hidden="true" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('paymentPane.pinRequired')}</p>
                   <POSButton
                     type="button"
                     touchSize="large"

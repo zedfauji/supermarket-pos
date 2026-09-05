@@ -4,25 +4,19 @@
  * State machine:
  *   CLOSED -> OPEN (SELECTING) -> CONFIGURING -> PIN_MODAL -> SUBMITTING -> CLOSED
  */
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
-import { ManagerPinDialog } from "@features/manager-pin-gate";
-import { useOrderItemsByPayment } from "@entities/payment";
-import { useRefundsByPayment } from "@entities/refund";
-import type { RefundReason } from "@entities/refund";
+import { ManagerPinDialog } from '@features/manager-pin-gate';
+import { useOrderItemsByPayment } from '@entities/payment';
+import { useRefundsByPayment } from '@entities/refund';
+import type { RefundReason } from '@entities/refund';
 import { formatMoney } from '@shared/lib/format';
-import { MoneyDisplay, POSButton, QuantityControl } from "@shared/ui";
-import { Checkbox } from "@shared/ui/checkbox";
-import { Label } from "@shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@shared/ui/select";
+import { MoneyDisplay, POSButton, QuantityControl } from '@shared/ui';
+import { Checkbox } from '@shared/ui/checkbox';
+import { Label } from '@shared/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -30,9 +24,9 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@shared/ui/sheet";
+} from '@shared/ui/sheet';
 
-import { useProcessRefund } from "../model/useProcessRefund";
+import { useProcessRefund } from '../model/useProcessRefund';
 
 // ============================================================================
 // TYPES
@@ -66,11 +60,11 @@ export interface RefundSheetProps {
 // ============================================================================
 
 const REFUND_REASONS: RefundReason[] = [
-  "wrong_order",
-  "quality_issue",
-  "customer_complaint",
-  "billing_error",
-  "other",
+  'wrong_order',
+  'quality_issue',
+  'customer_complaint',
+  'billing_error',
+  'other',
 ];
 
 // ============================================================================
@@ -78,13 +72,13 @@ const REFUND_REASONS: RefundReason[] = [
 // ============================================================================
 
 export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps) {
-  const { t } = useTranslation("featOrders");
+  const { t } = useTranslation('featOrders');
   const { data: orderItemsRaw, isLoading: itemsLoading } = useOrderItemsByPayment(paymentId);
   const { data: existingRefunds } = useRefundsByPayment(paymentId);
   const mutation = useProcessRefund();
 
   const [overrides, setOverrides] = useState(new Map<string, ItemOverride>());
-  const [reason, setReason] = useState<RefundReason | "">("");
+  const [reason, setReason] = useState<RefundReason | ''>('');
   const [pinOpen, setPinOpen] = useState(false);
 
   const refundedQtyMap = useMemo(() => {
@@ -117,7 +111,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
 
   const selectedItems = items.filter(i => i.selected);
   const refundTotal = selectedItems.reduce((sum, i) => sum + i.unitPrice * i.refundQty, 0);
-  const isValid = selectedItems.length >= 1 && reason !== "" && refundTotal > 0;
+  const isValid = selectedItems.length >= 1 && reason !== '' && refundTotal > 0;
 
   function toggleItem(orderItemId: string) {
     setOverrides(prev => {
@@ -178,7 +172,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
       return;
     }
     toast.success(
-      t("processRefund.refundProcessed", {
+      t('processRefund.refundProcessed', {
         amount: formatMoney(Math.round(refundTotal * 100) / 100),
       })
     );
@@ -187,7 +181,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      setReason("");
+      setReason('');
       setPinOpen(false);
       setOverrides(new Map());
     }
@@ -199,19 +193,19 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto flex flex-col">
           <SheetHeader>
-            <SheetTitle>{t("processRefund.title")}</SheetTitle>
-            <SheetDescription>
-              {t("processRefund.description")}
-            </SheetDescription>
+            <SheetTitle>{t('processRefund.title')}</SheetTitle>
+            <SheetDescription>{t('processRefund.description')}</SheetDescription>
           </SheetHeader>
 
           <div className="mt-4 flex-1 space-y-2 px-1">
             {itemsLoading && (
-              <p className="text-sm text-muted-foreground py-4 text-center">{t("processRefund.loadingItems")}</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {t('processRefund.loadingItems')}
+              </p>
             )}
             {!itemsLoading && items.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                {t("processRefund.noRefundableItems")}
+                {t('processRefund.noRefundableItems')}
               </p>
             )}
             {items.map(item => {
@@ -220,21 +214,24 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
               return (
                 <div
                   key={item.orderItemId}
-                  className={"rounded-lg border p-3 space-y-2 transition-opacity" + (fullyRefunded ? " opacity-50" : "")}
-                  title={fullyRefunded ? t("processRefund.fullyRefunded") : undefined}
+                  className={
+                    'rounded-xl border border-border bg-card p-4 space-y-2 shadow-xs transition-opacity' +
+                    (fullyRefunded ? ' opacity-50' : '')
+                  }
+                  title={fullyRefunded ? t('processRefund.fullyRefunded') : undefined}
                 >
                   <div className="flex items-center gap-3">
                     <Checkbox
-                      id={"refund-item-" + item.orderItemId}
+                      id={'refund-item-' + item.orderItemId}
                       checked={item.selected}
                       disabled={fullyRefunded}
                       onCheckedChange={() => {
                         if (!fullyRefunded) toggleItem(item.orderItemId);
                       }}
-                      aria-label={t("processRefund.selectForRefund", { name: item.productName })}
+                      aria-label={t('processRefund.selectForRefund', { name: item.productName })}
                     />
                     <label
-                      htmlFor={"refund-item-" + item.orderItemId}
+                      htmlFor={'refund-item-' + item.orderItemId}
                       className="flex-1 text-sm font-medium cursor-pointer"
                     >
                       {item.productName}
@@ -244,25 +241,29 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
                   {item.selected && (
                     <div className="flex items-center gap-4 pl-7">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{t("processRefund.qty")}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {t('processRefund.qty')}
+                        </span>
                         <QuantityControl
                           value={item.refundQty}
                           min={1}
                           max={maxQty}
-                          onChange={qty => { updateQty(item.orderItemId, qty); }}
+                          onChange={qty => {
+                            updateQty(item.orderItemId, qty);
+                          }}
                         />
                       </div>
                       <div className="flex items-center gap-2">
                         <Checkbox
-                          id={"restock-" + item.orderItemId}
+                          id={'restock-' + item.orderItemId}
                           checked={item.restock}
                           onCheckedChange={checked => {
                             updateRestock(item.orderItemId, checked === true);
                           }}
-                          aria-label={t("processRefund.restockAria", { name: item.productName })}
+                          aria-label={t('processRefund.restockAria', { name: item.productName })}
                         />
-                        <Label htmlFor={"restock-" + item.orderItemId} className="text-xs">
-                          {t("processRefund.restock")}
+                        <Label htmlFor={'restock-' + item.orderItemId} className="text-xs">
+                          {t('processRefund.restock')}
                         </Label>
                       </div>
                     </div>
@@ -272,17 +273,19 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
             })}
           </div>
 
-          <div className="border-t px-6 py-4 space-y-3 bg-background sticky bottom-0">
+          <div className="sticky bottom-0 space-y-3 border-t border-border bg-popover px-6 py-4">
             <div className="space-y-1.5">
               <Label htmlFor="refund-reason" className="text-sm font-medium">
-                {t("processRefund.reason")} <span className="text-destructive">*</span>
+                {t('processRefund.reason')} <span className="text-destructive">*</span>
               </Label>
               <Select
                 value={reason}
-                onValueChange={val => { setReason(val as RefundReason); }}
+                onValueChange={val => {
+                  setReason(val as RefundReason);
+                }}
               >
                 <SelectTrigger id="refund-reason" className="w-full">
-                  <SelectValue placeholder={t("processRefund.selectReasonPlaceholder")} />
+                  <SelectValue placeholder={t('processRefund.selectReasonPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {REFUND_REASONS.map(r => (
@@ -294,7 +297,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
               </Select>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-base font-semibold">{t("processRefund.refundTotal")}</span>
+              <span className="text-base font-semibold">{t('processRefund.refundTotal')}</span>
               <MoneyDisplay amount={refundTotal} size="lg" negative={true} />
             </div>
           </div>
@@ -304,18 +307,22 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
               variant="outline"
               touchSize="large"
               className="flex-1"
-              onClick={() => { onOpenChange(false); }}
+              onClick={() => {
+                onOpenChange(false);
+              }}
             >
-              {t("processRefund.closeRefund")}
+              {t('processRefund.closeRefund')}
             </POSButton>
             <POSButton
               touchSize="xl"
               focusEmphasis="high"
               className="flex-1"
               disabled={!isValid || mutation.isPending}
-              onClick={() => { setPinOpen(true); }}
+              onClick={() => {
+                setPinOpen(true);
+              }}
             >
-              {t("processRefund.requestApproval")}
+              {t('processRefund.requestApproval')}
             </POSButton>
           </SheetFooter>
         </SheetContent>
@@ -324,7 +331,7 @@ export function RefundSheet({ open, paymentId, onOpenChange }: RefundSheetProps)
         open={pinOpen}
         onOpenChange={setPinOpen}
         requiredAction="process_refund"
-        onSuccess={(staff) => {
+        onSuccess={staff => {
           setPinOpen(false);
           void handleSubmitRefund(staff.pin);
         }}

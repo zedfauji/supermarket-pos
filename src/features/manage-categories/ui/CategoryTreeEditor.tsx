@@ -30,13 +30,7 @@ import { RoutingBadge } from '@shared/ui/RoutingBadge';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Input } from '@shared/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@shared/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 
 // ============================================================================
 // CATEGORY FORM
@@ -109,7 +103,8 @@ function CategoryForm({ initial, submitting, onCancel, onSubmit }: CategoryFormP
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="KITCHEN">
-              <UtensilsCrossed className="size-3.5" aria-hidden /> {t('manageCategories.form.kitchenOption')}
+              <UtensilsCrossed className="size-3.5" aria-hidden />{' '}
+              {t('manageCategories.form.kitchenOption')}
             </SelectItem>
             <SelectItem value="BAR">
               <Beer className="size-3.5" aria-hidden /> {t('manageCategories.form.barOption')}
@@ -117,7 +112,9 @@ function CategoryForm({ initial, submitting, onCancel, onSubmit }: CategoryFormP
             <SelectItem value="NONE">{t('manageCategories.form.noneOption')}</SelectItem>
           </SelectContent>
         </Select>
-        <p className="mt-1 text-xs text-muted-foreground">{t('manageCategories.form.routingHelp')}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t('manageCategories.form.routingHelp')}
+        </p>
       </FormField>
       <div className="flex justify-end gap-2">
         <POSButton type="button" variant="outline" touchSize="default" onClick={onCancel}>
@@ -176,7 +173,7 @@ function NodeRow({ item, allCategories, expandedIds, onToggle, onEdit, onAddChil
           }
           className={[
             'flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground',
-            'hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'hover:bg-accent focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none',
             !hasChildren ? 'invisible pointer-events-none' : '',
           ].join(' ')}
           onClick={() => {
@@ -425,11 +422,11 @@ export function CategoryTreeEditor() {
 
       {/* Tree */}
       {tree.length === 0 ? (
-        <p className="rounded-md border px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border-strong px-4 py-8 text-center text-sm text-muted-foreground">
           {t('manageCategories.emptyState')}
         </p>
       ) : (
-        <ul className="divide-y rounded-md border">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           {tree.map(item => (
             <NodeRow
               key={item.category.id}

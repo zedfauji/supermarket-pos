@@ -45,150 +45,146 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col">
-      <main className="flex-1 overflow-auto">
-        <PageContainer title={t('reports.title')} backTo="/home">
-          <Tabs defaultValue="session">
-            <TabsList className="mb-4 h-auto w-full flex-col items-stretch gap-3 bg-transparent p-0">
-              <div className="flex flex-col gap-1.5">
-                <span className="px-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('reports.groups.sales')}
-                </span>
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
-                  <TabsTrigger value="session" className="flex-none">
-                    {t('reports.tabs.session')}
-                  </TabsTrigger>
-                  <TabsTrigger value="products" className="flex-none">
-                    {t('reports.tabs.products')}
-                  </TabsTrigger>
-                  <TabsTrigger value="hourly" className="flex-none">
-                    {t('reports.tabs.hourly')}
-                  </TabsTrigger>
-                  <TabsTrigger value="categories" className="flex-none">
-                    {t('reports.tabs.categories')}
-                  </TabsTrigger>
-                  <TabsTrigger value="payment-methods" className="flex-none">
-                    {t('reports.tabs.paymentMethods')}
-                  </TabsTrigger>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="px-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('reports.groups.inventoryAnalytics')}
-                </span>
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
-                  <TabsTrigger value="inventory-analytics" className="flex-none">
-                    {t('reports.tabs.inventoryAnalytics')}
-                  </TabsTrigger>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="px-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('reports.groups.staffTips')}
-                </span>
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
-                  <TabsTrigger value="staff" className="flex-none">
-                    {t('reports.tabs.staff')}
-                  </TabsTrigger>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="px-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('reports.groups.operations')}
-                </span>
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
-                  <TabsTrigger value="voids" className="flex-none">
-                    {t('reports.tabs.voids')}
-                  </TabsTrigger>
-                  <TabsTrigger value="deletions-pre" className="flex-none">
-                    {t('reports.tabs.deletionsPre')}
-                  </TabsTrigger>
-                  <TabsTrigger value="deletions-post" className="flex-none">
-                    {t('reports.tabs.deletionsPost')}
-                  </TabsTrigger>
-                  <TabsTrigger value="refunds-reg" className="flex-none">
-                    {t('reports.tabs.refundsReg')}
-                  </TabsTrigger>
-                </div>
-              </div>
-            </TabsList>
+    <PageContainer title={t('reports.title')}>
+      <Tabs defaultValue="session">
+        <TabsList className="mb-2 flex h-auto w-full flex-wrap items-start justify-start gap-x-6 gap-y-3 rounded-none bg-transparent p-0">
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('reports.groups.sales')}
+            </span>
+            <div className="flex flex-wrap items-center gap-1 rounded-xl bg-muted p-1">
+              <TabsTrigger value="session" className="flex-none">
+                {t('reports.tabs.session')}
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex-none">
+                {t('reports.tabs.products')}
+              </TabsTrigger>
+              <TabsTrigger value="hourly" className="flex-none">
+                {t('reports.tabs.hourly')}
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex-none">
+                {t('reports.tabs.categories')}
+              </TabsTrigger>
+              <TabsTrigger value="payment-methods" className="flex-none">
+                {t('reports.tabs.paymentMethods')}
+              </TabsTrigger>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('reports.groups.inventoryAnalytics')}
+            </span>
+            <div className="flex flex-wrap items-center gap-1 rounded-xl bg-muted p-1">
+              <TabsTrigger value="inventory-analytics" className="flex-none">
+                {t('reports.tabs.inventoryAnalytics')}
+              </TabsTrigger>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('reports.groups.staffTips')}
+            </span>
+            <div className="flex flex-wrap items-center gap-1 rounded-xl bg-muted p-1">
+              <TabsTrigger value="staff" className="flex-none">
+                {t('reports.tabs.staff')}
+              </TabsTrigger>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('reports.groups.operations')}
+            </span>
+            <div className="flex flex-wrap items-center gap-1 rounded-xl bg-muted p-1">
+              <TabsTrigger value="voids" className="flex-none">
+                {t('reports.tabs.voids')}
+              </TabsTrigger>
+              <TabsTrigger value="deletions-pre" className="flex-none">
+                {t('reports.tabs.deletionsPre')}
+              </TabsTrigger>
+              <TabsTrigger value="deletions-post" className="flex-none">
+                {t('reports.tabs.deletionsPost')}
+              </TabsTrigger>
+              <TabsTrigger value="refunds-reg" className="flex-none">
+                {t('reports.tabs.refundsReg')}
+              </TabsTrigger>
+            </div>
+          </div>
+        </TabsList>
 
-            <TabsContent value="session">
-              <CajaReportPanel />
-            </TabsContent>
+        <TabsContent value="session">
+          <CajaReportPanel />
+        </TabsContent>
 
-            <TabsContent value="products">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <ProductSalesPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="products">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <ProductSalesPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="hourly">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <HourlyBreakdownPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="hourly">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <HourlyBreakdownPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="inventory-analytics">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <InventoryAnalyticsPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="inventory-analytics">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <InventoryAnalyticsPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="voids">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <VoidRefundPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="voids">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <VoidRefundPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="deletions-pre">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <DeletionsPreSendPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="deletions-pre">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <DeletionsPreSendPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="deletions-post">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <DeletionsPostCloseReport dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="deletions-post">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <DeletionsPostCloseReport dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="payment-methods">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <PaymentMethodsReport dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="payment-methods">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <PaymentMethodsReport dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="categories">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <CategoryRevenuePanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="categories">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <CategoryRevenuePanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="staff">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <StaffSalesPanel dateRange={dateRange} />
-              </div>
-            </TabsContent>
+        <TabsContent value="staff">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <StaffSalesPanel dateRange={dateRange} />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="refunds-reg">
-              <div className="space-y-4">
-                <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
-                <RefundsRegister dateRange={dateRange} />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </PageContainer>
-      </main>
-    </div>
+        <TabsContent value="refunds-reg">
+          <div className="space-y-4">
+            <DateRangePicker fromStr={fromStr} toStr={toStr} onChange={handleDateChange} />
+            <RefundsRegister dateRange={dateRange} />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </PageContainer>
   );
 }

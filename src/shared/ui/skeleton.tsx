@@ -1,14 +1,14 @@
 /**
- * SKELETON COMPONENT (shadcn/ui)
+ * SKELETON COMPONENT (shadcn/ui, restyled)
  *
- * Placeholder for shadcn/ui Skeleton component.
- * Install with: npx shadcn@latest add skeleton
+ * Shimmering placeholder block that matches the shape of the content it
+ * stands in for.
  */
 
 import { cn } from '@shared/lib/utils';
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('animate-pulse rounded-md bg-muted', className)} {...props} />;
+  return <div className={cn('skeleton-shimmer rounded-md', className)} {...props} />;
 }
 
 export { Skeleton };

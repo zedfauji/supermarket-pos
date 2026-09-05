@@ -58,9 +58,9 @@ export function OfflineBanner() {
       role="status"
       aria-live="polite"
       className={cn(
-        'fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center py-1 px-3',
-        'text-xs font-medium transition-opacity duration-200',
-        isOffline ? 'bg-pos-warning text-black' : 'bg-pos-accent text-white',
+        'fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-2 py-1.5 px-3',
+        'text-xs font-semibold tracking-wide transition-opacity duration-200',
+        isOffline ? 'bg-warning text-warning-foreground' : 'bg-success text-success-foreground',
         isDone ? 'opacity-0' : 'opacity-100'
       )}
     >

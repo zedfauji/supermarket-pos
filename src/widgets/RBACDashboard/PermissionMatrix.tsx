@@ -55,17 +55,17 @@ export function PermissionMatrix() {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
       <table className="w-full text-sm">
         <thead>
           <tr>
-            <th className="min-w-[180px] py-2 pr-4 text-left font-medium text-muted-foreground">
+            <th className="min-w-[180px] bg-muted/60 px-4 py-2.5 text-left text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
               {t('permissionMatrix.columnAction')}
             </th>
             {STAFF_ROLES.map(role => (
               <th
                 key={role}
-                className="min-w-[90px] px-3 py-2 text-center font-medium capitalize"
+                className="min-w-[90px] bg-muted/60 px-3 py-2.5 text-center text-[0.6875rem] font-semibold tracking-[0.08em] uppercase"
               >
                 {ROLE_LABELS[role]}
               </th>
@@ -74,8 +74,8 @@ export function PermissionMatrix() {
         </thead>
         <tbody>
           {STAFF_ACTIONS.map(action => (
-            <tr key={action} className="border-t border-border">
-              <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{action}</td>
+            <tr key={action} className="border-t border-border transition-colors hover:bg-muted/40">
+              <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{action}</td>
               {STAFF_ROLES.map(role => {
                 const checked = permMap.get(role)?.has(action) ?? false;
                 return (

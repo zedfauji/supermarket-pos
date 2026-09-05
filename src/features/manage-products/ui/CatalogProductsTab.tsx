@@ -70,7 +70,7 @@ function ProductCategoryCell({
 }) {
   return (
     <select
-      className="border-input bg-background h-11 max-w-[10rem] rounded-md border px-2 text-sm"
+      className="h-11 max-w-[10rem] rounded-lg border border-input bg-card px-2 text-sm shadow-xs dark:bg-input/20"
       value={draftCategoryId}
       onChange={e => {
         const categoryId = e.target.value;

@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AppShell } from '@widgets/AppShell';
 import { HelpSheet } from '@widgets/HelpSheet';
-import { AgentButton, AgentPanel } from '@features/agent-chat';
+import { AgentPanel } from '@features/agent-chat';
+import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AuditRoute } from './audit-route';
 import { EditHistoryRoute } from './edit-history-route';
@@ -30,9 +32,18 @@ const PromotionWizardPage = lazy(() =>
 
 function LoadingFallback() {
   return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="text-muted-foreground">Loading...</div>
+    <div className="flex h-full min-h-[50vh] items-center justify-center">
+      <LoadingSpinner size={28} />
     </div>
+  );
+}
+
+/** Auth gate + persistent chrome for every signed-in route. */
+function ShellLayout() {
+  return (
+    <ProtectedRoute>
+      <AppShell />
+    </ProtectedRoute>
   );
 }
 
@@ -40,148 +51,84 @@ export function Router() {
   return (
     <BrowserRouter>
       <HelpSheet />
-      <AgentButton />
       <AgentPanel />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <ProtectedRoute>
-                <InventoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/staff"
-            element={
-              <ProtectedRoute>
-                <StaffPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/suppliers"
-            element={
-              <ProtectedRoute>
-                <SuppliersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
+          <Route element={<ShellLayout />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/staff" element={<StaffPage />} />
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route
+              path="/reports"
+              element={
                 <ReportsRoute>
                   <ReportsPage />
                 </ReportsRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pos"
-            element={
-              <ProtectedRoute>
-                <PosPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payments"
-            element={
-              <ProtectedRoute>
-                <PaymentsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rbac"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/pos" element={<PosPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
+            <Route
+              path="/rbac"
+              element={
                 <RbacRoute>
                   <RbacPage />
                 </RbacRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/audit"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit"
+              element={
                 <AuditRoute>
                   <AuditPage />
                 </AuditRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/edit-history"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit-history"
+              element={
                 <EditHistoryRoute>
                   <EditHistoryPage />
                 </EditHistoryRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/purchase-orders"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders"
+              element={
                 <PurchaseOrdersRoute>
                   <PurchaseOrdersPage />
                 </PurchaseOrdersRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/promotions"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/promotions"
+              element={
                 <PromotionsRoute>
                   <PromotionsPage />
                 </PromotionsRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/promotions/new"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/promotions/new"
+              element={
                 <PromotionsRoute>
                   <PromotionWizardPage />
                 </PromotionsRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/promotions/:id/edit"
-            element={
-              <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/promotions/:id/edit"
+              element={
                 <PromotionsRoute>
                   <PromotionWizardPage />
                 </PromotionsRoute>
-              </ProtectedRoute>
-            }
-          />
+              }
+            />
+          </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Suspense>

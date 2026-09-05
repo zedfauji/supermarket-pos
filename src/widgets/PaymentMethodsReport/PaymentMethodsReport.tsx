@@ -69,16 +69,22 @@ export function PaymentMethodsReport({ dateRange }: Props) {
       <div className="flex justify-end">
         <ExportButtons reportType="payment-methods" data={{ rows, dateRange }} />
       </div>
-      <div className="rounded-lg border p-4">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
-            <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} />
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={60}
+              outerRadius={100}
+            />
             <Tooltip />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>
@@ -101,7 +107,7 @@ export function PaymentMethodsReport({ dateRange }: Props) {
                   key={`${row.cajaSessionId ?? 'rollup'}-${row.method}-${String(i)}`}
                   className={
                     isLeadingRollup
-                      ? `border-l-2 border-l-pos-highlight bg-pos-highlight/5 font-semibold${isRollupStart ? ' border-t-2' : ''}`
+                      ? `border-l-2 border-l-brand bg-brand-soft/60 font-semibold${isRollupStart ? ' border-t-2' : ''}`
                       : row.isRollup
                         ? `font-semibold${isRollupStart ? ' border-t-2' : ''}`
                         : undefined

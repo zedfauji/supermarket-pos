@@ -139,7 +139,7 @@ export function ReceiveShipmentForm({
         <div className="space-y-4">
           <FormField label={t('receiveShipment.supplier')}>
             <select
-              className="border-input bg-background h-10 w-full rounded-md border px-3"
+              className="h-10 w-full rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20"
               value={supplierId}
               onChange={e => setSupplierId(e.target.value)}
               disabled={!!initialPurchaseOrder}
@@ -228,7 +228,7 @@ export function ReceiveShipmentForm({
             </div>
           )}
           {quick && (
-            <div className="grid grid-cols-2 gap-2 rounded border p-3">
+            <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-4">
               <FormField label={t('manageProducts.productForm.nameLabel')} required>
                 <Input
                   value={quick.name}
@@ -243,7 +243,7 @@ export function ReceiveShipmentForm({
               </FormField>
               <FormField label={t('manageProducts.productForm.categoryLabel')} required>
                 <select
-                  className="border-input bg-background h-10 rounded border px-3"
+                  className="h-10 rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20"
                   value={quick.categoryId}
                   onChange={e => setQuick({ ...quick, categoryId: e.target.value })}
                 >

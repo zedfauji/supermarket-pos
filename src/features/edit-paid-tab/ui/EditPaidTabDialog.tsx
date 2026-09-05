@@ -5,18 +5,18 @@
  * swapping refund-specific fields for a free-text reason, per-row qty/price/
  * notes editors, add/remove item affordances, and a tab-level notes field.
  */
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
-import { ManagerPinDialog } from "@features/manager-pin-gate";
-import { useProducts } from "@entities/product";
-import { tabKeys, useTab } from "@entities/tab";
-import { TERMINAL_ID } from "@shared/config/constants";
+import { ManagerPinDialog } from '@features/manager-pin-gate';
+import { useProducts } from '@entities/product';
+import { tabKeys, useTab } from '@entities/tab';
+import { TERMINAL_ID } from '@shared/config/constants';
 import { formatMoney } from '@shared/lib/format';
-import { supabase } from "@shared/lib/supabase";
-import { handleVersionError } from "@shared/lib/version-error";
+import { supabase } from '@shared/lib/supabase';
+import { handleVersionError } from '@shared/lib/version-error';
 import {
   Badge,
   ConfirmDialog,
@@ -36,10 +36,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@shared/ui";
+} from '@shared/ui';
 
-import type { EditPaidTabPatch } from "../model/useEditPaidTab";
-import { useEditPaidTab } from "../model/useEditPaidTab";
+import type { EditPaidTabPatch } from '../model/useEditPaidTab';
+import { useEditPaidTab } from '../model/useEditPaidTab';
 
 // ============================================================================
 // TYPES
@@ -69,17 +69,17 @@ export interface EditPaidTabDialogProps {
 // ============================================================================
 
 export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDialogProps) {
-  const { t } = useTranslation("featOrders");
+  const { t } = useTranslation('featOrders');
   const queryClient = useQueryClient();
-  const { data: tab, isLoading: tabLoading } = useTab(tabId ?? "");
+  const { data: tab, isLoading: tabLoading } = useTab(tabId ?? '');
   const { data: products } = useProducts();
   const mutation = useEditPaidTab();
 
   const [overrides, setOverrides] = useState(new Map<string, ItemOverride>());
   const [removedIds, setRemovedIds] = useState(new Set<string>());
   const [addedRows, setAddedRows] = useState<AddedRow[]>([]);
-  const [tabNotes, setTabNotes] = useState("");
-  const [reason, setReason] = useState("");
+  const [tabNotes, setTabNotes] = useState('');
+  const [reason, setReason] = useState('');
   const [pinOpen, setPinOpen] = useState(false);
   const [removeTargetId, setRemoveTargetId] = useState<string | null>(null);
 
@@ -88,7 +88,7 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
     /* eslint-disable react-hooks/set-state-in-effect -- initializing local edit
        state from the loaded tab when the sheet opens, same pattern as
        GeneralSettingsTab's data->form sync */
-    setTabNotes(tab.notes ?? "");
+    setTabNotes(tab.notes ?? '');
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, tab]);
 
@@ -97,17 +97,18 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
       .filter(item => !removedIds.has(item.id))
       .map(item => {
         const override = overrides.get(item.id);
-        const originalNotes = item.notes ?? "";
+        const originalNotes = item.notes ?? '';
         const quantity = override?.quantity ?? item.quantity;
         const unitPrice = override?.unitPrice ?? item.unitPrice;
         const notes = override?.notes ?? originalNotes;
         return {
           id: item.id,
-          productName: item.product?.name ?? t("editPaidTab.unknownItem"),
+          productName: item.product?.name ?? t('editPaidTab.unknownItem'),
           quantity,
           unitPrice,
           notes,
-          edited: quantity !== item.quantity || unitPrice !== item.unitPrice || notes !== originalNotes,
+          edited:
+            quantity !== item.quantity || unitPrice !== item.unitPrice || notes !== originalNotes,
         };
       });
   }, [tab?.items, overrides, removedIds, t]);
@@ -123,7 +124,7 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
   }, [existingRows, addedRows]);
   const totalDelta = Math.round((newTotal - originalTotal) * 100) / 100;
 
-  const isValid = reason.trim() !== "" && !mutation.isPending;
+  const isValid = reason.trim() !== '' && !mutation.isPending;
 
   function updateOverride(itemId: string, patch: Partial<ItemOverride>) {
     setOverrides(prev => {
@@ -132,7 +133,7 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
       const cur = next.get(itemId) ?? {
         quantity: original?.quantity ?? 1,
         unitPrice: original?.unitPrice ?? 0,
-        notes: original?.notes ?? "",
+        notes: original?.notes ?? '',
       };
       next.set(itemId, { ...cur, ...patch });
       return next;
@@ -159,13 +160,13 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
     /* eslint-disable i18next/no-literal-string -- 'op' is an RPC patch discriminator value, not UI copy */
     for (const item of tab.items) {
       if (removedIds.has(item.id)) {
-        patches.push({ op: "delete", id: item.id });
+        patches.push({ op: 'delete', id: item.id });
         continue;
       }
       const o = overrides.get(item.id);
       if (o) {
         patches.push({
-          op: "update",
+          op: 'update',
           id: item.id,
           quantity: o.quantity,
           unit_price: o.unitPrice,
@@ -175,7 +176,7 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
     }
     for (const row of addedRows) {
       patches.push({
-        op: "add",
+        op: 'add',
         product_id: row.productId,
         quantity: row.quantity,
         unit_price: row.unitPrice,
@@ -194,13 +195,13 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
 
     if (!result.ok) {
       const isVersionConflict =
-        result.error.code === "STALE_VERSION" || result.error.code === "NOT_FOUND_VERSIONED";
+        result.error.code === 'STALE_VERSION' || result.error.code === 'NOT_FOUND_VERSIONED';
       if (
         isVersionConflict &&
         handleVersionError(result.error, {
           queryClient,
           queryKey: tabKeys.detail(tab.id),
-          entity: "tabs",
+          entity: 'tabs',
           entityId: tab.id,
           expectedVersion: tab.version ?? 0,
           supabase,
@@ -210,10 +211,12 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
         onOpenChange(false);
         return;
       }
-      toast.error(result.error.message !== "" ? result.error.message : t("editPaidTab.genericError"));
+      toast.error(
+        result.error.message !== '' ? result.error.message : t('editPaidTab.genericError')
+      );
       return;
     }
-    toast.success(t("editPaidTab.editSaved"));
+    toast.success(t('editPaidTab.editSaved'));
     onOpenChange(false);
   }
 
@@ -222,8 +225,8 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
       setOverrides(new Map());
       setRemovedIds(new Set());
       setAddedRows([]);
-      setTabNotes("");
-      setReason("");
+      setTabNotes('');
+      setReason('');
       setPinOpen(false);
       setRemoveTargetId(null);
     }
@@ -235,49 +238,56 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto flex flex-col">
           <SheetHeader>
-            <SheetTitle>{t("editPaidTab.title")}</SheetTitle>
-            <SheetDescription>{t("editPaidTab.description")}</SheetDescription>
+            <SheetTitle>{t('editPaidTab.title')}</SheetTitle>
+            <SheetDescription>{t('editPaidTab.description')}</SheetDescription>
           </SheetHeader>
 
           <div className="mt-4 flex-1 space-y-2 px-1">
             {tabLoading && (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                {t("editPaidTab.loadingItems")}
+                {t('editPaidTab.loadingItems')}
               </p>
             )}
             {!tabLoading && existingRows.length === 0 && addedRows.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                {t("editPaidTab.noItems")}
+                {t('editPaidTab.noItems')}
               </p>
             )}
             {existingRows.map(row => (
               <div key={row.id} className="rounded-lg border p-3 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="flex-1 text-sm font-medium">{row.productName}</span>
-                  {row.edited && <Badge variant="outline">{t("editPaidTab.editedBadge")}</Badge>}
+                  {row.edited && <Badge variant="outline">{t('editPaidTab.editedBadge')}</Badge>}
                   <POSButton
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => { setRemoveTargetId(row.id); }}
+                    onClick={() => {
+                      setRemoveTargetId(row.id);
+                    }}
                   >
-                    {t("editPaidTab.removeItem")}
+                    {t('editPaidTab.removeItem')}
                   </POSButton>
                 </div>
                 <div className="flex items-end gap-4">
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">{t("editPaidTab.qty")}</span>
+                    <span className="text-xs text-muted-foreground">{t('editPaidTab.qty')}</span>
                     <QuantityControl
                       value={row.quantity}
                       min={1}
                       max={99}
-                      onChange={qty => { updateOverride(row.id, { quantity: qty }); }}
+                      onChange={qty => {
+                        updateOverride(row.id, { quantity: qty });
+                      }}
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <Label htmlFor={`edit-price-${row.id}`} className="text-xs text-muted-foreground">
-                      {t("editPaidTab.unitPriceLabel")}
+                    <Label
+                      htmlFor={`edit-price-${row.id}`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {t('editPaidTab.unitPriceLabel')}
                     </Label>
                     <Input
                       id={`edit-price-${row.id}`}
@@ -293,12 +303,14 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor={`edit-notes-${row.id}`} className="text-xs text-muted-foreground">
-                    {t("editPaidTab.itemNotesLabel")}
+                    {t('editPaidTab.itemNotesLabel')}
                   </Label>
                   <Input
                     id={`edit-notes-${row.id}`}
                     value={row.notes}
-                    onChange={e => { updateOverride(row.id, { notes: e.target.value }); }}
+                    onChange={e => {
+                      updateOverride(row.id, { notes: e.target.value });
+                    }}
                   />
                 </div>
               </div>
@@ -336,22 +348,27 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
                       setAddedRows(prev => prev.filter(r => r.key !== row.key));
                     }}
                   >
-                    {t("editPaidTab.removeItem")}
+                    {t('editPaidTab.removeItem')}
                   </POSButton>
                 </div>
                 <div className="flex items-end gap-4">
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">{t("editPaidTab.qty")}</span>
+                    <span className="text-xs text-muted-foreground">{t('editPaidTab.qty')}</span>
                     <QuantityControl
                       value={row.quantity}
                       min={1}
                       max={99}
-                      onChange={qty => { updateAddedRow(row.key, { quantity: qty }); }}
+                      onChange={qty => {
+                        updateAddedRow(row.key, { quantity: qty });
+                      }}
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <Label htmlFor={`add-price-${row.key}`} className="text-xs text-muted-foreground">
-                      {t("editPaidTab.unitPriceLabel")}
+                    <Label
+                      htmlFor={`add-price-${row.key}`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {t('editPaidTab.unitPriceLabel')}
                     </Label>
                     <Input
                       id={`add-price-${row.key}`}
@@ -374,39 +391,45 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
               onClick={handleAddItem}
               disabled={!products || products.length === 0}
             >
-              {t("editPaidTab.addItem")}
+              {t('editPaidTab.addItem')}
             </POSButton>
           </div>
 
-          <div className="border-t px-6 py-4 space-y-3 bg-background sticky bottom-0">
+          <div className="sticky bottom-0 space-y-3 border-t border-border bg-popover px-6 py-4">
             <div className="space-y-1.5">
               <Label htmlFor="edit-paid-tab-notes" className="text-sm font-medium">
-                {t("editPaidTab.ticketNotesLabel")}
+                {t('editPaidTab.ticketNotesLabel')}
               </Label>
               <Input
                 id="edit-paid-tab-notes"
                 value={tabNotes}
-                onChange={e => { setTabNotes(e.target.value); }}
+                onChange={e => {
+                  setTabNotes(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="edit-paid-tab-reason" className="text-sm font-medium">
-                {t("editPaidTab.reason")} <span className="text-destructive">*</span>
+                {t('editPaidTab.reason')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="edit-paid-tab-reason"
-                placeholder={t("editPaidTab.reasonPlaceholder")}
+                placeholder={t('editPaidTab.reasonPlaceholder')}
                 value={reason}
-                onChange={e => { setReason(e.target.value); }}
+                onChange={e => {
+                  setReason(e.target.value);
+                }}
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-base font-semibold">{t("editPaidTab.newTotal")}</span>
+              <span className="text-base font-semibold">{t('editPaidTab.newTotal')}</span>
               <MoneyDisplay amount={newTotal} size="lg" negative={totalDelta < 0} />
             </div>
             {totalDelta !== 0 && (
               <p className="text-xs text-muted-foreground">
-                {t("editPaidTab.totalDeltaHint", { amount: formatMoney(totalDelta, { showSign: true }) })}
+                {t('editPaidTab.totalDeltaHint', {
+                  amount: formatMoney(totalDelta, { showSign: true }),
+                })}
               </p>
             )}
           </div>
@@ -416,18 +439,22 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
               variant="outline"
               touchSize="large"
               className="flex-1"
-              onClick={() => { onOpenChange(false); }}
+              onClick={() => {
+                onOpenChange(false);
+              }}
             >
-              {t("editPaidTab.cancel")}
+              {t('editPaidTab.cancel')}
             </POSButton>
             <POSButton
               touchSize="xl"
               focusEmphasis="high"
               className="flex-1"
               disabled={!isValid}
-              onClick={() => { setPinOpen(true); }}
+              onClick={() => {
+                setPinOpen(true);
+              }}
             >
-              {t("editPaidTab.saveCorrection")}
+              {t('editPaidTab.saveCorrection')}
             </POSButton>
           </SheetFooter>
         </SheetContent>
@@ -435,9 +462,9 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
 
       <ConfirmDialog
         open={removeTargetId !== null}
-        title={t("editPaidTab.removeItemConfirmTitle")}
-        description={t("editPaidTab.removeItemConfirmDescription")}
-        confirmLabel={t("editPaidTab.removeItemConfirmLabel")}
+        title={t('editPaidTab.removeItemConfirmTitle')}
+        description={t('editPaidTab.removeItemConfirmDescription')}
+        confirmLabel={t('editPaidTab.removeItemConfirmLabel')}
         variant="destructive"
         onConfirm={() => {
           if (removeTargetId) {
@@ -445,14 +472,16 @@ export function EditPaidTabDialog({ open, tabId, onOpenChange }: EditPaidTabDial
           }
           setRemoveTargetId(null);
         }}
-        onCancel={() => { setRemoveTargetId(null); }}
+        onCancel={() => {
+          setRemoveTargetId(null);
+        }}
       />
 
       <ManagerPinDialog
         open={pinOpen}
         onOpenChange={setPinOpen}
         requiredAction="edit_paid_tab"
-        onSuccess={(staff) => {
+        onSuccess={staff => {
           setPinOpen(false);
           void handleSubmit(staff.pin);
         }}

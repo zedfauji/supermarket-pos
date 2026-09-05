@@ -1,8 +1,8 @@
 /**
- * BADGE COMPONENT (shadcn/ui)
+ * BADGE COMPONENT (shadcn/ui, restyled)
  *
- * Placeholder for shadcn/ui Badge component.
- * Install with: npx shadcn@latest add badge
+ * Soft, square-cornered status chips. Semantic variants use the tinted
+ * `*-soft` surfaces so a wall of badges reads as labels, not buttons.
  */
 
 /* eslint-disable react-refresh/only-export-components */
@@ -12,16 +12,18 @@ import * as React from 'react';
 import { cn } from '@shared/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-xs font-medium leading-none whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&>svg]:size-3 [&>svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
+        default: 'border-transparent bg-primary text-primary-foreground',
+        secondary: 'border-transparent bg-secondary text-secondary-foreground',
+        destructive: 'border-transparent bg-destructive-soft text-destructive',
+        outline: 'border-border-strong bg-transparent text-foreground',
+        brand: 'border-transparent bg-brand-soft text-brand-strong',
+        success: 'border-transparent bg-success-soft text-success-strong',
+        warning: 'border-transparent bg-warning-soft text-warning-strong',
+        muted: 'border-transparent bg-muted text-muted-foreground',
       },
     },
     defaultVariants: {

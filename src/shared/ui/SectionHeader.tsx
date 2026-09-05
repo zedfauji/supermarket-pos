@@ -1,15 +1,13 @@
 /**
  * SECTION HEADER COMPONENT
  *
- * Consistent page/section headers with optional action and badge.
+ * Page / section title row: title (h2), optional description, optional count
+ * badge, optional action slot. The former per-page "Back home" button is gone —
+ * navigation lives in the app shell's sidebar now — but the `backTo`/`backLabel`
+ * props stay accepted (and ignored) so every call-site keeps compiling.
  */
 
-import { Home } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-
 import { cn } from '@shared/lib/utils';
-import { POSButton } from '@shared/ui/POSButton';
 import { Badge } from '@shared/ui/badge';
 
 export type SectionHeaderProps = {
@@ -23,68 +21,50 @@ export type SectionHeaderProps = {
   badge?: string | number;
   /** Additional CSS classes */
   className?: string;
-  /** Optional back-navigation target. Omit to render no back link. */
+  /** Legacy — navigation is owned by the app shell. Accepted for compatibility, ignored. */
   backTo?: string;
-  /** Optional back-link label. Defaults to "Home" when backTo is provided. */
+  /** Legacy — navigation is owned by the app shell. Accepted for compatibility, ignored. */
   backLabel?: string;
+  /** Visual size — `page` for the route title, `section` for in-page groups. */
+  size?: 'page' | 'section';
 };
 
-/**
- * Section header with title, description, action, and badge.
- *
- * @example
- * ```tsx
- * <SectionHeader
- *   title="Open Tabs"
- *   description="Currently active customer tabs"
- *   badge={5}
- *   action={<Button>New Tab</Button>}
- * />
- * ```
- */
 export function SectionHeader({
   title,
   description,
   action,
   badge,
   className,
-  backTo,
-  backLabel,
+  size = 'section',
 }: SectionHeaderProps) {
-  const { t } = useTranslation('common');
   return (
-    <div className={cn('flex items-center justify-between gap-4 border-b pb-4', className)}>
-      <div className="flex items-center gap-4">
-        {backTo && (
-          <POSButton
-            variant="outline"
-            touchSize="large"
-            focusEmphasis="high"
-            asChild
-            className="shrink-0 gap-2 border-2 px-4"
-          >
-            <Link to={backTo}>
-              <Home className="h-5 w-5" />
-              {backLabel ?? t('sectionHeader.backHome')}
-            </Link>
-          </POSButton>
-        )}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h2 className="font-heading text-2xl font-semibold leading-none tracking-tight">
-              {title}
-            </h2>
-            {badge !== undefined && (
-              <Badge variant="secondary" aria-label={`Count: ${String(badge)}`}>
-                {badge}
-              </Badge>
+    <div
+      className={cn(
+        'flex flex-wrap items-center justify-between gap-x-6 gap-y-3',
+        size === 'section' && 'mb-4 border-b border-border pb-3',
+        className
+      )}
+    >
+      <div className="min-w-0 space-y-1">
+        <div className="flex items-center gap-2.5">
+          <h2
+            className={cn(
+              'truncate font-semibold tracking-tight',
+              size === 'page' ? 'text-2xl' : 'text-lg'
             )}
-          </div>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          >
+            {title}
+          </h2>
+          {badge !== undefined && (
+            <Badge variant="muted" aria-label={`Count: ${String(badge)}`}>
+              {badge}
+            </Badge>
+          )}
         </div>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
 
-      {action && <div className="flex-shrink-0">{action}</div>}
+      {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
     </div>
   );
 }

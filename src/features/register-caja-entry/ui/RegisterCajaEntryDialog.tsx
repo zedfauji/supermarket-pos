@@ -88,9 +88,14 @@ export function RegisterCajaEntryDialog({ open, onOpenChange }: RegisterCajaEntr
     }
 
     toast.success(
-      t(type === 'expense' ? 'registerCajaEntry.expenseRecorded' : 'registerCajaEntry.incomeRecorded', {
-        amount: formatMoney(validation.data.amount),
-      })
+      t(
+        type === 'expense'
+          ? 'registerCajaEntry.expenseRecorded'
+          : 'registerCajaEntry.incomeRecorded',
+        {
+          amount: formatMoney(validation.data.amount),
+        }
+      )
     );
     resetForm();
     onOpenChange(false);
@@ -180,7 +185,7 @@ export function RegisterCajaEntryDialog({ open, onOpenChange }: RegisterCajaEntr
                 rows={3}
                 placeholder={t('registerCajaEntry.conceptPlaceholder')}
                 disabled={isPending}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20 py-2 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               />
               {errors.concept && <p className="text-sm text-destructive">{errors.concept}</p>}
             </div>

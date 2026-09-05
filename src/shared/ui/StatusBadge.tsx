@@ -38,7 +38,15 @@ export type StatusBadgeProps = {
 type StatusConfig = {
   /** i18next key (within the `common` namespace) resolving to the display label */
   labelKey: string;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  variant:
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | 'success'
+    | 'warning'
+    | 'brand'
+    | 'muted';
   className?: string;
 };
 
@@ -46,8 +54,7 @@ const statusConfig: Record<string, StatusConfig> = {
   // Tab statuses
   open: {
     labelKey: 'statusBadge.open',
-    variant: 'default',
-    className: 'bg-pos-accent text-white hover:opacity-90',
+    variant: 'success',
   },
   closed: {
     labelKey: 'statusBadge.closed',
@@ -55,8 +62,7 @@ const statusConfig: Record<string, StatusConfig> = {
   },
   paid: {
     labelKey: 'statusBadge.paid',
-    variant: 'default',
-    className: 'bg-primary text-primary-foreground hover:opacity-90',
+    variant: 'brand',
   },
   voided: {
     labelKey: 'statusBadge.voided',
@@ -66,8 +72,7 @@ const statusConfig: Record<string, StatusConfig> = {
   // Order statuses
   pending: {
     labelKey: 'statusBadge.pending',
-    variant: 'default',
-    className: 'bg-pos-accent text-white hover:opacity-90',
+    variant: 'warning',
   },
   served: {
     labelKey: 'statusBadge.served',
@@ -77,35 +82,29 @@ const statusConfig: Record<string, StatusConfig> = {
   // Open tab duration (how long the bill has been open)
   tab_open_ok: {
     labelKey: 'statusBadge.open',
-    variant: 'default',
-    className: 'bg-pos-accent text-white hover:opacity-90',
+    variant: 'success',
   },
   tab_open_warn: {
     labelKey: 'statusBadge.tabOpenWarn',
-    variant: 'default',
-    className: 'bg-pos-warning text-black hover:opacity-90',
+    variant: 'warning',
   },
   tab_open_critical: {
     labelKey: 'statusBadge.tabOpenCritical',
     variant: 'destructive',
-    className: 'bg-pos-danger text-white hover:opacity-90',
   },
 
   // Inventory (quantity vs threshold)
   inv_in_stock: {
     labelKey: 'statusBadge.inStock',
-    variant: 'secondary',
-    className: 'bg-muted text-muted-foreground hover:bg-muted',
+    variant: 'success',
   },
   inv_low_stock: {
     labelKey: 'statusBadge.lowStock',
-    variant: 'destructive',
-    className: 'bg-pos-danger text-white hover:opacity-90',
+    variant: 'warning',
   },
   inv_out_of_stock: {
     labelKey: 'statusBadge.outOfStock',
     variant: 'destructive',
-    className: 'bg-destructive text-white hover:opacity-90',
   },
 
   // Purchase order statuses
@@ -115,19 +114,17 @@ const statusConfig: Record<string, StatusConfig> = {
   },
   po_received: {
     labelKey: 'statusBadge.poReceived',
-    variant: 'default',
-    className: 'bg-primary text-primary-foreground hover:opacity-90',
+    variant: 'success',
   },
 
   // Promotion lifecycle (derived client-side, not a persisted column)
   promo_active: {
     labelKey: 'statusBadge.promoActive',
-    variant: 'default',
-    className: 'bg-pos-accent text-white hover:opacity-90',
+    variant: 'success',
   },
   promo_scheduled: {
     labelKey: 'statusBadge.promoScheduled',
-    variant: 'secondary',
+    variant: 'brand',
   },
   promo_expired: {
     labelKey: 'statusBadge.promoExpired',
@@ -140,8 +137,7 @@ const statusConfig: Record<string, StatusConfig> = {
   // Phase 28 (D-12): migrated-from-old-schema indicator on the promotions list.
   promo_needs_review: {
     labelKey: 'statusBadge.promoNeedsReview',
-    variant: 'outline',
-    className: 'bg-pos-warning text-black hover:opacity-90',
+    variant: 'warning',
   },
 };
 

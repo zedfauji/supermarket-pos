@@ -86,11 +86,11 @@ export function HourlyBreakdownPanel({ dateRange }: Props) {
 
       {/* Callout row */}
       {(peakHour ?? slowestHour) && (
-        <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/30 px-4 py-2 text-sm">
+        <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm">
           {peakHour && (
             <span>
               {t('hourlyBreakdownPanel.peakLabel')}{' '}
-              <span className="font-semibold text-pos-highlight">
+              <span className="font-semibold text-brand-strong">
                 {t('hourlyBreakdownPanel.hourRevenueValue', {
                   hour: formatHour(peakHour.hour),
                   revenue: formatMoney(peakHour.revenue),
@@ -101,7 +101,7 @@ export function HourlyBreakdownPanel({ dateRange }: Props) {
           {slowestHour && (
             <span>
               {t('hourlyBreakdownPanel.slowestLabel')}{' '}
-              <span className="font-semibold text-pos-warning">
+              <span className="font-semibold text-warning-strong">
                 {t('hourlyBreakdownPanel.hourRevenueValue', {
                   hour: formatHour(slowestHour.hour),
                   revenue: formatMoney(slowestHour.revenue),
@@ -113,7 +113,7 @@ export function HourlyBreakdownPanel({ dateRange }: Props) {
       )}
 
       {/* Per-hour bar chart, busiest hour bar highlighted (D-13) */}
-      <div className="rounded-lg border p-4">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={rows}>
             <XAxis dataKey="hour" tickFormatter={formatHour} />
@@ -135,7 +135,7 @@ export function HourlyBreakdownPanel({ dateRange }: Props) {
       </div>
 
       {/* 24-row table */}
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>
@@ -154,9 +154,9 @@ export function HourlyBreakdownPanel({ dateRange }: Props) {
                   key={row.hour}
                   className={
                     isPeak
-                      ? 'border-l-2 border-l-pos-highlight bg-pos-highlight/5 text-pos-highlight'
+                      ? 'border-l-2 border-l-brand bg-brand-soft/60 text-brand-strong'
                       : isSlowest
-                        ? 'border-l-2 border-l-pos-warning bg-pos-warning/5 text-pos-warning'
+                        ? 'border-l-2 border-l-warning bg-warning-soft/60 text-warning-strong'
                         : undefined
                   }
                 >

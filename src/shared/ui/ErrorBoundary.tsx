@@ -36,11 +36,11 @@ export class ErrorBoundary extends Component<Props, State> {
       // imported i18n singleton's .t() directly (same pattern as non-component
       // consumers documented in @shared/lib/i18n/index.ts).
       return (
-        <div className="p-6 bg-destructive/10 rounded-lg border border-destructive/20 text-center">
-          <h2 className="text-lg font-bold text-destructive mb-2">
+        <div className="mx-auto max-w-md rounded-2xl border border-destructive/20 bg-destructive-soft p-8 text-center">
+          <h2 className="mb-2 text-lg font-semibold text-destructive">
             {i18n.t('common:errorBoundary.title')}
           </h2>
-          <p className="text-sm text-destructive/80 mb-4">{this.state.error?.message}</p>
+          <p className="mb-5 text-sm text-destructive/80">{this.state.error?.message}</p>
           <POSButton
             touchSize="large"
             variant="default"

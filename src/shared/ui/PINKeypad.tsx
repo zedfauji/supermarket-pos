@@ -1,8 +1,8 @@
 /**
  * PIN KEYPAD COMPONENT
  *
- * 10-key numeric keypad for PIN entry in bar environment.
- * Large touch targets, displays value as dots for security.
+ * 10-key numeric keypad for PIN entry. Large touch targets, value shown as
+ * dots for security.
  */
 
 import { Delete, Loader2 } from 'lucide-react';
@@ -32,29 +32,11 @@ export interface PINKeypadProps {
   className?: string;
 }
 
-/**
- * PINKeypad - Numeric keypad for secure PIN entry
- *
- * Features:
- * - Large 64px Ã— 64px buttons for fat-finger bar environment
- * - Displays value as dots (â—â—â—â—) not actual digits
- * - Auto-fires onComplete when maxLength reached
- * - Loading state with spinner
- * - Error state with red border
- *
- * @example
- * ```tsx
- * <PINKeypad
- *   value={pin}
- *   onChange={setPin}
- *   maxLength={4}
- *   onComplete={(pin) => handleLogin(pin)}
- *   label="Enter PIN"
- *   error={error}
- *   isLoading={isLoading}
- * />
- * ```
- */
+/* eslint-disable i18next/no-literal-string -- Tailwind class string, not UI copy */
+const KEY_CLASS =
+  'h-16 w-full rounded-xl border-border bg-card text-2xl font-medium tabular-nums shadow-xs hover:bg-muted hover:border-border-strong active:scale-[0.97] dark:bg-input/20';
+/* eslint-enable i18next/no-literal-string */
+
 export function PINKeypad({
   value,
   onChange,
@@ -73,7 +55,6 @@ export function PINKeypad({
       const newValue = value + digit;
       onChange(newValue);
 
-      // Auto-fire onComplete when maxLength reached
       if (newValue.length === maxLength && onComplete) {
         onComplete(newValue);
       }
@@ -110,55 +91,56 @@ export function PINKeypad({
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      {/* Label */}
-      {label && <label className="text-sm font-medium text-foreground">{label}</label>}
+      {label && (
+        <label className="text-center text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+          {label}
+        </label>
+      )}
 
       {/* PIN Display */}
       <div
         className={cn(
-          'flex h-16 items-center justify-center gap-2 rounded-md border-2 bg-background px-4',
-          error ? 'border-destructive' : 'border-input',
-          isLoading && 'opacity-50'
+          'flex h-14 items-center justify-center gap-3 rounded-xl border bg-muted/50 px-4 transition-colors',
+          error ? 'border-destructive/60 bg-destructive-soft' : 'border-border',
+          isLoading && 'opacity-60'
         )}
         aria-label={t('pinKeypad.display')}
         aria-live="polite"
       >
         {isLoading ? (
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="size-5 animate-spin text-brand" />
         ) : (
           <>
             {Array.from({ length: maxLength }).map((_, i) => (
               <span
                 key={i}
                 className={cn(
-                  'text-2xl w-8 flex items-center justify-center flex-shrink-0',
-                  i < value.length ? 'text-foreground' : 'text-muted-foreground'
+                  'block size-3 shrink-0 rounded-full transition-[background-color,transform] duration-150',
+                  i < value.length
+                    ? 'scale-100 bg-foreground'
+                    : 'scale-90 bg-transparent ring-1 ring-muted-foreground/40 ring-inset'
                 )}
                 aria-hidden="true"
-              >
-                {i < value.length ? '\u25CF' : '\u25CB'}
-              </span>
+              />
             ))}
           </>
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="-mt-1 text-center text-sm font-medium text-destructive" role="alert">
           {error}
         </p>
       )}
 
       {/* Keypad Grid */}
-      <div className="grid grid-cols-3 gap-2" role="group" aria-label={t('pinKeypad.keypad')}>
-        {/* Keys 1-9 */}
+      <div className="grid grid-cols-3 gap-2.5" role="group" aria-label={t('pinKeypad.keypad')}>
         {keys.slice(0, 9).map(key => (
           <Button
             key={key}
             variant="outline"
             size="lg"
-            className="h-16 w-full text-xl font-semibold"
+            className={KEY_CLASS}
             onClick={() => {
               handleKeyPress(key);
             }}
@@ -169,12 +151,11 @@ export function PINKeypad({
           </Button>
         ))}
 
-        {/* Empty space, 0, Backspace */}
         <div />
         <Button
           variant="outline"
           size="lg"
-          className="h-16 w-full text-xl font-semibold"
+          className={KEY_CLASS}
           onClick={() => {
             handleKeyPress('0');
           }}
@@ -184,16 +165,16 @@ export function PINKeypad({
           0
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="lg"
-          className="h-16 w-full"
+          className="h-16 w-full rounded-xl text-muted-foreground hover:text-foreground active:scale-[0.97]"
           onClick={() => {
             handleBackspace();
           }}
           disabled={isLoading || value.length === 0}
           aria-label={t('pinKeypad.backspace')}
         >
-          <Delete className="h-6 w-6" />
+          <Delete className="size-6" />
         </Button>
       </div>
     </div>

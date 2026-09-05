@@ -180,20 +180,18 @@ export function BillingSettingsTab({ currentRole }: Props) {
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
             {/* eslint-disable i18next/no-literal-string -- 'value' is a data enum key, not UI copy */}
-            {(
-              [
-                {
-                  value: 'prorated' as const,
-                  label: t('billingSettingsTab.proratedLabel'),
-                  description: t('billingSettingsTab.proratedDescription'),
-                },
-                {
-                  value: 'full' as const,
-                  label: t('billingSettingsTab.fullHourLabel'),
-                  description: t('billingSettingsTab.fullHourDescription'),
-                },
-              ]
-            ).map(option => (
+            {[
+              {
+                value: 'prorated' as const,
+                label: t('billingSettingsTab.proratedLabel'),
+                description: t('billingSettingsTab.proratedDescription'),
+              },
+              {
+                value: 'full' as const,
+                label: t('billingSettingsTab.fullHourLabel'),
+                description: t('billingSettingsTab.fullHourDescription'),
+              },
+            ].map(option => (
               /* eslint-enable i18next/no-literal-string */
               <POSButton
                 key={option.value}
@@ -226,7 +224,9 @@ export function BillingSettingsTab({ currentRole }: Props) {
             void save();
           }}
         >
-          {updateSetting.isPending ? t('billingSettingsTab.saving') : t('billingSettingsTab.saveBilling')}
+          {updateSetting.isPending
+            ? t('billingSettingsTab.saving')
+            : t('billingSettingsTab.saveBilling')}
         </POSButton>
 
         <ConfirmDialog
@@ -245,7 +245,7 @@ export function BillingSettingsTab({ currentRole }: Props) {
           }}
         />
 
-        <div className="space-y-3 rounded-lg border p-4">
+        <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
           <h3 className="font-medium">{t('billingSettingsTab.paymentButtonLabelsTitle')}</h3>
           <p className="text-xs text-muted-foreground">
             {t('billingSettingsTab.paymentButtonLabelsDescription')}
@@ -293,7 +293,9 @@ export function BillingSettingsTab({ currentRole }: Props) {
               );
             }}
           >
-            {updateSetting.isPending ? t('billingSettingsTab.saving') : t('billingSettingsTab.saveLabels')}
+            {updateSetting.isPending
+              ? t('billingSettingsTab.saving')
+              : t('billingSettingsTab.saveLabels')}
           </POSButton>
         </div>
       </div>

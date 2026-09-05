@@ -69,7 +69,7 @@ export function TimerDisplay({
       className={cn(
         isTabOpen ? 'tabular-nums' : 'font-mono tabular-nums',
         sizeClasses[size],
-        warning && 'text-pos-warning',
+        warning && 'text-warning-strong',
         critical && 'text-destructive',
         className
       )}

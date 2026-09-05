@@ -15,8 +15,10 @@ const ALL_VALUE = '__all__';
 
 const pillClass = (active: boolean) =>
   cn(
-    'flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-3 text-sm font-medium transition-colors',
-    active ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+    'flex h-10 min-h-10 shrink-0 flex-none items-center gap-2 rounded-full border px-4 text-sm font-medium transition-[background-color,color,border-color,box-shadow] duration-150',
+    active
+      ? 'border-primary bg-primary text-primary-foreground shadow-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary'
+      : 'border-border bg-card text-muted-foreground shadow-xs hover:border-border-strong hover:text-foreground dark:bg-input/20'
   );
 
 export function CategoryTabs({
@@ -48,7 +50,7 @@ export function CategoryTabs({
       }}
       className={className}
     >
-      <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden bg-transparent p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger
           ref={allRef}
           value={ALL_VALUE}

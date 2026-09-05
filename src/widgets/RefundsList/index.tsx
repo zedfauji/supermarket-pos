@@ -57,9 +57,7 @@ function buildColumns(t: TFunction<'wAdmin'>): ColumnDef<Refund>[] {
       id: 'reason',
       accessorKey: 'reason',
       header: t('refundsList.columnReason'),
-      cell: ({ row }) => (
-        <span className="text-sm">{capitalizeReason(row.original.reason)}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm">{capitalizeReason(row.original.reason)}</span>,
     },
     {
       id: 'items_count',
@@ -75,9 +73,7 @@ function buildColumns(t: TFunction<'wAdmin'>): ColumnDef<Refund>[] {
       accessorKey: 'amount',
       header: t('refundsList.columnAmount'),
       enableSorting: true,
-      cell: ({ row }) => (
-        <MoneyDisplay amount={row.original.amount} size="sm" negative={true} />
-      ),
+      cell: ({ row }) => <MoneyDisplay amount={row.original.amount} size="sm" negative={true} />,
     },
     {
       id: 'restocked',
@@ -85,7 +81,7 @@ function buildColumns(t: TFunction<'wAdmin'>): ColumnDef<Refund>[] {
       cell: ({ row }) => {
         const hasRestock = row.original.items.some(i => i.restock);
         return hasRestock ? (
-          <Badge variant="outline" className="text-pos-accent border-pos-accent">
+          <Badge variant="outline" className="text-success-strong border-success">
             {t('refundsList.yes')}
           </Badge>
         ) : (

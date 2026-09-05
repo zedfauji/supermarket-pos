@@ -1,8 +1,8 @@
 /**
  * QUANTITY CONTROL COMPONENT
  *
- * Three-button quantity selector with large touch targets.
- * Includes haptic feedback on mobile devices.
+ * Three-part stepper (−, value, +) rendered as one pill with large touch
+ * targets. Includes haptic feedback on devices that support it.
  */
 
 import { Minus, Plus } from 'lucide-react';
@@ -25,28 +25,12 @@ export type QuantityControlProps = {
   className?: string;
 };
 
-/**
- * Triggers haptic feedback on mobile devices.
- */
 function triggerHaptic() {
   if ('vibrate' in navigator) {
     navigator.vibrate(10);
   }
 }
 
-/**
- * Quantity control with increment/decrement buttons.
- *
- * @example
- * ```tsx
- * <QuantityControl
- *   value={quantity}
- *   min={1}
- *   max={99}
- *   onChange={setQuantity}
- * />
- * ```
- */
 export function QuantityControl({
   value,
   min = 1,
@@ -75,24 +59,27 @@ export function QuantityControl({
 
   return (
     <div
-      className={cn('flex items-center gap-2', className)}
+      className={cn(
+        'inline-flex h-11 items-center rounded-lg border border-border bg-card shadow-xs dark:bg-input/20',
+        className
+      )}
       role="group"
       aria-label={t('quantityControl.group')}
     >
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
         onClick={handleDecrement}
         disabled={disabled || !canDecrement}
         aria-label={t('quantityControl.decrease')}
-        className="h-11 w-11 touch-manipulation"
+        className="size-11 touch-manipulation rounded-l-lg rounded-r-none"
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="size-4" />
       </Button>
 
       <div
-        className="flex h-11 w-16 items-center justify-center rounded-md border border-input bg-background font-mono text-lg font-semibold tabular-nums"
+        className="text-numeric flex h-full w-12 items-center justify-center border-x border-border text-base font-semibold"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -101,14 +88,14 @@ export function QuantityControl({
 
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
         onClick={handleIncrement}
         disabled={disabled || !canIncrement}
         aria-label={t('quantityControl.increase')}
-        className="h-11 w-11 touch-manipulation"
+        className="size-11 touch-manipulation rounded-l-none rounded-r-lg"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="size-4" />
       </Button>
     </div>
   );

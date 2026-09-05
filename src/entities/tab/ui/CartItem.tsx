@@ -1,4 +1,4 @@
-import { AlertTriangle, X, Zap } from 'lucide-react';
+import { AlertTriangle, Scale, X, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNearExpiryAlerts } from '@entities/inventory';
 import { evaluateBestPromotion, usePromotions } from '@entities/promotion';
@@ -68,96 +68,102 @@ export function CartItem({
       ? Math.round(((item.product.basePrice - item.unitPrice) / item.product.basePrice) * 100)
       : null;
   return (
-    <div className="flex gap-3 rounded-lg border bg-card p-3">
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-start justify-between gap-2">
-          <h4 className="truncate text-sm font-medium">{item.product.name}</h4>
-          <POSButton
-            type="button"
-            variant="ghost"
-            touchSize="default"
-            size="icon"
-            className="shrink-0"
-            onClick={onRemove}
-            aria-label={t('cartItem.remove', { name: item.product.name })}
-          >
-            <X className="h-4 w-4" />
-          </POSButton>
+    <div className="group/line flex flex-col gap-3 rounded-xl border border-border bg-background p-3 shadow-xs transition-colors hover:border-border-strong animate-fade-in">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h4 className="truncate text-sm font-semibold tracking-tight">{item.product.name}</h4>
+          <p className="text-xs text-muted-foreground">
+            {item.weightGrams != null ? (
+              t('cartItem.weight', { weight: (item.weightGrams / 1000).toFixed(3) })
+            ) : (
+              <>
+                {formatMoney(item.unitPrice)} × {item.quantity}
+              </>
+            )}
+          </p>
         </div>
-
-        {nearExpiry ? (
-          <Badge className="mb-2 bg-pos-warning text-amber-950 dark:text-amber-100">
-            {t('cartItem.nearExpiry', { days: nearExpiry.daysUntilExpiry })}
-          </Badge>
-        ) : null}
-
-        {item.priceConflict ? (
-          <POSButton
-            type="button"
-            variant="destructive"
-            touchSize="default"
-            size="sm"
-            className="mb-2 gap-1.5"
-            onClick={handleResolveConflict}
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            {t('cartItem.priceConflict')}
-          </POSButton>
-        ) : null}
-
-        {item.selectedModifiers.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1">
-            {item.selectedModifiers.map(mod => (
-              <Badge key={mod.id} variant="secondary" className="text-xs">
-                {mod.name}
-                {mod.priceDelta > 0 ? ` ${formatMoney(mod.priceDelta, { showSign: true })}` : ''}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {item.weightGrams != null ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {t('cartItem.weight', { weight: (item.weightGrams / 1000).toFixed(3) })}
-              </span>
-              <POSButton type="button" variant="outline" touchSize="default" onClick={onEditWeight}>
-                {t('cartItem.editWeight')}
-              </POSButton>
-            </div>
-          ) : (
-            <QuantityControl value={item.quantity} min={1} max={99} onChange={onQuantitySet} />
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <MoneyDisplay amount={item.lineTotal} size="md" className="font-semibold" />
+          {(isDiscounted || (discountPercent !== null && discountPercent > 0)) && (
+            <span className="inline-flex items-center gap-1 text-[0.6875rem] font-medium text-success-strong">
+              <Zap className="size-3" aria-label={t('cartItem.promotionApplied')} />
+              {discountPercent !== null && discountPercent > 0
+                ? t('cartItem.discountBadge', { percent: discountPercent })
+                : null}
+            </span>
           )}
-          <div className="flex shrink-0 items-center gap-1">
-            {isDiscounted && (
-              <Zap
-                className="h-3.5 w-3.5 text-pos-accent"
-                aria-label={t('cartItem.promotionApplied')}
-              />
-            )}
-            {discountPercent !== null && discountPercent > 0 && (
-              <Badge className="bg-pos-accent text-white">
-                {t('cartItem.discountBadge', { percent: discountPercent })}
-              </Badge>
-            )}
-            <MoneyDisplay amount={item.lineTotal} size="lg" />
-          </div>
         </div>
-
-        <Input
-          data-testid={`cart-item-notes-${item.product.id}`}
-          type="text"
-          placeholder={t('cartItem.notesPlaceholder')}
-          value={item.notes}
-          maxLength={200}
-          className="mt-2 h-7 text-xs"
-          onChange={e => {
-            onNotesChange(e.target.value);
-          }}
-          aria-label={t('cartItem.notesFor', { name: item.product.name })}
-        />
       </div>
+
+      {(nearExpiry || item.priceConflict || item.selectedModifiers.length > 0) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {nearExpiry ? (
+            <Badge variant="warning">
+              {t('cartItem.nearExpiry', { days: nearExpiry.daysUntilExpiry })}
+            </Badge>
+          ) : null}
+          {item.priceConflict ? (
+            <POSButton
+              type="button"
+              variant="destructive"
+              touchSize="default"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleResolveConflict}
+            >
+              <AlertTriangle className="size-3.5" />
+              {t('cartItem.priceConflict')}
+            </POSButton>
+          ) : null}
+          {item.selectedModifiers.map(mod => (
+            <Badge key={mod.id} variant="secondary">
+              {mod.name}
+              {mod.priceDelta > 0 ? ` ${formatMoney(mod.priceDelta, { showSign: true })}` : ''}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        {item.weightGrams != null ? (
+          <POSButton
+            type="button"
+            variant="outline"
+            size="sm"
+            touchSize="default"
+            onClick={onEditWeight}
+          >
+            <Scale className="size-4" aria-hidden="true" />
+            {t('cartItem.editWeight')}
+          </POSButton>
+        ) : (
+          <QuantityControl value={item.quantity} min={1} max={99} onChange={onQuantitySet} />
+        )}
+        <POSButton
+          type="button"
+          variant="ghost"
+          touchSize="default"
+          size="icon"
+          className="text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+          onClick={onRemove}
+          aria-label={t('cartItem.remove', { name: item.product.name })}
+        >
+          <X className="size-4" />
+        </POSButton>
+      </div>
+
+      <Input
+        data-testid={`cart-item-notes-${item.product.id}`}
+        type="text"
+        placeholder={t('cartItem.notesPlaceholder')}
+        value={item.notes}
+        maxLength={200}
+        className="h-8 rounded-md border-transparent bg-muted/60 px-2.5 text-xs shadow-none hover:border-border focus-visible:bg-card"
+        onChange={e => {
+          onNotesChange(e.target.value);
+        }}
+        aria-label={t('cartItem.notesFor', { name: item.product.name })}
+      />
     </div>
   );
 }

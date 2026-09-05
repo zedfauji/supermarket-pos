@@ -1,8 +1,5 @@
 /**
- * ALERT DIALOG COMPONENT (shadcn/ui)
- *
- * Placeholder for shadcn/ui AlertDialog component.
- * Install with: npx shadcn@latest add alert-dialog
+ * ALERT DIALOG COMPONENT (shadcn/ui, restyled)
  */
 
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
@@ -24,7 +21,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      'fixed inset-0 z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'fixed inset-0 z-50 bg-black/45 supports-backdrop-filter:backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
       className
     )}
     {...props}
@@ -42,7 +39,8 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl bg-popover/90 p-6 shadow-xl ring-1 ring-primary/20 backdrop-blur-md duration-100 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg',
+        'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-5 rounded-2xl border border-border bg-popover p-6 shadow-xl duration-150',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className
       )}
       {...props}
@@ -52,13 +50,13 @@ const AlertDialogContent = React.forwardRef<
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col space-y-2 text-center sm:text-left', className)} {...props} />
+  <div className={cn('flex flex-col gap-1.5 text-center sm:text-left', className)} {...props} />
 );
 AlertDialogHeader.displayName = 'AlertDialogHeader';
 
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
+    className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
     {...props}
   />
 );
@@ -70,7 +68,7 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn('font-heading text-lg font-semibold', className)}
+    className={cn('text-lg leading-tight font-semibold tracking-tight', className)}
     {...props}
   />
 ));
@@ -89,7 +87,8 @@ const AlertDialogDescription = React.forwardRef<
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
 /* eslint-disable i18next/no-literal-string -- Tailwind classes, not UI copy */
-const ALERT_DIALOG_TOUCH_SIZE = 'min-h-[56px] px-6 text-base active:scale-95 transition-transform';
+const ALERT_DIALOG_TOUCH_SIZE =
+  'min-h-[56px] rounded-xl px-6 text-base active:scale-95 transition-transform';
 /* eslint-enable i18next/no-literal-string */
 
 const AlertDialogAction = React.forwardRef<

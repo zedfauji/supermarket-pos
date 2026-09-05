@@ -26,7 +26,10 @@ export function VarianceReport({ rows }: Props) {
   }
 
   return (
-    <div className="max-h-80 overflow-auto rounded-md border" data-testid="variance-report">
+    <div
+      className="max-h-80 overflow-auto rounded-xl border border-border bg-card"
+      data-testid="variance-report"
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -44,7 +47,7 @@ export function VarianceReport({ rows }: Props) {
               data-variance={row.variance}
               className={cn(
                 row.variance < 0 && 'bg-destructive/10 text-destructive',
-                row.variance > 0 && 'bg-pos-highlight/10 text-pos-highlight'
+                row.variance > 0 && 'bg-brand-soft text-brand-strong'
               )}
             >
               <TableCell className="font-medium">{row.productName}</TableCell>

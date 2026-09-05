@@ -46,7 +46,7 @@ function PeekWindowShell({ children, footer }: { children: ReactNode; footer: Re
   return (
     <div className="flex h-screen flex-col bg-background">
       <div className="flex-1 space-y-4 overflow-y-auto p-6">{children}</div>
-      <div className="flex justify-end gap-2 border-t bg-muted/50 p-4">{footer}</div>
+      <div className="flex justify-end gap-2 border-t border-border bg-muted/40 p-4">{footer}</div>
     </div>
   );
 }
@@ -139,13 +139,9 @@ function PeekProductDetail({
           </>
         }
       >
-        <div className="mx-auto flex aspect-square max-w-[240px] items-center justify-center rounded-lg border bg-muted">
+        <div className="mx-auto flex aspect-square max-w-[240px] items-center justify-center rounded-2xl border border-border bg-muted">
           {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="object-contain size-full"
-            />
+            <img src={product.imageUrl} alt={product.name} className="object-contain size-full" />
           ) : (
             <>
               <ImageOff className="text-muted-foreground size-10" aria-hidden="true" />
@@ -165,13 +161,13 @@ function PeekProductDetail({
           </div>
         )}
 
-        <h3 title={product.name} className="w-full truncate text-2xl font-heading font-semibold">
+        <h3 title={product.name} className="w-full truncate text-2xl font-semibold tracking-tight">
           {product.name}
         </h3>
 
         <MoneyDisplay amount={product.basePrice} size="xl" className="font-semibold" />
 
-        <div className="space-y-2 rounded-md border bg-muted/40 p-3 text-sm">
+        <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               {t('productPeekPanel.skuLabel')}
@@ -185,7 +181,9 @@ function PeekProductDetail({
             <span>{product.barcode ?? '—'}</span>
           </div>
           <p className="text-muted-foreground">
-            {product.soldByWeight ? t('productPeekPanel.unitWeight') : t('productPeekPanel.unitPiece')}
+            {product.soldByWeight
+              ? t('productPeekPanel.unitWeight')
+              : t('productPeekPanel.unitPiece')}
           </p>
           <div className="flex items-center justify-between">
             <StatusBadge status={stockTier} />

@@ -265,7 +265,7 @@ export function ProductForm({
         error={fieldErrors.categoryId ?? ''}
       >
         <select
-          className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm"
+          className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs dark:bg-input/20"
           value={categoryId}
           onChange={e => {
             setCategoryId(e.target.value);
@@ -341,7 +341,7 @@ export function ProductForm({
         error={fieldErrors.parentProductId ?? ''}
       >
         <select
-          className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm"
+          className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs dark:bg-input/20"
           value={parentProductIdInput}
           onChange={e => {
             setParentProductIdInput(e.target.value);
@@ -389,7 +389,7 @@ export function ProductForm({
         label={t('manageProducts.productForm.modifiersLabel')}
         error={fieldErrors.modifiers ?? ''}
       >
-        <ScrollArea className="max-h-40 rounded-md border p-2">
+        <ScrollArea className="max-h-40 rounded-lg border border-border bg-card p-2">
           <ul className="space-y-2 pr-2">
             {sortedModifiers.length === 0 ? (
               <li className="text-muted-foreground text-sm">
@@ -422,7 +422,7 @@ export function ProductForm({
       </FormField>
 
       <FormField label={t('manageProducts.productForm.suppliersLabel')}>
-        <ScrollArea className="max-h-40 rounded-md border p-2">
+        <ScrollArea className="max-h-40 rounded-lg border border-border bg-card p-2">
           <ul className="space-y-2 pr-2">
             {suppliers.length === 0 ? (
               <li className="text-muted-foreground text-sm">

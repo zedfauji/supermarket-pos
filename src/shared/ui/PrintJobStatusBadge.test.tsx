@@ -32,7 +32,7 @@ describe('PrintJobStatusBadge', () => {
     const { container } = renderWithProviders(<PrintJobStatusBadge status="unknown" onReprint={vi.fn()} />);
     const badge = container.querySelector('[role="status"]');
     expect(badge?.className).not.toMatch(/bg-destructive|pos-danger/);
-    expect(badge?.className).toMatch(/pos-warning/);
+    expect(badge?.className).toMatch(/warning/);
   });
 
   it('uses font-medium (not the shadcn Badge default font-semibold)', () => {

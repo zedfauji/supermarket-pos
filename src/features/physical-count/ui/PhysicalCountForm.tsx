@@ -132,7 +132,7 @@ export function PhysicalCountForm({ open, onOpenChange }: Props) {
                   <div
                     key={item.productId}
                     data-testid={`physical-count-row-${item.productId}`}
-                    className="flex items-center gap-4 rounded-md border px-3 py-2"
+                    className="flex items-center gap-4 rounded-lg border border-border bg-card px-3 py-2"
                   >
                     <Label
                       htmlFor={`count-${item.productId}`}

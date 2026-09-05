@@ -156,7 +156,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
         {receipt && <LogoUploader receipt={receipt} />}
 
         {receipt && (
-          <div className="space-y-4 rounded-lg border p-4">
+          <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-xs">
             <h3 className="font-medium">{t('hardwareSettingsTab.receiptSettingsTitle')}</h3>
 
             <div className="space-y-1">
@@ -167,7 +167,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
                 onChange={e => {
                   patchReceipt({ printerName: e.target.value.length > 0 ? e.target.value : null });
                 }}
-                className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 w-full rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20 py-2 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
               >
                 <option value="">{t('hardwareSettingsTab.printerNotConfiguredOption')}</option>
                 {printerList?.printers.map(name => (
@@ -181,7 +181,9 @@ export function HardwareSettingsTab({ currentRole }: Props) {
                   )}
               </select>
               {printerListErrored && (
-                <p className="text-sm text-destructive">{t('hardwareSettingsTab.printerListError')}</p>
+                <p className="text-sm text-destructive">
+                  {t('hardwareSettingsTab.printerListError')}
+                </p>
               )}
               {!printerListErrored && printerList?.printers.length === 0 && (
                 <p className="text-sm text-muted-foreground">
@@ -203,7 +205,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
                 onChange={e => {
                   patchReceipt({ paperWidthChars: Number(e.target.value) as 32 | 40 | 48 });
                 }}
-                className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 w-full rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20 py-2 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
               >
                 {PAPER_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -235,9 +237,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="receipt-footerText">
-                {t('hardwareSettingsTab.footerTextLabel')}
-              </Label>
+              <Label htmlFor="receipt-footerText">{t('hardwareSettingsTab.footerTextLabel')}</Label>
               <Textarea
                 id="receipt-footerText"
                 value={receipt.footerText}
@@ -294,7 +294,7 @@ export function HardwareSettingsTab({ currentRole }: Props) {
             </p>
             <pre
               data-testid="receipt-live-preview"
-              className="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-[11px] leading-tight whitespace-pre"
+              className="max-h-[50vh] overflow-auto rounded-xl border border-border bg-muted/40 p-4 font-mono text-[11px] leading-tight whitespace-pre"
             >
               {buildThermalReceiptText(SAMPLE_RECEIPT_DATA, getCurrentLocale(), receipt)}
             </pre>

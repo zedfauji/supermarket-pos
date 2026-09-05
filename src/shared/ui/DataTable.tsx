@@ -107,7 +107,7 @@ export function DataTable<T>({
       <div className={cn('space-y-4', className)}>
         {toolbarBlock}
         {searchable && <SearchInput value="" onChange={() => {}} placeholder={searchPlaceholder} />}
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map(headerGroup => (
@@ -171,7 +171,7 @@ export function DataTable<T>({
         />
       )}
 
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (

@@ -8,24 +8,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 export default function PaymentsPage() {
   const { t } = useTranslation('pages');
   return (
-    <PageContainer
-      title={t('payments.title')}
-      backTo="/home"
-      className="mx-0 flex h-screen max-w-none flex-col space-y-0 bg-background p-0"
-    >
-      <Tabs defaultValue="payments" className="flex flex-1 flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-2 mb-0 w-fit">
-          <TabsTrigger value="payments">{t('payments.tabs.payments')}</TabsTrigger>
-          <TabsTrigger value="refunds">{t('payments.tabs.refunds')}</TabsTrigger>
-          <TabsTrigger value="bankTransfers">{t('payments.tabs.bankTransfers')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="payments" className="flex flex-1 overflow-hidden">
+    <PageContainer title={t('payments.title')} width="fluid" flush>
+      <Tabs defaultValue="payments" className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden">
+        <div className="shrink-0 border-b border-border bg-background px-6 py-3 lg:px-8">
+          <TabsList>
+            <TabsTrigger value="payments">{t('payments.tabs.payments')}</TabsTrigger>
+            <TabsTrigger value="refunds">{t('payments.tabs.refunds')}</TabsTrigger>
+            <TabsTrigger value="bankTransfers">{t('payments.tabs.bankTransfers')}</TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="payments" className="flex min-h-0 flex-1 overflow-hidden">
           <PaymentPane />
         </TabsContent>
-        <TabsContent value="refunds" className="flex flex-1 overflow-hidden p-4">
+        <TabsContent value="refunds" className="flex min-h-0 flex-1 overflow-auto p-6 lg:p-8">
           <RefundsList />
         </TabsContent>
-        <TabsContent value="bankTransfers" className="flex flex-1 overflow-hidden p-4">
+        <TabsContent value="bankTransfers" className="flex min-h-0 flex-1 overflow-auto p-6 lg:p-8">
           <BankTransfersList />
         </TabsContent>
       </Tabs>

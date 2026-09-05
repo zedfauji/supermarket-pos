@@ -63,7 +63,9 @@ function buildEntriesColumns(t: TFunction<'wPanels'>): ColumnDef<CajaEntry>[] {
       accessorKey: 'amount',
       header: t('cajaReportPanel.amount'),
       cell: ({ row }) => (
-        <span className={row.original.type === 'expense' ? 'text-red-400' : 'text-green-400'}>
+        <span
+          className={row.original.type === 'expense' ? 'text-destructive' : 'text-success-strong'}
+        >
           {formatMoney(
             row.original.type === 'expense' ? -row.original.amount : row.original.amount,
             { showSign: true }
@@ -123,7 +125,7 @@ export function CajaReportPanel() {
             onChange={e => {
               setSelectedId(e.target.value || null);
             }}
-            className="h-11 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20 py-2 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none"
           >
             {sessions.map((s: CajaSession) => (
               <option key={s.id} value={s.id}>
@@ -156,12 +158,12 @@ export function CajaReportPanel() {
                 value: report.summary.bankTransferPending,
               },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-lg border p-4">
+              <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-xs">
                 <p className="text-sm text-muted-foreground">{label}</p>
                 <MoneyDisplay amount={value} size="lg" className="mt-1 font-bold" />
               </div>
             ))}
-            <div className="rounded-lg border p-4">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
               <p className="text-sm text-muted-foreground">{t('cajaReportPanel.tabsOrders')}</p>
               <p className="mt-1 text-2xl font-bold tabular-nums">
                 {report.summary.tabCount} / {report.summary.orderCount}
@@ -170,7 +172,7 @@ export function CajaReportPanel() {
           </div>
 
           {/* Cash reconciliation */}
-          <div className="rounded-lg border p-4">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
             <h3 className="mb-3 font-semibold">{t('cajaReportPanel.cashReconciliation')}</h3>
             <div className="space-y-2 text-sm">
               {[
@@ -205,7 +207,9 @@ export function CajaReportPanel() {
                   <span className="text-muted-foreground">
                     {t('cajaReportPanel.incomeEntries')}
                   </span>
-                  <span className="text-green-400">{formatMoney(report.summary.totalIncome)}</span>
+                  <span className="text-success-strong">
+                    {formatMoney(report.summary.totalIncome)}
+                  </span>
                 </div>
               )}
               {report.summary.totalExpenses > 0 && (
@@ -213,7 +217,9 @@ export function CajaReportPanel() {
                   <span className="text-muted-foreground">
                     {t('cajaReportPanel.expenseEntries')}
                   </span>
-                  <span className="text-red-400">{formatMoney(report.summary.totalExpenses)}</span>
+                  <span className="text-destructive">
+                    {formatMoney(report.summary.totalExpenses)}
+                  </span>
                 </div>
               )}
               {(report.summary.totalExpenses > 0 || report.summary.totalIncome > 0) && (
@@ -247,9 +253,7 @@ export function CajaReportPanel() {
             {report.topProducts.length > 0 ? (
               <DataTable columns={topProductsColumns} data={report.topProducts} />
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('cajaReportPanel.noProductsSold')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('cajaReportPanel.noProductsSold')}</p>
             )}
           </div>
 
@@ -262,13 +266,13 @@ export function CajaReportPanel() {
                 <div className="mt-2 flex gap-4 text-sm">
                   <span>
                     {t('cajaReportPanel.totalExpensesLabel')}{' '}
-                    <span className="text-red-400 font-mono">
+                    <span className="text-destructive font-mono">
                       {formatMoney(report.summary.totalExpenses)}
                     </span>
                   </span>
                   <span>
                     {t('cajaReportPanel.totalIncomeLabel')}{' '}
-                    <span className="text-green-400 font-mono">
+                    <span className="text-success-strong font-mono">
                       {formatMoney(report.summary.totalIncome)}
                     </span>
                   </span>

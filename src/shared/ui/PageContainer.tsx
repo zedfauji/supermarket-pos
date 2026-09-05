@@ -1,7 +1,8 @@
 /**
  * PAGE CONTAINER COMPONENT
  *
- * Consistent page wrapper with title, description, and actions slot.
+ * Standard route body: a sticky title bar (title, description, actions) over a
+ * scrolling content well. Fills whatever height the app shell hands it.
  */
 
 import * as React from 'react';
@@ -19,56 +20,59 @@ export interface PageContainerProps {
   description?: string;
   /** Optional actions slot (e.g., buttons) */
   actions?: React.ReactNode;
-  /** Additional CSS classes */
+  /** Additional CSS classes for the content well */
   className?: string;
-  /** Optional back-navigation target. Omit to render no back link. */
+  /** Legacy — navigation is owned by the app shell. Accepted for compatibility, ignored. */
   backTo?: string;
-  /** Optional back-link label. Defaults to "Home" when backTo is provided. */
+  /** Legacy — navigation is owned by the app shell. Accepted for compatibility, ignored. */
   backLabel?: string;
+  /** `contained` (default) caps content width; `fluid` lets it stretch edge to edge. */
+  width?: 'contained' | 'fluid';
+  /** Remove the content well's padding (for full-bleed layouts such as split panes). */
+  flush?: boolean;
 }
 
-/**
- * PageContainer - Consistent page wrapper
- *
- * Features:
- * - Max width constraint (1400px)
- * - Consistent padding (24px)
- * - Renders SectionHeader at top
- * - Actions slot for page-level buttons
- *
- * @example
- * ```tsx
- * <PageContainer
- *   title="Open Tabs"
- *   description="Currently active customer tabs"
- *   actions={<Button>New Tab</Button>}
- * >
- *   <TabList tabs={tabs} />
- * </PageContainer>
- * ```
- */
 export function PageContainer({
   children,
   title,
   description,
   actions,
   className,
-  backTo,
-  backLabel,
+  width = 'contained',
+  flush = false,
 }: PageContainerProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-[1400px] space-y-6 p-6', className)}>
-      {/* Page Header */}
-      <SectionHeader
-        title={title}
-        {...(description && { description })}
-        {...(actions && { action: actions })}
-        {...(backTo && { backTo })}
-        {...(backLabel && { backLabel })}
-      />
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="sticky top-0 z-20 shrink-0 border-b border-border bg-background/85 px-6 py-4 backdrop-blur-md supports-backdrop-filter:bg-background/70 lg:px-8">
+        <div className={cn('mx-auto w-full', width === 'contained' && 'max-w-[1440px]')}>
+          <SectionHeader
+            size="page"
+            title={title}
+            {...(description && { description })}
+            {...(actions && { action: actions })}
+          />
+        </div>
+      </header>
 
-      {/* Page Content */}
-      {children}
+      <div
+        className={cn(
+          'min-h-0 flex-1 overflow-auto',
+          !flush && 'px-6 py-6 lg:px-8',
+          flush && 'flex flex-col'
+        )}
+      >
+        <div
+          className={cn(
+            'mx-auto w-full animate-fade-up',
+            width === 'contained' && 'max-w-[1440px]',
+            !flush && 'space-y-6',
+            flush && 'flex min-h-0 flex-1 flex-col',
+            className
+          )}
+        >
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

@@ -340,7 +340,7 @@ function ModifierSelector({ group, onClose }: ModifierSelectorProps) {
           {t('manageModifierGroups.selector.noModifiersAvailable')}
         </p>
       ) : (
-        <ul className="max-h-64 divide-y overflow-y-auto rounded-md border">
+        <ul className="max-h-64 divide-y divide-border overflow-y-auto rounded-xl border border-border bg-card shadow-xs">
           {sorted.map((m: Modifier) => (
             <li key={m.id} className="flex items-center gap-3 px-3 py-2">
               <Checkbox
@@ -470,11 +470,11 @@ export function ModifierGroupEditor() {
       </div>
 
       {sorted.length === 0 ? (
-        <p className="rounded-md border px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border-strong px-4 py-8 text-center text-sm text-muted-foreground">
           {t('manageModifierGroups.editor.emptyState')}
         </p>
       ) : (
-        <ul className="divide-y rounded-md border">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           {sorted.map(group => (
             <li key={group.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
               <div className="min-w-0 flex-1">

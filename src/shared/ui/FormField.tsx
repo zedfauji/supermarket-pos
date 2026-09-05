@@ -56,9 +56,9 @@ export function FormField({
   const hintId = `${id}-hint`;
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {/* Label */}
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
+      <label htmlFor={id} className="text-[0.8125rem] font-medium text-foreground/90">
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </label>
@@ -82,14 +82,14 @@ export function FormField({
 
       {/* Error Message */}
       {error && (
-        <p id={errorId} className="text-sm text-destructive" role="alert">
+        <p id={errorId} className="text-[0.8125rem] font-medium text-destructive" role="alert">
           {error}
         </p>
       )}
 
       {/* Hint Text */}
       {hint && !error && (
-        <p id={hintId} className="text-sm text-muted-foreground">
+        <p id={hintId} className="text-[0.8125rem] text-muted-foreground">
           {hint}
         </p>
       )}

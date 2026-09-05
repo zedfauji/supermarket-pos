@@ -89,7 +89,7 @@ export function SupplierForm({
         <Input value={notes} onChange={e => setNotes(e.target.value)} disabled={submitting} />
       </FormField>
       <FormField label={t('manageSuppliers.supplierForm.productsLabel')}>
-        <ScrollArea className="max-h-40 rounded-md border p-2">
+        <ScrollArea className="max-h-40 rounded-lg border border-border bg-card p-2">
           <ul className="space-y-2 pr-2">
             {products.length ? (
               products.map(product => (

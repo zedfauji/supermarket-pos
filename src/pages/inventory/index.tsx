@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { InventoryPagePanel } from '@widgets/InventoryPagePanel';
 import { PhysicalCountForm } from '@features/physical-count';
-import { LowStockBadge, NearExpiryBadge, useInventoryAlerts, useInventoryRealtimeBridge, useNearExpiryAlerts } from '@entities/inventory';
+import {
+  LowStockBadge,
+  NearExpiryBadge,
+  useInventoryAlerts,
+  useInventoryRealtimeBridge,
+  useNearExpiryAlerts,
+} from '@entities/inventory';
 import { useStaffStore } from '@entities/staff/model/store';
 import { canAccess } from '@shared/lib/rbac';
 import { PageContainer, POSButton } from '@shared/ui';
@@ -53,8 +59,18 @@ function useNearExpiryToast() {
   useEffect(() => {
     if (!alerts) return;
     const currentIds = new Set(alerts.map(alert => alert.productId));
-    if (prevIdsRef.current === null) { prevIdsRef.current = currentIds; return; }
-    for (const alert of alerts) if (!prevIdsRef.current.has(alert.productId)) toast.warning(t('inventory.nearExpiryToast', { productName: alert.productName, days: alert.daysUntilExpiry }));
+    if (prevIdsRef.current === null) {
+      prevIdsRef.current = currentIds;
+      return;
+    }
+    for (const alert of alerts)
+      if (!prevIdsRef.current.has(alert.productId))
+        toast.warning(
+          t('inventory.nearExpiryToast', {
+            productName: alert.productName,
+            days: alert.daysUntilExpiry,
+          })
+        );
     prevIdsRef.current = currentIds;
   }, [alerts, t]);
 }
@@ -72,43 +88,38 @@ function InventoryPageInner() {
   const [physicalCountOpen, setPhysicalCountOpen] = useState(false);
 
   return (
-    <div className="flex h-screen flex-col">
-      <main className="flex-1 overflow-auto">
-        <PageContainer
-          title={t('inventory.title')}
-          backTo="/home"
-          actions={
-            <>
-              {/* Low-stock counts are inventory-management data (per CLAUDE.md,
+    <PageContainer
+      title={t('inventory.title')}
+      actions={
+        <>
+          {/* Low-stock counts are inventory-management data (per CLAUDE.md,
                   /inventory's write actions are manager+) — gated behind the
                   same adjust_inventory check as Physical Count so a cashier's
                   read-only visit to /inventory doesn't surface it. Near-expiry
                   stays ungated: CLAUDE.md documents it as visible everywhere,
                   including checkout. */}
-              {canPhysicalCount && <LowStockBadge />}
-              <NearExpiryBadge />
-              {canPhysicalCount && (
-                <POSButton
-                  variant="outline"
-                  touchSize="default"
-                  data-testid="physical-count-btn"
-                  onClick={() => {
-                    setPhysicalCountOpen(true);
-                  }}
-                >
-                  {t('inventory.physicalCount')}
-                </POSButton>
-              )}
-            </>
-          }
-        >
-          <InventoryPagePanel />
+          {canPhysicalCount && <LowStockBadge />}
+          <NearExpiryBadge />
           {canPhysicalCount && (
-            <PhysicalCountForm open={physicalCountOpen} onOpenChange={setPhysicalCountOpen} />
+            <POSButton
+              variant="outline"
+              touchSize="default"
+              data-testid="physical-count-btn"
+              onClick={() => {
+                setPhysicalCountOpen(true);
+              }}
+            >
+              {t('inventory.physicalCount')}
+            </POSButton>
           )}
-        </PageContainer>
-      </main>
-    </div>
+        </>
+      }
+    >
+      <InventoryPagePanel />
+      {canPhysicalCount && (
+        <PhysicalCountForm open={physicalCountOpen} onOpenChange={setPhysicalCountOpen} />
+      )}
+    </PageContainer>
   );
 }
 

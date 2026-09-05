@@ -17,7 +17,7 @@ export function LoadingSpinner({ size = 24, className }: LoadingSpinnerProps) {
       aria-live="polite"
       aria-label={t('loading.simple')}
     >
-      <Loader2 className="animate-spin text-primary" size={size} aria-hidden="true" />
+      <Loader2 className="animate-spin text-brand" size={size} aria-hidden="true" />
       <span className="sr-only">{t('loading.tabDetails')}</span>
     </div>
   );

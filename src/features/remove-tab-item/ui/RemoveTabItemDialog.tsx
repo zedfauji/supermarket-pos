@@ -81,7 +81,7 @@ export function RemoveTabItemDialog({
       onCancel={handleClose}
     >
       <div className="space-y-4">
-        <div className="rounded-md border border-border/70 p-3 text-sm">
+        <div className="rounded-xl border border-border bg-muted/40 p-3.5 text-sm">
           <div className="flex items-center justify-between gap-3">
             <span className="min-w-0 truncate text-muted-foreground">
               {item.quantity}x {productName}

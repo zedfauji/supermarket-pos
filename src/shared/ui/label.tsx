@@ -1,8 +1,5 @@
 /**
- * LABEL COMPONENT (shadcn/ui)
- *
- * Placeholder for shadcn/ui Label component.
- * Install with: npx shadcn@latest add label
+ * LABEL COMPONENT (shadcn/ui, restyled)
  */
 
 import * as LabelPrimitive from '@radix-ui/react-label';
@@ -11,7 +8,7 @@ import * as React from 'react';
 import { cn } from '@shared/lib/utils';
 
 const labelVariants = cva(
-  'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+  'text-[0.8125rem] font-medium leading-none text-foreground/90 select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-60'
 );
 
 const Label = React.forwardRef<

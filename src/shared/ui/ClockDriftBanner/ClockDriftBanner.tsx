@@ -19,7 +19,7 @@ export function ClockDriftBanner() {
       role="status"
       aria-live="polite"
       data-testid="clock-drift-banner"
-      className="fixed top-7 left-0 right-0 z-[9998] flex items-center justify-center py-1 px-3 bg-pos-warning text-xs font-medium text-black"
+      className="fixed top-7 left-0 right-0 z-[9998] flex items-center justify-center py-1.5 px-3 bg-warning text-xs font-semibold text-warning-foreground"
     >
       {t('clockDriftBanner.message')}
     </div>

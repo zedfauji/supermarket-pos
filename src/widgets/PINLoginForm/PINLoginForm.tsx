@@ -184,33 +184,33 @@ export function PINLoginForm() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-xs">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
       <div className="text-center">
-        <div className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-2xl mx-auto mb-2">
+        <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-brand text-2xl font-semibold text-brand-foreground shadow-md">
           {selectedStaff.name.charAt(0).toUpperCase()}
         </div>
-        <h2 className="font-heading text-xl font-semibold tracking-tight">
-          {selectedStaff.name}
-        </h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{selectedStaff.name}</h2>
         <p className="text-sm text-muted-foreground capitalize">{selectedStaff.role}</p>
       </div>
 
       {phase === 'pin' && (
-        <PINKeypad
-          value={pin}
-          onChange={handlePinChange}
-          onComplete={pin => {
-            void handlePinComplete(pin);
-          }}
-          label={t('pinLoginForm.enterPinLabel')}
-          error={error}
-        />
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <PINKeypad
+            value={pin}
+            onChange={handlePinChange}
+            onComplete={pin => {
+              void handlePinComplete(pin);
+            }}
+            label={t('pinLoginForm.enterPinLabel')}
+            error={error}
+          />
+        </div>
       )}
 
       {phase === 'forced_pin_change' && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="text-center">
-            <h3 className="font-heading text-xl font-semibold">
+            <h3 className="text-lg font-semibold tracking-tight">
               {t('pinLoginForm.setNewPinTitle')}
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -263,7 +263,7 @@ export function PINLoginForm() {
           type="button"
           variant="link"
           onClick={clearSelection}
-          className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+          className="mx-auto text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
           {t('pinLoginForm.notYouGoBack')}
         </Button>

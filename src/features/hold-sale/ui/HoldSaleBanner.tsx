@@ -12,15 +12,17 @@ export function HoldSaleBanner() {
   if (!isHeld) return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3 lg:col-span-2">
-      <Badge>{t('holdSale.badge')}</Badge>
+    <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning-soft px-4 py-2.5">
+      <Badge variant="warning">{t('holdSale.badge')}</Badge>
       <div className="flex gap-2">
-        <POSButton type="button" variant="outline" onClick={resumeHeld}>
+        <POSButton type="button" variant="outline" size="sm" onClick={resumeHeld}>
           {t('holdSale.resume')}
         </POSButton>
         <POSButton
           type="button"
           variant="ghost"
+          size="sm"
+          className="text-warning-strong hover:bg-warning/20"
           onClick={() => {
             setDiscardOpen(true);
           }}

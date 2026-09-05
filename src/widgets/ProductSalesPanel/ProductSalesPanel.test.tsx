@@ -116,7 +116,7 @@ describe('ProductSalesPanel', () => {
     expect(tbody).not.toBeNull();
     const rows = within(tbody as HTMLElement).getAllByRole('row');
     // The first row (highest revenue) should have the highlight class
-    expect(rows[0]!.className).toMatch(/border-l-pos-highlight/);
+    expect(rows[0]!.className).toMatch(/border-l-brand/);
   });
 
   it('shows all unique categories in the filter select', () => {

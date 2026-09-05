@@ -11,7 +11,8 @@ import {
   type Inventory,
 } from '@entities/inventory';
 import { useStaffStore } from '@entities/staff/model/store';
-import { Badge, EmptyState } from '@shared/ui';
+import { cn } from '@shared/lib/utils';
+import { EmptyState } from '@shared/ui';
 import { DataTable } from '@shared/ui/DataTable';
 import { FormField } from '@shared/ui/FormField';
 import { POSButton } from '@shared/ui/POSButton';
@@ -45,7 +46,7 @@ function rowHighlightClass(inv: Inventory): string | undefined {
   }
   if (inv.quantityOnHand <= inv.lowStockThreshold) {
     // eslint-disable-next-line i18next/no-literal-string -- Tailwind class string, not UI copy
-    return 'border-l-2 border-l-pos-warning bg-pos-warning/5';
+    return 'border-l-2 border-l-warning bg-warning-soft/60';
   }
   return undefined;
 }
@@ -121,7 +122,12 @@ export function InventoryPagePanel() {
   const [batchReason, setBatchReason] = useState<string>('');
 
   const columns = useMemo(
-    () => inventoryRowColumns(tEntities, staffId || '00000000-0000-0000-0000-000000000001', currentRole),
+    () =>
+      inventoryRowColumns(
+        tEntities,
+        staffId || '00000000-0000-0000-0000-000000000001',
+        currentRole
+      ),
     [tEntities, staffId, currentRole]
   );
 
@@ -161,7 +167,7 @@ export function InventoryPagePanel() {
       </label>
       <select
         id="inv-category-filter"
-        className="h-11 rounded-md border border-input bg-background px-3 text-sm shadow-sm"
+        className="h-10 rounded-lg border border-input bg-card px-3 text-sm shadow-xs transition-[border-color,box-shadow] hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
         value={categoryFilter}
         onChange={e => {
           setCategoryFilter(e.target.value);
@@ -228,35 +234,45 @@ export function InventoryPagePanel() {
           ) : null}
 
           {!staffId ? (
-            <p className="rounded-md border border-pos-warning/40 bg-pos-warning/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
+            <p className="rounded-xl border border-warning/40 bg-warning-soft px-4 py-3 text-sm font-medium text-warning-strong">
               {t('inventoryPagePanel.signInBanner')}
             </p>
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="rounded-lg border bg-card px-4 py-3 text-center">
-              <div className="text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-stretch gap-3">
+            <div className="min-w-[9rem] rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+              <div className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
                 {t('inventoryPagePanel.totalSkus')}
               </div>
-              <div className="text-2xl font-semibold tabular-nums">{stats.totalSkus}</div>
+              <div className="text-numeric mt-1 text-2xl font-semibold">{stats.totalSkus}</div>
             </div>
-            <div className="rounded-lg border bg-card px-4 py-3 text-center">
-              <div className="text-xs text-muted-foreground">
+            <div className="min-w-[9rem] rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+              <div className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
                 {t('inventoryPagePanel.lowStock')}
               </div>
-              <Badge variant="destructive" className="mt-1 text-base tabular-nums">
+              <div
+                className={cn(
+                  'text-numeric mt-1 text-2xl font-semibold',
+                  stats.lowStock > 0 && 'text-warning-strong'
+                )}
+              >
                 {stats.lowStock}
-              </Badge>
+              </div>
             </div>
-            <div className="rounded-lg border bg-card px-4 py-3 text-center">
-              <div className="text-xs text-muted-foreground">
+            <div className="min-w-[9rem] rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+              <div className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
                 {t('inventoryPagePanel.outOfStock')}
               </div>
-              <Badge variant="destructive" className="mt-1 text-base tabular-nums">
+              <div
+                className={cn(
+                  'text-numeric mt-1 text-2xl font-semibold',
+                  stats.outOfStock > 0 && 'text-destructive'
+                )}
+              >
                 {stats.outOfStock}
-              </Badge>
+              </div>
             </div>
-            <div className="ml-auto flex flex-wrap gap-2">
+            <div className="ml-auto flex flex-wrap items-center gap-2">
               <ProtectedAction action="adjust_inventory" currentRole={currentRole}>
                 <POSButton
                   type="button"
@@ -314,7 +330,7 @@ export function InventoryPagePanel() {
               title={t('inventoryPagePanel.changeLogTitle')}
               description={t('inventoryPagePanel.changeLogDescription')}
             />
-            <div className="rounded-md border">
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -368,7 +384,7 @@ export function InventoryPagePanel() {
                   </label>
                   <select
                     id="batch-product"
-                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
                     value={batchProductId}
                     onChange={e => {
                       setBatchProductId(e.target.value);
@@ -389,7 +405,7 @@ export function InventoryPagePanel() {
                   {/* eslint-disable-next-line no-restricted-syntax -- 31-CONTEXT.md D-06: signed-delta input, MoneyInput would clamp negatives */}
                   <input
                     type="number"
-                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
                     value={batchDelta}
                     onChange={e => {
                       setBatchDelta(e.target.value);
@@ -398,7 +414,7 @@ export function InventoryPagePanel() {
                 </FormField>
                 <FormField label={t('inventoryPagePanel.reasonLabel')}>
                   <select
-                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
                     value={batchReason}
                     onChange={e => {
                       setBatchReason(e.target.value);
@@ -451,12 +467,32 @@ export function InventoryPagePanel() {
       </TabsContent>
       <TabsContent value="near-expiry">
         {nearExpiryEmpty ? (
-          <EmptyState icon={PackageX} title={t('inventoryPagePanel.nothingExpiringSoonTitle')} description={t('inventoryPagePanel.nothingExpiringSoonBody')} />
+          <EmptyState
+            icon={PackageX}
+            title={t('inventoryPagePanel.nothingExpiringSoonTitle')}
+            description={t('inventoryPagePanel.nothingExpiringSoonBody')}
+          />
         ) : (
-          <Table>
-            <TableHeader><TableRow><TableHead>{tEntities('inventoryRow.columns.product')}</TableHead><TableHead>{t('inventoryPagePanel.expiryDate')}</TableHead><TableHead>{t('inventoryPagePanel.daysRemaining')}</TableHead></TableRow></TableHeader>
-            <TableBody>{nearExpiryAlerts?.map(alert => <TableRow key={alert.productId}><TableCell>{alert.productName}</TableCell><TableCell>{alert.expiryDate}</TableCell><TableCell>{alert.daysUntilExpiry}</TableCell></TableRow>)}</TableBody>
-          </Table>
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{tEntities('inventoryRow.columns.product')}</TableHead>
+                  <TableHead>{t('inventoryPagePanel.expiryDate')}</TableHead>
+                  <TableHead>{t('inventoryPagePanel.daysRemaining')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {nearExpiryAlerts?.map(alert => (
+                  <TableRow key={alert.productId}>
+                    <TableCell>{alert.productName}</TableCell>
+                    <TableCell>{alert.expiryDate}</TableCell>
+                    <TableCell>{alert.daysUntilExpiry}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </TabsContent>
     </Tabs>

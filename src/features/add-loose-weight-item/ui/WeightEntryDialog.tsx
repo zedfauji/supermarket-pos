@@ -99,9 +99,11 @@ export function WeightEntryDialog({
           <DialogTitle>{t('weightEntry.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="rounded-md border bg-muted/40 p-3 text-center">
-            <p className="text-sm text-muted-foreground">{t('weightEntry.fieldLabel')}</p>
-            <p aria-live="polite" className="text-3xl font-semibold tabular-nums">
+          <div className="rounded-xl border border-border bg-muted/50 p-4 text-center">
+            <p className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('weightEntry.fieldLabel')}
+            </p>
+            <p aria-live="polite" className="text-numeric text-4xl font-semibold">
               {value || '0'} {t('weightEntry.kilograms')}
             </p>
           </div>
@@ -115,7 +117,8 @@ export function WeightEntryDialog({
               <Button
                 key={key}
                 type="button"
-                className="h-14 text-xl"
+                variant="outline"
+                className="h-14 rounded-xl text-xl font-medium tabular-nums"
                 onClick={() => {
                   append(key);
                 }}
@@ -125,8 +128,8 @@ export function WeightEntryDialog({
             ))}
             <Button
               type="button"
-              variant="outline"
-              className="h-14"
+              variant="ghost"
+              className="h-14 rounded-xl text-muted-foreground"
               onClick={() => {
                 setValue(current => current.slice(0, -1));
               }}

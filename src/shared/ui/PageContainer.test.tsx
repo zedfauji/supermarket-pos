@@ -1,7 +1,9 @@
 /**
  * Unit tests for PageContainer
  *
- * Tests: backTo/backLabel back-link behavior (SHELL-01 foundation).
+ * Navigation moved into the app shell's sidebar; PageContainer no longer renders
+ * a back link but still accepts the legacy backTo/backLabel props so existing
+ * call sites keep compiling.
  */
 
 import { render, screen } from '@testing-library/react';
@@ -11,10 +13,23 @@ import { describe, expect, it } from 'vitest';
 import { PageContainer } from './PageContainer';
 
 describe('PageContainer', () => {
-  it('renders no back link when backTo is omitted', () => {
+  it('renders the title as a heading and its children', () => {
     render(
       <MemoryRouter>
-        <PageContainer title="X">
+        <PageContainer title="Inventory" description="Stock on hand">
+          <div data-testid="child" />
+        </PageContainer>
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('heading', { name: 'Inventory' })).toBeInTheDocument();
+    expect(screen.getByText('Stock on hand')).toBeInTheDocument();
+    expect(screen.getByTestId('child')).toBeInTheDocument();
+  });
+
+  it('renders no back link, even when the legacy backTo prop is provided', () => {
+    render(
+      <MemoryRouter>
+        <PageContainer title="X" backTo="/home" backLabel="Home">
           <div data-testid="child" />
         </PageContainer>
       </MemoryRouter>
@@ -22,29 +37,14 @@ describe('PageContainer', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
-  it('renders a "Home" back link when backTo is provided without backLabel', () => {
+  it('renders the actions slot', () => {
     render(
       <MemoryRouter>
-        <PageContainer title="X" backTo="/home">
-          <div data-testid="child" />
+        <PageContainer title="X" actions={<button type="button">Act</button>}>
+          <div />
         </PageContainer>
       </MemoryRouter>
     );
-    const link = screen.getByRole('link', { name: /home/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/home');
-  });
-
-  it('renders a custom-labeled back link when backTo and backLabel are both provided', () => {
-    render(
-      <MemoryRouter>
-        <PageContainer title="X" backTo="/pool-tables" backLabel="Pool Tables">
-          <div data-testid="child" />
-        </PageContainer>
-      </MemoryRouter>
-    );
-    const link = screen.getByRole('link', { name: /pool tables/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/pool-tables');
+    expect(screen.getByRole('button', { name: 'Act' })).toBeInTheDocument();
   });
 });

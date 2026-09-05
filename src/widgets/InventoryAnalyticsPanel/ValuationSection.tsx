@@ -168,7 +168,7 @@ export function ValuationSection({ dateRange }: Props) {
             const idx = sortedRows.indexOf(row);
             if (idx < 3 && sortedRows.length > 0) {
               // eslint-disable-next-line i18next/no-literal-string -- Tailwind class string, not UI copy
-              return 'border-l-2 border-l-pos-highlight bg-pos-highlight/5';
+              return 'border-l-2 border-l-brand bg-brand-soft/60';
             }
             return undefined;
           }}

@@ -136,7 +136,7 @@ export function StepReview({
 
   return (
     <div className="max-h-[60vh] space-y-4 overflow-y-auto">
-      <div className="space-y-2 rounded-lg border bg-card p-4">
+      <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">{t('promotionWizard.review.nameLabel')}</span>
           <span className="font-medium">{name || '—'}</span>
@@ -161,7 +161,9 @@ export function StepReview({
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">{t('promotionWizard.review.dateRangeLabel')}</span>
+          <span className="text-muted-foreground">
+            {t('promotionWizard.review.dateRangeLabel')}
+          </span>
           <span className="font-medium">
             {t('promotionWizard.review.dateRangeValue', { from: fromStr, to: toStr })}
           </span>
@@ -176,9 +178,7 @@ export function StepReview({
                 <span key={label}>{label}</span>
               ))}
               {startTime !== null && endTime !== null && (
-                <span>
-                  {t('promotionWizard.review.timeWindowValue', { startTime, endTime })}
-                </span>
+                <span>{t('promotionWizard.review.timeWindowValue', { startTime, endTime })}</span>
               )}
             </span>
           ) : (
@@ -187,7 +187,7 @@ export function StepReview({
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
         {preview && sampleProduct ? (
           <p className="text-sm">
             {t('promotionWizard.review.previewLabel', {

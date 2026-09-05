@@ -46,7 +46,9 @@ type SummaryCardProps = {
 
 function SummaryCard({ label, amount, isLoading, highlight }: SummaryCardProps) {
   return (
-    <div className={`flex flex-col gap-1 rounded-lg border p-3 ${highlight ?? ''}`}>
+    <div
+      className={`flex flex-col gap-1 rounded-xl border border-border bg-card p-4 shadow-xs ${highlight ?? ''}`}
+    >
       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
         {label}
       </span>
@@ -203,7 +205,7 @@ export function CajaDashboard() {
   if (!can('manage_caja')) return null;
 
   return (
-    <section className="space-y-4 rounded-lg border p-4">
+    <section className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-xs">
       <SectionHeader
         title={t('cajaDashboard.title')}
         description={t('cajaDashboard.description')}
@@ -243,8 +245,16 @@ export function CajaDashboard() {
       {isCajaOpen && currentCaja !== null && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            <SummaryCard label={t('cajaDashboard.cash')} amount={cash} isLoading={isSummaryLoading} />
-            <SummaryCard label={t('cajaDashboard.card')} amount={card} isLoading={isSummaryLoading} />
+            <SummaryCard
+              label={t('cajaDashboard.cash')}
+              amount={cash}
+              isLoading={isSummaryLoading}
+            />
+            <SummaryCard
+              label={t('cajaDashboard.card')}
+              amount={card}
+              isLoading={isSummaryLoading}
+            />
             <SummaryCard
               label={t('cajaDashboard.rappi')}
               amount={rappi}
@@ -254,13 +264,13 @@ export function CajaDashboard() {
               label={t('cajaDashboard.pendingOpenTabs')}
               amount={pendingTotal}
               isLoading={isPendingLoading}
-              highlight="border-pos-warning/40"
+              highlight="border-warning/40"
             />
             <SummaryCard
               label={t('cajaDashboard.net')}
               amount={net}
               isLoading={isSummaryLoading}
-              highlight="border-pos-highlight/40"
+              highlight="border-brand/40"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -294,7 +304,7 @@ export function CajaDashboard() {
                 {entries.slice(-10).map(entry => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2.5 text-sm"
                   >
                     <div className="flex items-center gap-2">
                       <Badge
@@ -314,8 +324,8 @@ export function CajaDashboard() {
                       <span
                         className={
                           entry.type === 'expense'
-                            ? 'text-red-400 font-mono'
-                            : 'text-green-400 font-mono'
+                            ? 'text-destructive font-mono'
+                            : 'text-success-strong font-mono'
                         }
                       >
                         {formatMoney(entry.type === 'expense' ? -entry.amount : entry.amount, {
@@ -350,12 +360,14 @@ export function CajaDashboard() {
               {totalExpenses > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {t('cajaDashboard.totalExpensesLabel')}{' '}
-                  <span className="text-red-400">{formatMoney(totalExpenses)}</span>
+                  <span className="font-medium text-destructive">{formatMoney(totalExpenses)}</span>
                   {totalIncome > 0 && (
                     <>
                       {' '}
                       {t('cajaDashboard.totalIncomeLabel')}{' '}
-                      <span className="text-green-400">{formatMoney(totalIncome)}</span>
+                      <span className="font-medium text-success-strong">
+                        {formatMoney(totalIncome)}
+                      </span>
                     </>
                   )}
                 </p>
@@ -475,7 +487,7 @@ export function CajaDashboard() {
                 }}
                 placeholder={t('cajaDashboard.endOfDayNotesPlaceholder')}
                 rows={3}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm shadow-xs placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-input/20"
               />
             </div>
           </div>

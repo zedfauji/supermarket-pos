@@ -169,7 +169,6 @@ export default function PromotionsPage() {
   return (
     <PageContainer
       title={t('promotions.title')}
-      backTo="/home"
       actions={
         <POSButton type="button" onClick={openCreateDialog}>
           {t('promotions.newPromotion')}

@@ -1,8 +1,5 @@
 /**
- * TEXTAREA COMPONENT (shadcn/ui)
- *
- * Placeholder for shadcn/ui Textarea component.
- * Install with: npx shadcn@latest add textarea
+ * TEXTAREA COMPONENT (shadcn/ui, restyled)
  */
 
 /* eslint-disable react/prop-types */
@@ -17,7 +14,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex min-h-[88px] w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm text-foreground shadow-xs transition-[border-color,box-shadow] duration-150 outline-none',
+          'placeholder:text-muted-foreground/80 hover:border-border-strong',
+          'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25',
+          'aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20',
+          'disabled:cursor-not-allowed disabled:bg-muted/60 disabled:opacity-60 dark:bg-input/20',
           className
         )}
         ref={ref}

@@ -710,14 +710,14 @@ export function PaymentForm({
       <div className="flex flex-1 flex-col overflow-hidden p-4 sm:px-6">
         {receiptData.paymentMethod === 'bank_transfer' && receiptData.terminalReference && (
           <section
-            className="mb-4 space-y-2 rounded-lg border-2 border-[var(--pos-accent)] p-4 text-center"
+            className="mb-4 space-y-2 rounded-2xl border-2 border-success bg-success-soft p-5 text-center"
             data-testid="bank-transfer-reference-code-section"
           >
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {t('featOrders:checkoutSale.referenceCodeHeading')}
             </h3>
             <p
-              className="font-mono text-4xl font-bold tracking-widest"
+              className="font-mono text-4xl font-bold tracking-[0.2em] text-success-strong"
               data-testid="bank-transfer-reference-code"
             >
               {receiptData.terminalReference}
@@ -752,10 +752,10 @@ export function PaymentForm({
   return (
     <>
       <ScrollArea className="flex-1 p-4 sm:px-6">
-        <div className="space-y-6">
-          <section className="space-y-3">
+        <div className="space-y-5 pb-2">
+          <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
             <div>
-              <h3 className="text-lg font-semibold">{tab.customerName}</h3>
+              <h3 className="text-lg font-semibold tracking-tight">{tab.customerName}</h3>
               <p className="text-sm text-muted-foreground">
                 {t('paymentForm.itemTypesAndTotal', {
                   itemTypeCount: groupedItems.length,
@@ -776,7 +776,10 @@ export function PaymentForm({
                       {item.productName}
                     </p>
                     {item.discountAmount > 0 && (
-                      <p className="text-xs text-pos-accent" data-testid="line-item-discount-badge">
+                      <p
+                        className="text-xs font-medium text-success-strong"
+                        data-testid="line-item-discount-badge"
+                      >
                         {item.discountRate != null
                           ? t('paymentForm.lineItemDiscountRate', { rate: item.discountRate })
                           : t('paymentForm.lineItemDiscountAmount', {
@@ -788,7 +791,7 @@ export function PaymentForm({
                   <MoneyDisplay amount={item.lineTotal} size="sm" />
                 </div>
               ))}
-              <div className="flex justify-between border-t pt-2 font-semibold">
+              <div className="flex justify-between border-t border-border pt-2 font-semibold">
                 <span>{t('paymentForm.itemsSubtotal')}</span>
                 <MoneyDisplay amount={itemsSubtotal} size="sm" />
               </div>
@@ -799,7 +802,7 @@ export function PaymentForm({
             processors.processBankTransferPayment &&
             activePromotionOptions.length > 0 && (
               <section
-                className="space-y-2 rounded-lg border p-3"
+                className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
                 data-testid="apply-promotion-section"
               >
                 <Label htmlFor="apply-promotion-select" className="text-sm font-semibold">
@@ -830,7 +833,10 @@ export function PaymentForm({
             )}
 
           {method !== 'rappi' && (
-            <section className="space-y-2 rounded-lg border p-3" data-testid="discount-section">
+            <section
+              className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
+              data-testid="discount-section"
+            >
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <Label htmlFor="discount-toggle" className="text-sm font-semibold">
@@ -874,7 +880,7 @@ export function PaymentForm({
                           non-interactive label rather than a scope picker. */}
                       <div
                         data-testid="discount-scope-all"
-                        className="flex-1 rounded-md border bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
+                        className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
                       >
                         {t('paymentForm.discountScopeAll')}
                       </div>
@@ -912,7 +918,10 @@ export function PaymentForm({
                       data-testid="discount-value-input"
                     />
                     {discountAmount > 0 && (
-                      <p className="text-sm text-pos-accent" data-testid="discount-applied-label">
+                      <p
+                        className="text-sm font-medium text-success-strong"
+                        data-testid="discount-applied-label"
+                      >
                         {t('paymentForm.discountApplied', { amount: formatMoney(discountAmount) })}
                       </p>
                     )}
@@ -923,20 +932,20 @@ export function PaymentForm({
           )}
 
           {method === 'rappi' && (
-            <section className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+            <section className="rounded-xl border border-dashed border-border-strong bg-muted/30 p-4 text-sm text-muted-foreground">
               {t('paymentForm.rappiCollectedNotice')}
             </section>
           )}
 
-          <section className="space-y-2 rounded-lg border p-3">
-            <div className="flex items-center justify-between text-sm">
+          <section className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>{t('paymentForm.subtotal')}</span>
               <MoneyDisplay amount={baseSubtotal} size="sm" />
             </div>
             {discountAmount > 0 && (
               <>
                 <div
-                  className="flex items-center justify-between text-sm text-pos-accent"
+                  className="flex items-center justify-between text-sm font-medium text-success-strong"
                   data-testid="discount-row"
                 >
                   <span>
@@ -958,13 +967,16 @@ export function PaymentForm({
               </>
             )}
             {method !== 'rappi' && (
-              <div className="flex items-center justify-between text-sm" data-testid="tax-row">
+              <div
+                className="flex items-center justify-between text-sm text-muted-foreground"
+                data-testid="tax-row"
+              >
                 <span>{t('paymentForm.taxLabel', { rate: taxRatePercent })}</span>
                 <MoneyDisplay amount={taxAmount} size="sm" />
               </div>
             )}
             <div
-              className="flex items-center justify-between border-t pt-2 text-lg font-semibold"
+              className="flex items-center justify-between border-t border-border pt-3 text-lg font-semibold"
               data-testid="total-row"
             >
               <span>{t('paymentForm.total')}</span>
@@ -972,10 +984,12 @@ export function PaymentForm({
             </div>
           </section>
 
-          <section className="space-y-2">
-            <h4 className="font-medium">{t('paymentForm.paymentMethod')}</h4>
+          <section className="space-y-3">
+            <h4 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              {t('paymentForm.paymentMethod')}
+            </h4>
 
-            <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-4 shadow-xs">
               <div>
                 <Label htmlFor="split-mode-toggle" className="text-sm font-semibold">
                   {t('paymentForm.splitPayment')}
@@ -995,7 +1009,10 @@ export function PaymentForm({
             {isSplitMode ? (
               <div className="space-y-3">
                 {splitRows.map((row, index) => (
-                  <div key={row.id} className="space-y-3 rounded-lg border p-3">
+                  <div
+                    key={row.id}
+                    className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold">
                         {t('paymentForm.paymentNumber', { number: index + 1 })}
@@ -1091,7 +1108,7 @@ export function PaymentForm({
                           }}
                           disabled={isProcessing}
                         />
-                        <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+                        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-sm font-medium">
                           <span>{t('paymentForm.changeDue')}</span>
                           <MoneyDisplay
                             amount={Math.max(
@@ -1152,8 +1169,10 @@ export function PaymentForm({
                 </POSButton>
 
                 <div
-                  className={`rounded-lg border p-3 ${
-                    splitRemaining === 0 ? 'border-[var(--pos-accent)]' : ''
+                  className={`rounded-xl border p-4 ${
+                    splitRemaining === 0
+                      ? 'border-success bg-success-soft'
+                      : 'border-border bg-card'
                   }`}
                 >
                   <div className="flex items-center justify-between text-sm font-semibold">
@@ -1240,15 +1259,15 @@ export function PaymentForm({
                 onChange={setTenderedAmount}
                 disabled={isProcessing}
               />
-              <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+              <div className="flex items-center justify-between rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm font-medium">
                 <span>{t('paymentForm.changeDue')}</span>
-                <MoneyDisplay amount={changeDue} size="sm" />
+                <MoneyDisplay amount={changeDue} size="lg" />
               </div>
             </section>
           )}
 
           {!isSplitMode && method === 'card' && (
-            <section className="space-y-3 rounded-lg border p-4">
+            <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
               <p className="text-sm font-medium">{t('paymentForm.processOnBbvaTerminal')}</p>
               <MoneyInput
                 label={t('paymentForm.chargeAmount')}
@@ -1288,7 +1307,7 @@ export function PaymentForm({
           )}
 
           {!isSplitMode && method === 'bank_transfer' && (
-            <section className="space-y-3 rounded-lg border p-4">
+            <section className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-xs">
               <div className="space-y-2">
                 <Label htmlFor="bank-transfer-customer-name">
                   {t('featOrders:checkoutSale.customerNameLabel')}
@@ -1327,7 +1346,7 @@ export function PaymentForm({
 
           {errorMessage && (
             <div
-              className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive-soft p-3.5 text-sm text-destructive"
               role="alert"
               data-testid="payment-error-alert"
             >
@@ -1338,7 +1357,7 @@ export function PaymentForm({
         </div>
       </ScrollArea>
 
-      <div className="space-y-2 border-t px-4 py-3 sm:px-6 sm:py-4">
+      <div className="space-y-2 border-t border-border bg-background px-4 py-3 sm:px-6 sm:py-4">
         <ProtectedAction
           action="close_tab"
           currentRole={currentRole}
@@ -1349,7 +1368,8 @@ export function PaymentForm({
             touchSize="xl"
             focusEmphasis="high"
             disabled={isProcessing || (isSplitMode ? !canSubmitSplit : !canSubmit)}
-            className="w-full bg-[var(--pos-accent)] text-black hover:opacity-90"
+            variant="brand"
+            className="w-full"
             onClick={() => {
               if (isSplitMode) {
                 void handleSplitPrimary();

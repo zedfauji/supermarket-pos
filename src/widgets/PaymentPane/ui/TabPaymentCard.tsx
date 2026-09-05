@@ -31,8 +31,8 @@ export function TabPaymentCard({ tab, selected, onClick }: TabPaymentCardProps) 
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        'w-full flex-col items-stretch justify-start rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent',
-        selected && 'border-primary ring-1 ring-primary bg-accent'
+        'w-full flex-col items-stretch justify-start rounded-xl border border-border bg-card p-3.5 text-left shadow-xs transition-[border-color,box-shadow,background-color] hover:border-border-strong hover:bg-card',
+        selected && 'border-brand bg-brand-soft/40 ring-2 ring-brand/30 hover:bg-brand-soft/40'
       )}
     >
       <div className="flex items-start justify-between gap-2">

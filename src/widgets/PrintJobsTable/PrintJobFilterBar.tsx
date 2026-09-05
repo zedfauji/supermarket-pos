@@ -11,13 +11,7 @@ import { PrintJobStatusSchema } from '@shared/lib/domain';
 import { FormField } from '@shared/ui/FormField';
 import { POSButton } from '@shared/ui/POSButton';
 import { Input } from '@shared/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@shared/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 
 /** Sentinel value for the "All ..." option (Radix Select disallows value=""). */
 const ALL_VALUE = '__all__';
@@ -40,7 +34,7 @@ function toDateInputValue(date: Date | undefined): string {
 }
 
 const DATE_INPUT_CLASS =
-  'h-11 rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  'h-11 rounded-lg border border-input bg-card px-2 shadow-xs dark:bg-input/20 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none';
 
 function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
   const entries = Object.entries(obj).filter(([k]) => k !== key);

@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { ArrowRight, PauseCircle, ScanBarcode, ShoppingBag } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -27,7 +28,7 @@ import { formatMoney } from '@shared/lib/format';
 import { useLockStateStore } from '@shared/lib/lock-state-store';
 import { isTauri } from '@shared/lib/pos-printer';
 import { useBarcodeScanner } from '@shared/lib/useBarcodeScanner';
-import { MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';
+import { Badge, MoneyDisplay, POSButton, ScrollArea } from '@shared/ui';
 
 export function CheckoutPanel() {
   const { t } = useTranslation('wPanels');
@@ -207,50 +208,79 @@ export function CheckoutPanel() {
 
   if (paymentOpen) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <PaymentForm
-          tab={syntheticTab}
-          staffId={staffId}
-          processors={processors}
-          onPaymentSuccess={() => undefined}
-          onClose={() => {
-            resetIdempotencyKey();
-            setPaymentOpen(false);
-          }}
-          onDone={() => {
-            toast.success(t('checkoutPanel.saleComplete', { amount: formatMoney(total) }));
-            resetIdempotencyKey();
-            clearCart();
-            setPaymentOpen(false);
-          }}
-        />
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-muted/30">
+        <div className="mx-auto flex size-full min-h-0 max-w-3xl flex-col border-x border-border bg-background shadow-lg">
+          <PaymentForm
+            tab={syntheticTab}
+            staffId={staffId}
+            processors={processors}
+            onPaymentSuccess={() => undefined}
+            onClose={() => {
+              resetIdempotencyKey();
+              setPaymentOpen(false);
+            }}
+            onDone={() => {
+              toast.success(t('checkoutPanel.saleComplete', { amount: formatMoney(total) }));
+              resetIdempotencyKey();
+              clearCart();
+              setPaymentOpen(false);
+            }}
+          />
+        </div>
       </div>
     );
   }
 
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="grid h-full min-h-0 gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.7fr)] lg:p-6">
-      <HoldSaleBanner />
-      <ProductGrid
-        weightEntry={weightEntry}
-        search={search}
-        onSearchChange={setSearch}
-        resolvePromotionMatch={resolvePromotionMatch}
-        onSelect={product => {
-          const match = resolvePromotionMatch(product);
-          addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
-        }}
-      />
-      <aside className="flex min-h-0 flex-col rounded-xl border bg-card p-4">
-        <h2 className="mb-3 text-lg font-semibold">{t('checkoutPanel.cartTitle')}</h2>
+    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]">
+      {/* Catalogue */}
+      <section className="flex min-h-0 flex-col gap-3 p-4 lg:p-5">
+        <HoldSaleBanner />
+        <ProductGrid
+          weightEntry={weightEntry}
+          search={search}
+          onSearchChange={setSearch}
+          resolvePromotionMatch={resolvePromotionMatch}
+          onSelect={product => {
+            const match = resolvePromotionMatch(product);
+            addItem(product, [], match?.discountedUnitPrice, match?.promotionId ?? null);
+          }}
+        />
+      </section>
+
+      {/* Cart */}
+      <aside className="flex min-h-0 flex-col border-l border-border bg-card">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <ShoppingBag className="size-[1.125rem] text-muted-foreground" aria-hidden="true" />
+            <h2 className="text-base font-semibold tracking-tight">
+              {t('checkoutPanel.cartTitle')}
+            </h2>
+          </div>
+          {itemCount > 0 && (
+            <Badge variant="muted" className="tabular-nums">
+              {t('checkoutPanel.itemCount', { count: itemCount })}
+            </Badge>
+          )}
+        </div>
+
         {items.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center text-muted-foreground">
-            <p className="font-medium">{t('checkoutPanel.emptyCart')}</p>
-            <p className="text-sm">{t('checkoutPanel.emptyCartDescription')}</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+              <ScanBarcode className="size-6" aria-hidden="true" strokeWidth={1.75} />
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium">{t('checkoutPanel.emptyCart')}</p>
+              <p className="text-sm text-muted-foreground text-pretty">
+                {t('checkoutPanel.emptyCartDescription')}
+              </p>
+            </div>
           </div>
         ) : (
-          <ScrollArea className="min-h-0 flex-1 pr-3">
-            <div className="space-y-3">
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-2 p-3">
               {items.map(item => (
                 <CartItem
                   key={item.tempId}
@@ -276,31 +306,40 @@ export function CheckoutPanel() {
             </div>
           </ScrollArea>
         )}
-        <div className="mt-4 flex items-center justify-between border-t pt-4">
-          <span className="font-medium">{t('checkoutPanel.cartTotal')}</span>
-          <div className="flex items-center gap-3">
-            <MoneyDisplay amount={total} size="xl" />
+
+        <div className="shrink-0 space-y-3 border-t border-border bg-background/60 p-4 backdrop-blur-sm">
+          <div className="flex items-end justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="block text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                {t('checkoutPanel.cartTotal')}
+              </span>
+              <MoneyDisplay amount={total} size="xl" className="text-[2rem] leading-none" />
+            </div>
             <POSButton
               type="button"
               variant="outline"
+              touchSize="default"
               disabled={items.length === 0 || isHeld}
               onClick={holdCart}
             >
+              <PauseCircle className="size-4" aria-hidden="true" />
               {t('checkoutPanel.hold')}
             </POSButton>
           </div>
+          <POSButton
+            type="button"
+            variant="brand"
+            touchSize="xl"
+            className="w-full justify-between px-6"
+            disabled={items.length === 0 || !staffId || hasPriceConflict}
+            onClick={() => {
+              setPaymentOpen(true);
+            }}
+          >
+            <span>{t('checkoutPanel.processPayment')}</span>
+            <ArrowRight className="size-5" aria-hidden="true" />
+          </POSButton>
         </div>
-        <POSButton
-          type="button"
-          touchSize="xl"
-          className="mt-4 w-full"
-          disabled={items.length === 0 || !staffId || hasPriceConflict}
-          onClick={() => {
-            setPaymentOpen(true);
-          }}
-        >
-          {t('checkoutPanel.processPayment')}
-        </POSButton>
       </aside>
       {editingWeightItem?.weightGrams != null && (
         <WeightEntryDialog

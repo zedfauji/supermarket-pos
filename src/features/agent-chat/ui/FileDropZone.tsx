@@ -111,7 +111,7 @@ export function FileDropZone({ onSend, onFileDrop, disabled }: FileDropZoneProps
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0]?.[0]?.transcript ?? '';
-      setText((prev) => prev + transcript);
+      setText(prev => prev + transcript);
     };
 
     recognition.onerror = () => {
@@ -139,19 +139,23 @@ export function FileDropZone({ onSend, onFileDrop, disabled }: FileDropZoneProps
       onDrop={handleDrop}
     >
       {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-primary bg-primary/10">
-          <span className="text-sm text-primary">{t('agentChat.dropFileHere')}</span>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl border-2 border-dashed border-brand bg-brand-soft/80">
+          <span className="text-sm font-medium text-brand-strong">
+            {t('agentChat.dropFileHere')}
+          </span>
         </div>
       )}
       <div className="flex items-end gap-2">
         <textarea
           value={text}
-          onChange={(e) => { setText(e.target.value); }}
+          onChange={e => {
+            setText(e.target.value);
+          }}
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={t('agentChat.messagePlaceholder')}
           rows={1}
-          className="min-h-[40px] flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+          className="min-h-[44px] flex-1 resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-3 focus:ring-ring/25 disabled:opacity-50 dark:bg-input/20"
           style={{ maxHeight: '120px', overflowY: 'auto' }}
         />
         <Button
@@ -161,9 +165,11 @@ export function FileDropZone({ onSend, onFileDrop, disabled }: FileDropZoneProps
           onClick={toggleVoice}
           disabled={disabled}
           aria-label={
-            isListening ? t('agentChat.stopVoiceRecordingAria') : t('agentChat.startVoiceRecordingAria')
+            isListening
+              ? t('agentChat.stopVoiceRecordingAria')
+              : t('agentChat.startVoiceRecordingAria')
           }
-          className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
         >
           {isListening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
         </Button>
@@ -174,7 +180,7 @@ export function FileDropZone({ onSend, onFileDrop, disabled }: FileDropZoneProps
           onClick={handleSend}
           disabled={disabled || !text.trim()}
           aria-label={t('agentChat.sendMessageAria')}
-          className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-xs transition-colors hover:bg-brand-strong disabled:opacity-50"
         >
           <Send className="size-4" />
         </Button>

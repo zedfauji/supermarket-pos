@@ -1,7 +1,8 @@
 /**
  * Unit tests for PaymentsPage
  *
- * Tests: back-to-home link present, PaymentPane rendered
+ * Tests: page title rendered, PaymentPane rendered. Navigation back to /home is
+ * owned by the app shell's sidebar, so the page itself renders no back link.
  */
 
 import { screen } from '@testing-library/react';
@@ -17,9 +18,6 @@ import { renderWithProviders } from '@shared/lib/test-utils';
 vi.mock('@widgets/PaymentPane', () => ({
   PaymentPane: () => <div data-testid="payment-pane">PaymentPane stub</div>,
 }));
-
-// BackToHomeButton uses react-router Link — we need MemoryRouter
-// renderWithProviders wraps in QueryClientProvider; we add MemoryRouter here.
 
 // ---------------------------------------------------------------------------
 // Import under test (after mocks)
@@ -44,11 +42,10 @@ function renderPage() {
 // ---------------------------------------------------------------------------
 
 describe('PaymentsPage', () => {
-  it('renders a link to /home', () => {
+  it('renders the page title and no in-page back link', () => {
     renderPage();
-    const link = screen.getByRole('link', { name: /home/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/home');
+    expect(screen.getByRole('heading', { name: /payments|pagos/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /home|inicio/i })).not.toBeInTheDocument();
   });
 
   it('renders PaymentPane', () => {

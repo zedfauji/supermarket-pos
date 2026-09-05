@@ -92,7 +92,7 @@ export function PurchaseOrderForm({
     <div className="space-y-4">
       <FormField label={t('receiveShipment.supplier')}>
         <select
-          className="border-input bg-background h-10 w-full rounded-md border px-3"
+          className="h-10 w-full rounded-lg border border-input bg-card px-3 shadow-xs dark:bg-input/20"
           value={supplierId}
           onChange={e => setSupplierId(e.target.value)}
           disabled={submitting}
@@ -167,11 +167,7 @@ export function PurchaseOrderForm({
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex justify-between">
         <div className="flex gap-2">
-          <POSButton
-            type="button"
-            variant="outline"
-            onClick={() => setLines(v => [...v, blank()])}
-          >
+          <POSButton type="button" variant="outline" onClick={() => setLines(v => [...v, blank()])}>
             {t('receiveShipment.addLine')}
           </POSButton>
           <POSButton

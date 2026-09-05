@@ -1,12 +1,13 @@
-import { Bot } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@shared/lib/utils';
 import { Button } from '@shared/ui/button';
 import { useAgentStore } from '../model/agentStore';
 
-export function AgentButton() {
+export function AgentButton({ className }: { className?: string }) {
   const { t } = useTranslation('featMgmt');
-  const toggle = useAgentStore((s) => s.toggle);
-  const hasUnread = useAgentStore((s) => s.hasUnread);
+  const toggle = useAgentStore(s => s.toggle);
+  const hasUnread = useAgentStore(s => s.hasUnread);
 
   const agentEnabled = import.meta.env['VITE_AGENT_ENABLED'] as string | undefined;
   if (agentEnabled === 'false') return null;
@@ -17,12 +18,13 @@ export function AgentButton() {
       variant="ghost"
       onClick={toggle}
       aria-label={t('agentChat.openAssistantAria')}
-      className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+      size="icon-xs"
+      className={cn('relative text-sidebar-muted hover:text-brand', className)}
     >
       {hasUnread && (
-        <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-75" />
+        <span className="absolute top-0.5 right-0.5 size-2 rounded-full bg-brand animate-pulse-soft" />
       )}
-      <Bot className="size-6" />
+      <Sparkles className="size-4" aria-hidden="true" />
     </Button>
   );
 }

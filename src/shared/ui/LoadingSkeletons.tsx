@@ -31,7 +31,7 @@ export function CardSkeleton({ height = 200, className }: CardSkeletonProps) {
   const { t } = useTranslation('common');
   return (
     <div
-      className={cn('rounded-lg border bg-card p-4', className)}
+      className={cn('rounded-xl border bg-card p-4', className)}
       style={{ height: typeof height === 'number' ? `${String(height)}px` : height }}
       aria-label={t('loading.generic')}
       role="status"
@@ -107,8 +107,8 @@ export function ProductGridSkeleton({ count = 8, className }: ProductGridSkeleto
       role="status"
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-lg border bg-card p-4">
-          <Skeleton className="mb-3 h-24 w-full" />
+        <div key={i} className="rounded-xl border bg-card p-4">
+          <Skeleton className="mb-3 h-20 w-full" />
           <Skeleton className="mb-2 h-4 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
         </div>
@@ -145,7 +145,7 @@ export function PoolTableGridSkeleton({ count = 6, className }: PoolTableGridSke
       role="status"
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-lg border bg-card p-6">
+        <div key={i} className="rounded-xl border bg-card p-6">
           <div className="mb-4 flex items-center justify-between">
             <Skeleton className="h-6 w-20" />
             <Skeleton className="h-5 w-16" />
@@ -182,7 +182,7 @@ export function TabListSkeleton({ count = 5, className }: TabListSkeletonProps) 
   return (
     <div className={cn('space-y-3', className)} aria-label={t('loading.tabs')} role="status">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-lg border bg-card p-4">
+        <div key={i} className="rounded-xl border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-5 w-16" />
