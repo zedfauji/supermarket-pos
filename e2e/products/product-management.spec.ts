@@ -28,22 +28,24 @@ async function navigateToInventory(page: Parameters<typeof loginAs>[0]): Promise
 }
 
 /**
- * Category/product CRUD lives on Settings > Products (`ProductsSettingsTab`,
- * src/widgets/SettingsTabsPanel/tabs/ProductsSettingsTab.tsx), NOT on
- * `/inventory` (which is the stock/on-hand-quantity view — no create/edit
- * affordances). Navigates there and, for 'categories', switches to the
- * Categories sub-tab (backed by `CategoryTreeEditor`, a 3-level tree editor
- * — not the unused, unwired `CatalogCategoriesTab`/`CategoryForm` pair).
+ * Category/product CRUD lives on Inventory › Catalog (`CatalogTab`,
+ * src/widgets/InventoryPagePanel/ui/CatalogTab.tsx), NOT on the Stock tab
+ * (which is the stock/on-hand-quantity view — no create/edit affordances).
+ * Navigates there and, for 'categories', switches to the Categories sub-tab
+ * (backed by `CategoryTreeEditor`, a 3-level tree editor — not the unused,
+ * unwired `CatalogCategoriesTab`/`CategoryForm` pair).
  */
 async function navigateToProductsSettingsTab(
   page: Parameters<typeof loginAs>[0],
   subTab: 'products' | 'categories' = 'products'
 ): Promise<boolean> {
-  await page.goto('/settings');
-  const productsTab = page.getByRole('tab', { name: 'Products' });
-  const productsTabVisible = await productsTab.isVisible({ timeout: 10_000 }).catch(() => false);
-  if (!productsTabVisible) return false;
-  await productsTab.click();
+  await page.goto('/inventory');
+  const catalogTab = page.getByRole('tab', { name: 'Catalog' });
+  const catalogTabVisible = await catalogTab.isVisible({ timeout: 10_000 }).catch(() => false);
+  if (!catalogTabVisible) return false;
+  await catalogTab.click();
+  // Nested catalog tabs: "Products" is selected by default.
+  await page.getByRole('tab', { name: 'Products' }).click();
 
   if (subTab === 'categories') {
     const categoriesSubTab = page.getByRole('tab', { name: 'Categories' });

@@ -316,6 +316,7 @@
     "cancel": "Cancel",
     "apply": "Apply",
     "stockTabLabel": "Stock",
+    "catalogTabLabel": "Catalog",
     "openUnitsTabLabel": "Open Units",
     "nearExpiryTabLabel": "Near Expiry",
     "nothingExpiringSoonTitle": "Nothing expiring soon",
@@ -476,8 +477,8 @@
     "previewHelper": "Reflects your unsaved changes exactly as they will print."
   },
   "productsSettingsTab": {
-    "title": "Product Management",
-    "description": "Manage products, categories, modifiers, and modifier groups. Changes are applied immediately after save.",
+    "title": "Catalog",
+    "description": "Products, categories, modifiers and modifier groups sold at this store. Changes apply immediately after save.",
     "tabProducts": "Products",
     "tabCategories": "Categories",
     "tabModifiers": "Modifiers",

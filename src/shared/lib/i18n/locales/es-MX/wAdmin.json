@@ -316,6 +316,7 @@
     "cancel": "Cancelar",
     "apply": "Aplicar",
     "stockTabLabel": "Existencias",
+    "catalogTabLabel": "Catálogo",
     "openUnitsTabLabel": "Unidades abiertas",
     "nearExpiryTabLabel": "Próxima caducidad",
     "nothingExpiringSoonTitle": "Nada próximo a caducar",
@@ -476,8 +477,8 @@
     "previewHelper": "Refleja tus cambios sin guardar exactamente como se imprimirán."
   },
   "productsSettingsTab": {
-    "title": "Gestión de productos",
-    "description": "Administra productos, categorías, modificadores y grupos de modificadores. Los cambios se aplican de inmediato al guardar.",
+    "title": "Catálogo",
+    "description": "Productos, categorías, modificadores y grupos de modificadores de la tienda. Los cambios se aplican de inmediato al guardar.",
     "tabProducts": "Productos",
     "tabCategories": "Categorías",
     "tabModifiers": "Modificadores",

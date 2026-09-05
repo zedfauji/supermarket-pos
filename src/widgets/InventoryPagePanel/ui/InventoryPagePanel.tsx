@@ -2,6 +2,7 @@ import { PackageX } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { OpenUnitsTab } from '@widgets/OpenUnitsTab';
 import {
   inventoryRowColumns,
   useInventory,
@@ -11,6 +12,7 @@ import {
   type Inventory,
 } from '@entities/inventory';
 import { useStaffStore } from '@entities/staff/model/store';
+import { usePermissions } from '@entities/staff/model/usePermissions';
 import { cn } from '@shared/lib/utils';
 import { EmptyState } from '@shared/ui';
 import { DataTable } from '@shared/ui/DataTable';
@@ -21,7 +23,7 @@ import { SectionHeader } from '@shared/ui/SectionHeader';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { OpenUnitsTab } from './OpenUnitsTab';
+import { CatalogTab } from './CatalogTab';
 
 function stockSortPriority(inv: Inventory): number {
   if (inv.quantityOnHand === 0) return 2;
@@ -108,6 +110,8 @@ export function InventoryPagePanel() {
   const currentStaff = useStaffStore(s => s.currentStaff);
   const currentRole = currentStaff?.role;
   const staffId = currentStaff?.id ?? '';
+  const { can } = usePermissions();
+  const canManageProducts = can('manage_products');
 
   const { data, isLoading, resultError, isEmpty } = useInventory();
   const { data: nearExpiryAlerts, isEmpty: nearExpiryEmpty } = useNearExpiryAlerts();
@@ -222,6 +226,9 @@ export function InventoryPagePanel() {
     <Tabs defaultValue="stock" className="w-full">
       <TabsList className="mb-4">
         <TabsTrigger value="stock">{t('inventoryPagePanel.stockTabLabel')}</TabsTrigger>
+        {canManageProducts && (
+          <TabsTrigger value="catalog">{t('inventoryPagePanel.catalogTabLabel')}</TabsTrigger>
+        )}
         <TabsTrigger value="open-units">{t('inventoryPagePanel.openUnitsTabLabel')}</TabsTrigger>
         <TabsTrigger value="near-expiry">{t('inventoryPagePanel.nearExpiryTabLabel')}</TabsTrigger>
       </TabsList>
@@ -462,6 +469,11 @@ export function InventoryPagePanel() {
           </Dialog>
         </div>
       </TabsContent>
+      {canManageProducts && (
+        <TabsContent value="catalog">
+          <CatalogTab currentRole={currentRole ?? null} />
+        </TabsContent>
+      )}
       <TabsContent value="open-units">
         <OpenUnitsTab />
       </TabsContent>

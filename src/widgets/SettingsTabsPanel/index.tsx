@@ -11,7 +11,6 @@ import { HardwareSettingsTab } from './tabs/HardwareSettingsTab';
 import { LanguageSettingsTab } from './tabs/LanguageSettingsTab';
 import { LockSettingsTab } from './tabs/LockSettingsTab';
 import { NearExpirySettingsTab } from './tabs/NearExpirySettingsTab';
-import { ProductsSettingsTab } from './tabs/ProductsSettingsTab';
 
 type TabItem = {
   key: string;
@@ -72,18 +71,11 @@ export function SettingsTabsPanel() {
       );
     }
     if (canManageProducts) {
-      out.push(
-        {
-          key: 'products',
-          label: t('tabs.products'),
-          render: () => <ProductsSettingsTab currentRole={currentRole} />,
-        },
-        {
-          key: 'billing',
-          label: t('tabs.billing'),
-          render: () => <BillingSettingsTab currentRole={currentRole} />,
-        }
-      );
+      out.push({
+        key: 'billing',
+        label: t('tabs.billing'),
+        render: () => <BillingSettingsTab currentRole={currentRole} />,
+      });
     }
     return out;
   }, [canManageProducts, canManageSettings, currentRole, t]);

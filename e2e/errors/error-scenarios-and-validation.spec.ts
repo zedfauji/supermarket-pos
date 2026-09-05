@@ -442,8 +442,8 @@ test.describe('Field Validation', () => {
       return;
     }
 
-    const prodTab = page.getByRole('tab', { name: /products/i });
-    if (await prodTab.isVisible({ timeout: 3_000 }).catch(() => false)) await prodTab.click();
+    const catalogTab = page.getByRole('tab', { name: /catalog|catálogo/i });
+    if (await catalogTab.isVisible({ timeout: 3_000 }).catch(() => false)) await catalogTab.click();
 
     const addProdBtn = page.getByRole('button', { name: /add product|new product/i });
     if (!(await addProdBtn.isVisible({ timeout: 5_000 }).catch(() => false))) {

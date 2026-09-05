@@ -269,8 +269,8 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
     // reopen, confirm persisted.
     // -------------------------------------------------------------------
     await test.step('Step 1: configure package product (units-per-package = 20)', async () => {
-      await page.goto('/settings');
-      await page.getByRole('tab', { name: 'Products' }).click();
+      await page.goto('/inventory');
+      await page.getByRole('tab', { name: 'Catalog' }).click();
       await expect(page.getByRole('button', { name: 'Add product' })).toBeVisible({ timeout: 15_000 });
       await page.getByRole('button', { name: 'Add product' }).click();
 
