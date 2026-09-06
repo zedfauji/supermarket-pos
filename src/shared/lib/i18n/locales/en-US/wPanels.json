@@ -277,8 +277,6 @@
     "clearCartTitle": "Clear the cart?",
     "clearCartBody": "All lines are removed. Nothing has been charged.",
     "clearCartConfirm": "Clear",
-    "itemsLine_one": "{{count}} item",
-    "itemsLine_other": "{{count}} items",
     "subtotal": "Subtotal",
     "scanReady": "Scanner ready"
   },

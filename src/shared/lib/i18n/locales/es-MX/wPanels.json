@@ -277,8 +277,6 @@
     "clearCartTitle": "¿Vaciar el carrito?",
     "clearCartBody": "Se quitan todas las partidas. No se ha cobrado nada.",
     "clearCartConfirm": "Vaciar",
-    "itemsLine_one": "{{count}} artículo",
-    "itemsLine_other": "{{count}} artículos",
     "subtotal": "Subtotal",
     "scanReady": "Escáner listo"
   },
