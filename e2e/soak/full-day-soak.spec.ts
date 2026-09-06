@@ -381,7 +381,13 @@ test.describe.serial('Full-day soak', () => {
     await loginAs(page, 'manager');
     await gotoAuthed(page, '/suppliers');
     await page.getByRole('button', { name: /receive shipment|recibir/i }).click();
-    const supplierSelect = page.getByLabel(/supplier|proveedor/i);
+    // Scoped to the dialog: an unscoped getByLabel(/supplier/i) also matches the
+    // sidebar's "Suppliers" nav link (aria-label="Suppliers"), causing a strict-mode
+    // violation now that the app-shell sidebar renders on every authenticated page.
+    const receiveShipmentDialog = page.getByRole('dialog', {
+      name: /confirm receipt|confirmar recepción/i,
+    });
+    const supplierSelect = receiveShipmentDialog.getByLabel(/supplier|proveedor/i);
     await expect(supplierSelect).toBeVisible();
     await supplierSelect.selectOption({ label: supplierName });
     await page.getByRole('button', { name: /add line item|agregar partida/i }).click();

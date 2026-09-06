@@ -70,8 +70,15 @@ test.describe('Idle Screen Lock', () => {
     const managerName = process.env['E2E_MANAGER_NAME'] ?? '';
     await enterPin(page, managerPin);
     await expect(overlay).not.toBeVisible({ timeout: 10_000 });
+    // Scoped to the sidebar's identity display (data-testid="app-sidebar"): an
+    // unscoped getByText also matches Home's "Welcome, <name>" heading, which
+    // renders the same currentStaff.name and causes a strict-mode violation.
+    // The sidebar is the right scope here since the test's intent is confirming
+    // the active session's identity (currentStaff) itself didn't change.
     await expect(
-      page.getByText(new RegExp(bartenderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
+      page
+        .getByTestId('app-sidebar')
+        .getByText(new RegExp(bartenderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
     ).toBeVisible({ timeout: 10_000 });
 
     // LCK-04/D-05: both the lock and unlock events are fully attributed in audit_logs.

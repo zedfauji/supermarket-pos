@@ -145,19 +145,25 @@ test.describe('Print Jobs audit tab (Plan 19-08, PRN-05)', () => {
     await expect(page.getByRole('tab', { name: /print jobs/i })).toHaveAttribute('data-state', 'active');
 
     // Badges: correct label + color-token per status (never destructive/
-    // pos-danger for 'unknown' — UI-SPEC's amber-only rule).
+    // danger for 'unknown' — UI-SPEC's amber-only rule). Token classes below
+    // match PrintJobStatusBadge.tsx's statusConfig (the old `pos-warning`/
+    // `pos-danger`/`pos-accent` names predate this branch's design-token
+    // rename and never appear in the rendered class list).
     const unknownBadge = page.getByRole('status', { name: /needs confirmation/i });
     await expect(unknownBadge).toBeVisible({ timeout: 15_000 });
-    await expect(unknownBadge).toHaveClass(/pos-warning/);
-    await expect(unknownBadge).not.toHaveClass(/pos-danger/);
+    await expect(unknownBadge).toHaveClass(/bg-warning-soft/);
+    await expect(unknownBadge).toHaveClass(/text-warning-strong/);
+    await expect(unknownBadge).not.toHaveClass(/bg-destructive-soft/);
 
     const failedBadge = page.getByRole('status', { name: /^failed$/i });
     await expect(failedBadge).toBeVisible();
-    await expect(failedBadge).toHaveClass(/pos-danger/);
+    await expect(failedBadge).toHaveClass(/bg-destructive-soft/);
+    await expect(failedBadge).toHaveClass(/text-destructive/);
 
     const printedBadge = page.getByRole('status', { name: /^printed$/i });
     await expect(printedBadge).toBeVisible();
-    await expect(printedBadge).toHaveClass(/pos-accent/);
+    await expect(printedBadge).toHaveClass(/bg-success-soft/);
+    await expect(printedBadge).toHaveClass(/text-success-strong/);
 
     // Apply a status filter — assert get_print_jobs was called with it.
     await page.getByRole('combobox', { name: /all statuses/i }).click();
