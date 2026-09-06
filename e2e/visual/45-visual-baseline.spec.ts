@@ -188,7 +188,11 @@ test.describe.serial('Visual regression baseline (Phase 17)', () => {
     // full-page height) is not under this test's control. Cap the list's
     // rendered height so the page height is deterministic, and mask its
     // content since which staff show up varies run to run.
-    const employeeList = heading.locator('xpath=following-sibling::div[1]');
+    // EmployeeSelector wraps the heading with its subtitle <p> in a shared
+    // `space-y-1.5` div, so the scrollable list is a sibling of the heading's
+    // *parent*, not of the heading itself — go up one level before walking
+    // to the next div sibling.
+    const employeeList = heading.locator('xpath=../following-sibling::div[1]');
     await employeeList.evaluate(el => {
       el.style.maxHeight = '400px';
       el.style.overflow = 'hidden';
