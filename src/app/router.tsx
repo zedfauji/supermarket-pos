@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@widgets/AppShell';
 import { HelpSheet } from '@widgets/HelpSheet';
 import { AgentPanel } from '@features/agent-chat';
+import { useStaffStore } from '@entities/staff/model/store';
 import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AuditRoute } from './audit-route';
@@ -45,10 +46,15 @@ function ShellLayout() {
 }
 
 export function Router() {
+  // AI assistant is a staff tool — never render it before someone is logged
+  // in (its suggestion chips surface staff-only actions on the unauthenticated
+  // PIN picker otherwise).
+  const isStaffAuthenticated = useStaffStore(s => s.isAuthenticated);
+
   return (
     <BrowserRouter>
       <HelpSheet />
-      <AgentPanel />
+      {isStaffAuthenticated && <AgentPanel />}
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
