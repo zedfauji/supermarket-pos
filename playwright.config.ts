@@ -63,6 +63,7 @@ export default defineConfig({
   expect: {
     timeout: fastE2e ? 5_000 : 10_000,
   },
+  globalSetup: path.join(__dirname, 'e2e', 'global-setup.ts'),
   globalTeardown: path.join(__dirname, 'e2e', 'global-teardown.ts'),
   reporter: [
     ['blob', { outputDir: 'e2e-blob-reports' }],

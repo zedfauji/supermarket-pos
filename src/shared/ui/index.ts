@@ -61,6 +61,8 @@ export type { UpdateAvailableDialogProps } from './UpdateAvailableDialog';
 export { Progress } from './progress';
 export { DataTable } from './DataTable';
 export type { DataTableProps } from './DataTable';
+export { TablePager } from './TablePager';
+export type { TablePagerProps } from './TablePager';
 
 // Navigation
 export { DateRangePicker } from './DateRangePicker';

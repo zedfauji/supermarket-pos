@@ -28,7 +28,12 @@
     "noDataTitle": "No data",
     "noDataDescription": "No records found.",
     "noResultsTitle": "No results",
-    "noResultsDescription": "No records match your search."
+    "noResultsDescription": "No records match your search.",
+    "pager": {
+      "pageInfo": "Page {{page}} of {{totalPages}}",
+      "previous": "Previous page",
+      "next": "Next page"
+    }
   },
   "dateRangePicker": {
     "from": "From:",
