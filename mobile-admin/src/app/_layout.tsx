@@ -3,13 +3,16 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, LogBox, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { colors } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
+
+// expo-router's Tabs emits this from its own reanimated usage; nothing in this app does.
+LogBox.ignoreLogs([/shared value's .value inside reanimated inline style/]);
 
 const queryClient = new QueryClient({
   defaultOptions: {
