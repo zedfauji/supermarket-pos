@@ -70,3 +70,6 @@ uppercase text-muted-foreground`.
 - Inputs: shadcn `Input`/`Select`/`Textarea`; a native `<select>`/`<input>`
   must copy the same classes (`h-10 rounded-lg border border-input bg-card px-3
   shadow-xs dark:bg-input/20` + the focus ring).
+- Grouped settings-style navigation uses `VerticalTabsList`/`VerticalTabsGroupLabel`/
+  `VerticalTabsTrigger` inside `<Tabs orientation="vertical">` — never a hand-built
+  list of buttons.
