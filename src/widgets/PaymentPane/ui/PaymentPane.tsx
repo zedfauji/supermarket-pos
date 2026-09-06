@@ -274,6 +274,11 @@ function PaymentHistoryList({
             </div>
           </div>
         </div>
+        {payments.length >= 100 && (
+          <p className="text-xs text-muted-foreground">
+            {t('paymentPane.tilesTruncatedHint', { count: payments.length })}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput
             value={filterValue}

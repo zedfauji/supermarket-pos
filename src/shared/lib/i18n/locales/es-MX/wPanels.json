@@ -117,13 +117,14 @@
     "filterCash": "Efectivo",
     "filterCard": "Tarjeta",
     "filterTransfer": "Transferencia",
-    "filterRefunds": "Devoluciones",
+    "filterRefunds": "Reembolsos",
     "filterLabel": "Filtrar por método",
     "dayToday": "Hoy",
     "dayYesterday": "Ayer",
     "refundBadge": "Reembolso",
     "awaitingCount_one": "{{count}} en espera",
-    "awaitingCount_other": "{{count}} en espera"
+    "awaitingCount_other": "{{count}} en espera",
+    "tilesTruncatedHint": "Basado en los {{count}} pagos más recientes"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} producto",
@@ -271,13 +272,10 @@
     "saleComplete": "Venta completada — {{amount}}",
     "itemCount_one": "{{count}} artículo",
     "itemCount_other": "{{count}} artículos",
-    "scanHint": "Escanea un código o escribe para buscar",
     "clearCart": "Vaciar carrito",
     "clearCartTitle": "¿Vaciar el carrito?",
     "clearCartBody": "Se quitan todas las partidas. No se ha cobrado nada.",
     "clearCartConfirm": "Vaciar",
-    "itemsLine_one": "{{count}} artículo",
-    "itemsLine_other": "{{count}} artículos",
     "subtotal": "Subtotal",
     "scanReady": "Escáner listo"
   },

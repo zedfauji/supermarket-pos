@@ -117,13 +117,14 @@
     "filterCash": "Cash",
     "filterCard": "Card",
     "filterTransfer": "Transfer",
-    "filterRefunds": "Returns",
+    "filterRefunds": "Refunds",
     "filterLabel": "Filter by method",
     "dayToday": "Today",
     "dayYesterday": "Yesterday",
     "refundBadge": "Refund",
     "awaitingCount_one": "{{count}} waiting",
-    "awaitingCount_other": "{{count}} waiting"
+    "awaitingCount_other": "{{count}} waiting",
+    "tilesTruncatedHint": "Based on the {{count}} most recent payments"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} item",
@@ -271,13 +272,10 @@
     "saleComplete": "Sale complete — {{amount}}",
     "itemCount_one": "{{count}} item",
     "itemCount_other": "{{count}} items",
-    "scanHint": "Scan a barcode or type to search",
     "clearCart": "Clear cart",
     "clearCartTitle": "Clear the cart?",
     "clearCartBody": "All lines are removed. Nothing has been charged.",
     "clearCartConfirm": "Clear",
-    "itemsLine_one": "{{count}} item",
-    "itemsLine_other": "{{count}} items",
     "subtotal": "Subtotal",
     "scanReady": "Scanner ready"
   },

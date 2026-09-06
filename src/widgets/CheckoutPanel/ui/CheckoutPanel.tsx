@@ -360,7 +360,9 @@ export function CheckoutPanel() {
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <dt>{t('checkoutPanel.subtotal')}</dt>
-                <dd>{t('checkoutPanel.itemsLine', { count: itemCount })}</dd>
+                <dd>
+                  <MoneyDisplay amount={total} size="sm" />
+                </dd>
               </div>
               <div className="flex items-end justify-between">
                 <dt className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
