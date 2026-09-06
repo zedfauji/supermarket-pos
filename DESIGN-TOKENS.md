@@ -47,7 +47,7 @@ banners and row highlights; solid variants are for buttons and dots.
 Geist Variable everywhere (`font-sans`; `font-heading` is an alias).
 `font-mono` falls back to the platform monospace (IDs, barcodes, receipts).
 Money uses `MoneyDisplay` (`text-numeric` = tabular lining figures). Section
-eyebrows and table headers use `text-[0.6875rem] font-semibold tracking-[0.08em]
+eyebrows and table headers use `text-[0.6875rem] font-semibold tracking-[0.12em]
 uppercase text-muted-foreground`.
 
 ## Component conventions

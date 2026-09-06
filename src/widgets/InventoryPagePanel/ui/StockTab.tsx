@@ -123,7 +123,7 @@ function FilterTile({
         pressed && 'border-brand ring-2 ring-brand/30'
       )}
     >
-      <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+      <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
         {label}
       </span>
       <span
@@ -361,7 +361,7 @@ export function StockTab({ onOpenCatalog }: Props) {
           }}
         />
         <div className="min-w-[11rem] rounded-xl border border-border bg-muted/40 px-4 py-3">
-          <div className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+          <div className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             {t('inventoryPagePanel.stockValue')}
           </div>
           <MoneyDisplay amount={stats.stockValue} size="lg" className="mt-1 block" />

@@ -257,7 +257,7 @@ export default function PromotionsPage() {
               statusFilter === status && 'border-brand ring-2 ring-brand/30'
             )}
           >
-            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               {label}
             </span>
             <span className={cn('text-numeric text-2xl font-semibold', tone)}>
@@ -267,7 +267,7 @@ export default function PromotionsPage() {
         ))}
         {counts.needsReview > 0 && (
           <div className="flex min-w-[9rem] flex-col gap-1 rounded-xl border border-warning/40 bg-warning-soft px-4 py-3">
-            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-warning-strong uppercase">
+            <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-warning-strong uppercase">
               {tAdmin('promotionsListPanel.statNeedsReview')}
             </span>
             <span className="text-numeric text-2xl font-semibold text-warning-strong">

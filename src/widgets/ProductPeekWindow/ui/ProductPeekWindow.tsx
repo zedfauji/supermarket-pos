@@ -108,7 +108,7 @@ function NotFoundStateView({ onClose }: { onClose: () => void }) {
         />
         {scannedCode && (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               {t('productPeekPanel.scannedCode')}
             </span>
             <span className="rounded-md bg-muted px-3 py-1 font-mono text-sm">{scannedCode}</span>
@@ -198,7 +198,7 @@ function PeekProductDetail({
           <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/50 px-5 py-2.5">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ScanBarcode className="size-4" aria-hidden="true" />
-              <span className="font-semibold tracking-[0.1em] uppercase">
+              <span className="font-semibold tracking-[0.12em] uppercase">
                 {t('productPeekPanel.scannedEyebrow')}
               </span>
             </div>
@@ -219,7 +219,7 @@ function PeekProductDetail({
             <div className="mr-auto flex flex-col leading-tight">
               {qty > 1 && (
                 <>
-                  <span className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                  <span className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                     {t('productPeekPanel.total')}
                   </span>
                   <MoneyDisplay amount={lineTotal} size="lg" />
@@ -315,7 +315,7 @@ function PeekProductDetail({
 
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-lg bg-muted/50 px-3 py-2">
-              <dt className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <dt className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                 {t('productPeekPanel.skuLabel')}
               </dt>
               <dd className="font-mono">
@@ -323,7 +323,7 @@ function PeekProductDetail({
               </dd>
             </div>
             <div className="rounded-lg bg-muted/50 px-3 py-2">
-              <dt className="text-[0.6875rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <dt className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                 {t('productPeekPanel.barcodeLabel')}
               </dt>
               <dd className="font-mono">
