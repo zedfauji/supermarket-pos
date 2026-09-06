@@ -272,7 +272,6 @@
     "saleComplete": "Sale complete — {{amount}}",
     "itemCount_one": "{{count}} item",
     "itemCount_other": "{{count}} items",
-    "scanHint": "Scan a barcode or type to search",
     "clearCart": "Clear cart",
     "clearCartTitle": "Clear the cart?",
     "clearCartBody": "All lines are removed. Nothing has been charged.",

@@ -272,7 +272,6 @@
     "saleComplete": "Venta completada — {{amount}}",
     "itemCount_one": "{{count}} artículo",
     "itemCount_other": "{{count}} artículos",
-    "scanHint": "Escanea un código o escribe para buscar",
     "clearCart": "Vaciar carrito",
     "clearCartTitle": "¿Vaciar el carrito?",
     "clearCartBody": "Se quitan todas las partidas. No se ha cobrado nada.",
