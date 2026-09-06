@@ -95,6 +95,10 @@ type SaleReceiptPayment = {
   processed_at: string;
   tendered_amount: number | null;
   reference_number: string | null;
+  discount_scope: 'all' | null;
+  discount_type: 'percent' | 'fixed' | null;
+  discount_value: number | null;
+  discount_amount: number | null;
 };
 
 /**
@@ -133,13 +137,15 @@ async function buildSaleReceipt(
       admin.from('profiles').select('name').eq('id', staffId).maybeSingle(),
       admin
         .from('payments')
-        .select('amount, method, processed_at, tendered_amount, reference_number')
+        .select(
+          'amount, method, processed_at, tendered_amount, reference_number, discount_scope, discount_type, discount_value, discount_amount'
+        )
         .eq('tab_id', tabId)
         .order('processed_at', { ascending: true }),
       admin
         .from('orders')
         .select(
-          'status, order_items(quantity, unit_price, modifier_price_delta, weight_grams, products(name, category_id, categories(name)))'
+          'status, order_items(quantity, unit_price, modifier_price_delta, weight_grams, promotion_id, discount_rate, discount_amount, products(name, category_id, categories(name)))'
         )
         .eq('tab_id', tabId),
     ]);
@@ -158,6 +164,9 @@ async function buildSaleReceipt(
             unit_price: number;
             modifier_price_delta: number;
             weight_grams: number | null;
+            promotion_id: string | null;
+            discount_rate: number | null;
+            discount_amount: number | null;
             products: {
               name: string;
               category_id: string | null;
@@ -183,6 +192,9 @@ async function buildSaleReceipt(
       categoryName: item.products?.categories?.name ?? null,
       modifierNames: [],
       weightGrams: item.weight_grams ?? null,
+      promotionId: item.promotion_id ?? null,
+      discountRate: item.discount_rate == null ? null : Number(item.discount_rate),
+      discountAmount: item.discount_amount == null ? null : Number(item.discount_amount),
     }));
 
   const legs = payments as SaleReceiptPayment[];
@@ -205,6 +217,7 @@ async function buildSaleReceipt(
   // legs.length > 0 is guaranteed by the payments.length===0 guard above.
   const firstLeg = legs[0]!;
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
+  const discountLeg = legs.find(leg => leg.discount_amount != null);
 
   // Phase 24 (TAX-05): decompose the charged amount into subtotal/tax using
   // the same settings.billing row process_direct_sale_atomic already read
@@ -242,6 +255,12 @@ async function buildSaleReceipt(
     tenderedAmount: soleTender?.tenderedAmount ?? null,
     changeAmount: soleTender?.changeAmount ?? null,
     terminalReference: soleTender?.terminalReference,
+    discountAmount:
+      discountLeg?.discount_amount == null ? undefined : Number(discountLeg.discount_amount),
+    discountScope: discountLeg?.discount_scope ?? undefined,
+    discountType: discountLeg?.discount_type ?? undefined,
+    discountValue:
+      discountLeg?.discount_value == null ? undefined : Number(discountLeg.discount_value),
     tenders,
   };
 }

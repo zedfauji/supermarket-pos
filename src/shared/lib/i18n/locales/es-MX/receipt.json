@@ -4,6 +4,8 @@
     "cashier": "Cajero",
     "customer": "Cliente",
     "subtotal": "Subtotal",
+    "promotion": "Promoción",
+    "discount": "Descuento",
     "tax": "Impuesto",
     "total": "Total",
     "payment": "Pago",

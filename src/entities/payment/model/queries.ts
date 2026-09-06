@@ -84,6 +84,9 @@ type ReceiptOrderRow = {
         unit_price: number;
         modifier_price_delta: number;
         weight_grams: number | null;
+        promotion_id: string | null;
+        discount_rate: number | null;
+        discount_amount: number | null;
         products: {
           name: string;
           category_id: string | null;
@@ -99,6 +102,10 @@ type ReceiptPaymentRow = {
   processed_at: string;
   tendered_amount: number | null;
   reference_number: string | null;
+  discount_scope: 'all' | null;
+  discount_type: 'percent' | 'fixed' | null;
+  discount_value: number | null;
+  discount_amount: number | null;
 };
 
 /**
@@ -113,23 +120,30 @@ type ReceiptPaymentRow = {
  * (Pitfall 4 / CR-03) — never builds ReceiptData from a single leg.
  */
 export async function fetchReceiptDataForPayment(tabId: string): Promise<ReceiptData> {
-  const [{ data: tab }, { data: payments }, { data: orders }, { data: settingsRow }, { data: billingRow }] =
-    await Promise.all([
-      db.from('tabs').select('customer_name, staff_id').eq('id', tabId).maybeSingle(),
-      db
-        .from('payments')
-        .select('amount, method, processed_at, tendered_amount, reference_number')
-        .eq('tab_id', tabId)
-        .order('processed_at', { ascending: true }),
-      db
-        .from('orders')
-        .select(
-          'status, order_items(quantity, unit_price, modifier_price_delta, weight_grams, products(name, category_id, categories(name)))'
-        )
-        .eq('tab_id', tabId),
-      db.from('settings').select('value').eq('key', 'general').maybeSingle(),
-      db.from('settings').select('value').eq('key', 'billing').maybeSingle(),
-    ]);
+  const [
+    { data: tab },
+    { data: payments },
+    { data: orders },
+    { data: settingsRow },
+    { data: billingRow },
+  ] = await Promise.all([
+    db.from('tabs').select('customer_name, staff_id').eq('id', tabId).maybeSingle(),
+    db
+      .from('payments')
+      .select(
+        'amount, method, processed_at, tendered_amount, reference_number, discount_scope, discount_type, discount_value, discount_amount'
+      )
+      .eq('tab_id', tabId)
+      .order('processed_at', { ascending: true }),
+    db
+      .from('orders')
+      .select(
+        'status, order_items(quantity, unit_price, modifier_price_delta, weight_grams, promotion_id, discount_rate, discount_amount, products(name, category_id, categories(name)))'
+      )
+      .eq('tab_id', tabId),
+    db.from('settings').select('value').eq('key', 'general').maybeSingle(),
+    db.from('settings').select('value').eq('key', 'billing').maybeSingle(),
+  ]);
 
   if (!tab || !payments || (payments as unknown[]).length === 0 || !orders) {
     throw new Error(`fetchReceiptDataForPayment: sale not found for tab ${tabId}`);
@@ -153,6 +167,9 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
       categoryName: item.products?.categories?.name ?? null,
       modifierNames: [] as string[],
       weightGrams: item.weight_grams ?? null,
+      promotionId: item.promotion_id ?? null,
+      discountRate: item.discount_rate,
+      discountAmount: item.discount_amount,
     }));
 
   const legs = payments as ReceiptPaymentRow[];
@@ -174,6 +191,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     throw new Error(`fetchReceiptDataForPayment: no payment legs for tab ${tabId}`);
   }
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
+  const discountLeg = legs.find(leg => leg.discount_amount != null);
 
   const general = settingsRow?.value as { barName?: string; address?: string } | null;
   const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
@@ -200,6 +218,10 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     tenderedAmount: soleTender?.tenderedAmount ?? null,
     changeAmount: soleTender?.changeAmount ?? null,
     terminalReference: soleTender?.terminalReference,
+    discountAmount: discountLeg?.discount_amount == null ? undefined : discountLeg.discount_amount,
+    discountScope: discountLeg?.discount_scope ?? undefined,
+    discountType: discountLeg?.discount_type ?? undefined,
+    discountValue: discountLeg?.discount_value == null ? undefined : discountLeg.discount_value,
     tenders,
   });
 }
@@ -207,7 +229,9 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
 /** Reprint read for a completed sale, keyed by tabId — every leg grouped into one receipt. */
 export function useReceiptDataForPayment(tabId: string | null) {
   return useQuery({
-    queryKey: tabId ? paymentReceiptKeys.byTab(tabId) : (['payment', 'receipt-data', null] as const),
+    queryKey: tabId
+      ? paymentReceiptKeys.byTab(tabId)
+      : (['payment', 'receipt-data', null] as const),
     enabled: tabId !== null,
     queryFn: () => fetchReceiptDataForPayment(tabId as string),
   });
@@ -232,7 +256,7 @@ export function useOrderItemsByPayment(paymentId: string | null) {
       : (['payment', 'order-items', null] as const),
     enabled: paymentId != null,
     queryFn: async (): Promise<OrderItemForRefund[]> => {
-      if (paymentId == null) return [];  // guard: enabled only when paymentId != null
+      if (paymentId == null) return []; // guard: enabled only when paymentId != null
 
       // Step 1: resolve the tab_id from the payment
       const { data: paymentRow, error: payErr } = await db
@@ -271,7 +295,7 @@ export function useOrderItemsByPayment(paymentId: string | null) {
           unit_price: row['unit_price'] as number,
           parent_order_item_id: row['parent_order_item_id'] as string | null,
           products: row['products'] as { name: string },
-        }),
+        })
       );
     },
   });

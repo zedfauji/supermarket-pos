@@ -1,7 +1,11 @@
 import type { Locale, ReceiptSettings } from '@shared/lib/domain';
 import type { ReceiptData } from '@shared/lib/edge-function-contracts';
 import { formatMoneyIn } from '@shared/lib/format';
-import { formatModifierLines, groupByCategory, sanitize } from '@shared/lib/groupOrderItemsForReceipt';
+import {
+  formatModifierLines,
+  groupByCategory,
+  sanitize,
+} from '@shared/lib/groupOrderItemsForReceipt';
 import i18n from '@shared/lib/i18n';
 
 const LINE = 32;
@@ -63,9 +67,7 @@ function lineLeftRight(left: string, right: string, width: number = LINE): strin
   const r = byteWidth(right) >= width ? truncateFromEndToByteWidth(right, width) : right;
   const maxLeft = width - byteWidth(r);
   const l =
-    byteWidth(left) > maxLeft
-      ? `${truncateToByteWidth(left, Math.max(0, maxLeft - 1))}~`
-      : left;
+    byteWidth(left) > maxLeft ? `${truncateToByteWidth(left, Math.max(0, maxLeft - 1))}~` : left;
   return padRight(l, width - byteWidth(r)) + r;
 }
 
@@ -147,7 +149,7 @@ export function buildPreChequeText(data: PreChequeData, locale: Locale): string 
       lines.push(centerLine(group.categoryName ?? tr('receipt.category.other')));
     }
     for (const item of group.items) {
-      const left = `${String(item.quantity)}× ${sanitize(item.name)}`;
+      const left = `${String(item.quantity)}x ${sanitize(item.name)}`;
       lines.push(lineLeftRight(left, formatMoneyIn(locale, item.lineTotal)));
       lines.push(...formatModifierLines(item.modifierNames));
       if (item.notes) {
@@ -211,16 +213,35 @@ export function buildThermalReceiptText(
     for (const item of group.items) {
       const left =
         item.weightGrams != null
-          ? `${(item.weightGrams / 1000).toFixed(3)}kg × ${sanitize(item.name)}`
-          : `${String(item.quantity)}× ${sanitize(item.name)}`;
+          ? `${(item.weightGrams / 1000).toFixed(3)}kg x ${sanitize(item.name)}`
+          : `${String(item.quantity)}x ${sanitize(item.name)}`;
       const price = formatMoneyIn(locale, item.lineTotal);
       lines.push(lineLeftRight(left, price, width));
+      if ((item.discountAmount ?? 0) > 0) {
+        const rate = item.discountRate == null ? '' : ` ${String(item.discountRate)}%`;
+        lines.push(
+          lineLeftRight(
+            `${tr('receipt.promotion')}${rate}`,
+            `-${formatMoneyIn(locale, item.discountAmount ?? 0)}`,
+            width
+          )
+        );
+      }
       lines.push(...formatModifierLines(item.modifierNames ?? []));
     }
   }
 
   lines.push(divider(width));
   lines.push(lineLeftRight(tr('receipt.subtotal'), formatMoneyIn(locale, receipt.subtotal), width));
+  if ((receipt.discountAmount ?? 0) > 0) {
+    lines.push(
+      lineLeftRight(
+        tr('receipt.discount'),
+        `-${formatMoneyIn(locale, receipt.discountAmount ?? 0)}`,
+        width
+      )
+    );
+  }
   if (receipt.taxAmount != null) {
     lines.push(lineLeftRight(tr('receipt.tax'), formatMoneyIn(locale, receipt.taxAmount), width));
   }
@@ -240,10 +261,18 @@ export function buildThermalReceiptText(
       );
       if (tenderLeg.method === 'cash' && tenderLeg.tenderedAmount != null) {
         lines.push(
-          lineLeftRight(tr('receipt.tendered'), formatMoneyIn(locale, tenderLeg.tenderedAmount), width)
+          lineLeftRight(
+            tr('receipt.tendered'),
+            formatMoneyIn(locale, tenderLeg.tenderedAmount),
+            width
+          )
         );
         lines.push(
-          lineLeftRight(tr('receipt.change'), formatMoneyIn(locale, tenderLeg.changeAmount ?? 0), width)
+          lineLeftRight(
+            tr('receipt.change'),
+            formatMoneyIn(locale, tenderLeg.changeAmount ?? 0),
+            width
+          )
         );
       }
       if (tenderLeg.terminalReference) {
@@ -259,7 +288,9 @@ export function buildThermalReceiptText(
       lines.push(
         lineLeftRight(tr('receipt.tendered'), formatMoneyIn(locale, receipt.tenderedAmount), width)
       );
-      lines.push(lineLeftRight(tr('receipt.change'), formatMoneyIn(locale, receipt.changeAmount ?? 0), width));
+      lines.push(
+        lineLeftRight(tr('receipt.change'), formatMoneyIn(locale, receipt.changeAmount ?? 0), width)
+      );
     }
 
     if (receipt.terminalReference) {
@@ -276,7 +307,7 @@ export function buildThermalReceiptText(
     // WR-02: split on the Textarea's literal line breaks BEFORE sanitize() strips
     // them as control bytes, so a store owner's typed paragraphs stay separate
     // lines instead of silently merging into one run-together string.
-    const paragraphs = settings.footerText.split(/\r\n|\r|\n/).map((p) => sanitize(p));
+    const paragraphs = settings.footerText.split(/\r\n|\r|\n/).map(p => sanitize(p));
     for (const paragraph of paragraphs) {
       if (paragraph.length === 0) {
         lines.push(padRight('', width));

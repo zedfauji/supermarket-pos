@@ -4,6 +4,8 @@
     "cashier": "Cashier",
     "customer": "Customer",
     "subtotal": "Subtotal",
+    "promotion": "Promotion",
+    "discount": "Discount",
     "tax": "Tax",
     "total": "Total",
     "payment": "Payment",

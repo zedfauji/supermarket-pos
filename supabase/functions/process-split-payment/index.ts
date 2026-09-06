@@ -243,6 +243,9 @@ Deno.serve(async (req: Request) => {
         quantity,
         unit_price,
         modifier_price_delta,
+        promotion_id,
+        discount_rate,
+        discount_amount,
         products ( name )
       )
     `
@@ -257,6 +260,9 @@ Deno.serve(async (req: Request) => {
     quantity: number;
     unit_price: number;
     modifier_price_delta: number;
+    promotion_id: string | null;
+    discount_rate: number | null;
+    discount_amount: number | null;
     products: { name: string } | null;
   };
   type Or = {
@@ -273,6 +279,9 @@ Deno.serve(async (req: Request) => {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
+    promotionId: string | null;
+    discountRate: number | null;
+    discountAmount: number | null;
   }[] = [];
 
   for (const order of (orderRows ?? []) as Or[]) {
@@ -285,6 +294,9 @@ Deno.serve(async (req: Request) => {
         quantity: oi.quantity,
         unitPrice: Number(oi.unit_price) + Number(oi.modifier_price_delta),
         lineTotal: Math.round(lineTotal * 100) / 100,
+        promotionId: oi.promotion_id ?? null,
+        discountRate: oi.discount_rate == null ? null : Number(oi.discount_rate),
+        discountAmount: oi.discount_amount == null ? null : Number(oi.discount_amount),
       });
     }
   }
@@ -309,6 +321,9 @@ Deno.serve(async (req: Request) => {
       quantity: 1,
       unitPrice: ps.total_charge,
       lineTotal: ps.total_charge,
+      promotionId: null,
+      discountRate: null,
+      discountAmount: null,
     });
   }
 
