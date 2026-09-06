@@ -245,8 +245,19 @@ test.describe('Error Scenarios', () => {
     // middleware, default storage) both default to localStorage.
     // `clearCookies()` alone leaves both fully intact, so the app never sees
     // a cleared session at all. Clear localStorage to actually simulate it.
+    //
+    // Clearing via `page.evaluate(() => localStorage.clear())` while /home
+    // is still mounted loses a genuine race: the staff store's `persist`
+    // middleware re-serializes its still-authenticated in-memory state back
+    // into localStorage in the brief window between the clear and the next
+    // `page.goto()` actually unloading the page (confirmed live:
+    // `staff-store` reappeared, fully authenticated, immediately after
+    // clearing it while still on /home). `addInitScript` instead runs at the
+    // very start of the NEXT navigation's document — before React mounts or
+    // any persist rehydration reads localStorage — so nothing is left to
+    // race the clear with.
     await page.context().clearCookies();
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
       localStorage.clear();
     });
     await page.goto('/home');
