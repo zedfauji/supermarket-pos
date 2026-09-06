@@ -1,12 +1,19 @@
 import { CreditCard } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { ExportButtons } from '@features/export-report';
 import { usePaymentMethodsReport } from '@entities/tab/model/queries-reports';
 import type { PaymentMethodRow } from '@shared/lib/domain';
 import { formatMoney } from '@shared/lib/format';
-import { EmptyState, LoadingSpinner } from '@shared/ui';
+import { EmptyState, LoadingSpinner, TablePager } from '@shared/ui';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
+
+// Session-grain rows are already bounded by the get_payment_methods_report
+// RPC (grouped per caja session + method), but a long date range can still
+// span hundreds of sessions — paginate so the table never has to mount them
+// all synchronously in one render.
+const PAGE_SIZE = 25;
 
 const CHART_COLORS = [
   'var(--chart-1)',
@@ -26,6 +33,19 @@ function chartColor(index: number): string {
 export function PaymentMethodsReport({ dateRange }: Props) {
   const { t } = useTranslation('wAdmin');
   const { data: result, isLoading } = usePaymentMethodsReport(dateRange.from, dateRange.to);
+
+  // Reset to page 0 when the date range changes, without an Effect (React's
+  // "adjusting state when a prop changes" pattern) — an Effect would commit
+  // page 0's stale render first, then re-render once the setState lands.
+  const rangeKey = `${String(dateRange.from.getTime())}-${String(dateRange.to.getTime())}`;
+  const [pager, setPager] = useState({ page: 0, rangeKey });
+  if (pager.rangeKey !== rangeKey) {
+    setPager({ page: 0, rangeKey });
+  }
+  const page = pager.rangeKey === rangeKey ? pager.page : 0;
+  const setPage = (p: number) => {
+    setPager({ page: p, rangeKey });
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -62,7 +82,9 @@ export function PaymentMethodsReport({ dateRange }: Props) {
         (a.cajaSessionId ?? '').localeCompare(b.cajaSessionId ?? '') ||
         a.method.localeCompare(b.method)
     );
-  const tableRows = [...sessionRows, ...rollupRows];
+  const pageCount = Math.max(1, Math.ceil(sessionRows.length / PAGE_SIZE));
+  const pagedSessionRows = sessionRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const tableRows = [...pagedSessionRows, ...rollupRows];
 
   return (
     <div className="space-y-4">
@@ -100,7 +122,7 @@ export function PaymentMethodsReport({ dateRange }: Props) {
           </TableHeader>
           <TableBody>
             {tableRows.map((row, i) => {
-              const isRollupStart = row.isRollup && i === sessionRows.length;
+              const isRollupStart = row.isRollup && i === pagedSessionRows.length;
               const isLeadingRollup = row.isRollup && row === rollupRows[0];
               return (
                 <TableRow
@@ -125,6 +147,7 @@ export function PaymentMethodsReport({ dateRange }: Props) {
           </TableBody>
         </Table>
       </div>
+      <TablePager page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

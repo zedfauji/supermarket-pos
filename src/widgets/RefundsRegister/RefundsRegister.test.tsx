@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type * as QueriesReports from '@entities/tab/model/queries-reports';
 import type { RefundRegisterRow } from '@shared/lib/domain';
@@ -86,5 +87,28 @@ describe('RefundsRegister', () => {
     mockUseRefundsRegister.mockReturnValue({ isLoading: true, data: undefined });
     renderWithProviders(<RefundsRegister dateRange={dateRange} />);
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('paginates a large row set instead of rendering every row at once', async () => {
+    const manyRows: RefundRegisterRow[] = Array.from({ length: 30 }, (_, i) => ({
+      ...ROW_A,
+      id: `row-${String(i)}`,
+      operatorName: `Operator ${String(i)}`,
+    }));
+    mockUseRefundsRegister.mockReturnValue({ isLoading: false, data: { ok: true, data: manyRows } });
+    renderWithProviders(<RefundsRegister dateRange={dateRange} />);
+
+    // Page 1: first 25 rows visible, the 26th is not yet rendered.
+    expect(screen.getByText('Operator 0')).toBeInTheDocument();
+    expect(screen.getByText('Operator 24')).toBeInTheDocument();
+    expect(screen.queryByText('Operator 25')).not.toBeInTheDocument();
+    // Totals row always reflects every row, not just the current page.
+    expect(screen.getByText('$4,500.00')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /next page/i }));
+
+    expect(screen.queryByText('Operator 0')).not.toBeInTheDocument();
+    expect(screen.getByText('Operator 25')).toBeInTheDocument();
+    expect(screen.getByText('Operator 29')).toBeInTheDocument();
   });
 });

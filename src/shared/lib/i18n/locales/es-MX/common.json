@@ -28,7 +28,12 @@
     "noDataTitle": "Sin datos",
     "noDataDescription": "No se encontraron registros.",
     "noResultsTitle": "Sin resultados",
-    "noResultsDescription": "Ningún registro coincide con tu búsqueda."
+    "noResultsDescription": "Ningún registro coincide con tu búsqueda.",
+    "pager": {
+      "pageInfo": "Página {{page}} de {{totalPages}}",
+      "previous": "Página anterior",
+      "next": "Página siguiente"
+    }
   },
   "dateRangePicker": {
     "from": "Desde:",
