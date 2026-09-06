@@ -200,7 +200,9 @@ Deno.serve(async (req: Request) => {
 
   const { data: paymentRow, error: payErr } = await admin
     .from('payments')
-    .select('id, amount, method, processed_at, tendered_amount, reference_number')
+    .select(
+      'id, amount, method, processed_at, tendered_amount, reference_number, discount_scope, discount_type, discount_value, discount_amount'
+    )
     .eq('id', paymentId)
     .single();
 
@@ -231,6 +233,9 @@ Deno.serve(async (req: Request) => {
         unit_price,
         modifier_price_delta,
         modifier_ids,
+        promotion_id,
+        discount_rate,
+        discount_amount,
         products ( name, category_id, categories ( name ) )
       )
     `
@@ -246,6 +251,9 @@ Deno.serve(async (req: Request) => {
     unit_price: number;
     modifier_price_delta: number;
     modifier_ids: string[] | null;
+    promotion_id: string | null;
+    discount_rate: number | null;
+    discount_amount: number | null;
     products: { name: string; category_id: string | null; categories: { name: string } | null } | null;
   };
   type Or = {
@@ -284,6 +292,9 @@ Deno.serve(async (req: Request) => {
     categoryId: string | null;
     categoryName: string | null;
     modifierNames: string[];
+    promotionId: string | null;
+    discountRate: number | null;
+    discountAmount: number | null;
   }[] = [];
 
   for (const order of nonVoidedOrders) {
@@ -300,6 +311,9 @@ Deno.serve(async (req: Request) => {
         modifierNames: (oi.modifier_ids ?? [])
           .map((id) => modifierNameById.get(id))
           .filter((n): n is string => typeof n === 'string'),
+        promotionId: oi.promotion_id ?? null,
+        discountRate: oi.discount_rate == null ? null : Number(oi.discount_rate),
+        discountAmount: oi.discount_amount == null ? null : Number(oi.discount_amount),
       });
     }
   }
@@ -327,6 +341,9 @@ Deno.serve(async (req: Request) => {
       categoryId: null,
       categoryName: null,
       modifierNames: [],
+      promotionId: null,
+      discountRate: null,
+      discountAmount: null,
     });
   }
 
@@ -365,6 +382,12 @@ Deno.serve(async (req: Request) => {
     tenderedAmount: tendered,
     changeAmount,
     terminalReference: ref && ref.length > 0 ? ref : undefined,
+    discountAmount:
+      paymentRow.discount_amount == null ? undefined : Number(paymentRow.discount_amount),
+    discountScope: paymentRow.discount_scope ?? undefined,
+    discountType: paymentRow.discount_type ?? undefined,
+    discountValue:
+      paymentRow.discount_value == null ? undefined : Number(paymentRow.discount_value),
   };
 
   return jsonResponse({

@@ -64,6 +64,9 @@ export const ReceiptDataSchema = z.object({
       categoryName: z.string().nullable().optional(),
       modifierNames: z.array(z.string()).optional(),
       weightGrams: z.number().int().positive().max(50000).nullable().optional(),
+      promotionId: UuidSchema.nullable().optional(),
+      discountRate: z.number().nonnegative().nullable().optional(),
+      discountAmount: MoneySchema.nullable().optional(),
     })
   ),
   subtotal: MoneySchema,
@@ -367,7 +370,10 @@ export async function callCreateStaff(
 
     if (!response.ok) {
       const edgeMessage =
-        data !== null && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+        data !== null &&
+        typeof data === 'object' &&
+        'error' in data &&
+        typeof data.error === 'string'
           ? data.error
           : `Could not create staff account (${String(response.status)})`;
       return err(mapCreateStaffEdgeError(response.status, edgeMessage));
@@ -465,7 +471,10 @@ export async function callAdminResetPin(
 
     if (!response.ok) {
       const edgeMessage =
-        data !== null && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+        data !== null &&
+        typeof data === 'object' &&
+        'error' in data &&
+        typeof data.error === 'string'
           ? data.error
           : `Could not reset PIN (${String(response.status)})`;
       return err(mapAdminResetPinEdgeError(response.status, edgeMessage));
@@ -575,7 +584,9 @@ export async function callAgentProxy(
           ? (data as { error: unknown }).error
           : null
       );
-      const message = errBody.success ? errBody.data.message : `Agent service error (${String(response.status)})`;
+      const message = errBody.success
+        ? errBody.data.message
+        : `Agent service error (${String(response.status)})`;
       // Every agent-proxy failure code maps to AGENT_ERROR — this proxy has
       // no other domain-specific codes to distinguish.
       return err({ code: 'AGENT_ERROR', message });

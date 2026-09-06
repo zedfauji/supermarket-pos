@@ -30,7 +30,10 @@ export function AgentPanel() {
   } = useAgent();
   const setPendingImportProducts = useAgentStore(s => s.setPendingImportProducts);
 
-  const userRole = useStaffStore(s => s.currentStaff?.role ?? 'bartender');
+  // AgentPanel only mounts once router.tsx confirms an authenticated staff
+  // session, so currentStaff is always set here — the fallback only satisfies
+  // the nullable store type.
+  const userRole = useStaffStore(s => s.currentStaff?.role ?? 'cashier');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const agentEnabled = import.meta.env['VITE_AGENT_ENABLED'] as string | undefined;
