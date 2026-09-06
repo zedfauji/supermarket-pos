@@ -48,6 +48,8 @@ expect(secondRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
 
 **Interfaces:** Introduce useUnsavedSettings registration in the settings widget (or a lower-layer generic unsaved-form context) with dirty boolean and save(): Promise<boolean>. The provider owns pending navigation and Save/Discard/Stay; tabs own data and validation. Use installed React Router data router/useBlocker if supported; preserve all existing paths, overlays and lazy loading.
 
+**Research decisions:** Language has an explicit Save and must register. Hardware currently saves text on blur and toggles immediately, while LogoUploader submits a whole receipt-settings object independently; make hardware a consistent draft with an explicit Save and optional controlled logo callback, preventing an upload from accidentally saving or overwriting another draft field. Include src/features/upload-logo UI/tests in ownership for that integration. Billing owns two dirty forms (billing and labels); Save-and-leave saves both and preserves the existing tax-inclusive warning. Sidebar calls logout before navigate, so guard the sign-out action before destroying auth state. Inspect Tauri close permissions: onCloseRequested internally calls destroy after an unprevented event; add only the necessary main-window permission and verify listener cleanup. Native browser unload supports a generic confirmation, not an asynchronous custom Save action.
+
 - [ ] Write failing component/hook tests for tab switch with edits, Stay, Discard, awaited Save, failed/invalid Save, successful explicit save, history/route blocking, beforeunload, and Tauri close cleanup. Inspect and cover all explicit-save settings forms.
 
 ```tsx

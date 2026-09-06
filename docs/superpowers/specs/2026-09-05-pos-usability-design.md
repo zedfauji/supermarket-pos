@@ -31,3 +31,11 @@ Add an accessible decimal money keypad for checkout payment entry using the curr
 ## Validation and completion
 
 Run meaningful red/green tests for recovery, payment ambiguity/completion, settings navigation and failed saving, branding fallback/cache, and keypad entry. Run relevant existing suites and final lint/typecheck/build. Document baseline failures separately. Keep local commits and a short E2E follow-up checklist; no live deployment.
+
+## Research references and baseline
+
+React Router's supported [useBlocker](https://reactrouter.com/api/hooks/useBlocker) provides custom in-app navigation blocking. The installed React Router implementation requires a data router. Browser refresh/close needs a separate beforeunload listener. Tauri's installed @tauri-apps/api/window.js onCloseRequested awaits the handler and destroys the window unless prevented; the [window API](https://v2.tauri.app/reference/javascript/api/namespacewindow/) documents listener disposal.
+
+Hardware settings will use explicit Save for the entire local draft, including logo selection, so a blur or independent logo mutation cannot defeat the Save/Discard choice. Sign-out must defer logout until the dirty-settings decision is resolved. Existing tax-inclusive confirmation is retained when saving billing from the leave dialog.
+
+Baseline at 0fbef1e: unit suite 1411 passed, 4 failed, 15 todo (142 passing files, 2 failed, 2 skipped). Failures concern receipt promotion validation/rendering and ASCII quantity separators. Typecheck has four existing receipt discount/promotion field errors. Lint exits 0 with existing configuration warnings. Locked install requires --legacy-peer-deps due Storybook/Vitest peer mismatch; validation uses bundled Node 24.19.0. No credentials or live backend were used.
