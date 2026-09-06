@@ -123,7 +123,8 @@
     "dayYesterday": "Yesterday",
     "refundBadge": "Refund",
     "awaitingCount_one": "{{count}} waiting",
-    "awaitingCount_other": "{{count}} waiting"
+    "awaitingCount_other": "{{count}} waiting",
+    "tilesTruncatedHint": "Based on the {{count}} most recent payments"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} item",

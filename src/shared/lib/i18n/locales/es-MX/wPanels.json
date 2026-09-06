@@ -123,7 +123,8 @@
     "dayYesterday": "Ayer",
     "refundBadge": "Reembolso",
     "awaitingCount_one": "{{count}} en espera",
-    "awaitingCount_other": "{{count}} en espera"
+    "awaitingCount_other": "{{count}} en espera",
+    "tilesTruncatedHint": "Basado en los {{count}} pagos más recientes"
   },
   "tabPaymentCard": {
     "itemCount_one": "{{count}} producto",

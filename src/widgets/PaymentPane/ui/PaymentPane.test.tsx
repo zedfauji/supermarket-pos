@@ -485,6 +485,25 @@ describe('PaymentPane', () => {
       expect(screen.queryByTestId(`payment-row-${cash2.id}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`payment-row-${refund1.id}`)).not.toBeInTheDocument();
     });
+
+    it('discloses the 100-payment query cap under the tiles, and hides it below that count', () => {
+      const hundredPayments = Array.from({ length: 100 }, (_, i) =>
+        makePayment({ id: `payment-${String(i)}`, tabId: `tab-${String(i)}` })
+      );
+      mockPaymentsLoaded(hundredPayments);
+      const { rerender } = renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      expect(screen.getByText(/based on the 100 most recent payments/i)).toBeInTheDocument();
+
+      mockPaymentsLoaded([
+        makePayment({ id: 'payment-a', tabId: 'tab-a' }),
+        makePayment({ id: 'payment-b', tabId: 'tab-b' }),
+        makePayment({ id: 'payment-c', tabId: 'tab-c' }),
+      ]);
+      rerender(<MemoryRouter><PaymentPane /></MemoryRouter>);
+
+      expect(screen.queryByText(/based on the .* most recent payments/i)).not.toBeInTheDocument();
+    });
   });
 
 });
