@@ -103,7 +103,10 @@ export default function TransferDetailScreen() {
         )}
         <Divider />
         <Row title={nameOf(t.created_by)} subtitle={`Requested · ${dateTime(t.created_at)}`} />
-        {t.payments?.reference_number ? (
+        {/* The reference IS the confirmation code the customer must supply; never show it
+            while the transfer is still pending or the manager could confirm without checking
+            the bank. It is fine to show once the transfer is confirmed/disputed. */}
+        {t.status !== 'pending' && t.payments?.reference_number ? (
           <>
             <Divider />
             <Row title={t.payments.reference_number} subtitle="Payment reference number" />

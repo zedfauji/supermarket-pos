@@ -139,7 +139,7 @@ export default function SalesScreen() {
                 {i > 0 ? <Divider /> : null}
                 <Row
                   title={p.productName ?? 'Unknown product'}
-                  subtitle={`${String(p.units)} units${p.marginPct != null ? ` · ${pct(p.marginPct)} margin` : ''}`}
+                  subtitle={`${plural(p.units, 'unit')}${p.marginPct != null ? ` · ${pct(p.marginPct)} margin` : ''}`}
                   right={money(p.revenue)}
                 />
               </View>
