@@ -202,7 +202,7 @@ test('T1-T4: process refund on 2 items with manager PIN (admin PIN from env)', a
   await gotoAuthed(page, '/payments');
 
   // T2: Refund button visible on paid payment row
-  const refundBtn = page.getByRole('button', { name: 'Refund' }).first();
+  const refundBtn = page.getByRole('button', { name: 'Refund', exact: true }).first();
   await expect(refundBtn).toBeVisible({ timeout: 20_000 });
 
   // Open RefundSheet
@@ -370,12 +370,18 @@ test('T5: REFUND_EXCEEDS_ORIGINAL blocks double-refund of fully-refunded payment
   // payments list accumulates real rows across the whole E2E run, many of
   // which ARE legitimately refundable, so a page-wide Refund-button count
   // assertion is not meaningful here.
-  const paymentsRegion = page.getByText(/recent payments/i).locator('..');
+  //
+  // The heading role is used (rather than getByText + `..`) because the
+  // panel now conditionally renders a "Based on the N most recent payments"
+  // hint once the accumulated E2E-run payment count crosses the query's
+  // 100-row cap — that extra sibling text makes a text-content-based parent
+  // walk resolve to more than one ancestor (strict-mode violation).
+  const paymentsRegion = page.getByRole('heading', { name: /recent payments/i });
   await expect(paymentsRegion).toBeVisible({ timeout: 20_000 });
 
   const seededRow = page.getByTestId(`payment-row-${paymentId}`);
   await expect(seededRow).toBeVisible({ timeout: 10_000 });
-  await expect(seededRow.getByRole('button', { name: 'Refund' })).toHaveCount(0);
+  await expect(seededRow.getByRole('button', { name: 'Refund', exact: true })).toHaveCount(0);
 });
 
 // ============================================================================
@@ -441,7 +447,7 @@ test('T6: refund remaining 3 items with restock=false — no stock ledger change
   await loginAs(page, 'admin');
   await gotoAuthed(page, '/payments');
 
-  const refundBtn = page.getByRole('button', { name: 'Refund' }).first();
+  const refundBtn = page.getByRole('button', { name: 'Refund', exact: true }).first();
   await expect(refundBtn).toBeVisible({ timeout: 20_000 });
   await refundBtn.click();
 
@@ -536,7 +542,7 @@ test('generic: unmapped process_refund RPC failure shows translated toast, not r
   await loginAs(page, 'admin');
   await gotoAuthed(page, '/payments');
 
-  const refundBtn = page.getByRole('button', { name: 'Refund' }).first();
+  const refundBtn = page.getByRole('button', { name: 'Refund', exact: true }).first();
   await expect(refundBtn).toBeVisible({ timeout: 20_000 });
   await refundBtn.click();
 

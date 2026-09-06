@@ -459,15 +459,15 @@ describe('PaymentPane', () => {
       expect(headings[1]).toHaveTextContent(/yesterday/i);
     });
 
-    it('clicking the Returns filter chip shows only the refund row', async () => {
+    it('clicking the Refunds filter chip shows only the refund row', async () => {
       const user = userEvent.setup();
       const { cash1, cash2, refund1 } = loadFixture();
       renderWithProviders(<MemoryRouter><PaymentPane /></MemoryRouter>);
 
-      const refundsChip = screen.getByRole('button', { name: 'Returns', pressed: false });
+      const refundsChip = screen.getByRole('button', { name: 'Refunds', pressed: false });
       await user.click(refundsChip);
 
-      expect(screen.getByRole('button', { name: 'Returns', pressed: true })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Refunds', pressed: true })).toBeInTheDocument();
       expect(screen.getByTestId(`payment-row-${refund1.id}`)).toBeInTheDocument();
       expect(screen.queryByTestId(`payment-row-${cash1.id}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`payment-row-${cash2.id}`)).not.toBeInTheDocument();

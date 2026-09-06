@@ -288,7 +288,7 @@ test.describe('Phase 13: Permission Matrix', () => {
     await page.goto('/payments');
 
     // Look for any refund button visible on the page
-    const refundButton = page.getByRole('button', { name: /refund/i }).first();
+    const refundButton = page.getByRole('button', { name: /^refund$/i }).first();
     const refundVisible = await refundButton.isVisible({ timeout: 3_000 }).catch(() => false);
 
     if (refundVisible) {
@@ -302,7 +302,7 @@ test.describe('Phase 13: Permission Matrix', () => {
       // No refund button visible — bartender is already blocked at UI level
       // This is also acceptable: the UI hides the refund button for bartenders
       const stillNotVisible = !(await page
-        .getByRole('button', { name: /refund/i })
+        .getByRole('button', { name: /^refund$/i })
         .isVisible()
         .catch(() => false));
       expect(stillNotVisible).toBe(true);

@@ -164,7 +164,7 @@ test('cashier session + a genuine manager PIN succeeds on process_refund (folded
 
   const row = page.getByTestId(`payment-row-${seeded.paymentId}`);
   await expect(row).toBeVisible({ timeout: 20_000 });
-  await row.getByRole('button', { name: /refund|reembolso/i }).click();
+  await row.getByRole('button', { name: /^(refund|reembolso)$/i }).click();
 
   const refundDialog = page.getByRole('dialog', { name: /process refund|procesar reembolso/i });
   await expect(refundDialog).toBeVisible({ timeout: 10_000 });
@@ -242,7 +242,7 @@ test('a PIN belonging to a non-eligible staff member (another cashier) is reject
 
     const row = page.getByTestId(`payment-row-${seeded.paymentId}`);
     await expect(row).toBeVisible({ timeout: 20_000 });
-    await row.getByRole('button', { name: /refund|reembolso/i }).click();
+    await row.getByRole('button', { name: /^(refund|reembolso)$/i }).click();
 
     const refundDialog = page.getByRole('dialog', { name: /process refund|procesar reembolso/i });
     await expect(refundDialog).toBeVisible({ timeout: 10_000 });

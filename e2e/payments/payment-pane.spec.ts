@@ -460,7 +460,15 @@ test.describe('Payment Pane', () => {
     // (PaymentPane shows <PaymentHistoryList /> when no tab is selected — see
     // src/widgets/PaymentPane/ui/PaymentPane.tsx)
     await page.getByRole('button', { name: 'Done' }).click();
-    await expect(page.getByText(/recent payments|no payment records found/i)).toBeVisible({
+    // getByRole('heading', ...) rather than a bare getByText regex — the panel's
+    // "Based on the N most recent payments" cap-disclosure hint (rendered once
+    // accumulated E2E-run payments cross the query's 100-row cap) also contains
+    // "recent payments" and would otherwise make this a strict-mode violation.
+    await expect(
+      page
+        .getByRole('heading', { name: /recent payments/i })
+        .or(page.getByText(/no payment records found/i))
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -488,7 +496,15 @@ test.describe('Payment Pane', () => {
     // Selected tab cleared — right panel falls back to payment history
     // (PaymentPane shows <PaymentHistoryList /> when no tab is selected — see
     // src/widgets/PaymentPane/ui/PaymentPane.tsx)
-    await expect(page.getByText(/recent payments|no payment records found/i)).toBeVisible({
+    // getByRole('heading', ...) rather than a bare getByText regex — the panel's
+    // "Based on the N most recent payments" cap-disclosure hint (rendered once
+    // accumulated E2E-run payments cross the query's 100-row cap) also contains
+    // "recent payments" and would otherwise make this a strict-mode violation.
+    await expect(
+      page
+        .getByRole('heading', { name: /recent payments/i })
+        .or(page.getByText(/no payment records found/i))
+    ).toBeVisible({
       timeout: 5_000,
     });
     await logout(page);
