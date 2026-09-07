@@ -129,6 +129,11 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 ### Roadmap Evolution
 
+- Phase 30 added: Checkout Continuity, Settings Exit Guard & Cash Keypad — terminal-owned active
+  cart and Checkout draft restoration across restarts, idempotent recovery of interrupted payment
+  submissions, Save/Discard/Stay protection for dirty Settings forms, and an amount-tendered cash
+  keypad. Captured via `/gsd-explore` 2026-09-07.
+
 - Phase 29 added: Local POS Virtual Assistant — optional separate local inference service with
   English/Spanish chat; existing RBAC, approval, and audit gates remain authoritative; supports both
   remote and local-Docker Supabase without cloud AI APIs, has a hard 1 GB install budget, preserves

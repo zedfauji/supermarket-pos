@@ -418,6 +418,25 @@ Plans:
 
 - [ ] TBD (run /gsd-plan-phase 29 to break down)
 
+### Phase 30: Checkout Continuity, Settings Exit Guard & Cash Keypad
+
+**Goal:** An unfinished terminal sale survives application restarts and returns any authenticated
+cashier to the same active cart and, when applicable, the same pre-submission Checkout state. A
+payment interrupted after submission is reconciled under its original idempotency identity before
+the cashier can retry. Every editable Settings tab protects dirty values with Save/Discard/Stay on
+in-app navigation and Tauri close, and cash Checkout gains an accessible amount-tendered keypad by
+reusing the existing keypad interaction pattern.
+**Requirements**: CART-01, CART-02, CART-03, CART-04, SET-01, SET-02, KEYPAD-01
+**Depends on:** Nothing (independent client-state and POS usability work; it can proceed while Phase
+29 remains unplanned)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 30 to break down)
+
+**UI hint**: yes
+
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
 **Milestone Goal:** Scanning a barcode on `/pos` opens a separate detached Tauri window showing full product detail (name, size/unit, photo, price, inventory, SKU, barcode) with a qty/weight input, so a cashier can inspect an item before committing it to the cart.

@@ -246,6 +246,32 @@ Phase 1 and was combo/pool-coupled — not reusable) and no batch/lot-level expi
 - [x] **PROMO-08**: A discount computed while offline is snapshotted at add-to-cart time; if the underlying promotion changed before reconnect/sync, the conflict is flagged for review rather than silently re-priced.
 - [x] **PROMO-09**: Automated Playwright E2E coverage (per this repo's mandatory-automated-testing policy) proves: product/category scope overlap resolution, store-local timezone date-range boundaries, a promotion deleted mid-cart, refund/reopen restoring the exact historical discount, the below-cost floor guard, interaction with loose-weight and case→piece (open-unit) items, and the offline-then-changed-promotion conflict flag.
 
+## Phase 30 Requirements — POS Session Continuity & Safe Editing
+
+Milestone goal: preserve an unfinished terminal sale across application restarts, prevent settings
+edits from being discarded accidentally, and give cashiers a touch-first keypad for entering cash
+tendered at Checkout. Explored via `/gsd-explore` 2026-09-07.
+
+### Cart and Checkout Recovery
+
+- [ ] **CART-01**: The active cart is stored in versioned, schema-validated terminal-local persistence after every cart change, alongside the already-persisted held-cart slot. After an application restart, the exact active cart is restored for any authenticated cashier on that terminal; malformed or obsolete persisted data fails closed to an empty cart instead of partially restoring untrusted lines.
+- [ ] **CART-02**: If Checkout was open when the application exited, it reopens after authentication with the same pre-submission payment state, including payment method, amount tendered, split-payment allocation, promotion/custom-discount selection, and applicable reference/customer fields. Staff or manager PINs, credentials, and raw card data are never persisted.
+- [ ] **CART-03**: Completing a sale or explicitly clearing the cart removes its persisted cart and Checkout draft. Cancelling Checkout returns to the selling screen and clears only the Checkout-open marker/draft while retaining the active cart.
+- [ ] **CART-04**: If the application exits after payment submission begins but before the result is shown, restart recovery reconciles that same attempt against the backend using its original idempotency identity before enabling another payment action. A completed attempt shows its existing receipt; an incomplete attempt resumes safely; recovery never silently creates a new payment identity that could duplicate the sale.
+
+### Unsaved Settings Protection
+
+- [ ] **SET-01**: Every editable Settings tab reports whether it has unsaved changes. Switching Settings tabs, navigating to another route/page, or closing the Tauri application while changes are dirty presents **Save**, **Discard**, and **Stay** actions; browser reload/window-close surfaces the platform-native unsaved-changes warning where a custom asynchronous dialog is unavailable.
+- [ ] **SET-02**: **Save** waits for the relevant settings mutation to succeed before continuing the pending navigation or close. A failed save keeps the user on the current form with its values intact and an actionable error; **Discard** continues without saving; **Stay** cancels the pending exit.
+
+### Checkout Cash Keypad
+
+- [ ] **KEYPAD-01**: Cash Checkout displays a touch-friendly keypad for the amount-tendered field only, with digits 0–9, decimal, clear, and backspace. Existing Exact and quick-tender buttons remain available; keypad controls are keyboard-accessible, have translated accessible labels, are disabled while payment is processing, and participate in CART-02 restart restoration.
+
+Automated Vitest and Playwright coverage must prove active-cart and Checkout restoration, safe
+in-flight payment reconciliation without duplicate sales, all settings-exit decisions (including a
+failed save), and cash-keypad entry/accessibility.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in the v1.2 roadmap.
