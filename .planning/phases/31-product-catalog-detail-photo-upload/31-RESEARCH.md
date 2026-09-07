@@ -452,14 +452,21 @@ No "old approach → new approach" drift applies here — this is a greenfield i
 | A3 | Remote Supabase project's `product-photos` bucket does not already exist (no leftover from a prior spike/exploration) | Environment Availability | Medium — if a bucket with this name already exists remotely with different settings (public, wrong mime types), the `INSERT ... ON CONFLICT DO NOTHING` migration will silently no-op instead of configuring it as this phase needs; the executor must verify via the Supabase dashboard/CLI before assuming the migration alone is sufficient (see Environment Availability) |
 | A4 | Cashier-role staff need read access to product photos on cashier-facing surfaces (checkout `ProductGrid`, cart) | Code Examples (SELECT policy note), Open Questions | Medium — if the plan restricts `SELECT` on `storage.objects` to `manage_products` holders only (mirroring the write gate), cashier-facing photo display would silently fail to resolve signed URLs (empty/placeholder) for the checkout grid consumer that D-14 explicitly lists |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should the `storage.objects` SELECT policy be gated by `manage_products`, or open to any authenticated staff?**
+> Both questions below were routed into planning and are answered at a single blocking gate:
+> **31-01-PLAN.md Task 1 (`checkpoint:decision`, "Confirm the two one-way-door storage decisions")**,
+> which must be answered before the migration in Task 2 is written. Question 1 is Decision B there
+> (with the phase-31 caveat that no cashier-facing surface renders a photo this phase, so the looser
+> SELECT policy's benefit is forward-looking); question 2 is the "environment fact" check in the same
+> task. Both answers are recorded verbatim in `31-01-SUMMARY.md`.
+
+1. **Should the `storage.objects` SELECT policy be gated by `manage_products`, or open to any authenticated staff?** — **RESOLVED at 31-01 Task 1, Decision B.**
    - What we know: D-15 explicitly scopes only *writes* to `manage_products` holders ("storage writes are restricted by RLS to staff holding `manage_products`" — PCAT-03 verbatim). D-14 lists checkout `ProductGrid` and cart (`entities/tab`) as resolver consumers, both of which render to cashiers, not just managers/admins.
    - What's unclear: Whether a cashier should be able to *view* a product photo (clearly yes, if it's shown at checkout) even though they cannot upload/replace/remove one.
    - Recommendation: Gate `SELECT` on `storage.objects` to `bucket_id = 'product-photos'` for any `authenticated` role (no `manage_products` predicate on SELECT), keep the `manage_products` predicate only on INSERT/UPDATE/DELETE. This is the interpretation consistent with D-14's consumer list; flag it for explicit confirmation in discuss-phase/plan review since CONTEXT.md's D-15 wording is technically silent on reads-by-non-managers.
 
-2. **Does the remote Supabase project already have a Storage bucket from a prior exploration/spike?**
+2. **Does the remote Supabase project already have a Storage bucket from a prior exploration/spike?** — **RESOLVED at 31-01 Task 1** (the "also confirm before writing the migration" environment check; its result gates whether Task 2's migration inserts or updates the bucket row).
    - What we know: Local `supabase/config.toml`'s `[storage]` section has no bucket declared (only a commented-out example), and a full-repo grep found zero `supabase.storage` call sites — the *code* side is confirmed greenfield.
    - What's unclear: The remote project's actual Storage state was not directly queryable in this research session (no live Supabase MCP/CLI access was available to this researcher agent) — CONTEXT.md's own note ("Supabase Storage IS configured at the project-infrastructure level already") suggests something may already exist there, possibly unrelated to this phase.
    - Recommendation: Before running the bucket-creation migration against the remote project, the executor should run `supabase storage list-buckets` (or check the Studio dashboard) to confirm no `product-photos` bucket already exists with conflicting settings; if one does, reconcile via `UPDATE storage.buckets SET ...` in the migration instead of a bare `INSERT`.

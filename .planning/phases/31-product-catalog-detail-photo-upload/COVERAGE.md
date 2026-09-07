@@ -17,7 +17,7 @@
 | `update` | OPT-OUT | replace writes a NEW uuid key then deletes the old one (CONTEXT.md Claude's Discretion) — overwriting the same key lets a cached signed URL serve stale bytes |
 | `move` | OPT-OUT | object paths are immutable once written; a replace is new-key-then-delete, never a rename |
 | `copy` | OPT-OUT | PCAT-03 locks one photo per product — no duplication flow exists to serve |
-| `list` | OPT-OUT | `products.photo_path` is the index of record; a per-product lookup never needs a bucket listing |
+| `list` | OPT-OUT (app code) | `products.photo_path` is the index of record; a per-product lookup never needs a bucket listing. Used only from the E2E service client as ground truth (31-01 Task 3, 31-04 Task 3 assert exactly one object under `products/{productId}/` after a replace) — never from `src/`. |
 | `download` | OPT-OUT | the browser fetches bytes itself through the signed URL in `<img src>`; no in-app byte access is needed |
 | `info` | OPT-OUT | the column is the source of truth; a missing object degrades to the `photo.errorLoad` state (31-UI-SPEC.md) |
 | `exists` | OPT-OUT | same as `info` — existence is inferred from the render outcome, not pre-checked on every read |
