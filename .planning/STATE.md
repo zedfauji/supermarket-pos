@@ -129,6 +129,21 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 ### Roadmap Evolution
 
+- Phase 33 added: Login Screen Store Branding — dedicated `storeName`/`storeLogoUrl` fields
+  (Supabase Storage upload), large store name + logo on the login screen's left side. Deliberately
+  not a reuse of the existing receipt-only `logoDataUrl`/`headerLine2` fields. Captured via
+  `/gsd-explore` 2026-09-07.
+
+- Phase 32 added: Brand Entity & Pack-Weight Catalog Attributes — new `brands` table + CRUD,
+  `products.brand_id`, and `weight_amount`/`weight_unit` (g/kg/lb/oz) as a catalog/display
+  attribute independent of the existing loose-weight-checkout/open-unit system; both filterable in
+  product search. Captured via `/gsd-explore` 2026-09-07.
+
+- Phase 31 added: Product Catalog Detail & Photo Upload — reshapes the existing product add/edit
+  dialog into a larger view+edit+photo layout, one photo per product in a new Supabase Storage
+  bucket. Distinct from Phase 18's barcode-scan-at-checkout peek window (different flow/window).
+  Captured via `/gsd-explore` 2026-09-07.
+
 - Phase 30 added: Checkout Continuity, Settings Exit Guard & Cash Keypad — terminal-owned active
   cart and Checkout draft restoration across restarts, idempotent recovery of interrupted payment
   submissions, Save/Discard/Stay protection for dirty Settings forms, and an amount-tendered cash

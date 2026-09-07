@@ -10,6 +10,7 @@
 - ✅ **v1.5 Store-Local Durable Printing** — Phase 19 (8/8 plans complete 2026-08-27; Spike 001 validated)
 - ✅ **v1.6 Store Deployment: Signed Elevated Installer** — Phase 20 (3/3 plans complete 2026-08-30, incl. gap-closure plan 20-03; DEP-01..04 satisfied)
 - 🔜 **v1.11 Promotions & Discount Management** — Phase 27 (proposed, not started — captured via `/gsd-explore`)
+- 🔜 **Product Catalog & Store Branding** — Phases 31-33 (proposed, not started — captured via `/gsd-explore` 2026-09-07)
 
 ## Phases
 
@@ -436,6 +437,39 @@ Plans:
 - [ ] TBD (run /gsd-plan-phase 30 to break down)
 
 **UI hint**: yes
+
+### Phase 31: Product Catalog Detail & Photo Upload
+
+**Goal:** Clicking a product in Inventory/Catalog opens the existing add/edit dialog reshaped into a larger view+edit+photo layout (tabbed/sectioned) instead of the current small add/edit-only form, and a product can carry one photo stored in Supabase Storage (not client-local/base64). Distinct from Phase 18's separate barcode-scan-at-checkout peek window — different trigger, different flow, unaffected by this phase.
+**Requirements**: PCAT-01, PCAT-02, PCAT-03, PCAT-04
+**Depends on:** Nothing (Inventory/Catalog admin-side work, independent of Phase 29/30's POS/checkout scope)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 31 to break down)
+
+### Phase 32: Brand Entity & Pack-Weight Catalog Attributes
+
+**Goal:** Products can be assigned a brand (new `brands` table with its own CRUD, same pattern as Categories) and a catalog pack-size attribute (`weight_amount` + `weight_unit`: g/kg/lb/oz) — independent of the existing loose-weight-at-checkout/open-unit system. Both are filterable in product search/catalog browsing.
+**Requirements**: BRND-01, BRND-02, BRND-03, BRND-04, BRND-05
+**Depends on:** Phase 31 (extends the same product edit dialog with brand-select and weight fields)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 32 to break down)
+
+### Phase 33: Login Screen Store Branding
+
+**Goal:** The login screen shows the store's name and a large logo on the left side of the screen, sourced from new dedicated `storeName`/`storeLogoUrl` settings fields (Supabase Storage upload, same pattern as Phase 31's product photo) rather than the small receipt-only logo/header fields.
+**Requirements**: STORE-01, STORE-02, STORE-03
+**Depends on:** Nothing (settings + login-page work; shares the Phase 31 upload pattern but not its code)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 33 to break down)
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
