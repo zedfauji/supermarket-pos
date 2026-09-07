@@ -443,11 +443,15 @@ Plans:
 **Goal:** Clicking a product in Inventory/Catalog opens the existing add/edit dialog reshaped into a larger view+edit+photo layout (tabbed/sectioned) instead of the current small add/edit-only form, and a product can carry one photo stored in Supabase Storage (not client-local/base64). Distinct from Phase 18's separate barcode-scan-at-checkout peek window — different trigger, different flow, unaffected by this phase.
 **Requirements**: PCAT-01, PCAT-02, PCAT-03, PCAT-04
 **Depends on:** Nothing (Inventory/Catalog admin-side work, independent of Phase 29/30's POS/checkout scope)
-**Plans:** 0 plans
+**Plans:** 5 plans
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 31 to break down)
+- [ ] 31-01-PLAN.md — Storage tracer: private `product-photos` bucket, RLS write policies, `photo_path` column, resolver, upload hook, and one end-to-end upload (wave 1)
+- [ ] 31-02-PLAN.md — Dialog reshape: one `ProductDetailDialog` with a Details/Photo/Links vertical rail, stock strip, create-then-stay, error-tab navigation, dirty-close guard (wave 2)
+- [ ] 31-03-PLAN.md — Catalog integration: batch signed-URL thumbnails, row-click open, propagation stops on every inline editor (wave 3)
+- [ ] 31-04-PLAN.md — Photo capture UX: drag-and-drop, clipboard paste, replace, confirmed remove, full loading/error/offline state matrix (wave 3)
+- [ ] 31-05-PLAN.md — PCAT-04 completion: Storage RLS denial proof, Phase 18 peek-window-unaffected proof, visual-regression backstops (wave 4)
 
 ### Phase 32: Brand Entity & Pack-Weight Catalog Attributes
 
