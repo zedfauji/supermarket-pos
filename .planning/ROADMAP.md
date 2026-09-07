@@ -446,11 +446,21 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 31-01-PLAN.md — Storage tracer: private `product-photos` bucket, RLS write policies, `photo_path` column, resolver, upload hook, and one end-to-end upload (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 31-02-PLAN.md — Dialog reshape: one `ProductDetailDialog` with a Details/Photo/Links vertical rail, stock strip, create-then-stay, error-tab navigation, dirty-close guard (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 31-03-PLAN.md — Catalog integration: batch signed-URL thumbnails, row-click open, propagation stops on every inline editor (wave 3)
 - [ ] 31-04-PLAN.md — Photo capture UX: drag-and-drop, clipboard paste, replace, confirmed remove, full loading/error/offline state matrix (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 31-05-PLAN.md — PCAT-04 completion: Storage RLS denial proof, Phase 18 peek-window-unaffected proof, visual-regression backstops (wave 4)
 
 ### Phase 32: Brand Entity & Pack-Weight Catalog Attributes
