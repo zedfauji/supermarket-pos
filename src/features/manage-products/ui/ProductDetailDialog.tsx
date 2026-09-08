@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ClipboardEvent,
   type ReactNode,
   type SyntheticEvent,
 } from 'react';
@@ -24,6 +25,7 @@ import {
 } from '@shared/ui/dialog';
 import { Tabs, TabsContent } from '@shared/ui/tabs';
 import { VerticalTabsList, VerticalTabsTrigger } from '@shared/ui/vertical-tabs';
+import { firstImageFromClipboard } from '../model/photo-file';
 import {
   firstErroringTab,
   isProductFormDirty,
@@ -33,7 +35,7 @@ import {
 } from '../model/productDialogTabs';
 import { ProductDetailsTab } from './tabs/ProductDetailsTab';
 import { ProductLinksTab } from './tabs/ProductLinksTab';
-import { ProductPhotoTab } from './tabs/ProductPhotoTab';
+import { ProductPhotoTab, type ProductPhotoTabHandle } from './tabs/ProductPhotoTab';
 
 const ModifierIdsSchema = z.array(UuidSchema);
 
@@ -102,6 +104,19 @@ export function ProductDetailDialog({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const photoTabRef = useRef<ProductPhotoTabHandle>(null);
+
+  // D-09: paste is a first-class photo entry path, but only while the Photo
+  // tab is the active one — a paste into a Details or Links input (e.g. the
+  // SKU field) must never be intercepted and routed into the upload pipeline.
+  function handleDialogPaste(e: ClipboardEvent<HTMLDivElement>): void {
+    if (activeTab !== 'photo' || !isEdit) return;
+    const file = firstImageFromClipboard(e.clipboardData);
+    if (file) {
+      e.preventDefault();
+      photoTabRef.current?.handleFile(file);
+    }
+  }
 
   // D-07 dirty-close guard: captured once at mount. A create-then-stay
   // transition or opening a different product both remount this component
@@ -360,6 +375,7 @@ export function ProductDetailDialog({
       <DialogContent
         className="flex max-h-[80vh] max-w-4xl flex-col overflow-hidden sm:max-w-4xl"
         showCloseButton
+        onPaste={handleDialogPaste}
       >
         <DialogHeader className="pr-8">
           <DialogTitle>
@@ -477,7 +493,11 @@ export function ProductDetailDialog({
                 className="rounded-xl border border-border bg-card p-4 shadow-xs lg:p-6"
               >
                 {isEdit ? (
-                  <ProductPhotoTab product={initialProduct} submitting={submitting} />
+                  <ProductPhotoTab
+                    ref={photoTabRef}
+                    product={initialProduct}
+                    submitting={submitting}
+                  />
                 ) : null}
               </TabsContent>
               <TabsContent

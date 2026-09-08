@@ -1,13 +1,13 @@
 /**
- * Photo panel mounted in the product edit dialog (Phase 31, Task 2 tracer
- * slice). Wires ONE path only: OS file picker -> resize -> upload -> link ->
- * signed-URL preview. No drag-and-drop, no clipboard paste, no replace/remove
- * buttons yet — those are later plans (Plan 02). Clicking the populated
- * preview re-opens the picker so a second upload is still reachable without
- * a dedicated Replace button.
+ * Photo panel mounted in the product edit dialog (Phase 31). Wires all three
+ * D-09 entry paths — OS file picker, drag-and-drop, and clipboard paste (via
+ * the imperative handle `handleFile`, called by `ProductDetailDialog`'s
+ * tab-scoped paste listener) — onto the single validate -> resize -> upload
+ * -> link pipeline. Clicking the populated preview re-opens the picker so a
+ * second upload is still reachable without the dedicated Replace button.
  */
 import { ImageOff, ImagePlus } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useProductImageUrl } from '@entities/product';
@@ -17,7 +17,7 @@ import { cn } from '@shared/lib/utils';
 import { EmptyState } from '@shared/ui/EmptyState';
 import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
 import { Skeleton } from '@shared/ui/skeleton';
-import { ACCEPTED_PHOTO_MIME_TYPES } from '../../model/photo-file';
+import { ACCEPTED_PHOTO_MIME_TYPES, firstImageFromDataTransfer } from '../../model/photo-file';
 import { useProductPhotoUpload } from '../../model/useProductPhotoUpload';
 
 export type ProductPhotoTabProps = {
@@ -25,13 +25,20 @@ export type ProductPhotoTabProps = {
   submitting: boolean;
 };
 
+/** Imperative handle so the dialog-level paste listener (Photo-tab-scoped) can feed a pasted file into this panel's own pipeline without duplicating the upload logic. */
+export type ProductPhotoTabHandle = {
+  handleFile: (file: File) => void;
+};
+
 const ACCEPT_ATTR = ACCEPTED_PHOTO_MIME_TYPES.join(',');
 
-export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
+export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTabProps>(
+  function ProductPhotoTab({ product, submitting }, ref) {
   const { t } = useTranslation('featMgmt');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   // CatalogProductsTab's `editProduct` is a plain useState set once when the
   // dialog opens — it is never resynced after invalidateCatalogQueries
   // refetches the catalog, so `product.photoPath` stays stale for the whole
@@ -80,10 +87,8 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
     }
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  function handleFile(file: File): void {
+    if (disabled) return;
     setErrorMessage(null);
     setImgFailed(false);
     uploadMutation.mutate(
@@ -103,6 +108,37 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
     );
   }
 
+  useImperativeHandle(ref, () => ({ handleFile }));
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    handleFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>): void {
+    e.preventDefault();
+    if (disabled) return;
+    setIsDragOver(true);
+  }
+
+  function handleDragLeave(): void {
+    setIsDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>): void {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (disabled) return;
+    // Deliberate divergence from agent-chat/FileDropZone (D-09/D-11): an
+    // unsupported image type is still extracted here so validatePhotoFile
+    // (inside the upload pipeline) can name the offending type in a visible
+    // error, rather than the analog's silent log-only drop.
+    const file = firstImageFromDataTransfer(e.dataTransfer.items);
+    if (file) handleFile(file);
+  }
+
   const hasPhoto = localPhotoPath != null;
 
   return (
@@ -110,12 +146,17 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
       <div
         data-testid="product-photo-dropzone"
         className={cn(
-          'relative aspect-square w-full max-w-[20rem] overflow-hidden rounded-xl',
-          hasPhoto
-            ? 'border border-border bg-muted'
-            : 'border-2 border-dashed border-border-strong bg-card transition-colors duration-150',
+          'relative aspect-square w-full max-w-[20rem] overflow-hidden rounded-xl transition-colors duration-150',
+          isDragOver
+            ? 'border-2 border-brand bg-brand-soft/80'
+            : hasPhoto
+              ? 'border border-border bg-muted'
+              : 'border-2 border-dashed border-border-strong bg-card',
           disabled && 'pointer-events-none opacity-70'
         )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         {...(hasPhoto
           ? {
               role: 'button' as const,
@@ -126,6 +167,13 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
             }
           : {})}
       >
+        {isDragOver && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <span className="text-sm font-semibold text-brand-strong">
+              {t('manageProducts.productDialog.photo.dropHere')}
+            </span>
+          </div>
+        )}
         {hasPhoto ? (
           isSigning || !url ? (
             <Skeleton className="size-full rounded-xl" />
@@ -190,4 +238,5 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
       )}
     </div>
   );
-}
+  }
+);

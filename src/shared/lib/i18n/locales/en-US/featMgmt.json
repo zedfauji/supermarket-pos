@@ -194,6 +194,7 @@
         "emptyBody": "Drag an image here, paste with Ctrl+V, or choose a file.",
         "chooseFile": "Choose file",
         "formatsHint": "JPEG, PNG or WebP · 10 MB max",
+        "dropHere": "Drop the image here",
         "processing": "Preparing image…",
         "uploading": "Uploading photo…",
         "altText": "Photo of {{name}}",
