@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 32
 current_phase_name: Brand Entity & Pack-Weight Catalog Attributes
 status: executing
-stopped_at: Phase 32 context gathered
-last_updated: "2026-09-08T18:58:36.588Z"
+stopped_at: Completed 32-01-PLAN.md
+last_updated: "2026-09-08T20:40:50.268Z"
 last_activity: 2026-09-08
-last_activity_desc: Phase 31 complete, transitioned to Phase 32
-state_head: f902ce6a0457b04be217c8cc58d4110324be6ed5
+last_activity_desc: Phase 32 execution started
+state_head: 13625e0f5b0c1bd9f00d103eac65b89f25b0f3ab
 progress:
   total_phases: 16
   completed_phases: 9
   total_plans: 53
-  completed_plans: 51
+  completed_plans: 52
   percent: 56
 ---
 
@@ -29,9 +29,18 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 
 ## Current Position
 
-Phase: 32 (Brand Entity & Pack-Weight Catalog Attributes) — READY TO EXECUTE
-Status: Ready to execute
-Last activity: 2026-09-08 — Phase 31 verified complete (7/7 must-haves) and transitioned to Phase 32.
+Phase: 32 (Brand Entity & Pack-Weight Catalog Attributes) — EXECUTING
+Status: Executing Phase 32 — Plan 01/02 complete, Plan 02 (BRND-04 filters) remains
+Last activity: 2026-09-08 — Plan 32-01 executed and committed (603b7a6, 13625e0):
+  `brands` table + RLS + CRUD UI (BRND-01), `products.brand_id` (ON DELETE RESTRICT, BRND-02),
+  `products.weight_amount`/`weight_unit` (BRND-03) wired into the reshaped product dialog with
+  both-or-neither validation at both the Zod and DB layers. `e2e/products/brands.spec.ts` (6 tests)
+  + 2 new product-management.spec.ts tests (PM19/PM20) all green. Found and fixed 4 Rule 1/3
+  deviations along the way — most notably `entities/inventory/model/queries.ts`'s `mapInventoryRow`
+  was silently poisoning the entire `/inventory` list fetch once `ProductSchema` gained the new
+  required-but-nullable brand/weight keys (same failure class as a prior Phase 27 bug at that same
+  call site) — see `32-01-SUMMARY.md` for the full deviation list. BRND-04 (filter-by-brand/weight
+  in admin Catalog + POS grid) and the rest of BRND-05 (filter E2E coverage) remain for Plan 02.
   Gap-closure plan 31-06 (inventory join fix, units-per-package validation fix) reconfirmed live via
   `/gsd-verify-work 31`: full `e2e/products/` + `e2e/checkout/peek-window.spec.ts` suite (65 specs)
   run headless against local Supabase — 62 passed, 2 pre-existing documented skips, 1 flaky
@@ -128,6 +137,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 | Phase 27 P05 | 15min | 2 tasks | 8 files |
 | Phase 27 P06 | 30min | 2 tasks | 8 files |
 | Phase 27 P07 | 165min | 2 tasks | 13 files |
+| Phase 32 P01 | 95min | 2 tasks | 47 files |
 
 ## Accumulated Context
 
@@ -270,6 +280,7 @@ Recent decisions affecting current work:
 - [Phase 27]: PROMO-08: cart-line promotion snapshot stamped only on real price override; reconnect re-evaluation flags changed/vanished promotion-sourced lines via priceConflict, blocking checkout until cashier review
 - [Phase 27]: Phase 27 Plan 07: e2e/promotions/ scenario matrix closes PROMO-09 (scope-overlap, timezone-boundary, deleted-mid-cart, loose-weight/open-unit); fixed a real ProductGrid promotion-pricing gap flagged in 27-03, plus 4 genuine Phase-27-caused test regressions and one silently-failing E2E cleanup bug (Plan 27-05) surfaced by the full-suite phase-gate run
 - [Phase 31]: `/gsd-verify-work 31` re-verification found this machine's local Supabase instance was missing migration `20260907000001_product_photos_storage.sql` (last applied was `20260904000002`) — an environment-drift gap, not a code defect. Fixed via `npx supabase migration up --local`. Worth checking `npx supabase migration list --local` after any git pull that adds migrations, since a stale local DB produces misleading E2E failures that look like application bugs.
+- [Phase 32]: Phase 32 Plan 01: brands table + RLS + CRUD UI, products.brand_id/weight_amount/weight_unit wired into product dialog with both-or-neither validation (D-01..D-09)
 
 ### Pending Todos
 
@@ -317,9 +328,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-08T18:23:37.294Z
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-brand-entity-pack-weight-catalog-attributes/32-CONTEXT.md
+Last session: 2026-09-08T20:40:49.536Z
+Stopped at: Completed 32-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
