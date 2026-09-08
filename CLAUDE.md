@@ -344,12 +344,6 @@ Current codes: `NETWORK_OFFLINE | AUTH_REQUIRED | AUTH_FORBIDDEN | NOT_FOUND | V
 
 ---
 
-## Paperclip Sprint Team Standards
-
-> This section was appended by the Paperclip company setup generator (2026-04-21).
-> It records the authoritative project standards for all Paperclip agents.
-> Do not edit this section manually — update it by revising `.paperclip/skills/dev-standards/SKILL.md`.
-
 ### Actual Stack (from package.json / tsconfig.json)
 
 | Technology      | Version                                        | Notes                                                                 |
@@ -419,26 +413,4 @@ npm run test               # Vitest unit (run once)
 npm run test:e2e           # Playwright — requires .env.local E2E credentials
 npx vitest run src/path/to/file.test.ts   # single test file
 npx playwright test e2e/caja/session-management.spec.ts   # single E2E spec
-```
-
-### Paperclip Agent Files
-
-```
-.paperclip/
-  company.yaml              # Import into Paperclip UI
-  AGENTS.md                 # Shared behavioral contract (all agents read this)
-  agents/
-    pm.md                   # PM system prompt
-    fullstack-engineer.md   # Dev system prompt
-    test-engineer.md        # QA system prompt
-  skills/
-    sprint-decomposition/   # PM: brief → tickets
-    ticket-format/          # All: canonical ticket schema
-    dev-standards/          # Dev: React/TS/Tauri/Supabase rules
-    qa-playbook/            # QA: test pyramid, integration, E2E
-    failure-report/         # QA: exact failure report format
-  templates/
-    ticket.template.md
-    sprint-brief.template.md
-    dod-checklist.template.md
 ```

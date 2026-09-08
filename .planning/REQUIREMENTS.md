@@ -285,7 +285,7 @@ by this phase.
 
 - [x] **PCAT-01**: Clicking a product in Inventory → Catalog opens the existing product dialog, reshaped (larger, tabbed/sectioned) to show and edit full product detail plus its photo in one place — not a new read-only layer in front of the existing dialog.
 - [x] **PCAT-02**: Every existing editable product field remains editable inline in the reshaped dialog, gated by the existing `manage_products` RBAC action (unchanged gate, no new permission).
-- [ ] **PCAT-03**: A product can have one photo, uploaded to a new Supabase Storage bucket and referenced by a `photo_url` column on `products` (not a base64/client-local data URL). Re-uploading replaces the existing photo; storage writes are restricted by RLS to staff holding `manage_products`.
+- [x] **PCAT-03**: A product can have one photo, uploaded to a new Supabase Storage bucket and referenced by a `photo_url` column on `products` (not a base64/client-local data URL). Re-uploading replaces the existing photo; storage writes are restricted by RLS to staff holding `manage_products`.
 - [x] **PCAT-04**: Automated Playwright E2E coverage proves the reshaped dialog's open/edit/save round-trip, photo upload and replace, RBAC denial for a role without `manage_products`, and that Phase 18's separate peek window is unaffected.
 
 ## Phase 32 Requirements — Brand Entity & Pack-Weight Catalog Attributes
@@ -437,7 +437,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROMO-09 | Phase 27 (v1.11) | Complete |
 | PCAT-01 | Phase 31 | Complete |
 | PCAT-02 | Phase 31 | Complete |
-| PCAT-03 | Phase 31 | Not Started |
+| PCAT-03 | Phase 31 | Complete |
 | PCAT-04 | Phase 31 | Complete |
 | BRND-01 | Phase 32 | Not Started |
 | BRND-02 | Phase 32 | Not Started |
@@ -473,3 +473,5 @@ Which phases cover which requirements. Updated during roadmap creation.
 *2026-09-01 — Phase 27 (Promotions & Discount Management) added via `/gsd-explore`; PROMO-01..09 captured, traceability mapped 9/9. Batch/lot-level expiry tracking explicitly deferred (see `.planning/seeds/batch-lot-expiry-tracking.md`); implementation-level open questions (exact tier table defaults, exact `manage_promotions` UI) left for discuss-phase/plan-phase.*
 
 *2026-09-07 — Phases 31-33 (Product Catalog Detail & Photo Upload, Brand Entity & Pack-Weight Catalog Attributes, Login Screen Store Branding) added via `/gsd-explore`; PCAT-01..04, BRND-01..05, STORE-01..03 captured, traceability mapped 12/12. Confirmed Phase 31 is unrelated to Phase 18's barcode-scan peek window (different flow/window) and Phase 33's branding fields are new, not a reuse of the existing receipt-only logo/header settings. Implementation-level open questions (exact dialog tab layout, storage bucket naming, image size/format limits) left for discuss-phase/plan-phase.*
+
+*2026-09-08 — Phase 31 (Product Catalog Detail & Photo Upload) shipped and verified complete (7/7 must-haves, `31-VERIFICATION.md`); PCAT-01..04 all Complete.*

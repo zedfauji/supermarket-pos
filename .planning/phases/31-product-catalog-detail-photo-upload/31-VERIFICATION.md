@@ -1,42 +1,32 @@
 ---
 phase: 31-product-catalog-detail-photo-upload
-verified: 2026-09-08T15:21:15Z
-status: gaps_found
-score: 6/7 must-haves verified
+verified: 2026-09-08T16:40:00Z
+status: passed
+score: 7/7 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 gaps:
   - truth: "The reshaped dialog shows accurate 'full product detail' — specifically the D-17 read-only stock strip (quantity on hand, low-stock threshold, low-stock badge) — for every existing product, not just newly-created ones."
-    status: failed
+    status: resolved
+    resolved_by: "31-06-PLAN.md / 31-06-SUMMARY.md (gap-closure D1)"
+    resolved_at: "2026-09-08"
     reason: >
-      `useProductsForManagement()` (src/entities/product/model/queries.ts:305-322), the query that
-      feeds CatalogProductsTab/ProductDetailDialog, selects `*, category:categories(*),
-      product_modifiers(modifier:modifiers(*))` with no `inventory(quantity_on_hand,
-      low_stock_threshold)` join — unlike the POS-facing `useProducts()` (queries.ts:143-161), which
-      does join it. `mapProductRow` reads `quantityOnHand`/`lowStockThreshold` off
-      `row.inventory?.…`, which is always `undefined` here, and `ProductSchema`'s fields are
-      `optional()` so this parses silently rather than throwing. Independently reproduced by reading
-      the current query source (not just trusting 31-REVIEW.md's CR-01): the join is absent as of
-      HEAD (6475cd4), no fix has landed on queries.ts since Plan 01's commits (b0e0325/54b3880 are
-      the last two touching that file). Net effect: `ProductDetailDialog`'s stock strip
-      (ProductDetailDialog.tsx:391-419) shows "0 on hand" / "No threshold" for every product that
-      actually has stock, and the low-stock warning badge can never render. 31-CONTEXT.md's own D-17
-      decision explicitly assumed this data was already fetched ("ProductSchema already carries
-      quantityOnHand and lowStockThreshold (joined from inventory) ... this is display-only against
-      data the catalog query can already fetch") — that assumption was wrong for the query this
-      dialog actually uses. The create-mutation's post-insert refetch (queries.ts:463-480) shares the
-      same unjoined select, so even create-then-stay inherits the bug (only coincidentally correct
-      there, since a brand-new product genuinely has 0 stock). Existing E2E coverage
-      (product-management.spec.ts PM9/PM11) only asserts the strip is *visible*, never that its
-      numbers are correct, so this shipped and merged undetected by the phase's own automated gates.
+      Original finding: `useProductsForManagement()` (queries.ts:305-322) and the create-mutation's
+      post-insert refetch (queries.ts:463-480) selected products with no `inventory(quantity_on_hand,
+      low_stock_threshold)` join, so the D-17 stock strip always rendered "0 on hand"/"No threshold".
+      Fix (31-06): both selects now join `inventory(quantity_on_hand, low_stock_threshold)`, matching
+      `useProducts()`. Verified independently in this re-pass: read `queries.ts` at current HEAD and
+      confirmed the join is present on both selects; ran `npx playwright test e2e/products/
+      e2e/checkout/peek-window.spec.ts` live (headless, local Supabase backend) — `product-management
+      .spec.ts#PM16` (real seeded on-hand/threshold render, no badge when above threshold) and `#PM17`
+      (badge renders when at/below threshold) both pass. A second real bug found by 31-06 in the same
+      area (`unitsPerPackage` silently truncating a non-integer via `Number.parseInt` instead of
+      rejecting it — WR-01) is also fixed and covered by `#PM18`, confirmed passing in the same run.
     artifacts:
       - path: "src/entities/product/model/queries.ts"
-        issue: "useProductsForManagement (lines 305-322) and the create-mutation's post-insert refetch (lines 463-480) select products without the inventory(quantity_on_hand, low_stock_threshold) join that useProducts() already has, so mapProductRow always maps quantityOnHand/lowStockThreshold to undefined for every row this dialog reads."
+        issue: "RESOLVED — useProductsForManagement and the create-mutation's post-insert refetch now both join inventory(quantity_on_hand, low_stock_threshold)."
       - path: "src/features/manage-products/ui/ProductDetailDialog.tsx"
-        issue: "Lines 391-419 render the D-17 stock strip directly from initialProduct.quantityOnHand/lowStockThreshold, which are always undefined given the unjoined source query — the strip is present and wired but its data is permanently wrong for existing stock."
-    missing:
-      - "Add `inventory(quantity_on_hand, low_stock_threshold)` to useProductsForManagement's select (and to the create-mutation's post-insert refetch select) in src/entities/product/model/queries.ts, matching useProducts()'s existing join."
-      - "An E2E or unit assertion on the stock strip's actual rendered numbers against a seeded non-zero inventory row (not just strip visibility), so a regression of this join is caught in the future."
+        issue: "RESOLVED — stock strip now renders real inventory data; unitsPerPackage entry also now rejects non-integer input (WR-01) instead of truncating."
 deferred:
   - truth: "A product's photo renders in Phase 18's barcode-scan peek window when only an uploaded photo (no legacy imageUrl) is set."
     addressed_in: "Not scheduled — explicitly out of D-14's this-phase scope"
@@ -54,9 +44,19 @@ form, and a product can carry one photo stored in Supabase Storage (not client-l
 Distinct from Phase 18's separate barcode-scan-at-checkout peek window — different trigger, different
 flow, unaffected by this phase.
 
-**Verified:** 2026-09-08T15:21:15Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-09-08T16:40:00Z
+**Status:** passed
+**Re-verification:** Yes — re-verifies the initial 2026-09-08T15:21:15Z pass after gap-closure plan
+31-06 landed. Re-run performed via `/gsd-verify-work 31`: rather than manual UAT (prohibited by this
+project's CLAUDE.md testing policy), drove the full `e2e/products/` + `e2e/checkout/peek-window.spec
+.ts` suite (65 specs) live against a real local Supabase backend. First run surfaced 19 failures; root
+cause was an unrelated local-environment gap (migration `20260907000001_product_photos_storage.sql`
+had never been applied to this machine's local Supabase instance — last applied was `20260904000002`),
+not an application defect. Applied it (`npx supabase migration up --local`) and re-ran clean: 62
+passed, 2 pre-existing documented skips, 1 flaky test-instrumentation race in
+`product-photo-upload.spec.ts`'s D-09 paste-guard negative case (the test snapshots a storage-request
+counter before the first paste's upload/link/sign pipeline has fully settled — a test-timing issue,
+not a behavioral regression; confirmed via `--repeat-each=2` and isolated reruns).
 
 ## Goal Achievement
 
@@ -68,11 +68,11 @@ flow, unaffected by this phase.
 | 2 | Every existing editable field remains editable, gated by the unchanged `manage_products` RBAC action (PCAT-02) | VERIFIED | `ProductDetailsTab.tsx`/`ProductLinksTab.tsx` contain the full field set lifted verbatim from the retired `ProductForm.tsx` (confirmed present: name, category, price, sku, barcode, active, units-per-package, parent product, imageUrl, modifiers, suppliers). RBAC gate confirmed unchanged and unrelocated: `src/widgets/InventoryPagePanel/ui/CatalogTab.tsx:21` still wraps the whole surface in `<ProtectedAction action="manage_products" ...>` — `CatalogProductsTab.tsx` itself never re-implements the check, so the reshape didn't touch the gate. |
 | 3 | A product can carry one photo, uploaded to a private Supabase Storage bucket and referenced by `products.photo_path` (a bare object path, not a base64/data URL); re-upload replaces it; storage writes are RLS-restricted to `manage_products` holders (PCAT-03) | VERIFIED | Migration `supabase/migrations/20260907000001_product_photos_storage.sql` read directly: private bucket (`public: false`), 2097152-byte limit, 3-MIME allow-list, `products.photo_path text` column, 4 idempotent `storage.objects` policies — SELECT open to `authenticated` (Decision B), INSERT/UPDATE/DELETE gated on `role_permissions ... action = 'manage_products'`, none granted to `anon`. `photoPath: z.string().min(1).max(500).nullable()` confirmed in `domain.ts` (not `UrlSchema`). Upload/replace/remove sequence (`useProductPhotoUpload.ts`) confirmed writing a fresh uuid key and deleting the old one after the column write, never `upsert`. |
 | 4 | Automated Playwright E2E proves the reshaped dialog's round-trip, photo upload/replace, RBAC/RLS denial, and that Phase 18's peek window is unaffected (PCAT-04) | VERIFIED | All named spec files exist and were exercised per-plan against the real remote project (per SUMMARY task-commit records and this verification's own unit/typecheck re-run): `e2e/products/product-photo-upload.spec.ts` (11 tests), `e2e/products/catalog-row-and-thumbnails.spec.ts` (7 tests), `e2e/products/product-photo-rls.spec.ts` (9 tests, cashier+anon denial with service-client ground truth and an admin positive control), `e2e/checkout/peek-window.spec.ts` (+2 tests), `e2e/visual/46-product-dialog-baseline.spec.ts` (4 UI-contract backstops). `git log` confirms zero commits under `src/widgets/ProductPeekWindow/` from this phase. |
-| 5 | The dialog's D-17 stock strip (on-hand qty, low-stock threshold, low-stock badge) shows the real, accurate inventory state for an existing product — the phase goal's "full product detail" claim depends on this being correct, and D-17 (31-CONTEXT.md) explicitly assumed the data was "already" fetched by the catalog query | ✗ FAILED | `src/entities/product/model/queries.ts:305-322` (`useProductsForManagement`) and `:463-480` (create-mutation post-insert refetch) select products with **no** `inventory(quantity_on_hand, low_stock_threshold)` join — confirmed by reading the file directly at HEAD. `mapProductRow` maps both fields to `undefined` for every row this dialog reads, so `ProductDetailDialog.tsx:391-419`'s stock strip always renders "0 on hand" / "No threshold" and the low-stock badge can never appear, for every product with real stock. Documented and unresolved in `31-REVIEW.md` CR-01 (critical); no fix commit exists on `queries.ts` after Plan 01. |
+| 5 | The dialog's D-17 stock strip (on-hand qty, low-stock threshold, low-stock badge) shows the real, accurate inventory state for an existing product — the phase goal's "full product detail" claim depends on this being correct, and D-17 (31-CONTEXT.md) explicitly assumed the data was "already" fetched by the catalog query | ✓ VERIFIED (fixed by 31-06) | `src/entities/product/model/queries.ts` now joins `inventory(quantity_on_hand, low_stock_threshold)` on both `useProductsForManagement`'s select and the create-mutation's post-insert refetch, confirmed by reading the file at current HEAD. `e2e/products/product-management.spec.ts#PM16` (real seeded numbers render, no badge above threshold) and `#PM17` (badge renders at/below threshold) both pass in a live headless re-run. |
 | 6 | Storage write endpoints deny a role without `manage_products` (cashier) and an unauthenticated caller, proven from a real anon-key client, not just hidden in the UI | VERIFIED | Migration policies read directly confirm INSERT/UPDATE/DELETE require the `manage_products` `role_permissions` predicate and are granted `TO authenticated` only (no `anon` grant anywhere). `e2e/products/product-photo-rls.spec.ts` (9 tests) drives this from `createRoleScopedClient('cashier', ...)` and a bare anon client, each denial paired with a service-client ground-truth read, plus an admin positive control. |
 | 7 | No debt markers, unresolved `TBD`/`FIXME`/`XXX`, and clean typecheck/lint across the phase's touched files | VERIFIED | `grep -rnE "TBD|FIXME|XXX"` across `src/features/manage-products/` and the photo/resolver files returns nothing. `npm run typecheck` clean. `npx eslint` on the same files clean (only a pre-existing, unrelated `boundaries/dependencies` config warning). `npx vitest run` on the three phase-specific unit-test files: 58/58 passing. |
 
-**Score:** 6/7 truths verified (0 present-but-behavior-unverified)
+**Score:** 7/7 truths verified (0 present-but-behavior-unverified)
 
 ### Deferred Items
 
@@ -101,7 +101,7 @@ Items not yet met but explicitly, deliberately scoped out of this phase with rec
 |------|----|----|--------|---------|
 | `CatalogProductsTab` row click | `ProductDetailDialog` | `DataTable`'s `onRowClick` prop | ✓ WIRED | `grep -c "onRowClick"` = 1 in `CatalogProductsTab.tsx`; propagation stops confirmed on 3 inline editors + 2 action buttons |
 | `useProductPhotoUpload` | `products.photo_path` | Storage upload → column write → delete-old-object | ✓ WIRED | Confirmed sequence order in file; migration confirms the column exists and RLS gates the write |
-| `ProductDetailDialog` stock strip | `products`/`inventory` tables | `initialProduct.quantityOnHand`/`lowStockThreshold` | ⚠️ HOLLOW | Wired to a prop, but the prop's source query (`useProductsForManagement`) never joins `inventory`, so the value is structurally disconnected from real data — see Gap above |
+| `ProductDetailDialog` stock strip | `products`/`inventory` tables | `initialProduct.quantityOnHand`/`lowStockThreshold` | ✓ WIRED (fixed by 31-06) | `useProductsForManagement` now joins `inventory`; value flows real, confirmed by PM16/PM17 live rerun |
 | `storage.objects` RLS policies | `manage_products` gate | `role_permissions` + `get_user_role()` | ✓ WIRED | Confirmed in migration text and proven by `product-photo-rls.spec.ts`'s cashier/anon denial + admin positive control |
 
 ### Data-Flow Trace (Level 4)
@@ -110,7 +110,7 @@ Items not yet met but explicitly, deliberately scoped out of this phase with rec
 |----------|---------------|--------|---------------------|--------|
 | `ProductPhotoTab` preview | signed photo URL | `useProductImageUrl` → `signProductPhoto` → `createSignedUrl` on `photo_path` | Yes | ✓ FLOWING |
 | Catalog thumbnail column | signed photo URL | `useProductImageUrls` → `signProductPhotos` → batch `createSignedUrls` | Yes | ✓ FLOWING |
-| Stock strip "on hand" / "threshold" | `quantityOnHand` / `lowStockThreshold` | `useProductsForManagement` → `products` select with **no** `inventory` join | No — always `undefined`/0 | ✗ DISCONNECTED |
+| Stock strip "on hand" / "threshold" | `quantityOnHand` / `lowStockThreshold` | `useProductsForManagement` → `products` select now joins `inventory` (31-06) | Yes | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
@@ -123,9 +123,10 @@ Items not yet met but explicitly, deliberately scoped out of this phase with rec
 | RBAC gate for Catalog surface unchanged | `grep -rn "manage_products" src/widgets/InventoryPagePanel` | `CatalogTab.tsx:21` — `ProtectedAction action="manage_products"` | ✓ PASS |
 | Migration content matches Decision A/B | direct file read of `20260907000001_product_photos_storage.sql` | bucket/column/4-policy shape matches SUMMARY claims exactly | ✓ PASS |
 | Peek window untouched by this phase | `git log --oneline -- src/widgets/ProductPeekWindow` | 0 commits from phase-31 range | ✓ PASS |
-| Stock-strip data source join | direct file read of `src/entities/product/model/queries.ts:305-322,463-480` | no `inventory(...)` join present | ✗ FAIL (confirms CR-01) |
+| Stock-strip data source join | direct file read of `src/entities/product/model/queries.ts` at current HEAD | `inventory(quantity_on_hand, low_stock_threshold)` join present on both selects (31-06) | ✓ PASS |
+| Live E2E re-run, full phase-31 spec set | `npx playwright test e2e/products/ e2e/checkout/peek-window.spec.ts` (headless, local Supabase) | 62 passed, 2 pre-existing documented skips, 1 flaky test-timing assertion (not a behavioral regression, see Re-verification note above) | ✓ PASS |
 
-Full `npm run test:e2e`/`npx playwright test` was not re-executed in this verification pass (requires a live dev server + remote Supabase E2E credentials not exercised here); relied instead on direct source inspection of every named spec file's existence/shape, the SUMMARYs' per-task commit records, and 31-REVIEW.md's independent line-by-line code review (which read all 7 spec files and found no defects in the tests themselves, only in application code).
+Full `npx playwright test` **was** executed live in this re-verification pass (this project's CLAUDE.md testing policy prohibits substituting manual UAT for it) — see Re-verification note above for the environment issue found/fixed en route (missing local migration) and the one flaky test identified.
 
 ### Probe Execution
 
@@ -136,7 +137,7 @@ Not applicable — no `scripts/*/tests/probe-*.sh` convention or explicit probe 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
 | PCAT-01 | 31-02, 31-03 | Reshaped dialog opens on catalog click, larger tabbed layout | ✓ SATISFIED | Truths 1, 4; artifacts confirmed |
-| PCAT-02 | 31-02 | Every field editable, unchanged `manage_products` gate | ✓ SATISFIED (with WR-01 quality note, see below) | Truth 2; RBAC gate confirmed unrelocated |
+| PCAT-02 | 31-02, 31-06 | Every field editable, unchanged `manage_products` gate | ✓ SATISFIED | Truth 2; RBAC gate confirmed unrelocated; WR-01 (unitsPerPackage truncation) fixed by 31-06, covered by PM18 |
 | PCAT-03 | 31-01, 31-04 | One photo, Supabase Storage, `photo_url`/`photo_path` column, RLS-restricted | ✓ SATISFIED | Truths 3, 6; migration read directly |
 | PCAT-04 | 31-01..05 | Automated E2E: round-trip, photo upload/replace, RBAC denial, peek-window unaffected | ✓ SATISFIED | Truth 4; all spec files confirmed present with described coverage |
 
@@ -146,8 +147,8 @@ No orphaned requirements — REQUIREMENTS.md's Phase 31 section maps exactly PCA
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/entities/product/model/queries.ts` | 305-322, 463-480 | Missing `inventory(...)` join present on the sibling `useProducts()` query but absent here | 🛑 Blocker | Stock strip silently wrong for every existing product (see Gap) |
-| `src/features/manage-products/ui/ProductDetailDialog.tsx` | 267-277 | `Number.parseInt` silently truncates a manually-typed decimal (`2.5` → `2`) instead of failing validation | ⚠️ Warning | A manager can save a wrong `unitsPerPackage` with no error shown (31-REVIEW.md WR-01); does not block the phase goal but is a real correctness gap in "every field remains editable" (PCAT-02) |
+| `src/entities/product/model/queries.ts` | 305-322, 463-480 | ~~Missing `inventory(...)` join~~ — **RESOLVED by 31-06**, join now present, confirmed live (PM16/PM17) | ✅ Resolved | — |
+| `src/features/manage-products/ui/ProductDetailDialog.tsx` | 267-277 | ~~`Number.parseInt` silently truncates a manually-typed decimal~~ — **RESOLVED by 31-06**, non-integer entry now rejected, confirmed live (PM18) | ✅ Resolved | — |
 | `src/features/manage-products/ui/CatalogProductsTab.tsx` | 282-296 | Thumbnail cell's `loadFailed` local state resets on every unrelated table re-render (unmemoized `photoColumn`) | ℹ️ Info | Cosmetic only (31-REVIEW.md IN-02) — occasional re-fetch/flicker, not a correctness issue |
 | `src/features/manage-products/model/photo-file.ts` vs migration | 13 vs 23 | Client `MAX_UPLOAD_BYTES` (10 MB) is 5x the bucket's server-side `file_size_limit` (2 MB) | ℹ️ Info | Rarely surfaces post-resize (31-REVIEW.md IN-01); worth tightening but not a phase-goal blocker |
 
@@ -157,13 +158,15 @@ None. This project's CLAUDE.md testing policy prohibits any `human_needed` termi
 
 ## Gaps Summary
 
-Phase 31 delivers a genuinely working, well-tested reshape and photo pipeline — the dialog opens correctly on row click, every field is editable behind the unchanged RBAC gate, the Storage architecture (bucket, RLS, column, resolver, upload/replace/remove) is sound and independently RLS-tested against real cashier/anon clients, and Phase 18's peek window is proven unaffected. Typecheck, lint, and the phase's own unit-test suite are all clean.
+**Resolved.** Phase 31 delivers a genuinely working, well-tested reshape and photo pipeline — the dialog opens correctly on row click, every field is editable behind the unchanged RBAC gate, the Storage architecture (bucket, RLS, column, resolver, upload/replace/remove) is sound and independently RLS-tested against real cashier/anon clients, and Phase 18's peek window is proven unaffected. Typecheck, lint, and the phase's own unit-test suite are all clean.
 
-One blocking gap remains, already identified by the phase's own code-review pass (`31-REVIEW.md` CR-01) and independently reconfirmed here by reading the live query source: the dialog's D-17 stock strip — a deliberate, named feature of "full product detail" per both the roadmap goal and 31-CONTEXT.md's own D-17 decision — is wired but structurally disconnected from real inventory data, because the query feeding the dialog never joins the `inventory` table. It shows "0 on hand / No threshold" for every existing product regardless of actual stock, silently and with no error, since `ProductSchema`'s inventory fields are optional. This was not caught by any of this phase's own automated tests (which only assert the strip is visible, never that its numbers are correct) and remains unfixed as of the phase's final commit. This is exactly the class of "task complete, goal not achieved" gap this verification is designed to surface: the artifact exists, is wired into the UI, passes every existing test, and is still wrong.
+The one blocking gap from the initial pass — the D-17 stock strip structurally disconnected from real inventory data because `useProductsForManagement` never joined `inventory` — was closed by gap-closure plan 31-06, which also caught a second real bug in the same surface (`unitsPerPackage` silently truncating non-integer input, WR-01). Both fixes are independently reconfirmed in this re-verification pass: the join is present in the current `queries.ts`, and a live headless Playwright re-run (not a source-only read) proves `PM16`/`PM17`/`PM18` all pass against a real seeded backend.
 
-Fix is narrow and low-risk: add the same `inventory(quantity_on_hand, low_stock_threshold)` join `useProducts()` already has to `useProductsForManagement`'s select and the create-mutation's post-insert refetch, plus one assertion on the strip's actual numbers against a seeded non-zero-stock fixture so a future regression is caught.
+This re-run also surfaced and fixed an unrelated local-environment gap (a pending Supabase migration never applied to this machine's local instance) and found one flaky test-timing assertion in `product-photo-upload.spec.ts`'s D-09 negative case — neither is an application defect; see the Re-verification note above.
+
+No open gaps remain. Phase 31 is verified complete.
 
 ---
 
-*Verified: 2026-09-08T15:21:15Z*
+*Verified: 2026-09-08T15:21:15Z (initial), 2026-09-08T16:40:00Z (re-verification, gap-closure confirmed)*
 *Verifier: Claude (gsd-verifier)*

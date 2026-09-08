@@ -2,40 +2,42 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 31
-current_phase_name: Product Catalog Detail & Photo Upload
-status: executing
-stopped_at: Phase 30 context gathered
-last_updated: "2026-09-08T16:27:11.682Z"
+current_phase: 32
+current_phase_name: Brand Entity & Pack-Weight Catalog Attributes
+status: planning
+stopped_at: Phase 31 complete, ready to plan Phase 32
+last_updated: "2026-09-08T17:53:11.558Z"
 last_activity: 2026-09-08
-last_activity_desc: Phase 31 execution resumed (wave continue)
-state_head: 27b8ec9eda80c267247b73be0308b679fdda30a1
+last_activity_desc: Phase 31 complete, transitioned to Phase 32
+state_head: e991b3f2d92154895d102c23ab62c6345c185219
 progress:
   total_phases: 16
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 51
   completed_plans: 51
-  percent: 50
+  percent: 56
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-01)
+See: .planning/PROJECT.md (updated 2026-09-08)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 31 — Product Catalog Detail & Photo Upload
+**Current focus:** Phase 32 — Brand Entity & Pack-Weight Catalog Attributes
 
 ## Current Position
 
-Phase: 31 (Product Catalog Detail & Photo Upload) — All 6 plans summarized (31-06 gap closure
-  complete: inventory join fix, units-per-package validation fix incl. a real second bug found
-  during live E2E verification (missing `noValidate` on the product dialog form), all confirmed
-  passing via `npx playwright test e2e/products/product-management.spec.ts`, 17/17). Awaiting
-  phase re-verification.
-Status: Ready for verification
-Last activity: 2026-09-08 — Phase 31 gap-closure plan 31-06 executed via `/gsd-execute-phase 31 --gaps-only`
+Phase: 32 — Brand Entity & Pack-Weight Catalog Attributes
+Status: Ready to plan
+Last activity: 2026-09-08 — Phase 31 verified complete (7/7 must-haves) and transitioned to Phase 32.
+  Gap-closure plan 31-06 (inventory join fix, units-per-package validation fix) reconfirmed live via
+  `/gsd-verify-work 31`: full `e2e/products/` + `e2e/checkout/peek-window.spec.ts` suite (65 specs)
+  run headless against local Supabase — 62 passed, 2 pre-existing documented skips, 1 flaky
+  test-timing assertion (not a regression). Found and fixed an unrelated local-dev-environment gap
+  en route: migration `20260907000001_product_photos_storage.sql` had never been applied to this
+  machine's local Supabase instance.
 
 **Also complete (concurrent session):** Phase 27 — Promotions & Discount Management, 7/7 plans,
 verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-management/27-VERIFICATION.md`).
@@ -44,7 +46,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 **Velocity:**
 
-- Total plans completed: 96 (all v1.0, Phases 1-4)
+- Total plans completed: 102 (all v1.0, Phases 1-4)
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -71,6 +73,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 | 24 | 4 | - | - |
 | 27 | 10 | - | - |
 | 28 | 5 | - | - |
+| 31 | 6 | - | - |
 
 **Recent Trend:**
 
@@ -266,6 +269,7 @@ Recent decisions affecting current work:
 - [Phase 27]: E2E PROMO-06 proof split into 3 independent tests (not one chained scenario) since reopening a sale voids its original payment, making a subsequent refund on the same sale inexpressible in the UI.
 - [Phase 27]: PROMO-08: cart-line promotion snapshot stamped only on real price override; reconnect re-evaluation flags changed/vanished promotion-sourced lines via priceConflict, blocking checkout until cashier review
 - [Phase 27]: Phase 27 Plan 07: e2e/promotions/ scenario matrix closes PROMO-09 (scope-overlap, timezone-boundary, deleted-mid-cart, loose-weight/open-unit); fixed a real ProductGrid promotion-pricing gap flagged in 27-03, plus 4 genuine Phase-27-caused test regressions and one silently-failing E2E cleanup bug (Plan 27-05) surfaced by the full-suite phase-gate run
+- [Phase 31]: `/gsd-verify-work 31` re-verification found this machine's local Supabase instance was missing migration `20260907000001_product_photos_storage.sql` (last applied was `20260904000002`) — an environment-drift gap, not a code defect. Fixed via `npx supabase migration up --local`. Worth checking `npx supabase migration list --local` after any git pull that adds migrations, since a stale local DB produces misleading E2E failures that look like application bugs.
 
 ### Pending Todos
 
@@ -313,9 +317,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-08T00:30:26.091Z
-Stopped at: Phase 30 context gathered
-Resume file: .planning/phases/30-checkout-continuity-settings-exit-guard-cash-keypad/30-CONTEXT.md
+Last session: 2026-09-08T17:53:11.558Z
+Stopped at: Phase 31 complete, ready to plan Phase 32
+Resume file: None
 
 ## Operator Next Steps
 
