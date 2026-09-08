@@ -129,7 +129,7 @@
       "edit": "Editar",
       "deactivate": "Desactivar",
       "loadError": "No se pudieron cargar los productos: {{message}}",
-      "headerHelp": "Edita nombre, categoría o precios en línea (se guarda al salir del campo). Usa Editar para modificadores y SKU.",
+      "headerHelp": "Edita nombre, categoría o precios en línea (se guarda al salir del campo). Haz clic en una fila para ver el detalle completo y la foto.",
       "addProduct": "Agregar producto",
       "searchPlaceholder": "Buscar productos…",
       "newProductTitle": "Nuevo producto",
@@ -139,7 +139,9 @@
       "deactivateProductTitle": "¿Desactivar producto?",
       "deactivateProductDescription": "El producto se ocultará del menú del POS. Las órdenes existentes no se ven afectadas.",
       "deactivateProductConfirmLabel": "Desactivar",
-      "productDeactivated": "Producto desactivado"
+      "productDeactivated": "Producto desactivado",
+      "photoHeader": "Foto",
+      "noPhoto": "Sin foto"
     },
     "productForm": {
       "invalidModifierSelection": "Selección de modificador inválida",
@@ -167,6 +169,26 @@
       "noParentProduct": "No es una pieza suelta"
     },
     "productDialog": {
+      "navLabel": "Secciones del producto",
+      "tabs": {
+        "details": "Detalles",
+        "detailsDescription": "Nombre, precio, código de barras",
+        "photo": "Foto",
+        "photoDescription": "Una imagen del producto",
+        "links": "Vínculos",
+        "linksDescription": "Paquetes, modificadores, proveedores"
+      },
+      "tabWithErrors": "{{label}} (con errores)",
+      "stockStrip": {
+        "onHand": "En existencia",
+        "threshold": "Umbral de stock bajo",
+        "noThreshold": "Sin umbral",
+        "lowStock": "Stock bajo"
+      },
+      "discardTitle": "¿Descartar cambios?",
+      "discardDescription": "Tienes cambios sin guardar en este producto. Si cierras, se perderán.",
+      "discardConfirmLabel": "Descartar cambios",
+      "keepEditing": "Seguir editando",
       "photo": {
         "emptyTitle": "Sin foto",
         "emptyBody": "Arrastra una imagen aquí, pégala con Ctrl+V o elige un archivo.",
@@ -183,7 +205,8 @@
         "errorUpload": "No se pudo subir la foto: {{message}}. Inténtalo de nuevo.",
         "errorLink": "La foto se subió pero no se pudo vincular al producto. Inténtalo de nuevo.",
         "errorLoad": "No se pudo cargar la foto. Reemplázala o inténtalo más tarde.",
-        "errorOffline": "Sin conexión — las fotos solo se suben en línea. Reconecta e inténtalo de nuevo."
+        "errorOffline": "Sin conexión — las fotos solo se suben en línea. Reconecta e inténtalo de nuevo.",
+        "lockedTitle": "Guarda el producto primero"
       }
     }
   },

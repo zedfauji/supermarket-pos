@@ -19,11 +19,9 @@ import { DataTable } from '@shared/ui/DataTable';
 import { MoneyInput } from '@shared/ui/MoneyInput';
 import { POSButton } from '@shared/ui/POSButton';
 import { Badge } from '@shared/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Input } from '@shared/ui/input';
 
-import { ProductForm } from './ProductForm';
-import { ProductPhotoTab } from './tabs/ProductPhotoTab';
+import { ProductDetailDialog } from './ProductDetailDialog';
 
 function modifierIdsOf(p: Product): string[] {
   return p.modifiers.map(m => m.id);
@@ -125,9 +123,9 @@ export function CatalogProductsTab() {
   const updateMutation = useMutationUpdateProduct();
   const deactivateMutation = useMutationDeactivateProduct();
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const { data: editSupplierIds } = useProductSupplierIds(editProduct?.id);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const { data: editSupplierIds } = useProductSupplierIds(activeProduct?.id);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
 
   const [drafts, setDrafts] = useState<
@@ -279,7 +277,8 @@ export function CatalogProductsTab() {
               touchSize="default"
               variant="outline"
               onClick={() => {
-                setEditProduct(p);
+                setActiveProduct(p);
+                setDialogOpen(true);
               }}
             >
               {t('manageProducts.productsTab.edit')}
@@ -321,7 +320,8 @@ export function CatalogProductsTab() {
           type="button"
           touchSize="default"
           onClick={() => {
-            setCreateOpen(true);
+            setActiveProduct(null);
+            setDialogOpen(true);
           }}
         >
           {t('manageProducts.productsTab.addProduct')}
@@ -337,79 +337,44 @@ export function CatalogProductsTab() {
         enableSorting
       />
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-md sm:max-w-md" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>{t('manageProducts.productsTab.newProductTitle')}</DialogTitle>
-          </DialogHeader>
-          <ProductForm
-            categories={catList}
-            modifiers={modList}
-            products={products ?? []}
-            suppliers={suppliers ?? []}
-            submitting={createMutation.isPending}
-            onCancel={() => {
-              setCreateOpen(false);
-            }}
-            onSubmitCreate={payload => {
-              const input: CreateProductInput = { ...payload, modifierIds: payload.modifierIds };
-              void createMutation.mutateAsync(input, {
-                onSuccess: r => {
-                  if (!r.ok) toast.error(r.error.message);
-                  else {
-                    toast.success(t('manageProducts.productsTab.productCreated'));
-                    setCreateOpen(false);
-                  }
-                },
-              });
-            }}
-            onSubmitUpdate={() => {}}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={editProduct != null}
-        onOpenChange={o => {
-          if (!o) setEditProduct(null);
+      <ProductDetailDialog
+        key={activeProduct?.id ?? 'create'}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        categories={catList}
+        modifiers={modList}
+        products={products ?? []}
+        suppliers={suppliers ?? []}
+        supplierIds={editSupplierIds}
+        initialProduct={activeProduct}
+        submitting={activeProduct ? updateMutation.isPending : createMutation.isPending}
+        onSubmitCreate={payload => {
+          const input: CreateProductInput = { ...payload, modifierIds: payload.modifierIds };
+          void createMutation.mutateAsync(input, {
+            onSuccess: r => {
+              if (!r.ok) toast.error(r.error.message);
+              else {
+                toast.success(t('manageProducts.productsTab.productCreated'));
+                // Create-then-stay (D-03): the dialog stays open, now in edit
+                // mode for the just-created product — a photo needs a real
+                // product id, so it cannot be attached before this point.
+                setActiveProduct(r.data);
+              }
+            },
+          });
         }}
-      >
-        <DialogContent className="max-w-2xl sm:max-w-2xl" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>{t('manageProducts.productsTab.editProductTitle')}</DialogTitle>
-          </DialogHeader>
-          {editProduct ? (
-            <ProductForm
-              key={editProduct.id}
-              categories={catList}
-              modifiers={modList}
-              products={products ?? []}
-              suppliers={suppliers ?? []}
-              supplierIds={editSupplierIds}
-              initialProduct={editProduct}
-              submitting={updateMutation.isPending}
-              onCancel={() => {
-                setEditProduct(null);
-              }}
-              onSubmitCreate={() => {}}
-              onSubmitUpdate={payload => {
-                void updateMutation.mutateAsync(payload, {
-                  onSuccess: r => {
-                    if (!r.ok) toast.error(r.error.message);
-                    else {
-                      toast.success(t('manageProducts.productsTab.productSaved'));
-                      setEditProduct(null);
-                    }
-                  },
-                });
-              }}
-            />
-          ) : null}
-          {editProduct ? (
-            <ProductPhotoTab product={editProduct} submitting={updateMutation.isPending} />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        onSubmitUpdate={payload => {
+          void updateMutation.mutateAsync(payload, {
+            onSuccess: r => {
+              if (!r.ok) toast.error(r.error.message);
+              else {
+                toast.success(t('manageProducts.productsTab.productSaved'));
+                setDialogOpen(false);
+              }
+            },
+          });
+        }}
+      />
 
       <ConfirmDialog
         open={deactivateId != null}
