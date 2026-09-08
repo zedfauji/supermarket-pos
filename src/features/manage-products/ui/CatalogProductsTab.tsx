@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dia
 import { Input } from '@shared/ui/input';
 
 import { ProductForm } from './ProductForm';
+import { ProductPhotoTab } from './tabs/ProductPhotoTab';
 
 function modifierIdsOf(p: Product): string[] {
   return p.modifiers.map(m => m.id);
@@ -403,6 +404,9 @@ export function CatalogProductsTab() {
                 });
               }}
             />
+          ) : null}
+          {editProduct ? (
+            <ProductPhotoTab product={editProduct} submitting={updateMutation.isPending} />
           ) : null}
         </DialogContent>
       </Dialog>

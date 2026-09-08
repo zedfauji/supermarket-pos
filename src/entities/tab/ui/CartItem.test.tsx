@@ -34,6 +34,7 @@ const mockProduct: Product = {
   basePrice: 100,
   happyHourPrice: null,
   imageUrl: null,
+  photoPath: null,
   isActive: true,
   soldByWeight: false,
   sku: 'ALOO-200G',

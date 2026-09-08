@@ -9,6 +9,7 @@ const baseProduct: Product = {
   basePrice: 12,
   happyHourPrice: 9,
   imageUrl: null,
+  photoPath: null,
   isActive: true,
   soldByWeight: false,
   sku: 'COCKTAIL-MARG',

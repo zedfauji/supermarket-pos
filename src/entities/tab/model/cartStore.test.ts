@@ -16,6 +16,7 @@ describe('cartStore', () => {
     basePrice: 12.0,
     happyHourPrice: 9.0,
     imageUrl: null,
+    photoPath: null,
     isActive: true,
     soldByWeight: false,
     sku: 'COCKTAIL-MARG',

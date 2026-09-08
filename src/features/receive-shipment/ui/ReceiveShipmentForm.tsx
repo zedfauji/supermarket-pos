@@ -111,6 +111,7 @@ export function ReceiveShipmentForm({
       isActive: true,
       soldByWeight: false,
       imageUrl: null,
+      photoPath: null,
       barcode: quick.barcode || null,
       unitsPerPackage: null,
       parentProductId: null,

@@ -18,6 +18,7 @@ const inv = (productId: string, qty: number, threshold: number, name = 'Test') =
       sku: 'SKU',
       isActive: true,
       imageUrl: null,
+      photoPath: null,
       stock_threshold: null,
       unitsPerPackage: null,
       parentProductId: null,

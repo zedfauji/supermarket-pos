@@ -207,6 +207,10 @@ export type AppErrorCode =
   | 'NOT_FOUND_VERSIONED' // row missing under FOR UPDATE in versioned RPC
   | 'BELOW_COST_REQUIRES_OVERRIDE' // Phase 27 (PROMO-07): combined discounts would sell below cost; needs manager PIN override
   | 'DISCOUNT_REQUIRES_MANAGER' // Phase 27 (PROMO-05): ad-hoc discount submitted without manager authorization
+  | 'PHOTO_TOO_LARGE' // Phase 31: photo file exceeds MAX_UPLOAD_BYTES pre-resize
+  | 'PHOTO_DECODE_FAILED' // Phase 31: createImageBitmap could not decode the file (Pitfall 5 — mislabeled/unsupported bytes)
+  | 'PHOTO_UPLOAD_FAILED' // Phase 31: the Storage upload call itself failed
+  | 'PHOTO_LINK_FAILED' // Phase 31: object uploaded but products.photo_path write failed (Pitfall 6)
   | 'UNKNOWN_ERROR';
 
 /**
@@ -385,6 +389,49 @@ export const exportCancelledError = (): AppError => ({
 export const exportFailedError = (detail?: string, raw?: unknown): AppError => ({
   code: 'EXPORT_FAILED',
   message: 'Export failed. Please try again.',
+  ...(detail !== undefined && { detail }),
+  ...(raw !== undefined && { raw }),
+});
+
+/**
+ * Creates a photo-too-large error (Phase 31, D-11).
+ *
+ * @param sizeMb - Offending file size in megabytes, formatted to one decimal place
+ */
+export const photoTooLargeError = (sizeMb: string): AppError => ({
+  code: 'PHOTO_TOO_LARGE',
+  message: 'Photo exceeds the maximum upload size.',
+  detail: sizeMb,
+});
+
+/**
+ * Creates a photo-decode-failed error (Phase 31, Pitfall 5).
+ *
+ * @param type - Offending declared MIME type, or 'unknownType' when File.type is empty
+ */
+export const photoDecodeFailedError = (type: string): AppError => ({
+  code: 'PHOTO_DECODE_FAILED',
+  message: 'Could not decode the image file.',
+  detail: type,
+});
+
+/**
+ * Creates a photo-upload-failed error (Phase 31) — the Storage upload call itself failed.
+ */
+export const photoUploadFailedError = (detail?: string, raw?: unknown): AppError => ({
+  code: 'PHOTO_UPLOAD_FAILED',
+  message: 'Photo upload failed.',
+  ...(detail !== undefined && { detail }),
+  ...(raw !== undefined && { raw }),
+});
+
+/**
+ * Creates a photo-link-failed error (Phase 31, Pitfall 6) — the object uploaded but
+ * `products.photo_path` could not be updated.
+ */
+export const photoLinkFailedError = (detail?: string, raw?: unknown): AppError => ({
+  code: 'PHOTO_LINK_FAILED',
+  message: "The photo uploaded but couldn't be linked to the product.",
   ...(detail !== undefined && { detail }),
   ...(raw !== undefined && { raw }),
 });
