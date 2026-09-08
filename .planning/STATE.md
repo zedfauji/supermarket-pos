@@ -6,15 +6,15 @@ current_phase: 31
 current_phase_name: Product Catalog Detail & Photo Upload
 status: executing
 stopped_at: Phase 30 context gathered
-last_updated: "2026-09-08T00:30:26.603Z"
-last_activity: 2026-09-07
-last_activity_desc: Phase 31 execution started
-state_head: 4adf9d16d37fca7d6589cf603c12dda06ab39593
+last_updated: "2026-09-08T16:27:11.682Z"
+last_activity: 2026-09-08
+last_activity_desc: Phase 31 execution resumed (wave continue)
+state_head: 27b8ec9eda80c267247b73be0308b679fdda30a1
 progress:
   total_phases: 16
   completed_phases: 8
-  total_plans: 50
-  completed_plans: 45
+  total_plans: 51
+  completed_plans: 51
   percent: 50
 ---
 
@@ -29,12 +29,13 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 
 ## Current Position
 
-Phase: 31 (Product Catalog Detail & Photo Upload) — EXECUTING
-Plan: 1 of 5
-  D-08 negative-path proof, flip test-customer fixture to suspended)
-Status: Executing Phase 31
-Last activity: 2026-09-07 — Phase 31 execution started
-  --config merge, D-08 gate) proven end-to-end via a real workflow_dispatch run
+Phase: 31 (Product Catalog Detail & Photo Upload) — All 6 plans summarized (31-06 gap closure
+  complete: inventory join fix, units-per-package validation fix incl. a real second bug found
+  during live E2E verification (missing `noValidate` on the product dialog form), all confirmed
+  passing via `npx playwright test e2e/products/product-management.spec.ts`, 17/17). Awaiting
+  phase re-verification.
+Status: Ready for verification
+Last activity: 2026-09-08 — Phase 31 gap-closure plan 31-06 executed via `/gsd-execute-phase 31 --gaps-only`
 
 **Also complete (concurrent session):** Phase 27 — Promotions & Discount Management, 7/7 plans,
 verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-management/27-VERIFICATION.md`).

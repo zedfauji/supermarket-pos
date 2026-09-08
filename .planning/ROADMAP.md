@@ -443,7 +443,7 @@ Plans:
 **Goal:** Clicking a product in Inventory/Catalog opens the existing add/edit dialog reshaped into a larger view+edit+photo layout (tabbed/sectioned) instead of the current small add/edit-only form, and a product can carry one photo stored in Supabase Storage (not client-local/base64). Distinct from Phase 18's separate barcode-scan-at-checkout peek window — different trigger, different flow, unaffected by this phase.
 **Requirements**: PCAT-01, PCAT-02, PCAT-03, PCAT-04
 **Depends on:** Nothing (Inventory/Catalog admin-side work, independent of Phase 29/30's POS/checkout scope)
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -465,7 +465,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion — gap closure)*
 
-- [ ] 31-06-PLAN.md — Gap closure: join `inventory(quantity_on_hand, low_stock_threshold)` into `useProductsForManagement`/create-mutation refetch (31-VERIFICATION.md CR-01), reject non-integer `unitsPerPackage` entry (31-REVIEW.md WR-01), proven by new PM16-PM18 E2E assertions (wave 5)
+- [x] 31-06-PLAN.md — Gap closure: join `inventory(quantity_on_hand, low_stock_threshold)` into `useProductsForManagement`/create-mutation refetch (31-VERIFICATION.md CR-01), reject non-integer `unitsPerPackage` entry (31-REVIEW.md WR-01), proven by new PM16-PM18 E2E assertions (wave 5)
 
 ### Phase 32: Brand Entity & Pack-Weight Catalog Attributes
 
