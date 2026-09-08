@@ -1,10 +1,11 @@
 ---
 phase: 30
 slug: checkout-continuity-settings-exit-guard-cash-keypad
-status: draft
+status: approved
 shadcn_initialized: true
 preset: radix-nova
 created: 2026-09-08
+reviewed_at: 2026-09-08T15:24:03.1572646-06:00
 ---
 
 # Phase 30 — UI Design Contract
@@ -300,25 +301,45 @@ appear in the message.
 
 ## UI Considerations
 
-> State coverage generated from the UI-consideration probe. Copy references the Copywriting Contract
-> rather than duplicating source strings.
+> Populated by the ui-phase UI-consideration probe and lifted by plan-phase. Copy references the
+> Copywriting Contract rather than duplicating source strings.
 
-Applicable state considerations resolved: **20 covered, 0 backstop, 0 unresolved**.
+Applicable state considerations resolved: **32 covered, 0 backstop, 0 unresolved**.
 
-| Category          | Element(s)                                                                       | Status     | Resolution / Reason                                                                                                                               |
-| ----------------- | -------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Empty             | Saved-sale preview, cash amount                                                  | ✅ covered | Invalid/empty persisted data renders no recovery UI and falls back to documented empty cart; Clear renders `0.00`.                                |
-| Loading           | Caja validation, saved/current comparison, payment reconciliation, Settings Save | ✅ covered | Keep untrusted persisted content hidden until caja validation; show stable spinner/status surfaces and disable affected controls.                 |
-| Error             | Reconciliation and Settings save                                                 | ✅ covered | Unknown payment stays blocked with Retry; failed Save remains open with preserved fields and the documented alert.                                |
-| Populated         | Saved basket preview                                                             | ✅ covered | Render every product, quantity/weight, saved unit price, line total, saved total, and safe payment details.                                       |
-| Partial           | Missing product/inventory or optional draft values                               | ✅ covered | Missing authoritative product/inventory is removal-only; omit absent optional payment rows; any invalid required payload fails closed as a whole. |
-| Overflow          | Basket, dialog copy, keypad                                                      | ✅ covered | Basket body scrolls under fixed header/actions; dialogs cap at viewport height; keypad collision handling preserves a 16px gutter.                |
-| Zero / one / many | Saved basket and split allocations                                               | ✅ covered | Zero valid lines means no recovery surface; one and many use the same list with localized count grammar; long lists scroll.                       |
-| Long text         | Product names, references, translations, errors                                  | ✅ covered | Product names wrap to two lines; references/errors wrap and break safely; actions permit two lines without shrinking targets.                     |
-| Empty             | Settings form                                                                    | ✅ covered | No dirty registration means no guard; Backup never registers as dirty.                                                                            |
-| Loading           | Cash keypad                                                                      | ✅ covered | Processing leaves the anchored keypad visible but inert and exposes the existing processing label at Pay.                                         |
-| Error             | Cash keypad                                                                      | ✅ covered | Input sanitation rejects extra decimal separators/fraction digits without a modal; amount validation stays in existing Checkout error placement.  |
-| Long text         | Keypad accessible labels                                                         | ✅ covered | Labels may wrap visually where shown; translated accessible names remain complete and untruncated.                                                |
+| Category          | Element(s)            | Status     | Resolution / Reason                                                                                                                      |
+| ----------------- | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Empty             | Saved Sale Handoff    | ✅ covered | Empty, malformed, obsolete, caja-mismatched, or invalid saved sales render no recovery surface and fall back to the existing empty cart. |
+| Loading           | Saved Sale Handoff    | ✅ covered | Persisted content stays hidden until authentication and current-caja validation finish; the dialog appears only after validation.        |
+| Error             | Saved Sale Handoff    | ✅ covered | Validation or payload failure fails closed without flashing persisted content or exposing backend details.                               |
+| Populated         | Saved Sale Handoff    | ✅ covered | Show every safe saved product, quantity or weight, unit price, line total, sale total, and applicable Checkout detail.                   |
+| Partial           | Saved Sale Handoff    | ✅ covered | Omit absent optional Checkout rows; missing required sale data invalidates the whole envelope and fails closed.                          |
+| Overflow          | Saved Sale Handoff    | ✅ covered | Long baskets scroll inside the body while the dialog title and actions remain visible within the viewport-height cap.                    |
+| Zero / one / many | Saved Sale Handoff    | ✅ covered | Zero valid lines produces no recovery dialog; one and many lines use the same localized list, and long lists scroll.                     |
+| Long text         | Saved Sale Handoff    | ✅ covered | Product names wrap to two lines; translated copy and references wrap safely; action labels may use two lines.                            |
+| Empty             | Restored-Value Review | ✅ covered | Zero changed rows shows a compact ready notice and enables normal editing and payment.                                                   |
+| Loading           | Restored-Value Review | ✅ covered | Checkout stays visible during comparison, but Pay and cart mutation controls remain disabled until it finishes.                          |
+| Error             | Restored-Value Review | ✅ covered | Missing authoritative product or inventory data is shown as Unavailable and exposes only Remove Item.                                    |
+| Populated         | Restored-Value Review | ✅ covered | Each conflict shows warning treatment, Saved and Current values, and the applicable accept or remove action.                             |
+| Partial           | Restored-Value Review | ✅ covered | A row without an authoritative current value cannot be accepted and must be removed before Checkout continues.                           |
+| Overflow          | Restored-Value Review | ✅ covered | Review content remains viewport-bound; saved/current columns stack below 480px, and long collections scroll.                             |
+| Zero / one / many | Restored-Value Review | ✅ covered | Zero conflicts shows ready; one and many use the same review rows, with Pay disabled until every row resolves.                           |
+| Long text         | Restored-Value Review | ✅ covered | Names, values, guidance, and translated actions wrap without hiding identity, meaning, or touch targets.                                 |
+| Loading           | Payment Recovery      | ✅ covered | Reconciliation shows a stable blocking spinner/status surface with the saved summary while cart and payment controls are inert.          |
+| Error             | Payment Recovery      | ✅ covered | Unknown or offline status shows the documented warning and Retry action while Pay, edit, and discard remain unavailable.                 |
+| Overflow          | Payment Recovery      | ✅ covered | The recovery surface is viewport-constrained and its saved summary scrolls without displacing status or permitted actions.               |
+| Long text         | Payment Recovery      | ✅ covered | Recovery messages and translations wrap naturally, actions may use two lines, and internal identifiers are never displayed.              |
+| Empty             | Settings Exit Guard   | ✅ covered | A form with no registered dirty event shows no guard; Backup never registers a draft.                                                    |
+| Loading           | Settings Exit Guard   | ✅ covered | Saving shows the documented in-flight label and spinner and disables all three actions until the mutation settles.                       |
+| Error             | Settings Exit Guard   | ✅ covered | Validation or mutation failure keeps the dialog open, preserves values, shows the documented alert, and enables Retry Save.              |
+| Partial           | Settings Exit Guard   | ✅ covered | Partially invalid forms preserve all fields and focus the first invalid field; mutation failures focus the alert.                        |
+| Overflow          | Settings Exit Guard   | ✅ covered | Below 640px the dialog keeps a 16px viewport gutter, constrains content vertically, and stacks full-width actions.                       |
+| Long text         | Settings Exit Guard   | ✅ covered | Translated descriptions, errors, and actions wrap naturally without reducing action target height.                                       |
+| Empty             | Cash Tender Keypad    | ✅ covered | An empty or cleared tender buffer normalizes to `0.00` without showing an error.                                                         |
+| Loading           | Cash Tender Keypad    | ✅ covered | During processing the open keypad stays visible but inert, and all tender input and shortcut controls are disabled.                      |
+| Error             | Cash Tender Keypad    | ✅ covered | Extra decimal separators or fractional digits are rejected without a modal; validation stays in existing Checkout placement.             |
+| Partial           | Cash Tender Keypad    | ✅ covered | The buffer permits one decimal separator and two fractional digits while preserving the valid prefix already entered.                    |
+| Overflow          | Cash Tender Keypad    | ✅ covered | Radix collision handling keeps the keypad within the viewport gutter and away from Pay and the saved-order summary.                      |
+| Long text         | Cash Tender Keypad    | ✅ covered | Visible labels may wrap; translated accessible names remain complete while targets retain their required height.                         |
 
 ---
 
@@ -363,11 +384,11 @@ contract.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved
