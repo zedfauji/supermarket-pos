@@ -15,6 +15,7 @@ import {
   networkOfflineError,
   ok,
   photoLinkFailedError,
+  photoRemoveFailedError,
   photoUploadFailedError,
   supabaseMutation,
   type Result,
@@ -31,6 +32,8 @@ export type ProductPhotoUploadInput = {
   productId: string;
   previousPath: string | null;
   file: File;
+  /** Lets the UI distinguish the resize (D-10) phase from the network-upload phase — see 31-UI-SPEC.md's Photo tab loading row. */
+  onStageChange?: (stage: 'processing' | 'uploading') => void;
 };
 
 export function useProductPhotoUpload() {
@@ -45,9 +48,11 @@ export function useProductPhotoUpload() {
       const validated = validatePhotoFile(input.file);
       if (!validated.ok) return validated;
 
+      input.onStageChange?.('processing');
       const resized = await resizePhoto(validated.data);
       if (!resized.ok) return resized;
 
+      input.onStageChange?.('uploading');
       const path = photoObjectPath(input.productId, resized.data.ext);
       const contentType = resized.data.ext === 'webp' ? WEBP_CONTENT_TYPE : JPEG_CONTENT_TYPE;
 
@@ -87,6 +92,63 @@ export function useProductPhotoUpload() {
       }
 
       return ok({ path });
+    },
+    onSuccess: result => {
+      if (result.ok) invalidateCatalogQueries(queryClient);
+    },
+  });
+}
+
+export type ProductPhotoRemoveInput = {
+  productId: string;
+  /** Always the path already stored on the product row (T-31-15) — never a caller-supplied string. */
+  path: string;
+};
+
+/**
+ * Removes a product's photo (D-12): clears `products.photo_path` first, then
+ * deletes the Storage object. Column-clear failure leaves everything
+ * untouched (photo stays in place, retryable). A failed object delete after
+ * a successful column-clear is a logged orphan, not a user-facing error —
+ * the same precedent as the upload path's old-object delete above, since
+ * nothing references the object anymore either way.
+ */
+export function useRemoveProductPhoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: ProductPhotoRemoveInput): Promise<Result<void>> => {
+      if (!isOnline()) {
+        return err(networkOfflineError());
+      }
+
+      const linkResult = await supabaseMutation(() =>
+        supabase
+          .from('products')
+          .update({ photo_path: null })
+          .eq('id', input.productId)
+          .select('id')
+          .single()
+      );
+      if (!linkResult.ok) {
+        logger.error('product.photo.remove_link_failed', {
+          message: linkResult.error.message,
+          productId: input.productId,
+        });
+        return err(photoRemoveFailedError(linkResult.error.message, linkResult.error));
+      }
+
+      const { error: removeError } = await supabase.storage
+        .from(PRODUCT_PHOTO_BUCKET)
+        .remove([input.path]);
+      if (removeError) {
+        logger.warn('product.photo.remove_object_orphaned', {
+          path: input.path,
+          message: removeError.message,
+        });
+      }
+
+      return ok(undefined);
     },
     onSuccess: result => {
       if (result.ok) invalidateCatalogQueries(queryClient);

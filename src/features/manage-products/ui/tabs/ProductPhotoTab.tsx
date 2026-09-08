@@ -3,10 +3,10 @@
  * D-09 entry paths — OS file picker, drag-and-drop, and clipboard paste (via
  * the imperative handle `handleFile`, called by `ProductDetailDialog`'s
  * tab-scoped paste listener) — onto the single validate -> resize -> upload
- * -> link pipeline. Clicking the populated preview re-opens the picker so a
- * second upload is still reachable without the dedicated Replace button.
+ * -> link pipeline, plus a confirmed Remove (D-12) and the full loading/error
+ * state matrix from 31-UI-SPEC.md's Photo tab table.
  */
-import { ImageOff, ImagePlus } from 'lucide-react';
+import { ImageOff, ImagePlus, Trash2, Upload } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -14,11 +14,13 @@ import { useProductImageUrl } from '@entities/product';
 import type { Product } from '@shared/lib/domain';
 import type { AppError } from '@shared/lib/result';
 import { cn } from '@shared/lib/utils';
+import { ConfirmDialog } from '@shared/ui/ConfirmDialog';
 import { EmptyState } from '@shared/ui/EmptyState';
 import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
+import { POSButton } from '@shared/ui/POSButton';
 import { Skeleton } from '@shared/ui/skeleton';
 import { ACCEPTED_PHOTO_MIME_TYPES, firstImageFromDataTransfer } from '../../model/photo-file';
-import { useProductPhotoUpload } from '../../model/useProductPhotoUpload';
+import { useProductPhotoUpload, useRemoveProductPhoto } from '../../model/useProductPhotoUpload';
 
 export type ProductPhotoTabProps = {
   product: Product;
@@ -39,6 +41,8 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [stage, setStage] = useState<'idle' | 'processing' | 'uploading'>('idle');
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   // CatalogProductsTab's `editProduct` is a plain useState set once when the
   // dialog opens — it is never resynced after invalidateCatalogQueries
   // refetches the catalog, so `product.photoPath` stays stale for the whole
@@ -47,9 +51,11 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
   // product object.
   const [localPhotoPath, setLocalPhotoPath] = useState<string | null>(product.photoPath);
   const uploadMutation = useProductPhotoUpload();
+  const removeMutation = useRemoveProductPhoto();
   const { url, isLoading: isSigning } = useProductImageUrl({ ...product, photoPath: localPhotoPath });
 
-  const disabled = submitting || uploadMutation.isPending;
+  const disabled = submitting || uploadMutation.isPending || removeMutation.isPending;
+  const isInFlight = uploadMutation.isPending || removeMutation.isPending;
 
   function errorCopyFor(error: AppError): string {
     const unknownTypeLabel = t('manageProducts.productDialog.photo.unknownType');
@@ -68,6 +74,8 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
         return t('manageProducts.productDialog.photo.errorUpload', { message: error.message });
       case 'PHOTO_LINK_FAILED':
         return t('manageProducts.productDialog.photo.errorLink');
+      case 'PHOTO_REMOVE_FAILED':
+        return t('manageProducts.productDialog.photo.errorRemove', { message: error.message });
       case 'NETWORK_OFFLINE':
         return t('manageProducts.productDialog.photo.errorOffline');
       default:
@@ -92,7 +100,7 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
     setErrorMessage(null);
     setImgFailed(false);
     uploadMutation.mutate(
-      { productId: product.id, previousPath: localPhotoPath, file },
+      { productId: product.id, previousPath: localPhotoPath, file, onStageChange: setStage },
       {
         onSuccess: result => {
           if (!result.ok) {
@@ -103,6 +111,30 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
           }
           setLocalPhotoPath(result.data.path);
           toast.success(t('manageProducts.productDialog.photo.uploaded'));
+        },
+        onSettled: () => {
+          setStage('idle');
+        },
+      }
+    );
+  }
+
+  function handleRemoveConfirm(): void {
+    if (!localPhotoPath) return;
+    removeMutation.mutate(
+      { productId: product.id, path: localPhotoPath },
+      {
+        onSuccess: result => {
+          setRemoveConfirmOpen(false);
+          if (!result.ok) {
+            const message = errorCopyFor(result.error);
+            setErrorMessage(message);
+            toast.error(message);
+            return;
+          }
+          setErrorMessage(null);
+          setLocalPhotoPath(null);
+          toast.success(t('manageProducts.productDialog.photo.removed'));
         },
       }
     );
@@ -142,6 +174,7 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
   const hasPhoto = localPhotoPath != null;
 
   return (
+    <>
     <div className="flex flex-col items-center gap-4">
       <div
         data-testid="product-photo-dropzone"
@@ -158,14 +191,14 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         {...(hasPhoto
-          ? {
+          ? {}
+          : {
               role: 'button' as const,
               tabIndex: 0,
               onClick: openPicker,
               onKeyDown: handleKeyDown,
               'aria-label': t('manageProducts.productDialog.photo.chooseFile'),
-            }
-          : {})}
+            })}
       >
         {isDragOver && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
@@ -205,11 +238,13 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
           />
         )}
 
-        {uploadMutation.isPending && (
+        {isInFlight && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-popover/70">
             <LoadingSpinner />
             <span className="text-sm text-muted-foreground">
-              {t('manageProducts.productDialog.photo.uploading')}
+              {stage === 'processing'
+                ? t('manageProducts.productDialog.photo.processing')
+                : t('manageProducts.productDialog.photo.uploading')}
             </span>
           </div>
         )}
@@ -225,6 +260,35 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
         />
       </div>
 
+      {hasPhoto && (
+        <div className="flex flex-wrap justify-center gap-4">
+          <POSButton
+            type="button"
+            variant="outline"
+            touchSize="default"
+            disabled={disabled}
+            onClick={openPicker}
+            data-testid="product-photo-replace"
+          >
+            <Upload className="size-4" aria-hidden="true" />
+            {t('manageProducts.productDialog.photo.replace')}
+          </POSButton>
+          <POSButton
+            type="button"
+            variant="destructive"
+            touchSize="default"
+            disabled={disabled}
+            onClick={() => {
+              setRemoveConfirmOpen(true);
+            }}
+            data-testid="product-photo-remove"
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+            {t('manageProducts.productDialog.photo.remove')}
+          </POSButton>
+        </div>
+      )}
+
       {!hasPhoto && (
         <p className="text-sm text-muted-foreground">
           {t('manageProducts.productDialog.photo.formatsHint')}
@@ -237,6 +301,21 @@ export const ProductPhotoTab = forwardRef<ProductPhotoTabHandle, ProductPhotoTab
         </p>
       )}
     </div>
+
+    <ConfirmDialog
+      open={removeConfirmOpen}
+      title={t('manageProducts.productDialog.photo.removeConfirmTitle')}
+      description={t('manageProducts.productDialog.photo.removeConfirmDescription')}
+      confirmLabel={t('manageProducts.productDialog.photo.removeConfirmLabel')}
+      cancelLabel={t('manageProducts.productDialog.photo.removeConfirmCancelLabel')}
+      variant="destructive"
+      isLoading={removeMutation.isPending}
+      onConfirm={handleRemoveConfirm}
+      onCancel={() => {
+        setRemoveConfirmOpen(false);
+      }}
+    />
+    </>
   );
   }
 );

@@ -207,7 +207,15 @@
         "errorLink": "The photo uploaded but couldn't be linked to the product. Try again.",
         "errorLoad": "Couldn't load the photo. Replace it or try again later.",
         "errorOffline": "Offline — photos upload only when online. Reconnect and try again.",
-        "lockedTitle": "Save the product first"
+        "lockedTitle": "Save the product first",
+        "replace": "Replace photo",
+        "remove": "Remove photo",
+        "removed": "Photo removed",
+        "errorRemove": "Couldn't remove the photo: {{message}}. Try again.",
+        "removeConfirmTitle": "Remove the photo?",
+        "removeConfirmDescription": "The photo will be deleted from this product. You can upload another later.",
+        "removeConfirmLabel": "Remove photo",
+        "removeConfirmCancelLabel": "Keep photo"
       }
     }
   },

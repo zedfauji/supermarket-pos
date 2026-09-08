@@ -207,7 +207,15 @@
         "errorLink": "La foto se subió pero no se pudo vincular al producto. Inténtalo de nuevo.",
         "errorLoad": "No se pudo cargar la foto. Reemplázala o inténtalo más tarde.",
         "errorOffline": "Sin conexión — las fotos solo se suben en línea. Reconecta e inténtalo de nuevo.",
-        "lockedTitle": "Guarda el producto primero"
+        "lockedTitle": "Guarda el producto primero",
+        "replace": "Reemplazar foto",
+        "remove": "Quitar foto",
+        "removed": "Foto quitada",
+        "errorRemove": "No se pudo quitar la foto: {{message}}. Inténtalo de nuevo.",
+        "removeConfirmTitle": "¿Quitar la foto?",
+        "removeConfirmDescription": "Se eliminará la foto de este producto. Puedes subir otra después.",
+        "removeConfirmLabel": "Quitar foto",
+        "removeConfirmCancelLabel": "Conservar foto"
       }
     }
   },
