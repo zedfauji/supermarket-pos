@@ -170,7 +170,12 @@ export type CategoryRouting = z.infer<typeof CategoryRoutingSchema>;
 
 export const CategorySchema = z.object({
   id: UuidSchema,
-  name: z.string().min(1).max(50),
+  // max(100) matches the live `categories.name VARCHAR(100)` column
+  // (supabase/migrations/20260414000003_products_and_categories.sql:8) —
+  // was max(50) here, silently tighter than the DB and than a legitimate
+  // 60-100 char category name; see ProductSchema.name below for the sibling
+  // fix (Phase 31 Plan 05).
+  name: z.string().min(1).max(100),
   color: HexColorSchema,
   sortOrder: z.number().int().nonnegative(),
   /**
@@ -228,7 +233,15 @@ export type ModifierUpdate = z.infer<typeof ModifierUpdateSchema>;
 
 export const ProductSchema = z.object({
   id: UuidSchema,
-  name: z.string().min(1).max(100),
+  // max(255) matches the live `products.name VARCHAR(255)` column
+  // (supabase/migrations/20260414000003_products_and_categories.sql:27) —
+  // was max(100) here, silently tighter than the DB. A DB-legal name over
+  // 100 chars (e.g. a long imported-goods product name) previously failed
+  // this parse inside mapProductRow, and useProductsForManagement/useProducts
+  // abort the WHOLE catalog fetch on the first row that fails to map — one
+  // long name broke the entire Catalog page for every user, not just that
+  // row (found via Phase 31 Plan 05's own 120-char-name fixture).
+  name: z.string().min(1).max(255),
   categoryId: UuidSchema,
   basePrice: MoneySchema,
   /**
