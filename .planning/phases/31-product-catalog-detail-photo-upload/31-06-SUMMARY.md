@@ -142,6 +142,16 @@ Both tasks carry `tdd="true"`, but the RED (failing-test) step could not be obse
 - **Action needed before Phase 31 can be marked fully verified:** run `npx playwright test e2e/products/product-management.spec.ts` (full file, including PM16/17/18) in an environment with local Supabase/Docker available, and update `.planning/WINDOWS.md`'s corresponding `unrun-verify` entries once confirmed passing.
 - IN-01 (client/bucket upload-limit mismatch) and IN-02 (unmemoized `photoColumn`) remain explicitly out of scope per this plan's objective — untouched.
 
+## Self-Check: PASSED
+
+- FOUND: src/entities/product/model/queries.ts (modified)
+- FOUND: src/features/manage-products/ui/ProductDetailDialog.tsx (modified)
+- FOUND: e2e/products/product-management.spec.ts (modified)
+- FOUND: .planning/phases/31-product-catalog-detail-photo-upload/31-06-SUMMARY.md
+- FOUND commit: f29bd78 (Task 1)
+- FOUND commit: ac767fc (Task 2)
+- FOUND commit: bf0ce56 (metadata)
+
 ---
 *Phase: 31-product-catalog-detail-photo-upload*
 *Completed: 2026-09-08*
