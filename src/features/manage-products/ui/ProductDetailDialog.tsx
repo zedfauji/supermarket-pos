@@ -143,7 +143,18 @@ export function ProductDetailDialog({
   // switching never calls this, so it stays free per the spec.
   function requestClose() {
     if (isProductFormDirty(initialSnapshot, currentSnapshot())) {
-      setDiscardConfirmOpen(true);
+      // Opening the ConfirmDialog synchronously, from inside the outer
+      // Dialog's own Escape-key dismiss handler, races Radix's
+      // DismissableLayer: the new AlertDialog layer can mount and register
+      // its own document-level Escape listener while the SAME native
+      // keydown event is still finishing its dispatch, so the fresh layer
+      // immediately dismisses itself. Deferring to the next macrotask lets
+      // the triggering event finish first — a real fix, not just a test
+      // workaround, since a real user pressing Esc would hit the identical
+      // flicker/self-close.
+      setTimeout(() => {
+        setDiscardConfirmOpen(true);
+      }, 0);
     } else {
       onOpenChange(false);
     }

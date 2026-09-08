@@ -81,6 +81,9 @@ async function openEditDialogForTestProduct(page: Page) {
   // and would otherwise make this locator ambiguous.
   const dialog = page.getByRole('dialog', { name: 'Edit product' });
   await expect(dialog).toBeVisible({ timeout: 10_000 });
+  // Phase 31 Plan 02 reshape: ProductPhotoTab now lives behind the Photo
+  // rail trigger instead of being mounted directly under the form.
+  await dialog.getByRole('tab', { name: /photo/i }).click();
   return dialog;
 }
 

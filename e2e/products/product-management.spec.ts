@@ -5,6 +5,7 @@
  * and RBAC gating for cashiers.
  */
 
+import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '../fixtures';
 import { loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
@@ -21,10 +22,56 @@ async function cleanupTestData(): Promise<void> {
   await admin.from('categories').delete().eq('name', TEST_CATEGORY);
 }
 
+/** Seeds (upserts) TEST_PRODUCT directly via the service client, returning its id. */
+async function seedTestProduct(
+  overrides: Record<string, unknown> = {}
+): Promise<{ id: string; categoryId: string } | null> {
+  const admin = getServiceClient();
+  const { data: cat } = await admin.from('categories').select('id').limit(1).single();
+  if (!cat) return null;
+  const categoryId = cat.id as string;
+  const { data: product } = await admin
+    .from('products')
+    .upsert({
+      name: TEST_PRODUCT,
+      category_id: categoryId,
+      base_price: 9.99,
+      is_active: true,
+      ...overrides,
+    })
+    .select('id')
+    .single();
+  if (!product) return null;
+  return { id: product.id as string, categoryId };
+}
+
+/**
+ * The reshaped `ProductDetailDialog`'s Name field, selected by role instead
+ * of `getByLabel` (Rule 1 fix, Phase 31 reshape). `getByLabel` resolves a
+ * tab's `aria-labelledby` target by its full referenced text, including the
+ * `VerticalTabsTrigger`'s decorative (`aria-hidden`) description — and the
+ * Details tab's description ("Name, price, barcode") happens to start with
+ * "Name", so `dialog.getByLabel(/name/i)` strict-mode-fails by also matching
+ * the Details `tabpanel` container itself. `getByRole('textbox', ...)`
+ * can't match a non-textbox container, so it's unambiguous.
+ */
+function nameField(container: Page | Locator): Locator {
+  return container.getByRole('textbox', { name: /^Name/i });
+}
+
 async function navigateToInventory(page: Parameters<typeof loginAs>[0]): Promise<boolean> {
   await page.goto('/inventory');
   const inventoryHeading = page.getByRole('heading', { name: /inventory|products|catalog/i });
-  return inventoryHeading.isVisible({ timeout: 10_000 }).catch(() => false);
+  // `isVisible()` is a one-shot, non-retrying check (unlike `expect(...).toBeVisible()`
+  // or `waitFor()`) — calling it immediately after `page.goto()` races the app's
+  // client-side render and can return false before React ever mounts the
+  // heading. `waitFor` actually polls until the element renders or the
+  // timeout elapses (Rule 1 fix — pre-existing in this helper, unrelated to
+  // Phase 31's dialog reshape, but blocking every test that depends on it).
+  return inventoryHeading
+    .waitFor({ state: 'visible', timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
 }
 
 /**
@@ -41,7 +88,11 @@ async function navigateToProductsSettingsTab(
 ): Promise<boolean> {
   await page.goto('/inventory');
   const catalogTab = page.getByRole('tab', { name: 'Catalog' });
-  const catalogTabVisible = await catalogTab.isVisible({ timeout: 10_000 }).catch(() => false);
+  // See navigateToInventory's comment — `waitFor` actually polls, `isVisible` doesn't.
+  const catalogTabVisible = await catalogTab
+    .waitFor({ state: 'visible', timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
   if (!catalogTabVisible) return false;
   await catalogTab.click();
   // Nested catalog tabs: "Products" is selected by default.
@@ -49,7 +100,10 @@ async function navigateToProductsSettingsTab(
 
   if (subTab === 'categories') {
     const categoriesSubTab = page.getByRole('tab', { name: 'Categories' });
-    const visible = await categoriesSubTab.isVisible({ timeout: 5_000 }).catch(() => false);
+    const visible = await categoriesSubTab
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!visible) return false;
     await categoriesSubTab.click();
   }
@@ -170,7 +224,7 @@ test.describe('Product Management', () => {
     // ambiguous (strict-mode) on every authenticated page in this app.
     const dialog = page.getByRole('dialog', { name: 'New product' });
     await expect(dialog).toBeVisible({ timeout: 10_000 });
-    await dialog.getByLabel(/name/i).fill(TEST_PRODUCT);
+    await nameField(dialog).fill(TEST_PRODUCT);
     // Category is a required native <select> — explicitly pick TEST_CATEGORY
     // rather than relying on whatever the form defaults to.
     const categorySelect = dialog.getByLabel(/category/i);
@@ -185,7 +239,15 @@ test.describe('Product Management', () => {
     const priceInput = dialog.getByPlaceholder('0.00').first();
     await priceInput.fill('9.99');
     await dialog.getByRole('button', { name: /save|create|add/i }).click();
-    await expect(dialog).not.toBeVisible({ timeout: 10_000 });
+
+    // Create-then-stay (Phase 31 D-03): the dialog no longer closes itself on
+    // a successful create — it stays open, now in edit mode for the
+    // just-created product (see PM11 for a dedicated test of this
+    // behaviour). Close it explicitly before checking the catalog row.
+    const stayOpenDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(stayOpenDialog).toBeVisible({ timeout: 10_000 });
+    await stayOpenDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(stayOpenDialog).not.toBeVisible({ timeout: 10_000 });
 
     // Every row's Name cell renders as an editable <input value="...">
     // (CatalogProductsTab: "Edit name, category, or prices inline"), not
@@ -425,6 +487,280 @@ test.describe('Product Management', () => {
     // found." toast instead of a disabled control.
     await expect(page.getByRole('button', { name: /increase quantity/i }).first()).toBeDisabled();
     await expect(page.getByRole('button', { name: /decrease quantity/i }).first()).toBeDisabled();
+
+    await logout(page);
+  });
+
+  // ===================================================================
+  // Phase 31 (31-02): ProductDetailDialog reshape — Details/Photo/Links
+  // vertical tabs, read-only stock strip, create-then-stay, error-driven
+  // tab navigation (D-06), and the dirty-close guard (D-07).
+  // ===================================================================
+
+  test('PM9: reshaped dialog shows all three rail triggers — Photo enabled in edit, disabled in create', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+    await expect(editDialog.getByRole('tab', { name: /details/i })).toBeVisible();
+    await expect(editDialog.getByRole('tab', { name: /photo/i })).toBeVisible();
+    await expect(editDialog.getByRole('tab', { name: /links/i })).toBeVisible();
+    await expect(editDialog.getByRole('tab', { name: /photo/i })).toBeEnabled();
+    await expect(editDialog.getByTestId('product-stock-strip')).toBeVisible();
+    await editDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await page.getByRole('button', { name: 'Add product' }).click();
+    const createDialog = page.getByRole('dialog', { name: 'New product' });
+    await expect(createDialog).toBeVisible({ timeout: 10_000 });
+    await expect(createDialog.getByRole('tab', { name: /photo/i })).toBeDisabled();
+    await expect(createDialog.getByTestId('product-stock-strip')).toHaveCount(0);
+    await createDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(createDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await logout(page);
+  });
+
+  test('PM10: round trip — a Details field and a Links field save together from one submit', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    await editDialog.getByLabel('SKU').fill('SKU-ROUNDTRIP-1');
+    await editDialog.getByRole('tab', { name: /links/i }).click();
+    await editDialog.getByLabel('Units per package').fill('5');
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 10_000 });
+
+    const admin = getServiceClient();
+    const { data } = await admin
+      .from('products')
+      .select('sku, units_per_package')
+      .eq('id', seeded.id)
+      .single();
+    expect(data?.sku).toBe('SKU-ROUNDTRIP-1');
+    expect(data?.units_per_package).toBe(5);
+
+    await logout(page);
+  });
+
+  test('PM11 (D-03): create-then-stay — dialog stays open after Create, flips to edit title, Photo enables', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByRole('button', { name: 'Add product' }).click();
+    const createDialog = page.getByRole('dialog', { name: 'New product' });
+    await expect(createDialog).toBeVisible({ timeout: 10_000 });
+    await nameField(createDialog).fill(TEST_PRODUCT);
+    await createDialog.getByPlaceholder('0.00').first().fill('9.99');
+    const createBtn = createDialog.getByRole('button', { name: 'Create product' });
+    await createBtn.scrollIntoViewIfNeeded();
+    await createBtn.click();
+    await expect(page.getByText('Product created')).toBeVisible({ timeout: 15_000 });
+
+    const stillOpenDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(stillOpenDialog).toBeVisible({ timeout: 10_000 });
+    await expect(stillOpenDialog.getByRole('tab', { name: /photo/i })).toBeEnabled();
+    await expect(stillOpenDialog.getByTestId('product-stock-strip')).toBeVisible();
+
+    await stillOpenDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(stillOpenDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await logout(page);
+  });
+
+  test('PM12 (D-06): an invalid field on a hidden tab switches the dialog back to it and marks it', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    await nameField(editDialog).fill('');
+    await editDialog.getByRole('tab', { name: /links/i }).click();
+    await expect(editDialog.getByLabel('Units per package')).toBeVisible();
+
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+
+    const detailsTab = editDialog.getByRole('tab', { name: /details/i });
+    await expect(detailsTab).toHaveAttribute('data-state', 'active', { timeout: 10_000 });
+    await expect(detailsTab).toHaveAccessibleName(/has errors/i);
+    await expect(nameField(editDialog)).toHaveAttribute('aria-invalid', 'true');
+
+    // Restore the Name field and clean up (dirty close prompts otherwise).
+    await nameField(editDialog).fill(TEST_PRODUCT);
+    await editDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await logout(page);
+  });
+
+  test('PM13 (D-07): closing with unsaved edits prompts to discard; keep-editing preserves the edit', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    const skuInput = editDialog.getByLabel('SKU');
+    await skuInput.fill('SKU-DIRTY-1');
+
+    await page.keyboard.press('Escape');
+    const discardDialog = page.getByRole('alertdialog');
+    await expect(discardDialog).toBeVisible({ timeout: 10_000 });
+    await expect(discardDialog.getByText(/discard changes\?/i)).toBeVisible();
+
+    await discardDialog.getByRole('button', { name: /keep editing/i }).click();
+    await expect(discardDialog).not.toBeVisible({ timeout: 5_000 });
+    await expect(editDialog).toBeVisible();
+    await expect(skuInput).toHaveValue('SKU-DIRTY-1');
+
+    await page.keyboard.press('Escape');
+    await expect(discardDialog).toBeVisible({ timeout: 10_000 });
+    await discardDialog.getByRole('button', { name: /discard changes/i }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 10_000 });
+
+    await logout(page);
+  });
+
+  test('PM14: switching tabs is free — no confirmation, and an unsaved edit survives the round trip', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    const skuInput = editDialog.getByLabel('SKU');
+    await skuInput.fill('SKU-TAB-SWITCH-1');
+
+    await editDialog.getByRole('tab', { name: /links/i }).click();
+    await expect(editDialog.getByLabel('Units per package')).toBeVisible();
+    await editDialog.getByRole('tab', { name: /details/i }).click();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(skuInput).toHaveValue('SKU-TAB-SWITCH-1');
+
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 10_000 });
+
+    const admin = getServiceClient();
+    const { data } = await admin.from('products').select('sku').eq('id', seeded.id).single();
+    expect(data?.sku).toBe('SKU-TAB-SWITCH-1');
+
+    await logout(page);
+  });
+
+  test('PM15 (PCAT-02): cashier sees no add/edit affordance on Catalog Products', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'cashier');
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      // Cashier can't even reach the Products sub-tab — that's a stricter
+      // (still correct) form of the same denial this test asserts.
+      await logout(page);
+      return;
+    }
+
+    await expect(page.getByRole('button', { name: 'Add product' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Edit' }).first()).toHaveCount(0);
 
     await logout(page);
   });
