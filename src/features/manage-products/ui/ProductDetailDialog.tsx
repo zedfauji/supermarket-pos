@@ -1,10 +1,18 @@
 import { FileText, Image as ImageIcon, Link2 } from 'lucide-react';
-import { useEffect, useMemo, useState, type SyntheticEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type SyntheticEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import type { CreateProductInput, UpdateProductInput } from '@entities/product';
 import type { Category, Modifier, Product, Supplier } from '@shared/lib/domain';
 import { ProductCreateSchema, ProductUpdateSchema, UuidSchema } from '@shared/lib/domain';
+import { ConfirmDialog } from '@shared/ui/ConfirmDialog';
 import { POSButton } from '@shared/ui/POSButton';
 import { Badge } from '@shared/ui/badge';
 import {
@@ -16,13 +24,18 @@ import {
 } from '@shared/ui/dialog';
 import { Tabs, TabsContent } from '@shared/ui/tabs';
 import { VerticalTabsList, VerticalTabsTrigger } from '@shared/ui/vertical-tabs';
+import {
+  firstErroringTab,
+  isProductFormDirty,
+  tabsWithErrors,
+  type ProductDialogTabId,
+  type ProductFormSnapshot,
+} from '../model/productDialogTabs';
 import { ProductDetailsTab } from './tabs/ProductDetailsTab';
 import { ProductLinksTab } from './tabs/ProductLinksTab';
 import { ProductPhotoTab } from './tabs/ProductPhotoTab';
 
 const ModifierIdsSchema = z.array(UuidSchema);
-
-type ProductDialogTabId = 'details' | 'photo' | 'links';
 
 export type ProductDetailDialogProps = {
   open: boolean;
@@ -87,6 +100,54 @@ export function ProductDetailDialog({
   ]);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // D-07 dirty-close guard: captured once at mount. A create-then-stay
+  // transition or opening a different product both remount this component
+  // (CatalogProductsTab keys it by product id), which re-runs this lazy
+  // initializer — that is the re-baseline, not a live effect.
+  const [initialSnapshot] = useState<ProductFormSnapshot>(() => ({
+    name: initialProduct?.name ?? '',
+    categoryId: initialProduct?.categoryId ?? categories[0]?.id ?? '',
+    basePrice: initialProduct?.basePrice ?? 0,
+    sku: initialProduct?.sku ?? '',
+    barcode: initialProduct?.barcode ?? '',
+    unitsPerPackageInput:
+      initialProduct?.unitsPerPackage != null ? String(initialProduct.unitsPerPackage) : '',
+    parentProductIdInput: initialProduct?.parentProductId ?? '',
+    isActive: initialProduct?.isActive ?? true,
+    imageUrl: initialProduct?.imageUrl ?? '',
+    modifierIds: initialProduct?.modifiers.map(m => m.id) ?? [],
+    selectedSupplierIds: [...(supplierIds ?? [])],
+  }));
+
+  function currentSnapshot(): ProductFormSnapshot {
+    return {
+      name,
+      categoryId,
+      basePrice,
+      sku,
+      barcode,
+      unitsPerPackageInput,
+      parentProductIdInput,
+      isActive,
+      imageUrl,
+      modifierIds,
+      selectedSupplierIds,
+    };
+  }
+
+  // D-07: X, Esc, outside-click, and Cancel all route through this — dirty
+  // opens the discard-confirm dialog; not dirty closes immediately. Tab
+  // switching never calls this, so it stays free per the spec.
+  function requestClose() {
+    if (isProductFormDirty(initialSnapshot, currentSnapshot())) {
+      setDiscardConfirmOpen(true);
+    } else {
+      onOpenChange(false);
+    }
+  }
 
   // Same sanctioned backfill pattern as the retired `ProductForm.tsx` — the
   // categoryId initializer above only runs once, at mount, so if the dialog
@@ -106,6 +167,36 @@ export function ProductDetailDialog({
       setSelectedSupplierIds([...supplierIds]);
     }
   }, [supplierIds]);
+
+  // D-06: after a submit produces field errors, jump to the first tab that
+  // owns one (rail order breaks ties) and move focus to its first invalid
+  // control. Runs after the DOM reflects the (possibly new) activeTab.
+  useEffect(() => {
+    if (Object.keys(fieldErrors).length === 0) return;
+    // eslint-disable-next-line i18next/no-literal-string -- CSS attribute selector, not UI copy
+    const el = panelRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    el?.focus();
+  }, [fieldErrors]);
+
+  const errorTabs = useMemo(() => tabsWithErrors(fieldErrors), [fieldErrors]);
+
+  function errorBadgeFor(tab: ProductDialogTabId): ReactNode {
+    return errorTabs.has(tab) ? (
+      <span className="size-2 rounded-full bg-destructive" aria-hidden="true" />
+    ) : undefined;
+  }
+
+  function labelWithErrorSuffix(tab: ProductDialogTabId, label: string): string {
+    return errorTabs.has(tab) ? t('manageProducts.productDialog.tabWithErrors', { label }) : label;
+  }
+
+  function applyFieldErrors(next: Record<string, string>) {
+    setFieldErrors(next);
+    const target = firstErroringTab(next);
+    if (target && target !== activeTab) {
+      setActiveTab(target);
+    }
+  }
 
   const sortedModifiers = useMemo(
     () => [...modifiers].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
@@ -138,7 +229,7 @@ export function ProductDetailDialog({
 
     const modParsed = ModifierIdsSchema.safeParse(modifierIds);
     if (!modParsed.success) {
-      setFieldErrors({ modifiers: t('manageProducts.productForm.invalidModifierSelection') });
+      applyFieldErrors({ modifiers: t('manageProducts.productForm.invalidModifierSelection') });
       return;
     }
 
@@ -151,7 +242,7 @@ export function ProductDetailDialog({
     if (unitsPerPackageInput.trim() !== '') {
       const parsedUnits = Number.parseInt(unitsPerPackageInput.trim(), 10);
       if (!Number.isFinite(parsedUnits) || parsedUnits < 1) {
-        setFieldErrors({
+        applyFieldErrors({
           unitsPerPackage: t('manageProducts.productForm.unitsPerPackageMinError'),
         });
         return;
@@ -193,7 +284,7 @@ export function ProductDetailDialog({
         if (Object.keys(next).length === 0 && parsed.error.issues[0]) {
           next._form = parsed.error.issues[0].message;
         }
-        setFieldErrors(next);
+        applyFieldErrors(next);
         return;
       }
       onSubmitUpdate({
@@ -231,7 +322,7 @@ export function ProductDetailDialog({
       if (Object.keys(next).length === 0 && parsed.error.issues[0]) {
         next._form = parsed.error.issues[0].message;
       }
-      setFieldErrors(next);
+      applyFieldErrors(next);
       return;
     }
 
@@ -243,7 +334,18 @@ export function ProductDetailDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={next => {
+        // D-07: only a genuine close attempt (X / Esc / outside click) runs
+        // through the dirty check — Radix only ever calls this with `false`
+        // here, since `open` itself is controlled by the parent.
+        if (!next) {
+          requestClose();
+        }
+      }}
+    >
       <DialogContent
         className="flex max-h-[80vh] max-w-4xl flex-col overflow-hidden sm:max-w-4xl"
         showCloseButton
@@ -307,8 +409,12 @@ export function ProductDetailDialog({
               <VerticalTabsTrigger
                 value="details"
                 icon={FileText}
-                label={t('manageProducts.productDialog.tabs.details')}
+                label={labelWithErrorSuffix(
+                  'details',
+                  t('manageProducts.productDialog.tabs.details')
+                )}
                 description={t('manageProducts.productDialog.tabs.detailsDescription')}
+                badge={errorBadgeFor('details')}
                 disabled={submitting}
               />
               <VerticalTabsTrigger
@@ -325,13 +431,14 @@ export function ProductDetailDialog({
               <VerticalTabsTrigger
                 value="links"
                 icon={Link2}
-                label={t('manageProducts.productDialog.tabs.links')}
+                label={labelWithErrorSuffix('links', t('manageProducts.productDialog.tabs.links'))}
                 description={t('manageProducts.productDialog.tabs.linksDescription')}
+                badge={errorBadgeFor('links')}
                 disabled={submitting}
               />
             </VerticalTabsList>
 
-            <div className="min-h-0 overflow-y-auto">
+            <div ref={panelRef} className="min-h-0 overflow-y-auto">
               <TabsContent
                 value="details"
                 className="rounded-xl border border-border bg-card p-4 shadow-xs lg:p-6"
@@ -398,9 +505,7 @@ export function ProductDetailDialog({
               variant="outline"
               touchSize="default"
               disabled={submitting}
-              onClick={() => {
-                onOpenChange(false);
-              }}
+              onClick={requestClose}
             >
               {t('common:actions.cancel')}
             </POSButton>
@@ -419,6 +524,23 @@ export function ProductDetailDialog({
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <ConfirmDialog
+        open={discardConfirmOpen}
+        title={t('manageProducts.productDialog.discardTitle')}
+        description={t('manageProducts.productDialog.discardDescription')}
+        confirmLabel={t('manageProducts.productDialog.discardConfirmLabel')}
+        cancelLabel={t('manageProducts.productDialog.keepEditing')}
+        variant="destructive"
+        onConfirm={() => {
+          setDiscardConfirmOpen(false);
+          onOpenChange(false);
+        }}
+        onCancel={() => {
+          setDiscardConfirmOpen(false);
+        }}
+      />
+    </>
   );
 }
