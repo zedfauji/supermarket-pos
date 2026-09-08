@@ -315,7 +315,8 @@ export function useProductsForManagement() {
             category:categories(*),
             product_modifiers(
               modifier:modifiers(*)
-            )
+            ),
+            inventory(quantity_on_hand, low_stock_threshold)
           `
           )
           .order('name')
@@ -469,7 +470,8 @@ export function useMutationCreateProduct() {
             category:categories(*),
             product_modifiers(
               modifier:modifiers(*)
-            )
+            ),
+            inventory(quantity_on_hand, low_stock_threshold)
           `
           )
           .eq('id', productId)
