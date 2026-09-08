@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 41
+open_count: 42
 waived_count: 0
 fixed_count: 16
-total_count: 57
-last_updated: 2026-09-04T05:17:30.136Z
+total_count: 58
+last_updated: 2026-09-08T15:57:36.479Z
 ---
 
 # Broken Windows Ledger
@@ -72,6 +72,7 @@ last_updated: 2026-09-04T05:17:30.136Z
 | 55 | 26 | deviation | .github/workflows/release.yml | 162 | CUSTOMER_MIRROR_PAT rotated to a classic PAT with repo scope (fixing #54's 403). Real workflow_dispatch (33823523719, worktree-agent-a02e68602df65c889, v1.2.5): the 403 is gone -- but sync-customers's tauri-action release step now silently uploads/overwrites assets on CORE's own v1.2.5 draft release (id 382413906, asset updated_at timestamps exactly match this job's upload timestamps) instead of creating anything on zedfauji/supermarket-pos-taj. Confirmed via API: taj repo's release list still only has v1.2.3, zero v1.2.5 release exists there in any state (draft or published). GITHUB_REPOSITORY is correctly logged as zedfauji/supermarket-pos-taj in the step's env dump, so the shadow env var IS being set, but tauri-action's internal find-or-create-draft-release call is not honoring it for this PAT/scope combination -- root cause not yet isolated (untested whether classic PAT vs @actions/github's own context resolution is the culprit). Not fixed: requires debugging tauri-action's actual octokit target repo resolution (e.g. explicit owner/repo action inputs if v0.6.2 supports them, or an alternate release-creation step) before sync-customers can land a real release on the customer mirror. Fixed: stopped relying on tauri-action's own release call entirely -- added an explicit `gh release create`/`upload --clobber` step (GH_TOKEN=CUSTOMER_MIRROR_PAT) that locates the just-built nsis/msi artifacts on disk, builds latest.json matching a real prior release's schema, and publishes directly to matrix.customer.repo. Real workflow_dispatch verification (33824675553, v1.2.6, worktree-agent-a4fb1499065df1463): `gh release view v1.2.6 --repo zedfauji/supermarket-pos-taj` confirms tag v1.2.6 with all 5 expected assets (installer, .sig, msi, .sig, latest.json); latest.json's platform url fields all point at zedfauji/supermarket-pos-taj/releases/download/v1.2.6/...; signtool.exe verify //pa //v on the downloaded installer confirms the real Authenticode chain (SHA1 86F3E828B1815AC72AA339B3046B3FE6B690AF62, self-signed root reported untrusted -- expected, matches this repo's own verify-installer-integrity.ps1 pattern); core's own v1.2.6 release (published by the untouched publish-tauri job) is unaffected, still draft=true with its own 5 assets. | fixed |  | 2026-09-04T01:03:00.927Z | 2026-09-04T01:20:44.000Z |
 | 56 | 27 | unrun-verify | e2e/payments/apply-promotion-and-custom-discount.spec.ts |  | Tests (b)/(c) edited correctly per Plan 27-08 Task 3 (cashier login + distinct manager PIN) but not executable in this sandboxed worktree — shared port-1520 dev server bound to main checkout's stale/crashed esbuild instance | open |  | 2026-09-04T04:48:35.281Z |  |
 | 57 | 27 | unrun-verify | e2e/payments/payment-pane.spec.ts |  | T13/T14 (manager-PIN ad-hoc discount on PaymentPane, G-27-13) added but not executed - shared dev server on port 1520 in this sandboxed worktree serves the main repo code, not this worktree - orchestrator should re-run npx playwright test e2e/payments/payment-pane.spec.ts after merge | open |  | 2026-09-04T05:17:30.136Z |  |
+| 58 | 31 | unrun-verify | e2e/products/product-management.spec.ts |  | PM16/PM17/PM18 (31-06 gap closure) unrun — local Supabase/Docker unreachable in the executing sandbox; run npx playwright test e2e/products/product-management.spec.ts --grep "PM16\|PM17\|PM18" to confirm GREEN | open |  | 2026-09-08T15:57:36.479Z |  |
 
 ````json
 [
@@ -757,6 +758,18 @@ last_updated: 2026-09-04T05:17:30.136Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-09-04T05:17:30.136Z",
+    "resolved_at": null
+  },
+  {
+    "id": 58,
+    "kind": "unrun-verify",
+    "phase": "31",
+    "file": "e2e/products/product-management.spec.ts",
+    "line": null,
+    "description": "PM16/PM17/PM18 (31-06 gap closure) unrun — local Supabase/Docker unreachable in the executing sandbox; run npx playwright test e2e/products/product-management.spec.ts --grep \"PM16|PM17|PM18\" to confirm GREEN",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-08T15:57:36.479Z",
     "resolved_at": null
   }
 ]
