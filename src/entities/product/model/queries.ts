@@ -353,7 +353,7 @@ export function useProductsForManagement() {
   };
 }
 
-function invalidateCatalogQueries(queryClient: ReturnType<typeof useQueryClient>): void {
+export function invalidateCatalogQueries(queryClient: ReturnType<typeof useQueryClient>): void {
   void queryClient.invalidateQueries({ queryKey: ['products'] });
   void queryClient.invalidateQueries({ queryKey: PRODUCT_MANAGEMENT_QUERY_KEY });
   void queryClient.invalidateQueries({ queryKey: ['categories'] });
