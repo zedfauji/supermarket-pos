@@ -168,6 +168,24 @@
       "parentProductHint": "Vincula este producto como la pieza suelta de un paquete ya configurado.",
       "noParentProduct": "No es una pieza suelta"
     },
+    "brandsTab": {
+      "loadError": "No se pudieron cargar las marcas: {{message}}",
+      "loading": "Cargando marcas…",
+      "headerHelp": "Administra las marcas disponibles para asignar a productos.",
+      "addBrand": "Agregar marca",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "newBrandTitle": "Nueva marca",
+      "brandCreated": "Marca creada",
+      "editBrandTitle": "Editar marca",
+      "brandSaved": "Marca guardada",
+      "deleteBrandTitle": "¿Eliminar marca?",
+      "deleteBrandDescription": "Esto quita la marca del catálogo. No se puede eliminar si algún producto la usa.",
+      "deleteBrandConfirmLabel": "Eliminar",
+      "brandDeleted": "Marca eliminada",
+      "nameRequired": "El nombre es obligatorio",
+      "nameLabel": "Nombre"
+    },
     "productDialog": {
       "navLabel": "Secciones del producto",
       "tabs": {

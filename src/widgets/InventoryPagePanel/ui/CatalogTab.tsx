@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { CategoryTreeEditor } from '@features/manage-categories';
 import { ModifierGroupEditor } from '@features/manage-modifier-groups';
-import { CatalogModifiersTab, CatalogProductsTab } from '@features/manage-products';
+import { CatalogBrandsTab, CatalogModifiersTab, CatalogProductsTab } from '@features/manage-products';
 import type { UserRole } from '@shared/lib/domain';
 import { ProtectedAction } from '@shared/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
@@ -32,6 +32,7 @@ export function CatalogTab({ currentRole }: Props) {
             <TabsTrigger value="modifier-groups">
               {t('productsSettingsTab.tabModifierGroups')}
             </TabsTrigger>
+            <TabsTrigger value="brands">{t('productsSettingsTab.tabBrands')}</TabsTrigger>
           </TabsList>
           <TabsContent value="products">
             <CatalogProductsTab />
@@ -44,6 +45,9 @@ export function CatalogTab({ currentRole }: Props) {
           </TabsContent>
           <TabsContent value="modifier-groups">
             <ModifierGroupEditor />
+          </TabsContent>
+          <TabsContent value="brands">
+            <CatalogBrandsTab />
           </TabsContent>
         </Tabs>
       </div>

@@ -209,6 +209,25 @@ export type CategoryCreate = z.infer<typeof CategoryCreateSchema>;
 export type CategoryUpdate = z.infer<typeof CategoryUpdateSchema>;
 
 // ============================================================================
+// BRAND
+// ============================================================================
+// Phase 32 D-01: name-only, flat entity — no logo, no sortOrder, no hierarchy.
+
+export const BrandSchema = z.object({
+  id: UuidSchema,
+  name: z.string().min(1).max(100),
+  createdAt: TimestampSchema,
+});
+
+export const BrandCreateSchema = BrandSchema.omit({ id: true, createdAt: true });
+
+export const BrandUpdateSchema = BrandSchema.partial().required({ id: true });
+
+export type Brand = z.infer<typeof BrandSchema>;
+export type BrandCreate = z.infer<typeof BrandCreateSchema>;
+export type BrandUpdate = z.infer<typeof BrandUpdateSchema>;
+
+// ============================================================================
 // MODIFIER
 // ============================================================================
 

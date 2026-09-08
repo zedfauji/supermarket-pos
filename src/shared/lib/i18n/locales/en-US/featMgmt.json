@@ -168,6 +168,24 @@
       "parentProductHint": "Link this product as the loose piece of an already-configured package product.",
       "noParentProduct": "Not a loose piece"
     },
+    "brandsTab": {
+      "loadError": "Could not load brands: {{message}}",
+      "loading": "Loading brands…",
+      "headerHelp": "Manage the brands available to assign to products.",
+      "addBrand": "Add brand",
+      "edit": "Edit",
+      "delete": "Delete",
+      "newBrandTitle": "New brand",
+      "brandCreated": "Brand created",
+      "editBrandTitle": "Edit brand",
+      "brandSaved": "Brand saved",
+      "deleteBrandTitle": "Delete brand?",
+      "deleteBrandDescription": "This removes the brand from the catalog. It cannot be deleted while any product still uses it.",
+      "deleteBrandConfirmLabel": "Delete",
+      "brandDeleted": "Brand deleted",
+      "nameRequired": "Name is required",
+      "nameLabel": "Name"
+    },
     "productDialog": {
       "navLabel": "Product sections",
       "tabs": {

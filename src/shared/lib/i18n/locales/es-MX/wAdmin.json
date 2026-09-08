@@ -501,7 +501,8 @@
     "tabProducts": "Productos",
     "tabCategories": "Categorías",
     "tabModifiers": "Modificadores",
-    "tabModifierGroups": "Grupos de modificadores"
+    "tabModifierGroups": "Grupos de modificadores",
+    "tabBrands": "Marcas"
   },
   "openUnitsTab": {
     "title": "Unidades abiertas",
