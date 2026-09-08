@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 31
-current_phase_name: product-catalog-detail-photo-upload
+current_phase_name: Product Catalog Detail & Photo Upload
 status: executing
 stopped_at: Phase 30 context gathered
 last_updated: "2026-09-08T00:30:26.603Z"
-last_activity: 2026-09-04
-last_activity_desc: Phase 28 complete, transitioned to Phase 29
+last_activity: 2026-09-07
+last_activity_desc: Phase 31 execution started
 state_head: 4adf9d16d37fca7d6589cf603c12dda06ab39593
 progress:
   total_phases: 16
@@ -25,15 +25,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** Fast, reliable checkout (barcode scan → cart → pay) backed by inventory that's always accurate — what's on the shelf, what's expiring, and what needs reordering — without the owner doing manual data entry for every supplier delivery.
-**Current focus:** Phase 27 — Promotions & Discount Management
+**Current focus:** Phase 31 — Product Catalog Detail & Photo Upload
 
 ## Current Position
 
-Phase: 31 (product-catalog-detail-photo-upload) — READY TO EXECUTE
-Plan: Not started
+Phase: 31 (Product Catalog Detail & Photo Upload) — EXECUTING
+Plan: 1 of 5
   D-08 negative-path proof, flip test-customer fixture to suspended)
-Status: Ready to execute
-Last activity: 2026-09-04 — Phase 28 complete, transitioned to Phase 29
+Status: Executing Phase 31
+Last activity: 2026-09-07 — Phase 31 execution started
   --config merge, D-08 gate) proven end-to-end via a real workflow_dispatch run
 
 **Also complete (concurrent session):** Phase 27 — Promotions & Discount Management, 7/7 plans,
@@ -161,6 +161,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
   user feedback that this scope skipped discuss-phase/ui-phase/research. See
   `.planning/debug/promotion-dialog-ux-and-scope-gaps.md` for the existing root-cause
   characterization to start from.
+
 - Phase 26 added: Multi-Customer Deployment — ship this codebase to multiple customers, each with
   an isolated Supabase project and their own release/updater channel. Scoped from spikes 007–010
   (`.planning/spikes/MANIFEST.md`, idea key `multi-customer-deployment`), triggered by CI run
@@ -280,6 +281,7 @@ Recent decisions affecting current work:
   `suspended` as a safety measure before this push (so it doesn't fire a disposable mirror-push on
   every real release), but the hardening itself is still outstanding — resume Plan 26-02 to finish
   Task 3 before Plan 26-03 (onboarding script) or 26-04 (Taj retrofit) proceed.
+
 - Per project CLAUDE.md: all verification must be automated Playwright E2E/Vitest — no `human_needed` terminal states, no manual UAT checkpoints, for any v1.3 phase.
 - Phase 14 planning must pin one documented cost-basis formula per report (valuation vs. historical-cost-snapshot margin in the existing Product Sales report) before implementation — research PITFALLS.md flags inconsistent cost bases as the top risk for these reports not reconciling with existing pages.
 - Phase 14 planning must resolve the turnover-averaging-method gap (research Gaps to Address): no periodic-snapshot infrastructure exists yet for accurate period-average inventory value; compute from the movement log going forward and document the limitation for pre-feature periods.
