@@ -745,6 +745,156 @@ test.describe('Product Management', () => {
     await logout(page);
   });
 
+  // ===================================================================
+  // Phase 31 (31-06): gap closure — stock strip must render REAL seeded
+  // inventory data (not just be visible), and unitsPerPackage must reject
+  // a non-integer entry instead of silently truncating it.
+  // ===================================================================
+
+  test('PM16: stock strip shows real seeded on-hand/threshold, no low-stock badge when comfortably above threshold', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const admin = getServiceClient();
+    await admin.from('inventory').upsert(
+      { product_id: seeded.id, quantity_on_hand: 42, low_stock_threshold: 17, unit: 'unit' },
+      { onConflict: 'product_id' }
+    );
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    const stockStrip = editDialog.getByTestId('product-stock-strip');
+    await expect(stockStrip).toBeVisible();
+    await expect(stockStrip).toContainText('42');
+    await expect(stockStrip).toContainText('17');
+    await expect(stockStrip).not.toContainText('No threshold');
+    // On-hand figure must not be the old broken default of "0" — a real
+    // seeded value of 42 is present, so a bare "0" would only appear if the
+    // join were still missing (proves the fix, not just new numbers coexisting).
+    await expect(stockStrip.getByText('0', { exact: true })).toHaveCount(0);
+    await expect(stockStrip.getByText('Low stock')).toHaveCount(0);
+
+    await editDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await logout(page);
+  });
+
+  test('PM17: stock strip shows the low-stock badge when seeded quantity is at/below threshold', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const admin = getServiceClient();
+    await admin.from('inventory').upsert(
+      { product_id: seeded.id, quantity_on_hand: 3, low_stock_threshold: 17, unit: 'unit' },
+      { onConflict: 'product_id' }
+    );
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    const stockStrip = editDialog.getByTestId('product-stock-strip');
+    await expect(stockStrip).toBeVisible();
+    await expect(stockStrip).toContainText('3');
+    await expect(stockStrip).toContainText('17');
+    await expect(stockStrip.getByText('Low stock')).toBeVisible();
+
+    await editDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 5_000 });
+
+    await logout(page);
+  });
+
+  test('PM18 (WR-01): a non-integer Units per package entry is rejected, not silently truncated', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    await editDialog.getByRole('tab', { name: /links/i }).click();
+    const unitsInput = editDialog.getByLabel('Units per package');
+    await expect(unitsInput).toBeVisible();
+    await unitsInput.fill('2.5');
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+
+    // Dialog must stay open with a visible field error — not silently save
+    // a truncated value and close.
+    await expect(editDialog).toBeVisible();
+    await expect(unitsInput).toHaveAttribute('aria-invalid', 'true');
+
+    const admin = getServiceClient();
+    const { data } = await admin
+      .from('products')
+      .select('units_per_package')
+      .eq('id', seeded.id)
+      .single();
+    expect(data?.units_per_package).toBeNull();
+
+    // Restore a valid value and close cleanly (dirty-close guard otherwise).
+    await unitsInput.fill('');
+    await editDialog.getByRole('button', { name: 'Cancel' }).click();
+    const discardDialog = page.getByRole('alertdialog');
+    if (await discardDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await discardDialog.getByRole('button', { name: /discard changes/i }).click();
+    }
+    await expect(editDialog).not.toBeVisible({ timeout: 10_000 });
+
+    await logout(page);
+  });
+
   test('PM15 (PCAT-02): cashier sees no add/edit affordance on Catalog Products', async ({
     page,
   }) => {

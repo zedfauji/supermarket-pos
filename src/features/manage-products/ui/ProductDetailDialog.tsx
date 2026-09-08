@@ -266,7 +266,17 @@ export function ProductDetailDialog({
 
     let unitsPerPackage: number | null = null;
     if (unitsPerPackageInput.trim() !== '') {
-      const parsedUnits = Number.parseInt(unitsPerPackageInput.trim(), 10);
+      const trimmedUnits = unitsPerPackageInput.trim();
+      // Reject any non-whole-number entry (e.g. "2.5", "1e2") before parsing —
+      // Number.parseInt would otherwise silently truncate it to a different,
+      // wrong integer instead of failing validation (WR-01).
+      if (!/^\d+$/.test(trimmedUnits)) {
+        applyFieldErrors({
+          unitsPerPackage: t('manageProducts.productForm.unitsPerPackageMinError'),
+        });
+        return;
+      }
+      const parsedUnits = Number.parseInt(trimmedUnits, 10);
       if (!Number.isFinite(parsedUnits) || parsedUnits < 1) {
         applyFieldErrors({
           unitsPerPackage: t('manageProducts.productForm.unitsPerPackageMinError'),
