@@ -186,8 +186,10 @@ test.describe('Brand Entity', () => {
       .getByRole('button', { name: /^save$/i })
       .click();
 
-    // Rejected — dialog stays open, no second row appears.
-    await expect(page.getByText(/could not|error|ya existe|no se pudo/i).first()).toBeVisible({
+    // Rejected — dialog stays open, no second row appears. Matches the exact
+    // AppError.message text from duplicateEntryError() (result.ts), not a
+    // generic "error"-ish substring that could pass without exercising D-03.
+    await expect(page.getByText(/already exists/i).first()).toBeVisible({
       timeout: 10_000,
     });
 
@@ -254,7 +256,9 @@ test.describe('Brand Entity', () => {
     await confirmDialog.getByRole('button', { name: /delete/i }).click();
 
     // Blocked by ON DELETE RESTRICT — error toast, brand row still present.
-    await expect(page.getByText(/could not|error|no se pudo/i).first()).toBeVisible({
+    // Matches the exact AppError.message text for Postgres 23503 (result.ts's
+    // parseSupabaseError), not a generic "error"-ish substring (CR-01).
+    await expect(page.getByText(/invalid reference/i).first()).toBeVisible({
       timeout: 10_000,
     });
     await expect(page.getByText(TEST_BRAND, { exact: true })).toBeVisible();
