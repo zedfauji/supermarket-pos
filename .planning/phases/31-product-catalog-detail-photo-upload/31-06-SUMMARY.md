@@ -34,6 +34,7 @@ key-files:
 
 key-decisions:
   - "Both tasks' E2E additions (PM16, PM17, PM18) were authored together in one contiguous insertion in product-management.spec.ts, so Task 1's commit carries all three new tests while Task 2's commit carries only the ProductDetailDialog.tsx fix that makes PM18 meaningful — a minor packaging deviation from strict one-test-per-task, noted below."
+  - "Post-merge, the orchestrator ran the live E2E suite (this project's non-negotiable testing policy forbids treating unrun tests as done) and found PM18 genuinely failing: the dialog's <form> had no noValidate, so the units-per-package input's own step={1} HTML5 constraint blocked native submission for \"2.5\" before onSubmit/handleSubmit ever ran — the JS validation, applyFieldErrors, and aria-invalid never fired. Fixed in af6edea by adding noValidate to the form. All 3 new tests plus the full 17-test product-management.spec.ts file now pass, confirmed on two separate runs (no flake)."
 
 patterns-established: []
 
@@ -46,27 +47,19 @@ coverage:
     verification:
       - kind: e2e
         ref: "e2e/products/product-management.spec.ts#PM16: stock strip shows real seeded on-hand/threshold, no low-stock badge when comfortably above threshold"
-        status: unknown
+        status: pass
       - kind: e2e
         ref: "e2e/products/product-management.spec.ts#PM17: stock strip shows the low-stock badge when seeded quantity is at/below threshold"
-        status: unknown
-      - kind: other
-        ref: "direct read-back of src/entities/product/model/queries.ts confirming the inventory(quantity_on_hand, low_stock_threshold) fragment is present in both selects"
         status: pass
-    human_judgment: true
-    rationale: "PM16/PM17 could not be executed in this sandboxed worktree — the project's local Supabase stack requires Docker Desktop, which is unreachable here (supabase status reports the Docker Desktop pipe does not exist) and this worktree-isolation sandbox categorically refuses to launch Docker Desktop.exe, cmd.exe, powershell.exe, or wsl.exe. The fix and the new tests were verified by direct code trace (mapProductRow's existing row.inventory?.quantity_on_hand/low_stock_threshold reads confirmed against the new select strings) plus a clean npm run typecheck and npm run lint, but the live Playwright run itself is unrun — a human/CI with Docker available must run `npx playwright test e2e/products/product-management.spec.ts --grep \"PM16|PM17|PM18\"` to confirm GREEN."
+    human_judgment: false
   - id: D2
     description: "ProductDetailDialog's unitsPerPackage handler rejects a non-integer entry (e.g. '2.5') with a visible field error instead of silently truncating it via Number.parseInt."
     requirement: "PCAT-02"
     verification:
       - kind: e2e
         ref: "e2e/products/product-management.spec.ts#PM18 (WR-01): a non-integer Units per package entry is rejected, not silently truncated"
-        status: unknown
-      - kind: other
-        ref: "direct code trace: FormField clones its child with aria-invalid: error ? 'true' : 'false' (src/shared/ui/FormField.tsx), confirming applyFieldErrors' unitsPerPackage error correctly sets aria-invalid on the input PM18 asserts against"
         status: pass
-    human_judgment: true
-    rationale: "Same Docker/Supabase-unreachable sandbox limitation as D1 — PM18 is unrun in this environment. Code path was manually traced end-to-end (regex guard -> applyFieldErrors -> FormField's aria-invalid clone) and is a narrow, low-risk change confirmed clean by typecheck/lint."
+    human_judgment: false
 
 # Metrics
 duration: 20min
@@ -97,12 +90,11 @@ Each task was committed atomically:
 
 1. **Task 1: Join `inventory` into the catalog-management product query (CR-01 fix)** - `f29bd78` (fix) — includes PM16/PM17/PM18 additions to the spec file (see Deviations)
 2. **Task 2 (WR-01): Reject a non-integer `unitsPerPackage` entry** - `ac767fc` (fix)
-
-_Note: RED (failing-test) commits were not captured separately — see "Issues Encountered" below for why the RED→GREEN cycle could not be observed via a live test run in this environment._
+3. **Orchestrator follow-up fix (found by running PM18 for real):** `af6edea` (fix) — added `noValidate` to the dialog's `<form>`
 
 ## Files Created/Modified
 - `src/entities/product/model/queries.ts` - Added `inventory(quantity_on_hand, low_stock_threshold)` to `useProductsForManagement`'s select and to `useMutationCreateProduct`'s post-insert refetch select
-- `src/features/manage-products/ui/ProductDetailDialog.tsx` - `handleSubmit`'s `unitsPerPackage` branch now rejects non-whole-number strings before `Number.parseInt`
+- `src/features/manage-products/ui/ProductDetailDialog.tsx` - `handleSubmit`'s `unitsPerPackage` branch now rejects non-whole-number strings before `Number.parseInt`; `<form>` gained `noValidate` (orchestrator follow-up, see below)
 - `e2e/products/product-management.spec.ts` - Added PM16, PM17, PM18
 
 ## Decisions Made
@@ -114,32 +106,31 @@ _Note: RED (failing-test) commits were not captured separately — see "Issues E
 
 None beyond the plan's own two named fixes (CR-01, WR-01) — no additional Rule 1/2/3 issues were found during implementation.
 
-### Process Deviation (documented, not a Rule 1-4 case)
+### Process Deviation (resolved by the orchestrator post-merge)
 
-**1. Live Playwright verification could not be executed in this sandbox**
-- **Found during:** Task 1's mandated RED checkpoint (`npx playwright test ... --grep "PM16|PM17"`)
-- **Issue:** This project's E2E suite requires a local self-hosted Supabase stack via Docker (`supabase/config.toml` ports 54321/54322; `supabase status` confirms a container named `supabase_db_supermarket-pos-selfhosted`). In this worktree-isolated sandbox, Docker Desktop's backend pipe (`dockerDesktopLinuxEngine`) does not exist (`supabase status` errors with `LegacyStatusDbInspectError`), and the sandbox's worktree-isolation guard categorically refuses to invoke `Docker Desktop.exe`, `cmd.exe`, `powershell.exe`, or `wsl.exe` to start it (all attempts returned a hard refusal, not a runtime error). Port 1520 was also independently occupied by an unrelated `node.exe` process (PID 48732, likely a sibling worktree agent's `vite` dev server), which was investigated and left untouched (never killed — could belong to concurrent work).
-- **Attempted fixes (all reverted before commit, no trace left in git history):** (a) polled port 1520 for ~2 minutes waiting for it to free — did not; (b) temporarily parameterized `vite.config.ts`'s port and `playwright.config.ts`'s `baseURL`/`webServer.url` via a `GSD_TEMP_VITE_PORT` env var to sidestep the port conflict — ran, but hit the real blocker (Supabase unreachable) instead; (c) copied `.env.local` from the parent repo checkout into this worktree (gitignored, never displayed/read) since it was missing entirely — necessary but insufficient; (d) attempted to start Docker Desktop directly — categorically refused by the sandbox. Both diagnostic config edits were reverted via `git checkout -- vite.config.ts playwright.config.ts` before any commit; `git status --short` confirms no stray diffs remain in those files.
-- **Resolution:** Verified the fix correctness by direct code trace instead (see `coverage:` rationale fields above) plus a clean `npm run typecheck` and `npx eslint` on all three touched files. PM16/PM17/PM18 and the full `product-management.spec.ts` file remain **unrun** in this session — recorded as `unrun-verify` entries in `.planning/WINDOWS.md` for follow-up in an environment with Docker access.
-- **Files modified:** None beyond the plan's own three files (the diagnostic `vite.config.ts`/`playwright.config.ts` edits were reverted, not committed).
+**1. Executor's sandboxed worktree could not reach Docker/Supabase — orchestrator ran the live suite instead and it caught a real second bug**
+- **Found during:** Task 1's mandated RED checkpoint (`npx playwright test ... --grep "PM16|PM17"`) inside the executor's isolated worktree.
+- **Issue:** The executor's worktree-isolation sandbox had no path to Docker Desktop (`supabase status` errored `LegacyStatusDbInspectError`) and refused to launch it. The executor documented this honestly and shipped with `human_judgment: true` / unrun-verify rather than claiming false coverage.
+- **Orchestrator resolution:** After merging the worktree to `main`, the orchestrator (which has real Docker/Windows access) started Docker Desktop, resolved a stale WinNAT port-exclusion issue blocking `supabase start`, started the local Supabase stack, and ran the suite for real. **PM18 genuinely failed** on the first run: `aria-invalid` stayed `"false"` even with `"2.5"` typed into the field. Root cause: the dialog's `<form>` had no `noValidate`, so the `unitsPerPackage` input's own `step={1}` HTML5 constraint blocked the browser's native form submission before `onSubmit`/`handleSubmit` ever ran — the new regex guard, `applyFieldErrors`, and the resulting `aria-invalid` never executed at all. Fixed in `af6edea` by adding `noValidate` to the form. Re-ran PM16/17/18 twice (stable, no flake) and the full 17-test `product-management.spec.ts` file once — **all pass**.
+- **Files modified:** `src/features/manage-products/ui/ProductDetailDialog.tsx` (the `af6edea` commit, on top of the executor's `ac767fc`).
 
 ---
 
-**Total deviations:** 1 process deviation (environment limitation, not a code defect).
-**Impact on plan:** Code and test changes are complete and statically verified (typecheck/lint clean, manual trace of every consumed code path); the plan's own `<verify>` blocks that require a live `npx playwright test` run are unrun pending Docker availability, not failing.
+**Total deviations:** 1 process deviation (sandbox environment limitation, handled correctly by the executor) that led to 1 real Rule-1-class bug found and fixed by the orchestrator during mandatory live verification.
+**Impact on plan:** All code and test changes are complete and verified GREEN via a real `npx playwright test` run, not just static trace. The `noValidate` fix was necessary for PM18's actual scenario (not just its literal assertion) to work at all — without it, the browser silently blocks submission of an invalid units-per-package value with no error shown to the user, which is arguably worse than the truncation bug this plan set out to fix.
 
 ## Issues Encountered
 
-- Local self-hosted Supabase (Docker) is unreachable in this sandboxed worktree, blocking the live E2E run mandated by the plan's RED/GREEN checkpoints. See "Process Deviation" above for full detail and the exact commands a Docker-enabled environment must run to close this out: `npx playwright test e2e/products/product-management.spec.ts --grep "PM16|PM17|PM18"` followed by the full-file regression run `npx playwright test e2e/products/product-management.spec.ts`.
+- Local self-hosted Supabase (Docker) was unreachable in the executor's sandboxed worktree — resolved by running verification at the orchestrator level instead (which has real Docker access), per this project's non-negotiable "automate it, never ask the user to click through" testing policy. See "Process Deviation" above.
+- Along the way, Docker Desktop needed a cold start and a stale Windows WinNAT port-exclusion state needed a `net stop winnat && net start winnat` (run by the user, since this session lacked Administrator rights) before `supabase start` would bind its ports. Purely a host-environment hiccup, unrelated to the code.
 
 ## TDD Gate Compliance
 
-Both tasks carry `tdd="true"`, but the RED (failing-test) step could not be observed via a live test run for the reason above. Both `queries.ts` and `ProductDetailDialog.tsx` fixes were authored against a precise, independently-confirmed pre-fix defect (31-VERIFICATION.md Truth 5 / 31-REVIEW.md CR-01 and WR-01, both read directly and quoted in this plan), so the RED state is documented by prior verification/review evidence rather than a freshly-observed local test failure. GREEN is unverified live for the same Docker-unavailability reason — see coverage `rationale` fields.
+Both tasks carry `tdd="true"`. The executor could not observe a live RED→GREEN cycle in its sandbox, but its fixes were authored against a precise, independently-confirmed pre-fix defect (31-VERIFICATION.md Truth 5 / 31-REVIEW.md CR-01 and WR-01). The orchestrator then ran the actual suite: PM18 was RED once for real (caught the missing-`noValidate` bug), and GREEN after `af6edea`. PM16/PM17 were GREEN on first real run. All three, plus the full spec file, are confirmed passing.
 
 ## Next Phase Readiness
 
-- Code-level fix for 31-VERIFICATION.md's sole gap and 31-REVIEW.md's WR-01 warning is complete and statically sound.
-- **Action needed before Phase 31 can be marked fully verified:** run `npx playwright test e2e/products/product-management.spec.ts` (full file, including PM16/17/18) in an environment with local Supabase/Docker available, and update `.planning/WINDOWS.md`'s corresponding `unrun-verify` entries once confirmed passing.
+- Both of 31-VERIFICATION.md's/31-REVIEW.md's named gaps (CR-01, WR-01) are closed and confirmed via a real, passing E2E run — no outstanding action needed before Phase 31 verification.
 - IN-01 (client/bucket upload-limit mismatch) and IN-02 (unmemoized `photoColumn`) remain explicitly out of scope per this plan's objective — untouched.
 
 ## Self-Check: PASSED
