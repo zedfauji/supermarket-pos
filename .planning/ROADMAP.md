@@ -443,7 +443,7 @@ Plans:
 **Goal:** Clicking a product in Inventory/Catalog opens the existing add/edit dialog reshaped into a larger view+edit+photo layout (tabbed/sectioned) instead of the current small add/edit-only form, and a product can carry one photo stored in Supabase Storage (not client-local/base64). Distinct from Phase 18's separate barcode-scan-at-checkout peek window — different trigger, different flow, unaffected by this phase.
 **Requirements**: PCAT-01, PCAT-02, PCAT-03, PCAT-04
 **Depends on:** Nothing (Inventory/Catalog admin-side work, independent of Phase 29/30's POS/checkout scope)
-**Plans:** 2/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -456,8 +456,8 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 31-03-PLAN.md — Catalog integration: batch signed-URL thumbnails, row-click open, propagation stops on every inline editor (wave 3)
-- [ ] 31-04-PLAN.md — Photo capture UX: drag-and-drop, clipboard paste, replace, confirmed remove, full loading/error/offline state matrix (wave 3)
+- [x] 31-03-PLAN.md — Catalog integration: batch signed-URL thumbnails, row-click open, propagation stops on every inline editor (wave 3)
+- [x] 31-04-PLAN.md — Photo capture UX: drag-and-drop, clipboard paste, replace, confirmed remove, full loading/error/offline state matrix (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
