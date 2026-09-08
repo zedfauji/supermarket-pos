@@ -25,8 +25,8 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from '../fixtures';
-import { createRoleScopedClient } from '../helpers/rls-clients';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
+import { createRoleScopedClient } from '../helpers/rls-clients';
 import { getServiceClient } from '../helpers/supabase';
 
 const BUCKET = 'product-photos';
@@ -45,7 +45,7 @@ function getAnonKey(): string {
 }
 
 /** A bare anon client with no session — the "unauthenticated" caller. */
-function createAnonClient(): SupabaseClient {
+function createAnonClient(): ReturnType<typeof createClient> {
   return createClient(getUrl(), getAnonKey(), {
     auth: {
       persistSession: false,
@@ -67,7 +67,7 @@ let productId: string;
 let objectPath: string;
 let cashierClient: SupabaseClient;
 let cashierCleanup: () => Promise<void>;
-let anonClient: SupabaseClient;
+let anonClient: ReturnType<typeof createAnonClient>;
 
 async function listProductObjects(): Promise<string[]> {
   const admin = getServiceClient();
@@ -87,7 +87,7 @@ test.describe.serial('Product photo Storage RLS boundary — cashier and anonymo
       .insert({ name: TEST_PRODUCT, category_id: cat.id, base_price: 5, is_active: true })
       .select('id')
       .single();
-    if (error || !product) throw new Error(`beforeAll: product insert failed - ${error?.message}`);
+    if (error) throw new Error(`beforeAll: product insert failed - ${error.message}`);
     productId = product.id as string;
 
     objectPath = `products/${productId}/e2e-rls-seed.png`;
@@ -104,13 +104,15 @@ test.describe.serial('Product photo Storage RLS boundary — cashier and anonymo
   });
 
   test.afterAll(async () => {
-    if (cashierCleanup) await cashierCleanup();
+    // beforeAll always runs before afterAll in Playwright's lifecycle, so
+    // cashierCleanup/productId are always assigned by the time this runs.
+    await cashierCleanup();
     const admin = getServiceClient();
     const objects = await listProductObjects();
     if (objects.length > 0) {
       await admin.storage.from(BUCKET).remove(objects.map(name => `products/${productId}/${name}`));
     }
-    if (productId) await admin.from('products').delete().eq('id', productId);
+    await admin.from('products').delete().eq('id', productId);
   });
 
   test('cashier upload to a fresh path is denied (T-31-01)', async () => {
@@ -211,7 +213,7 @@ test.describe('Product photo Storage RLS boundary — admin positive control', (
       .insert({ name: productName, category_id: cat.id, base_price: 5, is_active: true })
       .select('id')
       .single();
-    if (insertError || !product) throw new Error(`insert failed - ${insertError?.message}`);
+    if (insertError) throw new Error(`insert failed - ${insertError.message}`);
     const adminProductId = product.id as string;
 
     const { client: adminClient, cleanup } = await createRoleScopedClient('admin', 'photo-positive');
