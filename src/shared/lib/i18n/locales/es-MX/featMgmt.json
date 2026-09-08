@@ -141,7 +141,11 @@
       "deactivateProductConfirmLabel": "Desactivar",
       "productDeactivated": "Producto desactivado",
       "photoHeader": "Foto",
-      "noPhoto": "Sin foto"
+      "noPhoto": "Sin foto",
+      "brandFilterLabel": "Filtrar por marca",
+      "allBrands": "Todas las marcas",
+      "weightUnitFilterLabel": "Filtrar por unidad de peso",
+      "allWeightUnits": "Todas las unidades"
     },
     "productForm": {
       "invalidModifierSelection": "Selección de modificador inválida",

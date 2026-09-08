@@ -1028,4 +1028,102 @@ test.describe('Product Management', () => {
 
     await logout(page);
   });
+
+  test('PM21 (BRND-04/05): the admin Catalog table narrows to one brand via the brand filter dropdown', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+
+    const admin = getServiceClient();
+    const { data: cat } = await admin.from('categories').select('id').limit(1).single();
+    if (!cat) {
+      test.skip(true, 'No category found to seed products in');
+      return;
+    }
+    const categoryId = (cat as { id: string }).id;
+
+    const productNameA = `${TEST_PRODUCT}-FilterA`;
+    const productNameB = `${TEST_PRODUCT}-FilterB`;
+    const brandNameA = 'TestBrandFilterA-E2E';
+    const brandNameB = 'TestBrandFilterB-E2E';
+
+    const cleanupFilterFixtures = async (): Promise<void> => {
+      // Products must be deleted before their referencing brand (D-02's
+      // RESTRICT ON DELETE would otherwise block the brand delete below).
+      await admin.from('products').delete().in('name', [productNameA, productNameB]);
+      await admin.from('brands').delete().in('name', [brandNameA, brandNameB]);
+    };
+    await cleanupFilterFixtures();
+
+    try {
+      const { data: brandA, error: brandAErr } = await admin
+        .from('brands')
+        .insert({ name: brandNameA })
+        .select('id')
+        .single();
+      const { data: brandB, error: brandBErr } = await admin
+        .from('brands')
+        .insert({ name: brandNameB })
+        .select('id')
+        .single();
+      if (brandAErr || !brandA || brandBErr || !brandB) {
+        test.skip(true, `Could not seed filter test brands: ${brandAErr?.message ?? brandBErr?.message}`);
+        return;
+      }
+
+      const { error: prodAErr } = await admin.from('products').insert({
+        name: productNameA,
+        category_id: categoryId,
+        base_price: 9.99,
+        is_active: true,
+        brand_id: (brandA as { id: string }).id,
+      });
+      const { error: prodBErr } = await admin.from('products').insert({
+        name: productNameB,
+        category_id: categoryId,
+        base_price: 9.99,
+        is_active: true,
+        brand_id: (brandB as { id: string }).id,
+      });
+      if (prodAErr || prodBErr) {
+        throw new Error(`Could not seed filter test products: ${prodAErr?.message ?? prodBErr?.message}`);
+      }
+
+      const found = await navigateToProductsSettingsTab(page, 'products');
+      if (!found) {
+        test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+        return;
+      }
+
+      // Both rows visible before filtering.
+      await expect(page.getByRole('row', { name: new RegExp(productNameA) })).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(page.getByRole('row', { name: new RegExp(productNameB) })).toBeVisible({
+        timeout: 10_000,
+      });
+
+      await page.getByLabel(/filter by brand/i).selectOption({ label: brandNameA });
+
+      // Exactly one of the two fixture rows visible (brandNameA's product);
+      // zero for brandNameB's product, which has no match under this filter.
+      await expect(page.getByRole('row', { name: new RegExp(productNameA) })).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(page.getByRole('row', { name: new RegExp(productNameB) })).toHaveCount(0);
+
+      await page.getByLabel(/filter by brand/i).selectOption({ label: brandNameB });
+
+      // Selecting the other brand flips which fixture row is zero/visible.
+      await expect(page.getByRole('row', { name: new RegExp(productNameA) })).toHaveCount(0);
+      await expect(page.getByRole('row', { name: new RegExp(productNameB) })).toBeVisible({
+        timeout: 10_000,
+      });
+
+      await logout(page);
+    } finally {
+      await cleanupFilterFixtures().catch(() => undefined);
+    }
+  });
 });

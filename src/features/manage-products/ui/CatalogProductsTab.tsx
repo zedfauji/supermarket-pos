@@ -184,6 +184,17 @@ export function CatalogProductsTab() {
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
   const { urls: photoUrls, isPending: photosPending } = useProductImageUrls(products ?? []);
 
+  // D-11: brand/weight-unit filter dropdowns above the table, composing with
+  // (not replacing) DataTable's own `searchable` text filter — plain
+  // useState + array .filter(), no new filter-panel component.
+  const [brandFilter, setBrandFilter] = useState('');
+  const [weightUnitFilter, setWeightUnitFilter] = useState('');
+  const filteredProducts = (products ?? []).filter(
+    p =>
+      (brandFilter === '' || p.brandId === brandFilter) &&
+      (weightUnitFilter === '' || p.weightUnit === weightUnitFilter)
+  );
+
   const openDetailDialog = useCallback((p: Product) => {
     setActiveProduct(p);
     setDialogOpen(true);
@@ -460,8 +471,45 @@ export function CatalogProductsTab() {
 
       <DataTable<Product>
         columns={columns}
-        data={products ?? []}
+        data={filteredProducts}
         isLoading={isLoading}
+        toolbar={
+          <>
+            <select
+              className="h-10 rounded-lg border border-input bg-card px-3 text-sm shadow-xs dark:bg-input/20"
+              aria-label={t('manageProducts.productsTab.brandFilterLabel')}
+              value={brandFilter}
+              onChange={e => {
+                setBrandFilter(e.target.value);
+              }}
+            >
+              <option value="">{t('manageProducts.productsTab.allBrands')}</option>
+              {(brands ?? []).map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="h-10 rounded-lg border border-input bg-card px-3 text-sm shadow-xs dark:bg-input/20"
+              aria-label={t('manageProducts.productsTab.weightUnitFilterLabel')}
+              value={weightUnitFilter}
+              onChange={e => {
+                setWeightUnitFilter(e.target.value);
+              }}
+            >
+              <option value="">{t('manageProducts.productsTab.allWeightUnits')}</option>
+              {
+                // eslint-disable-next-line i18next/no-literal-string -- unit codes (matches the weight_unit enum values), not UI copy
+                (['g', 'kg', 'lb', 'oz'] as const).map(u => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))
+              }
+            </select>
+          </>
+        }
         searchable
         searchPlaceholder={t('manageProducts.productsTab.searchPlaceholder')}
         enableSorting
