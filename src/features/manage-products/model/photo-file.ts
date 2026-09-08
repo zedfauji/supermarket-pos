@@ -68,6 +68,51 @@ export function targetDimensions({
 }
 
 /**
+ * Structural subset of a DOM `DataTransferItem` — deliberately duck-typed
+ * rather than importing the lib.dom interface so callers (drag events,
+ * clipboard paste events, and unit tests) can all pass real or plain-object
+ * item lists without a jsdom DataTransferItem constructor.
+ */
+export interface DataTransferItemLike {
+  readonly kind: string;
+  readonly type: string;
+  getAsFile(): File | null;
+}
+
+/**
+ * Returns the first image entry in a drag-and-drop item list — including one
+ * whose type is unsupported, so the caller's `validatePhotoFile` can name the
+ * offending type in its error (D-11) instead of the drop being silently
+ * ignored the way `agent-chat/FileDropZone` does today. Returns null when no
+ * item is an image at all.
+ */
+export function firstImageFromDataTransfer(
+  items: Iterable<DataTransferItemLike> | ArrayLike<DataTransferItemLike> | null | undefined
+): File | null {
+  if (!items) return null;
+  for (const item of Array.from(items)) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) return file;
+    }
+  }
+  return null;
+}
+
+/**
+ * Same extraction as `firstImageFromDataTransfer`, applied to a paste event's
+ * `clipboardData`.
+ */
+export function firstImageFromClipboard(
+  clipboardData:
+    | { items?: Iterable<DataTransferItemLike> | ArrayLike<DataTransferItemLike> | null }
+    | null
+    | undefined
+): File | null {
+  return firstImageFromDataTransfer(clipboardData?.items ?? null);
+}
+
+/**
  * Mints a fresh Storage object key. Built only from productId and a generated
  * uuid — File.name is never read into the key (path-traversal prevention).
  */

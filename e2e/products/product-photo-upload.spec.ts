@@ -6,7 +6,7 @@
  * column, a client-side resize pipeline, a signed-URL resolver, and the
  * Photo panel mounted in today's product edit dialog.
  */
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '../fixtures';
 import { loginAs, logout } from '../helpers/auth';
 import { requireIntegrationEnv } from '../helpers/requireEnv';
@@ -130,6 +130,87 @@ async function injectGeneratedPhoto(
     },
     { testId, width, height, mimeType }
   );
+}
+
+/**
+ * Builds a real, decodable PNG in-page and returns a `DataTransfer` handle
+ * carrying it — the same `page.evaluateHandle` + native-event-constructor
+ * technique `e2e/ai/agent-chat.spec.ts`'s `dropFileOntoAgent` established for
+ * FileDropZone, reused here for both the drop and paste entry paths so
+ * Playwright wires the cross-context handle into its own event dispatch
+ * rather than a manually `new`'d DragEvent/ClipboardEvent (which Chromium's
+ * headless drag/clipboard sandboxing can silently drop). `mimeType` overrides
+ * only the File's declared type (bytes stay real PNG), letting a caller
+ * simulate an unsupported-type drop without needing real bytes of that
+ * format.
+ */
+async function makeImageDataTransfer(page: Page, width: number, height: number, mimeType = 'image/png') {
+  return page.evaluateHandle(
+    async ({ width, height, mimeType }) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('no 2d context');
+      ctx.fillStyle = '#3366ff';
+      ctx.fillRect(0, 0, width, height);
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(b => {
+          if (b) resolve(b);
+          else reject(new Error('toBlob failed'));
+        }, 'image/png');
+      });
+      const file = new File([blob], 'e2e-photo.png', { type: mimeType });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      return dt;
+    },
+    { width, height, mimeType }
+  );
+}
+
+/** Dispatches a native 'drop' DragEvent carrying a generated image onto `target`. */
+async function dropImageOnto(
+  page: Page,
+  target: Locator,
+  width: number,
+  height: number,
+  mimeType = 'image/png'
+): Promise<void> {
+  const dataTransfer = await makeImageDataTransfer(page, width, height, mimeType);
+  await target.dispatchEvent('drop', { dataTransfer });
+}
+
+/**
+ * Dispatches a native 'paste' ClipboardEvent carrying a generated image onto
+ * `target` — proves the clipboard entry path (D-09) independently of
+ * drag-and-drop. Built and dispatched entirely inside `target.evaluate` (no
+ * cross-context Playwright event-type mapping) — Playwright's `dispatchEvent`
+ * helper does not recognize 'paste' as a `ClipboardEvent`-producing type the
+ * way it does 'drop' for `DragEvent`, so the `clipboardData` init property
+ * would otherwise be silently dropped.
+ */
+async function pasteImageOnto(target: Locator, width: number, height: number): Promise<void> {
+  await target.evaluate(async (el, { width, height }) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('no 2d context');
+    ctx.fillStyle = '#3366ff';
+    ctx.fillRect(0, 0, width, height);
+    const blob: Blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(b => {
+        if (b) resolve(b);
+        else reject(new Error('toBlob failed'));
+      }, 'image/png');
+    });
+    const file = new File([blob], 'e2e-paste-photo.png', { type: 'image/png' });
+    const clipboardData = new DataTransfer();
+    clipboardData.items.add(file);
+    const pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData });
+    el.dispatchEvent(pasteEvent);
+  }, { width, height });
 }
 
 test.describe('Product photo upload', () => {
@@ -338,5 +419,293 @@ test.describe('Product photo upload', () => {
     expect(objects?.length).toBe(1);
 
     await logout(page);
+  });
+
+  test('drop: dropping an image onto the drop zone uploads it (D-09)', async ({ page }) => {
+    test.setTimeout(90_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await dropImageOnto(page, dialog.getByTestId('product-photo-dropzone'), 1600, 900);
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible({ timeout: 20_000 });
+
+    const admin = getServiceClient();
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBeNull();
+
+    await logout(page);
+  });
+
+  test('paste: pasting on the Photo tab uploads it; pasting on the Details tab does not (D-09)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    let storageRequests = 0;
+    await page.route('**/storage/v1/object/**', async route => {
+      storageRequests += 1;
+      await route.continue();
+    });
+
+    await pasteImageOnto(dialog, 1600, 900);
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => storageRequests, { timeout: 20_000 }).toBeGreaterThan(0);
+    const requestsAfterPhotoTabPaste = storageRequests;
+
+    const admin = getServiceClient();
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBeNull();
+
+    // Negative case: a paste on the Details tab must never be intercepted —
+    // the dialog-level listener is gated on the controlled activeTab.
+    await dialog.getByRole('tab', { name: /details/i }).click();
+    const nameInput = dialog.getByRole('textbox', { name: /^Name/i });
+    await nameInput.click();
+    await pasteImageOnto(nameInput, 400, 300);
+
+    // No new Storage request should ever fire from the Details-tab paste —
+    // give the (incorrect) pipeline a moment it would need to reach Storage,
+    // then assert the count never moved.
+    await page.waitForTimeout(500);
+    expect(storageRequests).toBe(requestsAfterPhotoTabPaste);
+
+    await logout(page);
+  });
+
+  test('replace: the second photo writes a new object key and the old object is gone from the bucket (D-12 discretion)', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    const admin = getServiceClient();
+
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1600, 900);
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBeNull();
+    const { data: firstRow } = await admin
+      .from('products')
+      .select('photo_path')
+      .eq('id', productId)
+      .single();
+    const firstPath = firstRow.photo_path as string;
+
+    await expect(dialog.getByTestId('product-photo-replace')).toBeVisible();
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1300, 1300);
+
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBe(firstPath);
+
+    const { data: secondRow } = await admin
+      .from('products')
+      .select('photo_path')
+      .eq('id', productId)
+      .single();
+    const secondPath = secondRow.photo_path as string;
+    expect(secondPath).not.toBe(firstPath);
+
+    const { data: objects } = await admin.storage.from(BUCKET).list(`products/${productId}`);
+    expect(objects?.length).toBe(1);
+    expect(objects?.[0]?.name).not.toBe(firstPath.split('/').pop());
+
+    // The old object is genuinely gone, not just unreferenced — a download
+    // attempt errors when the object no longer exists.
+    const { error: downloadOldError } = await admin.storage.from(BUCKET).download(firstPath);
+    expect(downloadOldError).not.toBeNull();
+
+    await logout(page);
+  });
+
+  test('remove: cancel keeps the photo; confirm clears the column and deletes the object (D-12)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    const admin = getServiceClient();
+
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1600, 900);
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBeNull();
+
+    await dialog.getByTestId('product-photo-remove').click();
+    const confirmDialog = page.getByRole('alertdialog', { name: /remove the photo/i });
+    await expect(confirmDialog).toBeVisible();
+
+    // Cancel: the photo must still be there.
+    await confirmDialog.getByRole('button', { name: /keep photo/i }).click();
+    await expect(confirmDialog).toBeHidden();
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible();
+
+    // Confirm: the panel returns to the empty drop-zone state, the column is
+    // cleared, and the object is deleted from the bucket.
+    await dialog.getByTestId('product-photo-remove').click();
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.getByRole('button', { name: /^remove photo$/i }).click();
+
+    await expect(dialog.getByTestId('product-photo-preview')).toBeHidden({ timeout: 20_000 });
+    await expect(dialog.getByTestId('product-photo-dropzone')).toBeVisible();
+
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .toBeNull();
+
+    const { data: objects } = await admin.storage.from(BUCKET).list(`products/${productId}`);
+    expect(objects?.length ?? 0).toBe(0);
+
+    await logout(page);
+  });
+
+  test('unsupported type on drop: inline alert names the offending declared type, no object created (D-11)', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await dropImageOnto(page, dialog.getByTestId('product-photo-dropzone'), 800, 600, 'image/gif');
+
+    await expect(dialog.getByRole('alert').filter({ hasText: /image\/gif/i })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    const admin = getServiceClient();
+    const { data: objects } = await admin.storage.from(BUCKET).list(`products/${productId}`);
+    expect(objects?.length ?? 0).toBe(0);
+
+    await logout(page);
+  });
+
+  test('offline: upload is blocked before any file read, with no request reaching the Storage endpoint', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    let storageRequestSeen = false;
+    await page.route('**/storage/v1/object/**', async route => {
+      storageRequestSeen = true;
+      await route.continue();
+    });
+
+    await page.context().setOffline(true);
+    try {
+      await injectGeneratedPhoto(page, 'product-photo-file-input', 800, 600);
+
+      await expect(dialog.getByRole('alert').filter({ hasText: /offline/i })).toBeVisible({
+        timeout: 10_000,
+      });
+      expect(storageRequestSeen).toBe(false);
+    } finally {
+      await page.context().setOffline(false);
+    }
   });
 });

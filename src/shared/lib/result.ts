@@ -211,6 +211,7 @@ export type AppErrorCode =
   | 'PHOTO_DECODE_FAILED' // Phase 31: createImageBitmap could not decode the file (Pitfall 5 — mislabeled/unsupported bytes)
   | 'PHOTO_UPLOAD_FAILED' // Phase 31: the Storage upload call itself failed
   | 'PHOTO_LINK_FAILED' // Phase 31: object uploaded but products.photo_path write failed (Pitfall 6)
+  | 'PHOTO_REMOVE_FAILED' // Phase 31 Plan 04: the Storage delete or the products.photo_path clear failed
   | 'UNKNOWN_ERROR';
 
 /**
@@ -432,6 +433,18 @@ export const photoUploadFailedError = (detail?: string, raw?: unknown): AppError
 export const photoLinkFailedError = (detail?: string, raw?: unknown): AppError => ({
   code: 'PHOTO_LINK_FAILED',
   message: "The photo uploaded but couldn't be linked to the product.",
+  ...(detail !== undefined && { detail }),
+  ...(raw !== undefined && { raw }),
+});
+
+/**
+ * Creates a photo-remove-failed error (Phase 31 Plan 04) — the Storage
+ * delete or the `products.photo_path` clear failed; the photo stays in
+ * place so the operator can retry.
+ */
+export const photoRemoveFailedError = (detail?: string, raw?: unknown): AppError => ({
+  code: 'PHOTO_REMOVE_FAILED',
+  message: "Couldn't remove the photo.",
   ...(detail !== undefined && { detail }),
   ...(raw !== undefined && { raw }),
 });

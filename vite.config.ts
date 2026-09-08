@@ -43,7 +43,18 @@ export default defineConfig(async () => ({
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // 4. also ignore Playwright's own output directories — traces/videos/
+      //    screenshots are written continuously *during* an e2e run, and
+      //    without this, Vite's fs watcher treats those writes as source
+      //    changes and full-page-reloads the app under test mid-run,
+      //    intermittently wiping in-progress dialog/form state and causing
+      //    flaky "element not found" failures unrelated to the app itself.
+      ignored: [
+        "**/src-tauri/**",
+        "**/e2e-results/**",
+        "**/playwright-report/**",
+        "**/e2e-blob-reports/**",
+      ],
     },
   },
 }));

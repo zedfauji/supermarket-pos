@@ -2,15 +2,22 @@ import { describe, expect, it } from 'vitest';
 import {
   ACCEPTED_PHOTO_MIME_TYPES,
   MAX_UPLOAD_BYTES,
+  firstImageFromClipboard,
+  firstImageFromDataTransfer,
   photoObjectPath,
   resizePhoto,
   targetDimensions,
   validatePhotoFile,
+  type DataTransferItemLike,
 } from './photo-file';
 
 function makeFile(type: string, size: number): File {
   const blob = new Blob([new Uint8Array(size)], { type });
   return new File([blob], 'photo', { type });
+}
+
+function makeItem(kind: string, type: string, file: File | null): DataTransferItemLike {
+  return { kind, type, getAsFile: () => file };
 }
 
 describe('validatePhotoFile', () => {
@@ -115,5 +122,39 @@ describe('resizePhoto', () => {
       expect(result.error.code).toBe('PHOTO_DECODE_FAILED');
       expect(result.error.detail).toBe('image/png');
     }
+  });
+});
+
+describe('firstImageFromDataTransfer', () => {
+  it('returns the accepted image entry, skipping a leading plain-text item', () => {
+    const imageFile = makeFile('image/png', 10);
+    const items = [makeItem('string', 'text/plain', null), makeItem('file', 'image/png', imageFile)];
+    expect(firstImageFromDataTransfer(items)).toBe(imageFile);
+  });
+
+  it('returns null when the list has no image entry at all', () => {
+    const items = [makeItem('string', 'text/plain', null)];
+    expect(firstImageFromDataTransfer(items)).toBeNull();
+  });
+
+  it('returns an unsupported image type entry rather than dropping it, so the caller can name the offending type', () => {
+    const heicFile = makeFile('image/heic', 10);
+    const items = [makeItem('file', 'image/heic', heicFile)];
+    expect(firstImageFromDataTransfer(items)).toBe(heicFile);
+  });
+});
+
+describe('firstImageFromClipboard', () => {
+  it('returns the image file when the clipboard carries both text and an image', () => {
+    const imageFile = makeFile('image/jpeg', 10);
+    const clipboardData = {
+      items: [makeItem('string', 'text/plain', null), makeItem('file', 'image/jpeg', imageFile)],
+    };
+    expect(firstImageFromClipboard(clipboardData)).toBe(imageFile);
+  });
+
+  it('returns null for a text-only clipboard payload', () => {
+    const clipboardData = { items: [makeItem('string', 'text/plain', null)] };
+    expect(firstImageFromClipboard(clipboardData)).toBeNull();
   });
 });
