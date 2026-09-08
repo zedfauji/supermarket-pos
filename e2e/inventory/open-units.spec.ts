@@ -276,13 +276,29 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
 
       const createDialog = page.getByRole('dialog', { name: 'New product' });
       await expect(createDialog).toBeVisible({ timeout: 10_000 });
-      await createDialog.getByLabel('Name').fill(PACKAGE_PRODUCT_NAME);
+      // getByRole('textbox', ...), not getByLabel: the Details tab's
+      // description ("Name, price, barcode") starts with "Name", so
+      // getByLabel('Name') strict-mode-fails by also matching the Details
+      // tabpanel container itself (Rule 1 fix, Phase 31 reshape).
+      await createDialog.getByRole('textbox', { name: /^Name/i }).fill(PACKAGE_PRODUCT_NAME);
       await createDialog.getByLabel('Money amount').fill(PACKAGE_BASE_PRICE);
+      // Units per package now lives on the Links tab (Phase 31 D-02).
+      await createDialog.getByRole('tab', { name: /links/i }).click();
       await createDialog.getByLabel('Units per package').fill(String(UNITS_PER_PACKAGE));
       const createBtn = createDialog.getByRole('button', { name: 'Create product' });
       await createBtn.scrollIntoViewIfNeeded();
       await createBtn.click();
       await expect(page.getByText('Product created')).toBeVisible({ timeout: 15_000 });
+
+      // Create-then-stay (Phase 31 D-03): the dialog no longer closes itself
+      // on a successful create — it stays open, now in edit mode for the
+      // just-created product. Close it explicitly (Cancel is a no-op close
+      // here; nothing is dirty because the snapshot was re-baselined by the
+      // successful create) before reopening it the original checklist way.
+      const stayOpenDialog = page.getByRole('dialog', { name: 'Edit product' });
+      await expect(stayOpenDialog).toBeVisible({ timeout: 10_000 });
+      await stayOpenDialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect(stayOpenDialog).not.toBeVisible({ timeout: 5_000 });
 
       // Reopen and confirm 20 persisted.
       const search = page.getByPlaceholder(/search products/i);
@@ -292,6 +308,7 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
       await row.getByRole('button', { name: 'Edit' }).click();
       const editDialog = page.getByRole('dialog', { name: 'Edit product' });
       await expect(editDialog).toBeVisible({ timeout: 10_000 });
+      await editDialog.getByRole('tab', { name: /links/i }).click();
       await expect(editDialog.getByLabel('Units per package')).toHaveValue(String(UNITS_PER_PACKAGE));
       await editDialog.getByRole('button', { name: 'Cancel' }).click();
       await expect(editDialog).not.toBeVisible({ timeout: 5_000 });
@@ -307,13 +324,21 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
       await page.getByRole('button', { name: 'Add product' }).click();
       const createDialog = page.getByRole('dialog', { name: 'New product' });
       await expect(createDialog).toBeVisible({ timeout: 10_000 });
-      await createDialog.getByLabel('Name').fill(LOOSE_PRODUCT_NAME);
+      await createDialog.getByRole('textbox', { name: /^Name/i }).fill(LOOSE_PRODUCT_NAME);
       await createDialog.getByLabel('Money amount').fill(LOOSE_BASE_PRICE);
+      // Linked package product now lives on the Links tab (Phase 31 D-02).
+      await createDialog.getByRole('tab', { name: /links/i }).click();
       await createDialog.getByLabel('Linked package product').selectOption({ label: PACKAGE_PRODUCT_NAME });
       const createBtn = createDialog.getByRole('button', { name: 'Create product' });
       await createBtn.scrollIntoViewIfNeeded();
       await createBtn.click();
       await expect(page.getByText('Product created')).toBeVisible({ timeout: 15_000 });
+
+      // Create-then-stay (Phase 31 D-03) — see Step 1's comment above.
+      const stayOpenDialog = page.getByRole('dialog', { name: 'Edit product' });
+      await expect(stayOpenDialog).toBeVisible({ timeout: 10_000 });
+      await stayOpenDialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect(stayOpenDialog).not.toBeVisible({ timeout: 5_000 });
 
       const search = page.getByPlaceholder(/search products/i);
       await search.fill(LOOSE_PRODUCT_NAME);
@@ -324,6 +349,7 @@ test.describe('Phase 27 (27-08 Task 3): open-a-box-and-sell-through-it, fully au
       await expect(editDialog).toBeVisible({ timeout: 10_000 });
       // D-03: price is exactly what was entered, never auto-derived from the package.
       await expect(editDialog.getByLabel('Money amount')).toHaveValue(LOOSE_BASE_PRICE);
+      await editDialog.getByRole('tab', { name: /links/i }).click();
       const linkedSelect = editDialog.getByLabel('Linked package product');
       await expect(linkedSelect).not.toHaveValue('');
       await expect(linkedSelect.locator('option:checked')).toHaveText(PACKAGE_PRODUCT_NAME);

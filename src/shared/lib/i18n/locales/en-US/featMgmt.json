@@ -129,7 +129,7 @@
       "edit": "Edit",
       "deactivate": "Deactivate",
       "loadError": "Could not load products: {{message}}",
-      "headerHelp": "Edit name, category, or prices inline (saved on blur). Use Edit for modifiers and SKU.",
+      "headerHelp": "Edit name, category or prices inline (saved on blur). Click a row to open the full detail and photo.",
       "addProduct": "Add product",
       "searchPlaceholder": "Search products…",
       "newProductTitle": "New product",
@@ -139,7 +139,9 @@
       "deactivateProductTitle": "Deactivate product?",
       "deactivateProductDescription": "The product will be hidden from the POS menu. Existing orders are unchanged.",
       "deactivateProductConfirmLabel": "Deactivate",
-      "productDeactivated": "Product deactivated"
+      "productDeactivated": "Product deactivated",
+      "photoHeader": "Photo",
+      "noPhoto": "No photo"
     },
     "productForm": {
       "invalidModifierSelection": "Invalid modifier selection",
@@ -167,6 +169,26 @@
       "noParentProduct": "Not a loose piece"
     },
     "productDialog": {
+      "navLabel": "Product sections",
+      "tabs": {
+        "details": "Details",
+        "detailsDescription": "Name, price, barcode",
+        "photo": "Photo",
+        "photoDescription": "One product image",
+        "links": "Links",
+        "linksDescription": "Packages, modifiers, suppliers"
+      },
+      "tabWithErrors": "{{label}} (has errors)",
+      "stockStrip": {
+        "onHand": "On hand",
+        "threshold": "Low-stock threshold",
+        "noThreshold": "No threshold",
+        "lowStock": "Low stock"
+      },
+      "discardTitle": "Discard changes?",
+      "discardDescription": "You have unsaved changes to this product. Closing will lose them.",
+      "discardConfirmLabel": "Discard changes",
+      "keepEditing": "Keep editing",
       "photo": {
         "emptyTitle": "No photo",
         "emptyBody": "Drag an image here, paste with Ctrl+V, or choose a file.",
@@ -183,7 +205,8 @@
         "errorUpload": "Photo upload failed: {{message}}. Try again.",
         "errorLink": "The photo uploaded but couldn't be linked to the product. Try again.",
         "errorLoad": "Couldn't load the photo. Replace it or try again later.",
-        "errorOffline": "Offline — photos upload only when online. Reconnect and try again."
+        "errorOffline": "Offline — photos upload only when online. Reconnect and try again.",
+        "lockedTitle": "Save the product first"
       }
     }
   },
