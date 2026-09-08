@@ -5,16 +5,16 @@ milestone_name: Receipt Designer + Inventory Management Expansion
 current_phase: 32
 current_phase_name: Brand Entity & Pack-Weight Catalog Attributes
 status: executing
-stopped_at: Completed 32-01-PLAN.md
-last_updated: "2026-09-08T20:40:50.268Z"
+stopped_at: Completed 32-02-PLAN.md
+last_updated: "2026-09-08T21:07:28.737Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 32 execution started
-state_head: 13625e0f5b0c1bd9f00d103eac65b89f25b0f3ab
+state_head: 2b3fe7f84ba8a85c79beb95d67eb1495b5e28cf2
 progress:
   total_phases: 16
   completed_phases: 9
   total_plans: 53
-  completed_plans: 52
+  completed_plans: 53
   percent: 56
 ---
 
@@ -29,9 +29,21 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 
 ## Current Position
 
-Phase: 32 (Brand Entity & Pack-Weight Catalog Attributes) — EXECUTING
-Status: Executing Phase 32 — Plan 01/02 complete, Plan 02 (BRND-04 filters) remains
-Last activity: 2026-09-08 — Plan 32-01 executed and committed (603b7a6, 13625e0):
+Phase: 32 (Brand Entity & Pack-Weight Catalog Attributes) — BOTH PLANS COMPLETE
+Status: Phase 32 execution complete — Plan 01/02 and Plan 02/02 both done. BRND-01..05 all satisfied.
+  Phase-level verification/completion is the orchestrator's next step, not yet run.
+Last activity: 2026-09-08 — Plan 32-02 executed and committed (f5ca23d, 2b3fe7f): brand/weight-unit
+  filter dropdowns added to the admin Catalog product table (`DataTable` `toolbar` prop, D-11) and to
+  the POS checkout grid (secondary `<select>`s below `CategoryTabs`, AND-composed with the active
+  category tab per D-12 — `CategoryTabs.tsx` itself verified untouched via `git diff --name-only` on
+  every task). New `e2e/checkout/product-grid-brand-weight-filters.spec.ts` (2 tests) plus a new
+  PM21 test in `product-management.spec.ts` prove both surfaces narrow correctly; full
+  `product-management.spec.ts` + the new checkout spec run headless against local Supabase — 22
+  passed, 1 pre-existing documented skip, 0 failed. No deviations — Plan 01 already made
+  `brandId`/`weightUnit` required-but-nullable on `Product` everywhere, so this plan's read-only
+  filter predicates needed no schema/mapper changes. See `32-02-SUMMARY.md` for full detail.
+
+  Plan 32-01 executed and committed (603b7a6, 13625e0):
   `brands` table + RLS + CRUD UI (BRND-01), `products.brand_id` (ON DELETE RESTRICT, BRND-02),
   `products.weight_amount`/`weight_unit` (BRND-03) wired into the reshaped product dialog with
   both-or-neither validation at both the Zod and DB layers. `e2e/products/brands.spec.ts` (6 tests)
@@ -39,8 +51,7 @@ Last activity: 2026-09-08 — Plan 32-01 executed and committed (603b7a6, 13625e
   deviations along the way — most notably `entities/inventory/model/queries.ts`'s `mapInventoryRow`
   was silently poisoning the entire `/inventory` list fetch once `ProductSchema` gained the new
   required-but-nullable brand/weight keys (same failure class as a prior Phase 27 bug at that same
-  call site) — see `32-01-SUMMARY.md` for the full deviation list. BRND-04 (filter-by-brand/weight
-  in admin Catalog + POS grid) and the rest of BRND-05 (filter E2E coverage) remain for Plan 02.
+  call site) — see `32-01-SUMMARY.md` for the full deviation list.
   Gap-closure plan 31-06 (inventory join fix, units-per-package validation fix) reconfirmed live via
   `/gsd-verify-work 31`: full `e2e/products/` + `e2e/checkout/peek-window.spec.ts` suite (65 specs)
   run headless against local Supabase — 62 passed, 2 pre-existing documented skips, 1 flaky
@@ -138,6 +149,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 | Phase 27 P06 | 30min | 2 tasks | 8 files |
 | Phase 27 P07 | 165min | 2 tasks | 13 files |
 | Phase 32 P01 | 95min | 2 tasks | 47 files |
+| Phase 32 P02 | 25min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -281,6 +293,7 @@ Recent decisions affecting current work:
 - [Phase 27]: Phase 27 Plan 07: e2e/promotions/ scenario matrix closes PROMO-09 (scope-overlap, timezone-boundary, deleted-mid-cart, loose-weight/open-unit); fixed a real ProductGrid promotion-pricing gap flagged in 27-03, plus 4 genuine Phase-27-caused test regressions and one silently-failing E2E cleanup bug (Plan 27-05) surfaced by the full-suite phase-gate run
 - [Phase 31]: `/gsd-verify-work 31` re-verification found this machine's local Supabase instance was missing migration `20260907000001_product_photos_storage.sql` (last applied was `20260904000002`) — an environment-drift gap, not a code defect. Fixed via `npx supabase migration up --local`. Worth checking `npx supabase migration list --local` after any git pull that adds migrations, since a stale local DB produces misleading E2E failures that look like application bugs.
 - [Phase 32]: Phase 32 Plan 01: brands table + RLS + CRUD UI, products.brand_id/weight_amount/weight_unit wired into product dialog with both-or-neither validation (D-01..D-09)
+- [Phase 32]: Phase 32 Plan 02: brand/weight-unit filter dropdowns added to admin Catalog table (toolbar prop, D-11) and POS checkout grid (secondary selects below CategoryTabs, AND-composed via D-12); CategoryTabs.tsx untouched
 
 ### Pending Todos
 
@@ -328,8 +341,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-08T20:40:49.536Z
-Stopped at: Completed 32-01-PLAN.md
+Last session: 2026-09-08T21:07:28.215Z
+Stopped at: Completed 32-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

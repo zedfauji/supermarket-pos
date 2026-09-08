@@ -300,8 +300,8 @@ checkout/open-unit (case→piece) system, which stays untouched.
 - [x] **BRND-01**: A new `brands` table supports create/edit/delete through its own management UI, following the same CRUD pattern as existing Categories management, gated by `manage_products`.
 - [x] **BRND-02**: `products` gains a nullable `brand_id` FK; the Phase 31 product dialog lets a product be assigned a brand via a select populated from `brands`.
 - [x] **BRND-03**: `products` gains `weight_amount` (numeric) and `weight_unit` (enum: g, kg, lb, oz) as a catalog/display attribute describing pack size — independent of and not replacing the existing loose-weight-at-checkout / open-unit (case→piece) system.
-- [ ] **BRND-04**: Product search / catalog browsing can filter by brand and by weight unit, in addition to the existing category filter.
-- [ ] **BRND-05**: Automated Playwright E2E coverage proves brand CRUD, RBAC denial for a role without `manage_products`, weight field validation, and filter-by-brand/weight in the product search UI. (Plan 01: brand CRUD/RBAC/weight-validation coverage shipped in `e2e/products/brands.spec.ts` + `product-management.spec.ts` PM19/PM20; filter-by-brand/weight coverage is Plan 02's scope.)
+- [x] **BRND-04**: Product search / catalog browsing can filter by brand and by weight unit, in addition to the existing category filter.
+- [x] **BRND-05**: Automated Playwright E2E coverage proves brand CRUD, RBAC denial for a role without `manage_products`, weight field validation, and filter-by-brand/weight in the product search UI. (Plan 01: brand CRUD/RBAC/weight-validation coverage shipped in `e2e/products/brands.spec.ts` + `product-management.spec.ts` PM19/PM20; Plan 02: filter-by-brand/weight coverage shipped in `product-management.spec.ts` PM21 + `e2e/checkout/product-grid-brand-weight-filters.spec.ts`.)
 
 ## Phase 33 Requirements — Login Screen Store Branding
 
@@ -442,8 +442,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BRND-01 | Phase 32 | Complete |
 | BRND-02 | Phase 32 | Complete |
 | BRND-03 | Phase 32 | Complete |
-| BRND-04 | Phase 32 | Not Started |
-| BRND-05 | Phase 32 | In Progress |
+| BRND-04 | Phase 32 | Complete |
+| BRND-05 | Phase 32 | Complete |
 | STORE-01 | Phase 33 | Not Started |
 | STORE-02 | Phase 33 | Not Started |
 | STORE-03 | Phase 33 | Not Started |
