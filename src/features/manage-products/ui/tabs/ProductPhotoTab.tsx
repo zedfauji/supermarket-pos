@@ -32,8 +32,15 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
+  // CatalogProductsTab's `editProduct` is a plain useState set once when the
+  // dialog opens — it is never resynced after invalidateCatalogQueries
+  // refetches the catalog, so `product.photoPath` stays stale for the whole
+  // dialog session. Track the just-uploaded path locally so the preview
+  // updates immediately without depending on the parent re-passing a fresh
+  // product object.
+  const [localPhotoPath, setLocalPhotoPath] = useState<string | null>(product.photoPath);
   const uploadMutation = useProductPhotoUpload();
-  const { url, isLoading: isSigning } = useProductImageUrl(product);
+  const { url, isLoading: isSigning } = useProductImageUrl({ ...product, photoPath: localPhotoPath });
 
   const disabled = submitting || uploadMutation.isPending;
 
@@ -80,7 +87,7 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
     setErrorMessage(null);
     setImgFailed(false);
     uploadMutation.mutate(
-      { productId: product.id, previousPath: product.photoPath, file },
+      { productId: product.id, previousPath: localPhotoPath, file },
       {
         onSuccess: result => {
           if (!result.ok) {
@@ -89,13 +96,14 @@ export function ProductPhotoTab({ product, submitting }: ProductPhotoTabProps) {
             toast.error(message);
             return;
           }
+          setLocalPhotoPath(result.data.path);
           toast.success(t('manageProducts.productDialog.photo.uploaded'));
         },
       }
     );
   }
 
-  const hasPhoto = product.photoPath != null;
+  const hasPhoto = localPhotoPath != null;
 
   return (
     <div className="flex flex-col items-center gap-4">
