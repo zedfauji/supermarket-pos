@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { ImageOff } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -8,6 +9,7 @@ import {
   useMutationCreateProduct,
   useMutationDeactivateProduct,
   useMutationUpdateProduct,
+  useProductImageUrls,
   useProductsForManagement,
   type CreateProductInput,
   type UpdateProductInput,
@@ -20,11 +22,53 @@ import { MoneyInput } from '@shared/ui/MoneyInput';
 import { POSButton } from '@shared/ui/POSButton';
 import { Badge } from '@shared/ui/badge';
 import { Input } from '@shared/ui/input';
+import { Skeleton } from '@shared/ui/skeleton';
 
 import { ProductDetailDialog } from './ProductDetailDialog';
 
 function modifierIdsOf(p: Product): string[] {
   return p.modifiers.map(m => m.id);
+}
+
+function CatalogThumbnailCell({
+  hasPhotoPath,
+  url,
+  isPending,
+  noPhotoLabel,
+}: {
+  hasPhotoPath: boolean;
+  url: string | undefined;
+  isPending: boolean;
+  noPhotoLabel: string;
+}) {
+  const [loadFailed, setLoadFailed] = useState(false);
+  const showImage = !!url && !loadFailed;
+  const showSkeleton = !showImage && hasPhotoPath && isPending;
+
+  return (
+    <div
+      className="size-10 overflow-hidden rounded-md bg-muted"
+      data-testid="catalog-row-thumb"
+    >
+      {showImage ? (
+        <img
+          src={url}
+          alt=""
+          className="size-full object-cover"
+          onError={() => {
+            setLoadFailed(true);
+          }}
+        />
+      ) : showSkeleton ? (
+        <Skeleton className="size-full rounded-md" />
+      ) : (
+        <div className="flex size-full items-center justify-center">
+          <ImageOff className="size-4 text-muted-foreground" />
+          <span className="sr-only">{noPhotoLabel}</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ProductNameCell({
@@ -42,6 +86,12 @@ function ProductNameCell({
     <Input
       className="h-11 min-w-[8rem]"
       value={draftName}
+      onClick={e => {
+        e.stopPropagation();
+      }}
+      onMouseDown={e => {
+        e.stopPropagation();
+      }}
       onChange={e => {
         onDraftChange(e.target.value);
       }}
@@ -71,6 +121,12 @@ function ProductCategoryCell({
     <select
       className="h-11 max-w-[10rem] rounded-lg border border-input bg-card px-2 text-sm shadow-xs dark:bg-input/20"
       value={draftCategoryId}
+      onClick={e => {
+        e.stopPropagation();
+      }}
+      onMouseDown={e => {
+        e.stopPropagation();
+      }}
       onChange={e => {
         const categoryId = e.target.value;
         onDraftChange(categoryId);
@@ -98,7 +154,16 @@ function ProductBasePriceCell({
   onCommit: (basePrice: number) => void;
 }) {
   return (
-    <div className="min-w-[6rem]">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- propagation-stopper only, not an interactive element itself
+    <div
+      className="min-w-[6rem]"
+      onClick={e => {
+        e.stopPropagation();
+      }}
+      onMouseDown={e => {
+        e.stopPropagation();
+      }}
+    >
       <MoneyInput
         value={draftPrice}
         onChange={onDraftChange}
@@ -127,6 +192,12 @@ export function CatalogProductsTab() {
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const { data: editSupplierIds } = useProductSupplierIds(activeProduct?.id);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
+  const { urls: photoUrls, isPending: photosPending } = useProductImageUrls(products ?? []);
+
+  const openDetailDialog = useCallback((p: Product) => {
+    setActiveProduct(p);
+    setDialogOpen(true);
+  }, []);
 
   const [drafts, setDrafts] = useState<
     Record<string, { name: string; basePrice: number; categoryId: string }>
@@ -178,6 +249,21 @@ export function CatalogProductsTab() {
   const catList = categories ?? [];
 
   const columns: ColumnDef<Product>[] = [
+    {
+      id: 'photo',
+      header: t('manageProducts.productsTab.photoHeader'),
+      cell: ({ row }) => {
+        const p = row.original;
+        return (
+          <CatalogThumbnailCell
+            hasPhotoPath={!!p.photoPath}
+            url={p.photoPath ? photoUrls.get(p.photoPath) : undefined}
+            isPending={photosPending}
+            noPhotoLabel={t('manageProducts.productsTab.noPhoto')}
+          />
+        );
+      },
+    },
     {
       id: 'name',
       header: t('manageProducts.productsTab.nameHeader'),
@@ -276,9 +362,9 @@ export function CatalogProductsTab() {
               type="button"
               touchSize="default"
               variant="outline"
-              onClick={() => {
-                setActiveProduct(p);
-                setDialogOpen(true);
+              onClick={e => {
+                e.stopPropagation();
+                openDetailDialog(p);
               }}
             >
               {t('manageProducts.productsTab.edit')}
@@ -288,7 +374,8 @@ export function CatalogProductsTab() {
               touchSize="default"
               variant="outline"
               disabled={!p.isActive}
-              onClick={() => {
+              onClick={e => {
+                e.stopPropagation();
                 setDeactivateId(p.id);
               }}
             >
@@ -335,6 +422,9 @@ export function CatalogProductsTab() {
         searchable
         searchPlaceholder={t('manageProducts.productsTab.searchPlaceholder')}
         enableSorting
+        onRowClick={openDetailDialog}
+        // eslint-disable-next-line i18next/no-literal-string -- Tailwind class names, not UI copy
+        getRowClassName={() => 'hover:bg-muted/50 transition-colors duration-150'}
       />
 
       <ProductDetailDialog
