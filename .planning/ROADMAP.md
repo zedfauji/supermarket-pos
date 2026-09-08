@@ -472,7 +472,7 @@ Plans:
 **Goal:** Products can be assigned a brand (new `brands` table with its own CRUD, same pattern as Categories) and a catalog pack-size attribute (`weight_amount` + `weight_unit`: g/kg/lb/oz) — independent of the existing loose-weight-at-checkout/open-unit system. Both are filterable in product search/catalog browsing.
 **Requirements**: BRND-01, BRND-02, BRND-03, BRND-04, BRND-05
 **Depends on:** Phase 31 (extends the same product edit dialog with brand-select and weight fields)
-**Plans:** 2/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 **Wave 1**

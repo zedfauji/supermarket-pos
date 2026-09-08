@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Receipt Designer + Inventory Management Expansion
-current_phase: 32
-current_phase_name: Brand Entity & Pack-Weight Catalog Attributes
-status: executing
-stopped_at: Completed 32-02-PLAN.md
-last_updated: "2026-09-08T21:07:28.737Z"
+current_phase: 33
+current_phase_name: Login Screen Store Branding
+status: planning
+stopped_at: Phase 32 complete, ready to plan Phase 33
+last_updated: "2026-09-08T22:09:47.116Z"
 last_activity: 2026-09-08
-last_activity_desc: Phase 32 execution started
-state_head: 2b3fe7f84ba8a85c79beb95d67eb1495b5e28cf2
+last_activity_desc: Phase 32 complete, transitioned to Phase 33
+state_head: cee992f986cd2b937ac30919061384425487e937
 progress:
   total_phases: 16
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 53
   completed_plans: 53
-  percent: 56
+  percent: 63
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 
 ## Current Position
 
-Phase: 32 (Brand Entity & Pack-Weight Catalog Attributes) — BOTH PLANS COMPLETE
-Status: Phase 32 execution complete — Plan 01/02 and Plan 02/02 both done. BRND-01..05 all satisfied.
+Phase: 33 — Login Screen Store Branding
+Status: Ready to plan
   Phase-level verification/completion is the orchestrator's next step, not yet run.
-Last activity: 2026-09-08 — Plan 32-02 executed and committed (f5ca23d, 2b3fe7f): brand/weight-unit
+Last activity: 2026-09-08 — Phase 32 complete, transitioned to Phase 33
   filter dropdowns added to the admin Catalog product table (`DataTable` `toolbar` prop, D-11) and to
   the POS checkout grid (secondary `<select>`s below `CategoryTabs`, AND-composed with the active
   category tab per D-12 — `CategoryTabs.tsx` itself verified untouched via `git diff --name-only` on
@@ -47,6 +47,7 @@ Last activity: 2026-09-08 — Plan 32-02 executed and committed (f5ca23d, 2b3fe7
   `brands` table + RLS + CRUD UI (BRND-01), `products.brand_id` (ON DELETE RESTRICT, BRND-02),
   `products.weight_amount`/`weight_unit` (BRND-03) wired into the reshaped product dialog with
   both-or-neither validation at both the Zod and DB layers. `e2e/products/brands.spec.ts` (6 tests)
+
   + 2 new product-management.spec.ts tests (PM19/PM20) all green. Found and fixed 4 Rule 1/3
   deviations along the way — most notably `entities/inventory/model/queries.ts`'s `mapInventoryRow`
   was silently poisoning the entire `/inventory` list fetch once `ProductSchema` gained the new
@@ -66,7 +67,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 
 **Velocity:**
 
-- Total plans completed: 102 (all v1.0, Phases 1-4)
+- Total plans completed: 104 (all v1.0, Phases 1-4)
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -94,6 +95,7 @@ verified 16/16 must-haves (see `.planning/phases/27-promotions-discount-manageme
 | 27 | 10 | - | - |
 | 28 | 5 | - | - |
 | 31 | 6 | - | - |
+| 32 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -341,9 +343,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-08T21:07:28.215Z
-Stopped at: Completed 32-02-PLAN.md
-Resume file: None
+Last session: 2026-09-08T21:35:34.063Z
+Stopped at: Phase 32 complete, ready to plan Phase 33
+Resume file: .planning/phases/30-checkout-continuity-settings-exit-guard-cash-keypad/30-UI-SPEC.md
 
 ## Operator Next Steps
 
