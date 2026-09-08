@@ -7,7 +7,9 @@ export {
   SIGNED_URL_TTL_SECONDS,
   SIGNED_URL_STALE_TIME_MS,
   signProductPhoto,
+  signProductPhotos,
   pickProductImage,
   resolveProductImageUrl,
   useProductImageUrl,
+  useProductImageUrls,
 } from './model';

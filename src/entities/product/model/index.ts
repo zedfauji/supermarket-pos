@@ -15,13 +15,15 @@ export { useProducts, useProductsForManagement, useCategories, useModifiers, use
 
 export type { CreateProductInput, UpdateProductInput } from './queries';
 
-// Photo resolver (D-14)
+// Photo resolver (D-14) + batch signer for list surfaces (D-16)
 export {
   PRODUCT_PHOTO_BUCKET,
   SIGNED_URL_TTL_SECONDS,
   SIGNED_URL_STALE_TIME_MS,
   signProductPhoto,
+  signProductPhotos,
   pickProductImage,
   resolveProductImageUrl,
   useProductImageUrl,
+  useProductImageUrls,
 } from './resolveProductImage';

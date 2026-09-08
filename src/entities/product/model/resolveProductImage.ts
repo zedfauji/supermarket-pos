@@ -72,8 +72,8 @@ export async function resolveProductImageUrl(product: {
  * TanStack Query hook for a single product's display image (dialog Photo
  * tab / catalog thumbnail). Keyed by product id + photoPath + imageUrl so an
  * upload/replace/remove naturally produces a fresh query with no manual
- * invalidation needed. The batch createSignedUrls path (list surfaces) is
- * Plan 03's work, not this hook.
+ * invalidation needed. The batch signed-URL path (list surfaces) is
+ * `useProductImageUrls` below, not this hook.
  */
 export function useProductImageUrl(
   product: Pick<Product, 'id' | 'photoPath' | 'imageUrl'>
@@ -89,5 +89,71 @@ export function useProductImageUrl(
   return {
     url: query.data ?? null,
     isLoading: !!photoPath && query.isPending,
+  };
+}
+
+/**
+ * D-16 batch resolver for list surfaces (the catalog table, and any future
+ * consumer with many rows on screen at once): one signed-URL request for
+ * the whole page rather than one per row. De-duplicates and sorts the input
+ * before the network call so a page with repeated paths still costs one
+ * request, and a bad row never discards the rest of the page.
+ */
+export async function signProductPhotos(paths: string[]): Promise<Map<string, string>> {
+  const uniquePaths = Array.from(new Set(paths)).sort();
+  if (uniquePaths.length === 0) return new Map();
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(PRODUCT_PHOTO_BUCKET)
+      .createSignedUrls(uniquePaths, SIGNED_URL_TTL_SECONDS);
+    if (error) {
+      logger.error('products.photo_sign_batch_failed', {
+        message: error.message,
+        count: uniquePaths.length,
+      });
+      return new Map();
+    }
+    const map = new Map<string, string>();
+    for (const row of data) {
+      if (row.path && !row.error) map.set(row.path, row.signedUrl);
+    }
+    return map;
+  } catch (e) {
+    logger.error('products.photo_sign_batch_failed', {
+      message: e instanceof Error ? e.message : String(e),
+      count: uniquePaths.length,
+    });
+    return new Map();
+  }
+}
+
+function productImageUrlsQueryKey(paths: string[]): string[] {
+  // eslint-disable-next-line i18next/no-literal-string -- query-key namespace string, not UI copy
+  return ['product-photos-batch', ...paths];
+}
+
+/**
+ * Batch TanStack Query hook for a page of rows (the catalog table, D-16).
+ * Query key is the sorted, de-duplicated path list itself, so two renders
+ * holding the same rows in a different order share one cache entry and
+ * therefore one signing request.
+ */
+export function useProductImageUrls(
+  products: readonly Pick<Product, 'photoPath'>[]
+): { urls: Map<string, string>; isPending: boolean } {
+  const uniquePaths = Array.from(
+    new Set(products.map(p => p.photoPath).filter((p): p is string => !!p))
+  ).sort();
+  const query = useQuery({
+    queryKey: productImageUrlsQueryKey(uniquePaths),
+    queryFn: () => signProductPhotos(uniquePaths),
+    staleTime: SIGNED_URL_STALE_TIME_MS,
+    enabled: uniquePaths.length > 0,
+  });
+
+  return {
+    urls: query.data ?? new Map<string, string>(),
+    isPending: uniquePaths.length > 0 && query.isPending,
   };
 }
