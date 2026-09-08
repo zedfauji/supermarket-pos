@@ -430,7 +430,11 @@ export function ProductDetailDialog({
           ) : null}
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex min-h-0 flex-1 flex-col"
+        >
           <Tabs
             value={activeTab}
             onValueChange={v => {
