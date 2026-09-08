@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ProductSchema } from './domain';
+import { ProductCreateSchema, ProductSchema, ProductUpdateSchema } from './domain';
 
 const baseProduct = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -14,6 +14,9 @@ const baseProduct = {
   stock_threshold: null,
   unitsPerPackage: null,
   parentProductId: null,
+  brandId: null,
+  weightAmount: null,
+  weightUnit: null,
 };
 
 describe('ProductSchema stock_threshold field', () => {
@@ -42,5 +45,76 @@ describe('ProductSchema stock_threshold field', () => {
       Object.entries(baseProduct).filter(([k]) => k !== 'stock_threshold')
     );
     expect(() => ProductSchema.parse(withoutThreshold)).toThrow();
+  });
+});
+
+describe('ProductCreateSchema/ProductUpdateSchema weightAmount/weightUnit (Phase 32 D-06/D-07)', () => {
+  const baseCreate = Object.fromEntries(Object.entries(baseProduct).filter(([k]) => k !== 'id'));
+
+  it('ProductCreateSchema accepts both weightAmount/weightUnit null', () => {
+    const result = ProductCreateSchema.safeParse(baseCreate);
+    expect(result.success).toBe(true);
+  });
+
+  it('ProductCreateSchema accepts both weightAmount/weightUnit set', () => {
+    const result = ProductCreateSchema.safeParse({
+      ...baseCreate,
+      weightAmount: 0.5,
+      weightUnit: 'kg',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('ProductCreateSchema rejects weightAmount set with weightUnit null', () => {
+    const result = ProductCreateSchema.safeParse({
+      ...baseCreate,
+      weightAmount: 0.5,
+      weightUnit: null,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('ProductCreateSchema rejects weightAmount null with weightUnit set', () => {
+    const result = ProductCreateSchema.safeParse({
+      ...baseCreate,
+      weightAmount: null,
+      weightUnit: 'kg',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('ProductUpdateSchema accepts neither weightAmount nor weightUnit present (partial update)', () => {
+    const result = ProductUpdateSchema.safeParse({
+      id: baseProduct.id,
+      name: 'Renamed',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('ProductUpdateSchema rejects weightAmount present with weightUnit absent', () => {
+    const result = ProductUpdateSchema.safeParse({
+      id: baseProduct.id,
+      weightAmount: 0.5,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects weightAmount of 0 or negative (.positive())', () => {
+    expect(
+      ProductCreateSchema.safeParse({ ...baseCreate, weightAmount: 0, weightUnit: 'g' }).success
+    ).toBe(false);
+    expect(
+      ProductCreateSchema.safeParse({ ...baseCreate, weightAmount: -1, weightUnit: 'g' }).success
+    ).toBe(false);
+  });
+
+  it('rejects weightAmount with more than 2 decimal places, accepts exactly 2', () => {
+    expect(
+      ProductCreateSchema.safeParse({ ...baseCreate, weightAmount: 0.505, weightUnit: 'g' })
+        .success
+    ).toBe(false);
+    expect(
+      ProductCreateSchema.safeParse({ ...baseCreate, weightAmount: 0.5, weightUnit: 'g' }).success
+    ).toBe(true);
   });
 });

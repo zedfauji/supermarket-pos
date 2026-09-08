@@ -76,6 +76,9 @@ describe('ProductSchema unitsPerPackage / parentProductId fields', () => {
     stock_threshold: null,
     unitsPerPackage: null,
     parentProductId: null,
+    brandId: null,
+    weightAmount: null,
+    weightUnit: null,
   };
 
   it('accepts both fields as null (the state of every existing product)', () => {

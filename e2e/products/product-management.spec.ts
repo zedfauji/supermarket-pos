@@ -13,6 +13,7 @@ import { getServiceClient, openCaja, resetTestState } from '../helpers/supabase'
 
 const TEST_CATEGORY = 'TestCat-E2E';
 const TEST_PRODUCT = 'TestProduct-E2E';
+const TEST_BRAND = 'TestBrandForProduct-E2E';
 
 async function cleanupTestData(): Promise<void> {
   const admin = getServiceClient();
@@ -20,6 +21,8 @@ async function cleanupTestData(): Promise<void> {
   await admin.from('products').delete().eq('name', TEST_PRODUCT);
   // Delete test category
   await admin.from('categories').delete().eq('name', TEST_CATEGORY);
+  // Delete test brand (Phase 32)
+  await admin.from('brands').delete().eq('name', TEST_BRAND);
 }
 
 /** Seeds (upserts) TEST_PRODUCT directly via the service client, returning its id. */
@@ -891,6 +894,117 @@ test.describe('Product Management', () => {
       await discardDialog.getByRole('button', { name: /discard changes/i }).click();
     }
     await expect(editDialog).not.toBeVisible({ timeout: 10_000 });
+
+    await logout(page);
+  });
+
+  test('PM19 (BRND-02/03): brand + pack weight persist on a seeded product', async ({ page }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+    const admin = getServiceClient();
+    const { data: brandRow, error: brandErr } = await admin
+      .from('brands')
+      .upsert({ name: TEST_BRAND })
+      .select('id')
+      .single();
+    if (brandErr || !brandRow) {
+      test.skip(true, `Could not seed test brand: ${brandErr?.message ?? 'no row'}`);
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    await editDialog.getByLabel(/^brand/i).selectOption({ label: TEST_BRAND });
+    const weightAmountInput = editDialog.getByLabel(/pack weight/i);
+    await weightAmountInput.fill('0.5');
+    await editDialog.getByLabel(/weight unit/i).selectOption('kg');
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 15_000 });
+
+    const { data: saved } = await admin
+      .from('products')
+      .select('brand_id, weight_amount, weight_unit')
+      .eq('id', seeded.id)
+      .single();
+    expect(saved?.brand_id).toBe((brandRow as { id: string }).id);
+    expect(Number(saved?.weight_amount)).toBe(0.5);
+    expect(saved?.weight_unit).toBe('kg');
+
+    // Reopen to confirm the dialog reflects the persisted values.
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const reopenDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(reopenDialog).toBeVisible({ timeout: 10_000 });
+    await expect(reopenDialog.getByLabel(/^brand/i)).toHaveValue(
+      (brandRow as { id: string }).id
+    );
+    await expect(reopenDialog.getByLabel(/pack weight/i)).toHaveValue('0.5');
+    await expect(reopenDialog.getByLabel(/weight unit/i)).toHaveValue('kg');
+    await reopenDialog.getByRole('button', { name: 'Cancel' }).click();
+    const discardDialog = page.getByRole('alertdialog');
+    if (await discardDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await discardDialog.getByRole('button', { name: /discard changes/i }).click();
+    }
+    await expect(reopenDialog).not.toBeVisible({ timeout: 10_000 });
+
+    await logout(page);
+  });
+
+  test('PM20 (D-09): saving without touching weight fields never writes a phantom unit', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await loginAs(page, 'manager');
+    const seeded = await seedTestProduct();
+    if (!seeded) {
+      test.skip(true, 'No category found to seed product in');
+      return;
+    }
+
+    const found = await navigateToProductsSettingsTab(page, 'products');
+    if (!found) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+    const row = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.getByRole('button', { name: 'Edit' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Edit product' });
+    await expect(editDialog).toBeVisible({ timeout: 10_000 });
+
+    // Weight unit defaults to a pre-selected 'g' (D-09) but is never touched —
+    // only the unrelated SKU field changes, proving the phantom-unit trap
+    // does not fire on an untouched save.
+    await editDialog.getByLabel(/sku/i).fill('PM20-SKU');
+    await editDialog.getByRole('button', { name: /save|update/i }).click();
+    await expect(editDialog).not.toBeVisible({ timeout: 15_000 });
+
+    const admin = getServiceClient();
+    const { data: saved } = await admin
+      .from('products')
+      .select('brand_id, weight_amount, weight_unit')
+      .eq('id', seeded.id)
+      .single();
+    expect(saved?.brand_id).toBeNull();
+    expect(saved?.weight_amount).toBeNull();
+    expect(saved?.weight_unit).toBeNull();
 
     await logout(page);
   });

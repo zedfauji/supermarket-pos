@@ -83,6 +83,9 @@ export function mapProductRow(row: ProductRow): Result<Product> {
         barcode: (row as { barcode?: string | null }).barcode ?? null,
         unitsPerPackage: (row as { units_per_package?: number | null }).units_per_package ?? null,
         parentProductId: (row as { parent_product_id?: string | null }).parent_product_id ?? null,
+        brandId: (row as { brand_id?: string | null }).brand_id ?? null,
+        weightAmount: (row as { weight_amount?: number | null }).weight_amount ?? null,
+        weightUnit: (row as { weight_unit?: string | null }).weight_unit ?? null,
         quantityOnHand:
           (row as { inventory?: { quantity_on_hand: number } | null }).inventory
             ?.quantity_on_hand ?? undefined,
@@ -405,6 +408,15 @@ function productUpdateToRow(patch: Partial<Omit<ProductUpdate, 'id'>>): TablesUp
   if (patch.parentProductId !== undefined) {
     (row as Record<string, unknown>).parent_product_id = patch.parentProductId;
   }
+  if (patch.brandId !== undefined) {
+    (row as Record<string, unknown>).brand_id = patch.brandId;
+  }
+  if (patch.weightAmount !== undefined) {
+    (row as Record<string, unknown>).weight_amount = patch.weightAmount;
+  }
+  if (patch.weightUnit !== undefined) {
+    (row as Record<string, unknown>).weight_unit = patch.weightUnit;
+  }
   return row;
 }
 
@@ -439,6 +451,9 @@ export function useMutationCreateProduct() {
       }
       (insertRow as Record<string, unknown>).units_per_package = product.unitsPerPackage;
       (insertRow as Record<string, unknown>).parent_product_id = product.parentProductId;
+      (insertRow as Record<string, unknown>).brand_id = product.brandId;
+      (insertRow as Record<string, unknown>).weight_amount = product.weightAmount;
+      (insertRow as Record<string, unknown>).weight_unit = product.weightUnit;
 
       const res = await supabaseMutation<Tables<'products'>>(() =>
         supabase.from('products').insert(insertRow).select('*').single()

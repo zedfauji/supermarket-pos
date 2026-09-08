@@ -166,7 +166,15 @@
       "unitsPerPackageMinError": "Debe ser al menos 1",
       "parentProductLabel": "Paquete vinculado",
       "parentProductHint": "Vincula este producto como la pieza suelta de un paquete ya configurado.",
-      "noParentProduct": "No es una pieza suelta"
+      "noParentProduct": "No es una pieza suelta",
+      "brandLabel": "Marca",
+      "noBrand": "Sin marca",
+      "weightAmountLabel": "Peso del paquete",
+      "weightUnitLabel": "Unidad de peso",
+      "weightUnitGram": "Gramo (g)",
+      "weightUnitKilogram": "Kilogramo (kg)",
+      "weightUnitPound": "Libra (lb)",
+      "weightUnitOunce": "Onza (oz)"
     },
     "brandsTab": {
       "loadError": "No se pudieron cargar las marcas: {{message}}",

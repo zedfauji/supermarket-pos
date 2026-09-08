@@ -92,6 +92,11 @@ function mapInventoryRow(row: InventoryRow): Result<Inventory> {
         // fails to parse), not just rows for open-unit-configured products.
         unitsPerPackage: (productRaw['units_per_package'] as number | null | undefined) ?? null,
         parentProductId: (productRaw['parent_product_id'] as string | null | undefined) ?? null,
+        // Phase 32: same rationale as unitsPerPackage/parentProductId above —
+        // ProductSchema requires these keys present (nullable, not optional).
+        brandId: (productRaw['brand_id'] as string | null | undefined) ?? null,
+        weightAmount: (productRaw['weight_amount'] as number | null | undefined) ?? null,
+        weightUnit: (productRaw['weight_unit'] as string | null | undefined) ?? null,
         modifiers: [],
         category: cat,
       });

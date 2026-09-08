@@ -283,6 +283,19 @@ export const ProductSchema = z.object({
   unitsPerPackage: z.number().int().positive().nullable(),
   /** Phase 27 D-01: set on the LOOSE (child) product — links it to its parent BOX product. */
   parentProductId: UuidSchema.nullable(),
+  /** Phase 32 D-01: nullable brand assignment — independent of category. */
+  brandId: UuidSchema.nullable(),
+  /**
+   * Phase 32 D-06/D-07: catalog pack-size display attribute (e.g. "500" for
+   * "500 g"), independent of the loose-weight-at-checkout/open-unit system.
+   * Both-or-neither with {@link weightUnit} — enforced by a `.refine()` on
+   * ProductCreateSchema/ProductUpdateSchema below, never on this base schema
+   * (chaining `.refine()` here would break their `.omit()`/`.partial()`
+   * derivation).
+   */
+  weightAmount: z.number().positive().multipleOf(0.01).nullable(),
+  /** Phase 32 D-06: catalog pack-size unit (g/kg/lb/oz). Both-or-neither with {@link weightAmount}. */
+  weightUnit: z.enum(['g', 'kg', 'lb', 'oz']).nullable(),
   /** True when this product can be used as a component in a combo product */
   comboEligible: z.boolean().optional().default(true),
   /** True when this product IS a combo (composed of other products) */
@@ -297,10 +310,19 @@ export const ProductSchema = z.object({
   modifiers: z.array(ModifierSchema).default([]),
 });
 
+// Phase 32 D-06: both-or-neither weightAmount/weightUnit, attached to
+// Create/Update — never to the base ProductSchema (Pitfall 4/Pattern 3:
+// `.refine()` returns an effects-wrapped schema with no `.omit()`/`.partial()`).
+const WEIGHT_BOTH_OR_NEITHER_MESSAGE =
+  'weightAmount and weightUnit must both be set or both be null';
+
 export const ProductCreateSchema = ProductSchema.omit({
   id: true,
   category: true,
   modifiers: true,
+}).refine(v => (v.weightAmount == null) === (v.weightUnit == null), {
+  message: WEIGHT_BOTH_OR_NEITHER_MESSAGE,
+  path: ['weightUnit'],
 });
 
 export const ProductUpdateSchema = ProductSchema.omit({
@@ -308,7 +330,17 @@ export const ProductUpdateSchema = ProductSchema.omit({
   modifiers: true,
 })
   .partial()
-  .required({ id: true });
+  .required({ id: true })
+  .refine(
+    v =>
+      !('weightAmount' in v && !('weightUnit' in v)) &&
+      !('weightUnit' in v && !('weightAmount' in v)) &&
+      (v.weightAmount == null) === (v.weightUnit == null),
+    {
+      message: WEIGHT_BOTH_OR_NEITHER_MESSAGE,
+      path: ['weightUnit'],
+    }
+  );
 
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductCreate = z.infer<typeof ProductCreateSchema>;
@@ -1421,6 +1453,9 @@ export const domain = {
       stock_threshold: null,
       unitsPerPackage: null,
       parentProductId: null,
+      brandId: null,
+      weightAmount: null,
+      weightUnit: null,
       comboEligible: true,
       isCombo: false,
       modifiers: [],
@@ -1441,6 +1476,9 @@ export const domain = {
         stock_threshold: null,
         unitsPerPackage: null,
         parentProductId: null,
+        brandId: null,
+        weightAmount: null,
+        weightUnit: null,
         comboEligible: true,
         isCombo: false,
         modifiers: [],

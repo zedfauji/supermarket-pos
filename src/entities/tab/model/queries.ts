@@ -103,6 +103,11 @@ function mapProductRow(
       // undefined) instead of throwing loudly.
       unitsPerPackage: (pRaw['units_per_package'] as number | null | undefined) ?? null,
       parentProductId: (pRaw['parent_product_id'] as string | null | undefined) ?? null,
+      // Phase 32: same rationale as unitsPerPackage/parentProductId above —
+      // ProductSchema requires these keys present (nullable, not optional).
+      brandId: (pRaw['brand_id'] as string | null | undefined) ?? null,
+      weightAmount: (pRaw['weight_amount'] as number | null | undefined) ?? null,
+      weightUnit: (pRaw['weight_unit'] as string | null | undefined) ?? null,
       modifiers: [],
       ...(catEmbed
         ? {

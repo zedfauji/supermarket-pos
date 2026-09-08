@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { Category } from '@shared/lib/domain';
+import type { Brand, Category } from '@shared/lib/domain';
 import { FormField } from '@shared/ui/FormField';
 import { MoneyInput } from '@shared/ui/MoneyInput';
 import { Checkbox } from '@shared/ui/checkbox';
@@ -11,6 +11,15 @@ export type ProductDetailsTabProps = {
   categories: Category[];
   categoryId: string;
   onCategoryIdChange: (value: string) => void;
+  /** Phase 32 D-08: brand-select + weight fields sit right after Category. */
+  brands: Brand[];
+  brandId: string;
+  onBrandIdChange: (value: string) => void;
+  /** String buffer (Pattern 2) — never the parsed number; see ProductDetailDialog's submit-time parse. */
+  weightAmountInput: string;
+  onWeightAmountInputChange: (value: string) => void;
+  weightUnit: string;
+  onWeightUnitChange: (value: string) => void;
   basePrice: number;
   onBasePriceChange: (value: number) => void;
   sku: string;
@@ -34,6 +43,13 @@ export function ProductDetailsTab({
   categories,
   categoryId,
   onCategoryIdChange,
+  brands,
+  brandId,
+  onBrandIdChange,
+  weightAmountInput,
+  onWeightAmountInputChange,
+  weightUnit,
+  onWeightUnitChange,
   basePrice,
   onBasePriceChange,
   sku,
@@ -85,6 +101,60 @@ export function ProductDetailsTab({
               {c.name}
             </option>
           ))}
+        </select>
+      </FormField>
+
+      <FormField
+        label={t('manageProducts.productForm.brandLabel')}
+        error={fieldErrors.brandId ?? ''}
+      >
+        <select
+          className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs dark:bg-input/20"
+          value={brandId}
+          onChange={e => {
+            onBrandIdChange(e.target.value);
+          }}
+          disabled={submitting}
+        >
+          <option value="">{t('manageProducts.productForm.noBrand')}</option>
+          {brands.map(b => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
+
+      <FormField
+        label={t('manageProducts.productForm.weightAmountLabel')}
+        error={fieldErrors.weightAmount ?? ''}
+      >
+        <Input
+          inputMode="decimal"
+          value={weightAmountInput}
+          onChange={e => {
+            onWeightAmountInputChange(e.target.value);
+          }}
+          disabled={submitting}
+        />
+      </FormField>
+
+      <FormField
+        label={t('manageProducts.productForm.weightUnitLabel')}
+        error={fieldErrors.weightUnit ?? ''}
+      >
+        <select
+          className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-xs dark:bg-input/20"
+          value={weightUnit}
+          onChange={e => {
+            onWeightUnitChange(e.target.value);
+          }}
+          disabled={submitting}
+        >
+          <option value="g">{t('manageProducts.productForm.weightUnitGram')}</option>
+          <option value="kg">{t('manageProducts.productForm.weightUnitKilogram')}</option>
+          <option value="lb">{t('manageProducts.productForm.weightUnitPound')}</option>
+          <option value="oz">{t('manageProducts.productForm.weightUnitOunce')}</option>
         </select>
       </FormField>
 

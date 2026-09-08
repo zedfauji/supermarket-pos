@@ -3,6 +3,7 @@ import { ImageOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { useBrands } from '@entities/brand';
 import { useCategories } from '@entities/category';
 import {
   useModifiers,
@@ -170,6 +171,7 @@ export function CatalogProductsTab() {
   const { data: products, isLoading, resultError } = useProductsForManagement();
   const { data: categories } = useCategories();
   const { data: modifiers } = useModifiers();
+  const { data: brands } = useBrands();
   const { data: suppliers } = useSuppliers();
 
   const createMutation = useMutationCreateProduct();
@@ -474,6 +476,7 @@ export function CatalogProductsTab() {
         onOpenChange={setDialogOpen}
         categories={catList}
         modifiers={modList}
+        brands={brands ?? []}
         products={products ?? []}
         suppliers={suppliers ?? []}
         supplierIds={editSupplierIds}

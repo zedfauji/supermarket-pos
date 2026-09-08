@@ -75,6 +75,10 @@ export type ProductFormSnapshot = {
   imageUrl: string;
   modifierIds: string[];
   selectedSupplierIds: string[];
+  /** Phase 32 D-07 dirty-close guard extension: brand + weight fields. */
+  brandId: string;
+  weightAmountInput: string;
+  weightUnit: string;
 };
 
 function sameValue(a: unknown, b: unknown): boolean {

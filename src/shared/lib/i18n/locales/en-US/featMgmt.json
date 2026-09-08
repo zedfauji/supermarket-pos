@@ -166,7 +166,15 @@
       "unitsPerPackageMinError": "Must be at least 1",
       "parentProductLabel": "Linked package product",
       "parentProductHint": "Link this product as the loose piece of an already-configured package product.",
-      "noParentProduct": "Not a loose piece"
+      "noParentProduct": "Not a loose piece",
+      "brandLabel": "Brand",
+      "noBrand": "No brand",
+      "weightAmountLabel": "Pack weight",
+      "weightUnitLabel": "Weight unit",
+      "weightUnitGram": "Gram (g)",
+      "weightUnitKilogram": "Kilogram (kg)",
+      "weightUnitPound": "Pound (lb)",
+      "weightUnitOunce": "Ounce (oz)"
     },
     "brandsTab": {
       "loadError": "Could not load brands: {{message}}",

@@ -77,6 +77,9 @@ function mapOpenUnitRow(row: Record<string, unknown>): Result<OpenUnit> {
         stock_threshold: productRow['stock_threshold'] ?? null,
         unitsPerPackage: productRow['units_per_package'] ?? null,
         parentProductId: productRow['parent_product_id'] ?? null,
+        brandId: productRow['brand_id'] ?? null,
+        weightAmount: productRow['weight_amount'] ?? null,
+        weightUnit: productRow['weight_unit'] ?? null,
         modifiers: [],
         category,
       });

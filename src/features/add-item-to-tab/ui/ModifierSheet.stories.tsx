@@ -38,6 +38,9 @@ const mockProduct: Product = {
   stock_threshold: null,
   unitsPerPackage: null,
   parentProductId: null,
+  brandId: null,
+  weightAmount: null,
+  weightUnit: null,
   comboEligible: true,
   isCombo: false,
   modifiers: [

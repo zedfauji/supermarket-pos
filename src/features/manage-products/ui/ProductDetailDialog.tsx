@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import type { CreateProductInput, UpdateProductInput } from '@entities/product';
-import type { Category, Modifier, Product, Supplier } from '@shared/lib/domain';
+import type { Brand, Category, Modifier, Product, Supplier } from '@shared/lib/domain';
 import { ProductCreateSchema, ProductUpdateSchema, UuidSchema } from '@shared/lib/domain';
 import { ConfirmDialog } from '@shared/ui/ConfirmDialog';
 import { POSButton } from '@shared/ui/POSButton';
@@ -44,6 +44,8 @@ export type ProductDetailDialogProps = {
   onOpenChange: (open: boolean) => void;
   categories: Category[];
   modifiers: Modifier[];
+  /** Phase 32 D-08: brand-select options, sorted alphabetically (D-01: no sortOrder field). */
+  brands: Brand[];
   /** All catalog products — used to populate the parent-package selector. */
   products: Product[];
   suppliers: Supplier[];
@@ -66,6 +68,7 @@ export function ProductDetailDialog({
   onOpenChange,
   categories,
   modifiers,
+  brands,
   products,
   suppliers,
   supplierIds,
@@ -92,6 +95,14 @@ export function ProductDetailDialog({
   const [parentProductIdInput, setParentProductIdInput] = useState(
     initialProduct?.parentProductId ?? ''
   );
+  const [brandId, setBrandId] = useState(initialProduct?.brandId ?? '');
+  const [weightAmountInput, setWeightAmountInput] = useState(
+    initialProduct?.weightAmount != null ? String(initialProduct.weightAmount) : ''
+  );
+  // D-09: pre-selected default, purely a UI initial value — never read into the
+  // submit payload unless weightAmountInput is also non-empty (Pattern 2/Pitfall 2).
+  // eslint-disable-next-line i18next/no-literal-string -- 'g' is a weight-unit enum value (data), not UI copy.
+  const [weightUnit, setWeightUnit] = useState<string>(initialProduct?.weightUnit ?? 'g');
   const [isActive, setIsActive] = useState(initialProduct?.isActive ?? true);
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl ?? '');
   const [modifierIds, setModifierIds] = useState<string[]>(
@@ -131,6 +142,11 @@ export function ProductDetailDialog({
     unitsPerPackageInput:
       initialProduct?.unitsPerPackage != null ? String(initialProduct.unitsPerPackage) : '',
     parentProductIdInput: initialProduct?.parentProductId ?? '',
+    brandId: initialProduct?.brandId ?? '',
+    weightAmountInput:
+      initialProduct?.weightAmount != null ? String(initialProduct.weightAmount) : '',
+    // eslint-disable-next-line i18next/no-literal-string -- 'g' is a weight-unit enum value (data), not UI copy.
+    weightUnit: initialProduct?.weightUnit ?? 'g',
     isActive: initialProduct?.isActive ?? true,
     imageUrl: initialProduct?.imageUrl ?? '',
     modifierIds: initialProduct?.modifiers.map(m => m.id) ?? [],
@@ -146,6 +162,9 @@ export function ProductDetailDialog({
       barcode,
       unitsPerPackageInput,
       parentProductIdInput,
+      brandId,
+      weightAmountInput,
+      weightUnit,
       isActive,
       imageUrl,
       modifierIds,
@@ -286,6 +305,13 @@ export function ProductDetailDialog({
       unitsPerPackage = parsedUnits;
     }
 
+    const brandIdVal = brandId === '' ? null : brandId;
+    // Pattern 2/Pitfall 2 (D-09): the payload's weight unit is non-null ONLY
+    // when amount is also non-null, regardless of the select's pre-selected
+    // 'g' state — otherwise every untouched save would submit a phantom unit.
+    const weightAmount = weightAmountInput.trim() === '' ? null : Number(weightAmountInput.trim());
+    const payloadWeightUnit = weightAmount === null ? null : weightUnit;
+
     // happyHourPrice is always null — happy-hour pricing is managed in
     // Settings → Promotions (D-01); the vestigial nullable Zod field must
     // still be present in the parsed payload.
@@ -308,6 +334,9 @@ export function ProductDetailDialog({
         barcode: barcodeVal,
         unitsPerPackage,
         parentProductId,
+        brandId: brandIdVal,
+        weightAmount,
+        weightUnit: payloadWeightUnit,
         stock_threshold: initialProduct.stock_threshold ?? null,
       });
       if (!parsed.success) {
@@ -346,6 +375,9 @@ export function ProductDetailDialog({
       barcode: barcodeVal,
       unitsPerPackage,
       parentProductId,
+      brandId: brandIdVal,
+      weightAmount,
+      weightUnit: payloadWeightUnit,
       stock_threshold: null,
     });
     if (!parsed.success) {
@@ -490,6 +522,13 @@ export function ProductDetailDialog({
                   categories={categories}
                   categoryId={categoryId}
                   onCategoryIdChange={setCategoryId}
+                  brands={brands}
+                  brandId={brandId}
+                  onBrandIdChange={setBrandId}
+                  weightAmountInput={weightAmountInput}
+                  onWeightAmountInputChange={setWeightAmountInput}
+                  weightUnit={weightUnit}
+                  onWeightUnitChange={setWeightUnit}
                   basePrice={basePrice}
                   onBasePriceChange={setBasePrice}
                   sku={sku}
