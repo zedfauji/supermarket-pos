@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { useAddLooseWeightItem } from '@features/add-loose-weight-item/model/useAddLooseWeightItem';
 import { WeightEntryDialog } from '@features/add-loose-weight-item/ui/WeightEntryDialog';
+import { useBrands } from '@entities/brand';
 import { useCategories, useProducts } from '@entities/product';
 import { getProductRiskFlag } from '@entities/product/model/productRiskFlag';
 import { useConfirmRiskyAdd } from '@entities/product/model/useConfirmRiskyAdd';
@@ -34,6 +35,10 @@ export function ProductGrid({
   const { t } = useTranslation('wPanels');
   const confirmRiskyAdd = useConfirmRiskyAdd();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  // D-12: secondary brand/weight-unit filters narrow WITHIN the active
+  // category tab (AND logic) — CategoryTabs itself stays untouched.
+  const [activeBrand, setActiveBrand] = useState<string | null>(null);
+  const [activeWeightUnit, setActiveWeightUnit] = useState<string | null>(null);
   const {
     data: products = [],
     isIdleOrLoading: productsLoading,
@@ -44,10 +49,13 @@ export function ProductGrid({
     isIdleOrLoading: categoriesLoading,
     resultError: categoriesError,
   } = useCategories();
+  const { data: brands = [] } = useBrands();
   const query = search.trim().toLowerCase();
   const matches = products.filter(
     product =>
       (activeCategory === null || product.categoryId === activeCategory) &&
+      (activeBrand === null || product.brandId === activeBrand) &&
+      (activeWeightUnit === null || product.weightUnit === activeWeightUnit) &&
       (!query ||
         product.name.toLowerCase().includes(query) ||
         product.sku?.toLowerCase().includes(query) ||
@@ -99,6 +107,42 @@ export function ProductGrid({
         }}
         className="shrink-0"
       />
+
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <select
+          className="h-10 rounded-lg border border-input bg-card px-3 text-sm shadow-xs dark:bg-input/20"
+          aria-label={t('checkoutPanel.brandFilterLabel')}
+          value={activeBrand ?? ''}
+          onChange={e => {
+            setActiveBrand(e.target.value === '' ? null : e.target.value);
+          }}
+        >
+          <option value="">{t('checkoutPanel.allBrands')}</option>
+          {brands.map(b => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-10 rounded-lg border border-input bg-card px-3 text-sm shadow-xs dark:bg-input/20"
+          aria-label={t('checkoutPanel.weightUnitFilterLabel')}
+          value={activeWeightUnit ?? ''}
+          onChange={e => {
+            setActiveWeightUnit(e.target.value === '' ? null : e.target.value);
+          }}
+        >
+          <option value="">{t('checkoutPanel.allWeightUnits')}</option>
+          {
+            // eslint-disable-next-line i18next/no-literal-string -- unit codes (matches the weight_unit enum values), not UI copy
+            (['g', 'kg', 'lb', 'oz'] as const).map(u => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))
+          }
+        </select>
+      </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-2">
         {matches.length === 0 ? (

@@ -261,6 +261,10 @@
   },
   "checkoutPanel": {
     "searchPlaceholder": "Buscar productos",
+    "brandFilterLabel": "Filtrar por marca",
+    "allBrands": "Todas las marcas",
+    "weightUnitFilterLabel": "Filtrar por unidad de peso",
+    "allWeightUnits": "Todas las unidades",
     "noProductsFound": "No se encontraron productos",
     "noProductsFoundDescription": "Prueba otro término de búsqueda o vuelve a escanear el código de barras.",
     "cartTitle": "Carrito",

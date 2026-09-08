@@ -261,6 +261,10 @@
   },
   "checkoutPanel": {
     "searchPlaceholder": "Search products",
+    "brandFilterLabel": "Filter by brand",
+    "allBrands": "All brands",
+    "weightUnitFilterLabel": "Filter by weight unit",
+    "allWeightUnits": "All weight units",
     "noProductsFound": "No products found",
     "noProductsFoundDescription": "Try a different search term, or scan the barcode again.",
     "cartTitle": "Cart",
