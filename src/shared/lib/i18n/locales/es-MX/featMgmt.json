@@ -165,6 +165,26 @@
       "parentProductLabel": "Paquete vinculado",
       "parentProductHint": "Vincula este producto como la pieza suelta de un paquete ya configurado.",
       "noParentProduct": "No es una pieza suelta"
+    },
+    "productDialog": {
+      "photo": {
+        "emptyTitle": "Sin foto",
+        "emptyBody": "Arrastra una imagen aquí, pégala con Ctrl+V o elige un archivo.",
+        "chooseFile": "Elegir archivo",
+        "formatsHint": "JPEG, PNG o WebP · máximo 10 MB",
+        "processing": "Preparando imagen…",
+        "uploading": "Subiendo foto…",
+        "altText": "Foto de {{name}}",
+        "uploaded": "Foto guardada",
+        "errorUnsupportedType": "Formato no admitido: {{type}}. Usa JPEG, PNG o WebP.",
+        "unknownType": "desconocido",
+        "errorTooLarge": "La imagen pesa {{size}} MB; el máximo es 10 MB. Elige una más pequeña.",
+        "errorDecode": "No se pudo leer la imagen ({{type}}). Conviértela a JPEG o PNG e inténtalo de nuevo.",
+        "errorUpload": "No se pudo subir la foto: {{message}}. Inténtalo de nuevo.",
+        "errorLink": "La foto se subió pero no se pudo vincular al producto. Inténtalo de nuevo.",
+        "errorLoad": "No se pudo cargar la foto. Reemplázala o inténtalo más tarde.",
+        "errorOffline": "Sin conexión — las fotos solo se suben en línea. Reconecta e inténtalo de nuevo."
+      }
     }
   },
   "physicalCount": {

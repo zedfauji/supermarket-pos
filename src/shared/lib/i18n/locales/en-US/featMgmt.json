@@ -165,6 +165,26 @@
       "parentProductLabel": "Linked package product",
       "parentProductHint": "Link this product as the loose piece of an already-configured package product.",
       "noParentProduct": "Not a loose piece"
+    },
+    "productDialog": {
+      "photo": {
+        "emptyTitle": "No photo",
+        "emptyBody": "Drag an image here, paste with Ctrl+V, or choose a file.",
+        "chooseFile": "Choose file",
+        "formatsHint": "JPEG, PNG or WebP · 10 MB max",
+        "processing": "Preparing image…",
+        "uploading": "Uploading photo…",
+        "altText": "Photo of {{name}}",
+        "uploaded": "Photo saved",
+        "errorUnsupportedType": "Unsupported format: {{type}}. Use JPEG, PNG or WebP.",
+        "unknownType": "unknown",
+        "errorTooLarge": "Image is {{size}} MB; the limit is 10 MB. Choose a smaller one.",
+        "errorDecode": "Couldn't read the image ({{type}}). Convert it to JPEG or PNG and try again.",
+        "errorUpload": "Photo upload failed: {{message}}. Try again.",
+        "errorLink": "The photo uploaded but couldn't be linked to the product. Try again.",
+        "errorLoad": "Couldn't load the photo. Replace it or try again later.",
+        "errorOffline": "Offline — photos upload only when online. Reconnect and try again."
+      }
     }
   },
   "physicalCount": {
