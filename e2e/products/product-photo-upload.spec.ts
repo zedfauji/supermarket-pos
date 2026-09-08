@@ -64,15 +64,46 @@ async function navigateToProductsSettingsTab(page: Page): Promise<boolean> {
 }
 
 /**
+ * Navigates to Settings > Products, searches for TEST_PRODUCT, and opens its
+ * edit dialog. Returns null when the UI isn't reachable (caller should
+ * test.skip) so every test shares one "is this even rendered" guard.
+ */
+async function openEditDialogForTestProduct(page: Page) {
+  const found = await navigateToProductsSettingsTab(page);
+  if (!found) return null;
+
+  await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
+  const prodRow = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
+  await expect(prodRow).toBeVisible({ timeout: 10_000 });
+
+  await prodRow.getByRole('button', { name: /edit/i }).click();
+  // Scoped by name: the persistent AI Assistant panel is also role="dialog"
+  // and would otherwise make this locator ambiguous.
+  const dialog = page.getByRole('dialog', { name: 'Edit product' });
+  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  return dialog;
+}
+
+/**
  * Generates a real, decodable PNG in-page (createImageBitmap needs genuine
  * bytes — an arbitrary Buffer would fail resizePhoto's decode step) and
  * injects it through the real <input type="file"> via DataTransfer + a
  * native 'change' event — mirroring e2e/ai/agent-chat.spec.ts's drop-event
- * precedent, adapted for a file input instead of a drop zone.
+ * precedent, adapted for a file input instead of a drop zone. `mimeType`
+ * overrides only the File's declared type (bytes stay real PNG), letting a
+ * caller simulate a mislabeled/unsupported-type upload without needing real
+ * bytes of that format — validatePhotoFile rejects on the declared type
+ * before any decode is attempted.
  */
-async function injectGeneratedPhoto(page: Page, testId: string, width: number, height: number): Promise<void> {
+async function injectGeneratedPhoto(
+  page: Page,
+  testId: string,
+  width: number,
+  height: number,
+  mimeType = 'image/png'
+): Promise<void> {
   await page.evaluate(
-    async ({ testId, width, height }) => {
+    async ({ testId, width, height, mimeType }) => {
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -86,7 +117,7 @@ async function injectGeneratedPhoto(page: Page, testId: string, width: number, h
           else reject(new Error('toBlob failed'));
         }, 'image/png');
       });
-      const file = new File([blob], 'e2e-photo.png', { type: 'image/png' });
+      const file = new File([blob], 'e2e-photo.png', { type: mimeType });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       const input = document.querySelector(`[data-testid="${testId}"]`);
@@ -94,7 +125,7 @@ async function injectGeneratedPhoto(page: Page, testId: string, width: number, h
       input.files = dataTransfer.files;
       input.dispatchEvent(new Event('change', { bubbles: true }));
     },
-    { testId, width, height }
+    { testId, width, height, mimeType }
   );
 }
 
@@ -128,21 +159,11 @@ test.describe('Product photo upload', () => {
     const productId = await seedTestProduct();
     await loginAs(page, 'admin');
 
-    const found = await navigateToProductsSettingsTab(page);
-    if (!found) {
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
       test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
       return;
     }
-
-    await page.getByPlaceholder('Search products…').fill(TEST_PRODUCT);
-    const prodRow = page.getByRole('row', { name: new RegExp(TEST_PRODUCT) });
-    await expect(prodRow).toBeVisible({ timeout: 10_000 });
-
-    await prodRow.getByRole('button', { name: /edit/i }).click();
-    // Scoped by name: the persistent AI Assistant panel is also role="dialog"
-    // and would otherwise make this locator ambiguous.
-    const dialog = page.getByRole('dialog', { name: 'Edit product' });
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
 
     // Longer edge (1600) exceeds the 1200px resize threshold so the pipeline
     // actually exercises the downscale path, not just a pass-through.
@@ -178,6 +199,140 @@ test.describe('Product photo upload', () => {
     const { data: signed, error: signError } = await admin.storage.from(BUCKET).createSignedUrl(path, 60);
     expect(signError).toBeNull();
     expect(signed?.signedUrl).toBeTruthy();
+
+    await logout(page);
+  });
+
+  test('link failure: an intercepted PATCH leaves photo_path unchanged and shows the errorLink copy', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    // Storage upload succeeds; only the products-row PATCH (the "link" step)
+    // fails — proves the Pitfall 6 partial-failure branch.
+    await page.route('**/rest/v1/products*', async route => {
+      if (route.request().method() === 'PATCH') {
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'simulated link failure' }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1600, 900);
+
+    await expect(dialog.getByRole('alert').filter({ hasText: /couldn.t be linked/i })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const admin = getServiceClient();
+    const { data: row } = await admin
+      .from('products')
+      .select('photo_path')
+      .eq('id', productId)
+      .single();
+    expect(row.photo_path).toBeNull();
+
+    await logout(page);
+  });
+
+  test('unsupported type: the inline alert names the offending declared type', async ({ page }) => {
+    test.setTimeout(60_000);
+    await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 800, 600, 'image/gif');
+
+    await expect(dialog.getByRole('alert').filter({ hasText: /image\/gif/i })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await logout(page);
+  });
+
+  test('double upload: the second upload writes a new object path and exactly one object remains under the product prefix', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const productId = await seedTestProduct();
+    await loginAs(page, 'admin');
+
+    const dialog = await openEditDialogForTestProduct(page);
+    if (!dialog) {
+      test.skip(true, 'UI not implemented — EXPECTED FAIL: Settings > Products not rendered');
+      return;
+    }
+
+    const admin = getServiceClient();
+
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1600, 900);
+    await expect(dialog.getByTestId('product-photo-preview')).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBeNull();
+    const { data: firstRow } = await admin
+      .from('products')
+      .select('photo_path')
+      .eq('id', productId)
+      .single();
+    const firstPath = firstRow.photo_path as string;
+
+    // No Replace button in this plan — clicking the populated preview
+    // re-opens the picker (see ProductPhotoTab's dropzone click handler).
+    // injectGeneratedPhoto targets the input directly, so a second call is
+    // all that's needed to drive the replace path.
+    await injectGeneratedPhoto(page, 'product-photo-file-input', 1300, 1300);
+    await expect
+      .poll(
+        async () => {
+          const { data } = await admin
+            .from('products')
+            .select('photo_path')
+            .eq('id', productId)
+            .maybeSingle();
+          return (data?.photo_path ?? null) as string | null;
+        },
+        { timeout: 20_000 }
+      )
+      .not.toBe(firstPath);
+
+    const { data: secondRow } = await admin
+      .from('products')
+      .select('photo_path')
+      .eq('id', productId)
+      .single();
+    const secondPath = secondRow.photo_path as string;
+    expect(secondPath).not.toBe(firstPath);
+
+    const { data: objects } = await admin.storage.from(BUCKET).list(`products/${productId}`);
+    expect(objects?.length).toBe(1);
 
     await logout(page);
   });

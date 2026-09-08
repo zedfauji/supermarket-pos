@@ -3,6 +3,7 @@ import {
   ACCEPTED_PHOTO_MIME_TYPES,
   MAX_UPLOAD_BYTES,
   photoObjectPath,
+  resizePhoto,
   targetDimensions,
   validatePhotoFile,
 } from './photo-file';
@@ -102,5 +103,17 @@ describe('ACCEPTED_PHOTO_MIME_TYPES', () => {
     expect([...ACCEPTED_PHOTO_MIME_TYPES].sort()).toEqual(
       ['image/jpeg', 'image/png', 'image/webp'].sort()
     );
+  });
+});
+
+describe('resizePhoto', () => {
+  it('a file whose declared type is accepted but whose bytes cannot be decoded resolves to an err carrying the declared type, and never rejects as an unhandled promise (Pitfall 5)', async () => {
+    const file = makeFile('image/png', 1024); // garbage bytes — not a real PNG
+    const result = await resizePhoto(file);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PHOTO_DECODE_FAILED');
+      expect(result.error.detail).toBe('image/png');
+    }
   });
 });
