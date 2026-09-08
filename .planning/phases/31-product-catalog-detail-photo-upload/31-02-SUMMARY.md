@@ -229,7 +229,7 @@ Plan 03 (catalog thumbnail column, batch `createSignedUrls`) can build directly 
 
 ## Self-Check: PASSED
 
-All 5 created files confirmed present on disk (`ProductDetailDialog.tsx`, `ProductDetailsTab.tsx`, `ProductLinksTab.tsx`, `productDialogTabs.ts`, `productDialogTabs.test.ts`); `ProductForm.tsx` confirmed absent (`git ls-files` returns nothing); all 4 commit hashes confirmed in `git log`.
+All 5 created files confirmed present on disk (`ProductDetailDialog.tsx`, `ProductDetailsTab.tsx`, `ProductLinksTab.tsx`, `productDialogTabs.ts`, `productDialogTabs.test.ts`); `ProductForm.tsx` confirmed absent; all 5 commit hashes (`aa09513`, `3571851`, `f140b7e`, `79d8157`, `c3e83d4`) confirmed in `git log`. Working tree clean.
 
 ---
 *Phase: 31-product-catalog-detail-photo-upload*
