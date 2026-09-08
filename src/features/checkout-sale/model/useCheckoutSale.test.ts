@@ -307,6 +307,7 @@ describe('useCheckoutSale', () => {
       basePrice: 100,
       happyHourPrice: null,
       imageUrl: null,
+      photoPath: null,
       isActive: true,
       soldByWeight: false,
       sku: null,
@@ -351,6 +352,7 @@ describe('useCheckoutSale', () => {
       basePrice: 10, // per-kg catalog price
       happyHourPrice: null,
       imageUrl: null,
+      photoPath: null,
       isActive: true,
       soldByWeight: true,
       sku: null,

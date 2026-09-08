@@ -72,6 +72,7 @@ function miniProduct(partial: { id: string; name: string; basePrice: number }): 
     isActive: true,
     soldByWeight: false,
     imageUrl: null,
+    photoPath: null,
     stock_threshold: null,
     unitsPerPackage: null,
     parentProductId: null,

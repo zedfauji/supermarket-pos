@@ -95,6 +95,7 @@ function mapProductRow(
       sku: p.sku,
       isActive: p.is_active,
       imageUrl: p.image_url,
+      photoPath: (p as { photo_path?: string | null }).photo_path ?? null,
       stock_threshold: p.stock_threshold ?? null,
       // Phase 27: ProductSchema requires these two keys present (nullable,
       // not optional) — omitting them made ANY order item whose product had

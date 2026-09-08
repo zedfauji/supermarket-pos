@@ -82,6 +82,7 @@ function mapInventoryRow(row: InventoryRow): Result<Inventory> {
         sku: row.product.sku,
         isActive: row.product.is_active,
         imageUrl: row.product.image_url,
+        photoPath: (row.product as { photo_path?: string | null }).photo_path ?? null,
         stock_threshold: row.product.stock_threshold ?? null,
         // Phase 27: ProductSchema requires these two keys present (nullable,
         // not optional) — omitting them entirely (as this call site did

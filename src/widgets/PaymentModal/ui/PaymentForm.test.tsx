@@ -204,6 +204,7 @@ const promotableTab: Tab = {
         isActive: true,
         soldByWeight: false,
         imageUrl: null,
+        photoPath: null,
         stock_threshold: null,
         unitsPerPackage: null,
         parentProductId: null,

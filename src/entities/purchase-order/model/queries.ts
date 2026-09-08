@@ -74,6 +74,7 @@ function mapItem(row: PurchaseOrderItemRow): Result<PurchaseOrderItem> {
           isActive: row.product.is_active,
           soldByWeight: row.product.sold_by_weight,
           imageUrl: row.product.image_url,
+          photoPath: (row.product as { photo_path?: string | null }).photo_path ?? null,
           stock_threshold: row.product.stock_threshold,
           barcode: row.product.barcode,
           unitsPerPackage: row.product.units_per_package,

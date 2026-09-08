@@ -73,6 +73,7 @@ function mapOpenUnitRow(row: Record<string, unknown>): Result<OpenUnit> {
         sku: productRow['sku'],
         isActive: productRow['is_active'],
         imageUrl: productRow['image_url'],
+        photoPath: (productRow['photo_path'] as string | null | undefined) ?? null,
         stock_threshold: productRow['stock_threshold'] ?? null,
         unitsPerPackage: productRow['units_per_package'] ?? null,
         parentProductId: productRow['parent_product_id'] ?? null,

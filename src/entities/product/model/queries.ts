@@ -78,6 +78,7 @@ export function mapProductRow(row: ProductRow): Result<Product> {
         isActive: row.is_active,
         soldByWeight: row.sold_by_weight,
         imageUrl: row.image_url,
+        photoPath: row.photo_path ?? null,
         stock_threshold: row.stock_threshold ?? null,
         barcode: (row as { barcode?: string | null }).barcode ?? null,
         unitsPerPackage: (row as { units_per_package?: number | null }).units_per_package ?? null,
@@ -393,6 +394,7 @@ function productUpdateToRow(patch: Partial<Omit<ProductUpdate, 'id'>>): TablesUp
   if (patch.sku !== undefined) row.sku = patch.sku;
   if (patch.isActive !== undefined) row.is_active = patch.isActive;
   if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl;
+  if (patch.photoPath !== undefined) row.photo_path = patch.photoPath;
   if (patch.barcode !== undefined) {
     (row as Record<string, unknown>).barcode = patch.barcode;
   }

@@ -10,6 +10,7 @@ const baseProduct = {
   sku: null,
   isActive: true,
   imageUrl: null,
+  photoPath: null,
   stock_threshold: null,
   unitsPerPackage: null,
   parentProductId: null,

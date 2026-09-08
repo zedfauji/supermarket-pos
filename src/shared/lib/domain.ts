@@ -243,6 +243,8 @@ export const ProductSchema = z.object({
   isActive: z.boolean(),
   soldByWeight: z.boolean().optional().default(false),
   imageUrl: UrlSchema.nullable(),
+  /** Phase 31 D-16: Storage object path (e.g. products/{id}/{uuid}.webp), NOT a URL — do not reuse UrlSchema (Pitfall 3). */
+  photoPath: z.string().min(1).max(500).nullable(),
   stock_threshold: z.number().nullable(),
   barcode: z.string().nullable().optional(),
   /** Phase 27 D-02: set on the BOX (parent) product — pieces per package. Null = not open-unit-configured. */
@@ -1383,6 +1385,7 @@ export const domain = {
       isActive: true,
       soldByWeight: false,
       imageUrl: null,
+      photoPath: null,
       stock_threshold: null,
       unitsPerPackage: null,
       parentProductId: null,
@@ -1402,6 +1405,7 @@ export const domain = {
         isActive: true,
         soldByWeight: false,
         imageUrl: null,
+        photoPath: null,
         stock_threshold: null,
         unitsPerPackage: null,
         parentProductId: null,

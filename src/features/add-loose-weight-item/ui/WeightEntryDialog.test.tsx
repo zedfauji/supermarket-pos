@@ -37,6 +37,7 @@ const mockProduct: Product = {
   isActive: true,
   soldByWeight: true,
   imageUrl: null,
+  photoPath: null,
   stock_threshold: null,
   barcode: '1234567890123',
   unitsPerPackage: null,
