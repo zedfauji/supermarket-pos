@@ -23,6 +23,9 @@ A knowledge graph of this codebase already exists at `graphify-out/graph.json` (
 
 Only fall back to raw file traversal (Glob/Grep/Read) when the graph doesn't have an answer (e.g. brand-new files not yet extracted) or when you need to actually edit the file — the graph is for **locating and understanding**, not for reading full file contents. After editing files, or when the graph looks stale, run `/graphify . --update` to re-extract only changed files (cheap — incremental, code-only changes skip the LLM step entirely).
 
+## GSD Tools Location in Windows
+C:\Users\giris\.claude\gsd-core
+
 ## Session Memory (claude-mem — check before re-deriving)
 
 `claude-mem` is installed and auto-active (hooks fire on SessionStart/UserPromptSubmit/PostToolUse — it already captures observations and injects prior context automatically, no manual save step needed). **Prefer it over rebuilding context from scratch:**
