@@ -1,6 +1,7 @@
 # Phase 30: Checkout Continuity, Settings Exit Guard & Cash Keypad - Context
 
 **Gathered:** 2026-09-07
+**Updated:** 2026-09-08
 **Status:** Ready for planning
 
 <domain>
@@ -75,6 +76,12 @@ recovery and keypad surfaces.
   payment is processing. Their amount participates in the same Checkout-draft restoration as manual
   MoneyInput entry.
 
+### Approved UI design contract
+- **D-21:** `.planning/phases/30-checkout-continuity-settings-exit-guard-cash-keypad/30-UI-SPEC.md`
+  is the binding contract for exact copy, layout, focus behavior, responsive states, accessibility,
+  and automated interaction acceptance. Reuse the existing Radix/shadcn primitives and keypad/input
+  patterns identified there; add no new UI system or keypad dependency.
+
 ### the agent's Discretion
 - Exact persisted store key, schema version, and migration mechanics, provided all restored payloads
   are schema-validated and malformed/obsolete data fails closed.
@@ -82,8 +89,8 @@ recovery and keypad surfaces.
   of its values and async save mutation.
 - Exact recovery-status query/RPC shape and polling details; the outcome state machine in D-07–D-10
   is fixed.
-- Keypad component factoring, popover placement at responsive breakpoints, animation, and translated
-  copy, while reusing existing input/button/keypad patterns.
+- Keypad component factoring and internal state ownership within the UI contract's fixed popover,
+  responsive, motion, and translated-copy behavior.
 - Exact automated-test split between colocated Vitest and Playwright, provided all Phase 30
   requirements receive automated coverage.
 
@@ -97,6 +104,12 @@ None.
 ## Canonical References
 
 **Downstream agents MUST read these before planning or implementing.**
+
+### Phase contracts
+- `.planning/phases/30-checkout-continuity-settings-exit-guard-cash-keypad/30-UI-SPEC.md` — approved,
+  binding UI, interaction, copy, responsive, accessibility, and automated-acceptance contract.
+- `.planning/phases/30-checkout-continuity-settings-exit-guard-cash-keypad/30-RESEARCH.md` — validated
+  implementation constraints and reuse guidance supporting D-01 through D-21.
 
 ### Planning and requirements
 - `.planning/PROJECT.md` — product scope and project-level constraints.
@@ -221,4 +234,4 @@ None — discussion stayed within phase scope.
 ---
 
 *Phase: 30-checkout-continuity-settings-exit-guard-cash-keypad*
-*Context gathered: 2026-09-07*
+*Context gathered: 2026-09-07; updated: 2026-09-08*

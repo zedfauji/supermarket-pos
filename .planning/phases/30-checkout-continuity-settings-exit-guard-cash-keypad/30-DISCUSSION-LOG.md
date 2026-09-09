@@ -4,6 +4,7 @@
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
 **Date:** 2026-09-07
+**Updated:** 2026-09-08
 **Phase:** 30-checkout-continuity-settings-exit-guard-cash-keypad
 **Areas discussed:** Restore experience and stale data, Payment recovery outcomes, Settings exit
 details, Cash keypad interaction
@@ -207,3 +208,20 @@ None — discussion stayed within phase scope.
 **Reviewed todos, not folded:** `rename-cargo-package-bar-pos.md` and
 `rotate-remote-supabase-db-password.md`; both matched generic keywords only and remain unrelated
 standalone tasks.
+
+---
+
+## 2026-09-08 Context Update
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Update it | Reconcile the existing context with later approved Phase 30 artifacts. | ✓ |
+| View it | Show the existing context without changing it. | |
+| Skip | Leave the existing context unchanged. | |
+
+**User's choice:** Update it.
+
+**Notes:** The approved `30-UI-SPEC.md` covers 32 applicable UI states with no unresolved items.
+No behavioral decision changed and no new user-facing gray area remained. The context now makes the
+UI contract and completed research mandatory downstream references and narrows implementation
+discretion where the UI contract already fixed behavior.
