@@ -7,7 +7,7 @@ on:
 
 jobs:
   read-manifest:
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     outputs:
       active_customers: ${{ steps.filter.outputs.active_customers }}
     steps:
@@ -34,7 +34,7 @@ jobs:
       contents: write
     environment:
       name: ${{ matrix.customer.github_environment }}
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Validate customer manifest fields (T-26-03)
         # customers.json is committed/human-edited, but its name/repo fields
