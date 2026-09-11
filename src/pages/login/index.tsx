@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { EmployeeSelector } from '@widgets/EmployeeSelector/EmployeeSelector';
 import { LogoImage } from '@widgets/LogoImage';
 import { PINLoginForm } from '@widgets/PINLoginForm/PINLoginForm';
-import { useSettings } from '@entities/settings';
+import { StoreLogoImage, useSettings } from '@entities/settings';
 import { useLoginUiStore } from '@entities/staff/model/loginUiStore';
 import { useStaffStore } from '@entities/staff/model/store';
 import { ErrorBoundary } from '@shared/ui';
@@ -47,7 +47,11 @@ export default function LoginPage() {
         {storeName ? (
           <div className="relative flex flex-col items-start gap-4">
             <div className="flex size-32 items-center justify-center overflow-hidden rounded-3xl bg-ink-foreground/10 p-3 ring-1 ring-ink-foreground/15">
-              <ShoppingBasket className="size-8" aria-hidden="true" />
+              <StoreLogoImage
+                alt={t('login.logoAlt', { name: storeName })}
+                className="max-h-full max-w-full object-contain"
+                fallback={<ShoppingBasket className="size-8" aria-hidden="true" />}
+              />
             </div>
             <div className="leading-tight">
               <p data-testid="login-store-name" className="text-3xl font-semibold tracking-tight">

@@ -19,3 +19,7 @@ export {
 } from './model';
 
 export type { StoreLogoRemoveInput, StoreLogoUploadInput } from './model';
+
+// Phase 33 Plan 03: login-hero logo component, distinct from the
+// receipt-only widgets/LogoImage (33-PLAN.md Task 2).
+export { StoreLogoImage } from './ui/StoreLogoImage';
