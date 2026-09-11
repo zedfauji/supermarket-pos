@@ -313,9 +313,9 @@ new dedicated fields, not a reuse of the receipt ones.
 
 ### Store Branding
 
-- [ ] **STORE-01**: New dedicated `storeName` (text) and `storeLogoUrl` settings fields, populated via Supabase Storage upload using the same upload pattern as Phase 31's product photo — distinct from the existing receipt-only `headerLine2`/`logoDataUrl` fields, which are unchanged.
-- [ ] **STORE-02**: The login screen displays the configured store name and a large logo on the left side of the screen, with a sane default (e.g. generic app name, no logo) when unconfigured.
-- [ ] **STORE-03**: Automated Playwright E2E/visual-regression coverage proves the login screen renders a configured store name/logo and the unconfigured fallback.
+- [x] **STORE-01**: New dedicated `storeName` (text) and `storeLogoUrl` settings fields, populated via Supabase Storage upload using the same upload pattern as Phase 31's product photo — distinct from the existing receipt-only `headerLine2`/`logoDataUrl` fields, which are unchanged.
+- [x] **STORE-02**: The login screen displays the configured store name and a large logo on the left side of the screen, with a sane default (e.g. generic app name, no logo) when unconfigured.
+- [x] **STORE-03**: Automated Playwright E2E/visual-regression coverage proves the login screen renders a configured store name/logo and the unconfigured fallback.
 
 ## v2 Requirements
 
@@ -444,9 +444,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BRND-03 | Phase 32 | Complete |
 | BRND-04 | Phase 32 | Complete |
 | BRND-05 | Phase 32 | Complete |
-| STORE-01 | Phase 33 | Not Started |
-| STORE-02 | Phase 33 | Not Started |
-| STORE-03 | Phase 33 | Not Started |
+| STORE-01 | Phase 33 | Complete |
+| STORE-02 | Phase 33 | Complete |
+| STORE-03 | Phase 33 | Complete |
 
 **Coverage:**
 

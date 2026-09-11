@@ -490,20 +490,20 @@ Plans:
 **Goal:** The login screen shows the store's name and a large logo on the left side of the screen, sourced from new dedicated `storeName`/`storeLogoUrl` settings fields (Supabase Storage upload, same pattern as Phase 31's product photo) rather than the small receipt-only logo/header fields.
 **Requirements**: STORE-01, STORE-02, STORE-03
 **Depends on:** Nothing (settings + login-page work; shares the Phase 31 upload pattern but not its code)
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 33-01-PLAN.md — Tracer: rename `barName`→`storeName` repo-wide, add the anon settings read, render the real store name on the login screen
+- [x] 33-01-PLAN.md — Tracer: rename `barName`→`storeName` repo-wide, add the anon settings read, render the real store name on the login screen
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 33-02-PLAN.md — `store-branding` Storage bucket + RLS, and the validate/downscale/upload/link pipeline
+- [x] 33-02-PLAN.md — `store-branding` Storage bucket + RLS, and the validate/downscale/upload/link pipeline
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 33-03-PLAN.md — Settings logo upload control, login hero logo, and STORE-03 functional/RLS/visual coverage
+- [x] 33-03-PLAN.md — Settings logo upload control, login hero logo, and STORE-03 functional/RLS/visual coverage
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
 
