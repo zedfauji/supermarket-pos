@@ -141,7 +141,30 @@ const SETTINGS_KEYS: SettingsKey[] = [
 
 function parseGeneral(value: unknown): GeneralSettings {
   const parsed = GeneralSettingsSchema.safeParse(value);
-  return parsed.success ? parsed.data : DEFAULT_GENERAL;
+  if (parsed.success) return parsed.data;
+  // CR-01: a single invalid field (e.g. a blanked required `address`) must
+  // not collapse the whole snapshot to DEFAULT_GENERAL -- toSnapshot() is
+  // the single read path shared by every consumer, including the store-logo
+  // upload/remove read-merge-write in useStoreLogoUpload.ts, which would
+  // otherwise persist DEFAULT_GENERAL's placeholder values back over the
+  // real storeName/timezone/currency/receiptFooterText on the next write.
+  // Fall back field-by-field instead so one bad field can't erase the rest.
+  const raw = (value ?? {}) as Partial<Record<keyof GeneralSettings, unknown>>;
+  return {
+    storeName: typeof raw.storeName === 'string' ? raw.storeName : DEFAULT_GENERAL.storeName,
+    address:
+      typeof raw.address === 'string' && raw.address.length > 0 ? raw.address : DEFAULT_GENERAL.address,
+    timezone:
+      typeof raw.timezone === 'string' && raw.timezone.length > 0
+        ? raw.timezone
+        : DEFAULT_GENERAL.timezone,
+    currency: typeof raw.currency === 'string' ? raw.currency : DEFAULT_GENERAL.currency,
+    receiptFooterText:
+      typeof raw.receiptFooterText === 'string'
+        ? raw.receiptFooterText
+        : DEFAULT_GENERAL.receiptFooterText,
+    storeLogoPath: typeof raw.storeLogoPath === 'string' ? raw.storeLogoPath : null,
+  };
 }
 
 function parseBilling(value: unknown): BillingSettings {
