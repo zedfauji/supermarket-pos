@@ -1,6 +1,6 @@
 import { ImageOff } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@shared/lib/utils';
 import { Skeleton } from '@shared/ui/skeleton';
 import { useSettings } from '../model/queries';
@@ -30,6 +30,18 @@ export function StoreLogoImage({ className, alt = 'Logo', fallback = null }: Pro
   const storeLogoPath = data?.general.storeLogoPath ?? null;
   const { url, isLoading } = useStoreLogoUrl(storeLogoPath);
   const [imgFailed, setImgFailed] = useState(false);
+
+  // CR-02: a single failed <img> load must not permanently gate every future
+  // render for the rest of this mount -- reset the flag whenever a new
+  // signed URL (TTL refresh, retry, or a brand-new logo) resolves.
+  useEffect(() => {
+    // Resetting a failure flag when the resolved source changes, not
+    // deriving state from props; same accepted pattern as
+    // GeneralSettingsTab.tsx's own imgFailed resets.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setImgFailed(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [url]);
 
   if (!storeLogoPath) return <>{fallback}</>;
 
