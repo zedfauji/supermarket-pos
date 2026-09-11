@@ -254,4 +254,37 @@ test.describe.serial('Login screen store branding', () => {
 
     await logout(page);
   });
+
+  test('logo without a configured storeName still renders the hero logo (D-04 truth table)', async ({
+    page,
+  }) => {
+    // Regression for 33-VERIFICATION.md gap: the hero-vs-fallback branch must
+    // gate on storeName OR storeLogoPath, not storeName alone — a logo can be
+    // uploaded independently of the Save General flow, so "logo set, name
+    // empty" is a reachable state that must still render the hero-size logo
+    // (with the generic brand string), never the small fallback tile.
+    test.setTimeout(60_000);
+    await writeGeneral(SEEDED_VALUE);
+    await loginAs(page, 'admin');
+    await openGeneralSettingsTab(page);
+    await injectGeneratedLogo(page, 'settings-store-logo-file-input', 800, 600);
+    await expect(page.getByTestId('settings-store-logo-preview')).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(async () => (await readGeneral()).storeLogoPath, { timeout: 20_000 })
+      .not.toBeNull();
+    const uploadedPath = (await readGeneral()).storeLogoPath as string;
+    uploadedLogoPaths.push(uploadedPath);
+    await logout(page);
+
+    // Blank the name directly (service client — no UI path clears just the
+    // name while keeping the logo) and reload the pre-auth login screen.
+    await writeGeneral({ ...SEEDED_VALUE, storeName: '', storeLogoPath: uploadedPath });
+
+    await page.goto('/login');
+    await expect(page.getByTestId('login-store-logo')).toBeVisible({ timeout: 20_000 });
+    // Hero-size (size-32) tile, not the small (size-11) fallback tile.
+    await expect(page.locator('div.size-32')).toBeVisible();
+    await expect(page.locator('div.size-11')).not.toBeAttached();
+    await expect(page.getByTestId('login-store-name')).toHaveText(UNCONFIGURED_FALLBACK);
+  });
 });

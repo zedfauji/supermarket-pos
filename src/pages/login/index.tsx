@@ -20,6 +20,8 @@ export default function LoginPage() {
   // unconfigured branch renders instead of a skeleton (UI-SPEC §1 "Loading state").
   const { data: settingsData } = useSettings();
   const storeName = settingsData?.general.storeName.trim() ?? '';
+  const hasStoreLogo = Boolean(settingsData?.general.storeLogoPath);
+  const showHero = storeName !== '' || hasStoreLogo;
 
   if (isAuthenticated) {
     return <Navigate to="/home" replace />;
@@ -44,18 +46,18 @@ export default function LoginPage() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklch,var(--color-ink)_60%,transparent))]"
         />
-        {storeName ? (
+        {showHero ? (
           <div className="relative flex flex-col items-start gap-4">
             <div className="flex size-32 items-center justify-center overflow-hidden rounded-3xl bg-ink-foreground/10 p-3 ring-1 ring-ink-foreground/15">
               <StoreLogoImage
-                alt={t('login.logoAlt', { name: storeName })}
+                alt={t('login.logoAlt', { name: storeName || t('login.brand') })}
                 className="max-h-full max-w-full object-contain"
                 fallback={<ShoppingBasket className="size-8" aria-hidden="true" />}
               />
             </div>
             <div className="leading-tight">
               <p data-testid="login-store-name" className="text-3xl font-semibold tracking-tight">
-                {storeName}
+                {storeName || t('login.brand')}
               </p>
               <p className="mt-1 text-xs text-ink-foreground/60">
                 {t('login.terminal', { id: TERMINAL_ID })}
