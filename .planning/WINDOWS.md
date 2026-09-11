@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 43
+open_count: 41
 waived_count: 0
-fixed_count: 17
+fixed_count: 19
 total_count: 60
-last_updated: 2026-09-11T16:34:31.532Z
+last_updated: 2026-09-11T16:53:55.931Z
 ---
 
 # Broken Windows Ledger
@@ -73,8 +73,8 @@ last_updated: 2026-09-11T16:34:31.532Z
 | 56 | 27 | unrun-verify | e2e/payments/apply-promotion-and-custom-discount.spec.ts |  | Tests (b)/(c) edited correctly per Plan 27-08 Task 3 (cashier login + distinct manager PIN) but not executable in this sandboxed worktree — shared port-1520 dev server bound to main checkout's stale/crashed esbuild instance | open |  | 2026-09-04T04:48:35.281Z |  |
 | 57 | 27 | unrun-verify | e2e/payments/payment-pane.spec.ts |  | T13/T14 (manager-PIN ad-hoc discount on PaymentPane, G-27-13) added but not executed - shared dev server on port 1520 in this sandboxed worktree serves the main repo code, not this worktree - orchestrator should re-run npx playwright test e2e/payments/payment-pane.spec.ts after merge | open |  | 2026-09-04T05:17:30.136Z |  |
 | 58 | 31 | unrun-verify | e2e/products/product-management.spec.ts |  | PM16/PM17/PM18 (31-06 gap closure) unrun — local Supabase/Docker unreachable in the executing sandbox; run npx playwright test e2e/products/product-management.spec.ts --grep "PM16\|PM17\|PM18" to confirm GREEN | fixed |  | 2026-09-08T15:57:36.479Z | 2026-09-08T16:26:52.208Z |
-| 59 | 33 | unrun-verify | supabase/migrations/20260911000001_store_branding_settings.sql |  | Migration 20260911000001 authored and grep-verified but never applied — local Supabase/Docker not running on this machine (Task 2 precondition unmet) | open |  | 2026-09-11T16:34:26.551Z |  |
-| 60 | 33 | unrun-verify | e2e/settings/store-branding.spec.ts |  | Spec not yet written — Task 3 blocked behind Task 2 (migration never applied, local Supabase/Docker down) | open |  | 2026-09-11T16:34:31.532Z |  |
+| 59 | 33 | unrun-verify | supabase/migrations/20260911000001_store_branding_settings.sql |  | Migration 20260911000001 authored and grep-verified but never applied — local Supabase/Docker not running on this machine (Task 2 precondition unmet) | fixed |  | 2026-09-11T16:34:26.551Z | 2026-09-11T16:53:51.955Z |
+| 60 | 33 | unrun-verify | e2e/settings/store-branding.spec.ts |  | Spec not yet written — Task 3 blocked behind Task 2 (migration never applied, local Supabase/Docker down) | fixed |  | 2026-09-11T16:34:31.532Z | 2026-09-11T16:53:55.931Z |
 
 ````json
 [
@@ -781,10 +781,10 @@ last_updated: 2026-09-11T16:34:31.532Z
     "file": "supabase/migrations/20260911000001_store_branding_settings.sql",
     "line": null,
     "description": "Migration 20260911000001 authored and grep-verified but never applied — local Supabase/Docker not running on this machine (Task 2 precondition unmet)",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-11T16:34:26.551Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-11T16:53:51.955Z"
   },
   {
     "id": 60,
@@ -793,10 +793,10 @@ last_updated: 2026-09-11T16:34:31.532Z
     "file": "e2e/settings/store-branding.spec.ts",
     "line": null,
     "description": "Spec not yet written — Task 3 blocked behind Task 2 (migration never applied, local Supabase/Docker down)",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-11T16:34:31.532Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-11T16:53:55.931Z"
   }
 ]
 ````
