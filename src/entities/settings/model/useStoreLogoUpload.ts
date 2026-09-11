@@ -103,6 +103,18 @@ export function useStoreLogoUpload() {
       });
       if (!linkResult.ok) {
         logger.error('settings.store_logo.link_failed', { message: linkResult.error.message, path });
+        // WR-01: the just-uploaded object is now unlinked -- attempt to clean
+        // it up, and if that also fails, log it as an orphan the same way the
+        // old-object delete path below does, instead of leaving it untracked.
+        const { error: cleanupError } = await supabase.storage
+          .from(STORE_BRANDING_BUCKET)
+          .remove([path]);
+        if (cleanupError) {
+          logger.warn('settings.store_logo.unlinked_object_orphaned', {
+            path,
+            message: cleanupError.message,
+          });
+        }
         return err(photoLinkFailedError(linkResult.error.message, linkResult.error));
       }
 
