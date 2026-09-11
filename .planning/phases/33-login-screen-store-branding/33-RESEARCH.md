@@ -542,10 +542,14 @@ Phase-31 migration and Storage-pipeline files, two RLS migration files, and one 
 no user confirmation is needed for the stack/pattern/pitfall claims, only for A1-A3's naming/sizing
 discretion items (which CONTEXT.md already delegates to the planner, not to the user).
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+Both questions were open at research time and were answered by the planning pass that followed
+(plans `33-01`/`33-02`/`33-03`, written 2026-09-11). Resolutions are recorded inline below; no
+question from this research remains open.
 
 1. **Should the `barName` -> `storeName` data migration run as a single combined migration with
-   the bucket creation, or as two separate migration files?**
+   the bucket creation, or as two separate migration files?** — **(RESOLVED: two separate files)**
    - What we know: Both are forward-only SQL run through the same `supabase/migrations/` pipeline;
      either ordering works as long as the data migration runs before any code path expects
      `storeName` to be present.
@@ -556,9 +560,18 @@ discretion items (which CONTEXT.md already delegates to the planner, not to the 
      `ON CONFLICT DO NOTHING`/`DROP POLICY IF EXISTS`) and a data migration (the `UPDATE` in
      Pitfall 1, also idempotent via the `WHERE value ? 'barName'` guard) — mirrors this repo's
      existing convention of one migration file per logical change.
+   - **Resolution:** The recommendation was taken, with one refinement the planner discovered:
+     `20260911000001_store_branding_settings.sql` (plan 01) carries the anon SELECT policy on the
+     `settings` table **plus** the JSONB key rewrite, and `20260911000002_store_branding_storage.sql`
+     (plan 02) carries the Storage bucket and its write policies. The split is therefore
+     settings-concern vs. storage-concern rather than schema-vs-data — the key rewrite ships with
+     the policy that makes the rewritten row readable, so plan 01's tracer is provable end to end
+     before any Storage work begins. Both files stay idempotent and DOWN-script-free per repo
+     convention.
 
 2. **Does the login page need a `gsd-ui-phase` UI-SPEC pass before planning, given `ui_phase: true`
-   and `ui_review: true` are both enabled in `.planning/config.json`?**
+   and `ui_review: true` are both enabled in `.planning/config.json`?** — **(RESOLVED: yes, a
+   UI-SPEC pass was run)**
    - What we know: This phase reshapes an existing page's visual layout (hero-size logo, D-04) —
      the kind of work `ui_phase`/`ui_hint` flags in this project's ROADMAP.md for other phases
      (Phase 32 shows `**UI hint**: yes`; Phase 33's ROADMAP.md entry, read this session, does not
@@ -569,6 +582,12 @@ discretion items (which CONTEXT.md already delegates to the planner, not to the 
      it since the phase's own CONTEXT.md already locked the visual decisions (D-04/D-06) in enough
      detail (hero-size, desktop-only, existing content kept) that a full UI-SPEC pass may be
      redundant, but that call belongs to the planning step, not research.
+   - **Resolution:** The orchestrator ran the UI-SPEC pass. `33-UI-SPEC.md` is approved and is a
+     consumed input, not an optional reference: plan 01 task 1 renders the hero block from its
+     § "Layout & Interaction Contract" §1, plan 03 task 1 builds the upload control from §2 and
+     lands all 22 `generalSettingsTab.logo*` strings from its § Copywriting Contract, and plan 03
+     task 2 takes the hero loading/error branches from §1. Its `## UI Considerations` rows are
+     lifted verbatim into the `must_haves.truths` of plans 01 and 03.
 
 ## Environment Availability
 
