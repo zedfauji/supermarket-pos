@@ -28,6 +28,7 @@ import {
   DeletionsPreRowSchema,
   DeletionsPostRowSchema,
   PaymentMethodRowSchema,
+  GeneralSettingsSchema,
 } from './domain';
 
 // ─── Shared test fixtures ────────────────────────────────────────────────────
@@ -577,5 +578,64 @@ describe('PaymentMethodRowSchema', () => {
       isRollup: false,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+// ─── GeneralSettingsSchema (Phase 33: storeName rename, D-03 unconfigured state) ──
+
+describe('GeneralSettingsSchema', () => {
+  it('accepts an empty storeName (D-03 unconfigured state)', () => {
+    const result = GeneralSettingsSchema.safeParse({
+      storeName: '',
+      address: 'x',
+      timezone: 'x',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.storeName).toBe('');
+    }
+  });
+
+  it('accepts a storeName at the 120-character max', () => {
+    const result = GeneralSettingsSchema.safeParse({
+      storeName: 'x'.repeat(120),
+      address: 'x',
+      timezone: 'x',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a storeName over the 120-character max', () => {
+    const result = GeneralSettingsSchema.safeParse({
+      storeName: 'x'.repeat(121),
+      address: 'x',
+      timezone: 'x',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('round-trips a unicode storeName unchanged', () => {
+    const name = 'Tienda 🌶️ Índia';
+    const result = GeneralSettingsSchema.safeParse({
+      storeName: name,
+      address: 'x',
+      timezone: 'x',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.storeName).toBe(name);
+    }
+  });
+
+  it('defaults storeLogoPath to null when the key is absent (pre-migration rows)', () => {
+    const result = GeneralSettingsSchema.safeParse({
+      storeName: 'Taj House of Spices',
+      address: 'x',
+      timezone: 'x',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.storeLogoPath).toBeNull();
+    }
   });
 });

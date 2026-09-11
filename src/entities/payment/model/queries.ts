@@ -193,7 +193,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
   const soleTender = legs.length === 1 ? tenders[0] : undefined;
   const discountLeg = legs.find(leg => leg.discount_amount != null);
 
-  const general = settingsRow?.value as { barName?: string; address?: string } | null;
+  const general = settingsRow?.value as { storeName?: string; address?: string } | null;
   const billing = billingRow?.value as { taxRatePercent?: number; taxInclusive?: boolean } | null;
   const taxRatePercent = billing?.taxRatePercent ?? 16;
   const taxInclusive = billing?.taxInclusive ?? true;
@@ -213,7 +213,7 @@ export async function fetchReceiptDataForPayment(tabId: string): Promise<Receipt
     processedAt: firstLeg.processed_at,
     squareReceiptUrl: null,
     cashierName: (cashier as { name?: string } | null)?.name ?? 'Staff',
-    barName: general?.barName ?? 'Supermarket POS',
+    storeName: general?.storeName ?? 'Supermarket POS',
     barAddress: general?.address ?? '',
     tenderedAmount: soleTender?.tenderedAmount ?? null,
     changeAmount: soleTender?.changeAmount ?? null,

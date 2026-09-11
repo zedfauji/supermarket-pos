@@ -253,7 +253,7 @@ function makeReceipt(): ReceiptData {
     tabId: testTab.id,
     customerName: testTab.customerName,
     cashierName: 'Staff',
-    barName: 'Test Bar',
+    storeName: 'Test Bar',
     barAddress: '1 Main St',
     items: [],
     subtotal: 20,

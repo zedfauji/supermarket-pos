@@ -12,7 +12,7 @@ const base: ReceiptData = {
   tabId: '123e4567-e89b-12d3-a456-426614174000',
   customerName: 'María G.',
   cashierName: 'Luis P.',
-  barName: 'Bola 8 Cantina',
+  storeName: 'Bola 8 Cantina',
   barAddress: 'Av. Insurgentes 123, CDMX',
   items: baseItems,
   // Inclusive-mode sale (D-01 default): the $210 catalog-price sum IS the

@@ -858,11 +858,12 @@ export const SettingsKeySchema = z.enum([
 export type SettingsKey = z.infer<typeof SettingsKeySchema>;
 
 export const GeneralSettingsSchema = z.object({
-  barName: z.string().min(1).max(120),
+  storeName: z.string().max(120).default(''),
   address: z.string().min(1).max(300),
   timezone: z.string().min(1).max(100),
   currency: z.string().length(3).default('MXN'),
   receiptFooterText: z.string().max(240).default(''),
+  storeLogoPath: z.string().nullable().default(null),
 });
 
 export type GeneralSettings = z.infer<typeof GeneralSettingsSchema>;

@@ -18,7 +18,7 @@ function stubReceipt(tab: Tab): ReceiptData {
     tabId: tab.id,
     customerName: tab.customerName,
     cashierName: 'Story',
-    barName: 'Story Bar',
+    storeName: 'Story Bar',
     barAddress: '',
     items: [],
     subtotal: 0,

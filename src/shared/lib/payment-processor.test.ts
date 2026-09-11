@@ -18,7 +18,7 @@ describe('payment-processor', () => {
     tabId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     customerName: 'C',
     cashierName: 'S',
-    barName: 'B',
+    storeName: 'B',
     barAddress: '',
     items: [],
     subtotal: 10,

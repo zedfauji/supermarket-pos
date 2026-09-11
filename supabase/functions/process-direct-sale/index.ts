@@ -250,7 +250,7 @@ async function buildSaleReceipt(
     processedAt: firstLeg.processed_at,
     squareReceiptUrl: null,
     cashierName: cashier?.name ?? 'Staff',
-    barName: Deno.env.get('BAR_NAME') ?? 'Supermarket POS',
+    storeName: Deno.env.get('BAR_NAME') ?? 'Supermarket POS',
     barAddress: Deno.env.get('BAR_ADDRESS') ?? '',
     tenderedAmount: soleTender?.tenderedAmount ?? null,
     changeAmount: soleTender?.changeAmount ?? null,

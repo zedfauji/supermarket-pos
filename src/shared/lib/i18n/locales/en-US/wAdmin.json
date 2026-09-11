@@ -458,7 +458,7 @@
   "generalSettingsTab": {
     "saved": "General settings saved.",
     "title": "General",
-    "barNameLabel": "Bar name",
+    "storeNameLabel": "Store name",
     "currencyLabel": "Currency",
     "addressLabel": "Address",
     "timezoneLabel": "Timezone",

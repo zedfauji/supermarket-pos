@@ -20,7 +20,7 @@ describe('sendReceiptByEmail', () => {
     tabId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     customerName: 'Guest',
     cashierName: 'Staff',
-    barName: 'Bar',
+    storeName: 'Bar',
     barAddress: '',
     items: [],
     subtotal: 1,
