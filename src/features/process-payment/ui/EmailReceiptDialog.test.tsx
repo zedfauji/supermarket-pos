@@ -24,7 +24,7 @@ const receipt: ReceiptData = {
   tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   customerName: 'Guest',
   cashierName: 'Staff',
-  barName: 'Bar',
+  storeName: 'Bar',
   barAddress: '',
   items: [],
   subtotal: 1,

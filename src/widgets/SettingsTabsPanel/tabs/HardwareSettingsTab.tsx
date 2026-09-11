@@ -34,7 +34,7 @@ const SAMPLE_RECEIPT_DATA: ReceiptData = {
   tabId: '00000000-0000-4000-8000-000000000000',
   customerName: 'Cliente',
   cashierName: 'Ana',
-  barName: 'Tienda',
+  storeName: 'Tienda',
   barAddress: '',
   items: [
     { name: 'Arroz Basmati 1kg', quantity: 2, unitPrice: 45, lineTotal: 90 },

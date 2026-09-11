@@ -53,11 +53,12 @@ const db = supabase as any;
 const TERMINAL_ID = (import.meta.env.VITE_TERMINAL_ID as string | undefined) ?? 'POS-1';
 
 const DEFAULT_GENERAL: GeneralSettings = {
-  barName: 'Bola 8',
+  storeName: '',
   address: '',
   timezone: 'America/Mexico_City',
   currency: 'MXN',
   receiptFooterText: '',
+  storeLogoPath: null,
 };
 
 const DEFAULT_BILLING: BillingSettings = {

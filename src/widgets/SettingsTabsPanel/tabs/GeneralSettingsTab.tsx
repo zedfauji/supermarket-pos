@@ -10,19 +10,21 @@ type Props = {
 };
 
 type GeneralForm = {
-  barName: string;
+  storeName: string;
   address: string;
   timezone: string;
   currency: string;
   receiptFooterText: string;
+  storeLogoPath: string | null;
 };
 
 const DEFAULT_FORM: GeneralForm = {
-  barName: 'Bola 8',
+  storeName: '',
   address: '',
   timezone: 'America/Mexico_City',
   currency: 'MXN',
   receiptFooterText: '',
+  storeLogoPath: null,
 };
 
 export function GeneralSettingsTab({ currentRole }: Props) {
@@ -36,11 +38,12 @@ export function GeneralSettingsTab({ currentRole }: Props) {
     if (!data || dirty) return;
     /* eslint-disable react-hooks/set-state-in-effect */
     setForm({
-      barName: data.general.barName,
+      storeName: data.general.storeName,
       address: data.general.address,
       timezone: data.general.timezone,
       currency: data.general.currency,
       receiptFooterText: data.general.receiptFooterText,
+      storeLogoPath: data.general.storeLogoPath,
     });
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [data, dirty]);
@@ -49,11 +52,12 @@ export function GeneralSettingsTab({ currentRole }: Props) {
     const result = await updateSetting.mutateAsync({
       key: 'general',
       value: {
-        barName: form.barName.trim(),
+        storeName: form.storeName.trim(),
         address: form.address.trim(),
         timezone: form.timezone.trim(),
         currency: form.currency.trim().toUpperCase(),
         receiptFooterText: form.receiptFooterText.trim(),
+        storeLogoPath: form.storeLogoPath,
       },
     });
     if (!result.ok) {
@@ -74,13 +78,13 @@ export function GeneralSettingsTab({ currentRole }: Props) {
         <h2 className="text-lg font-semibold">{t('generalSettingsTab.title')}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="settings-bar-name">{t('generalSettingsTab.barNameLabel')}</Label>
+            <Label htmlFor="settings-store-name">{t('generalSettingsTab.storeNameLabel')}</Label>
             <Input
-              id="settings-bar-name"
-              value={form.barName}
+              id="settings-store-name"
+              value={form.storeName}
               onChange={event => {
                 setDirty(true);
-                setForm(current => ({ ...current, barName: event.target.value }));
+                setForm(current => ({ ...current, storeName: event.target.value }));
               }}
             />
           </div>

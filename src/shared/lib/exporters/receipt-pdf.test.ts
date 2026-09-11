@@ -107,7 +107,7 @@ function makeReceipt(overrides?: Partial<ReceiptData>): ReceiptData {
     tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     customerName: 'Guest',
     cashierName: 'Staff',
-    barName: 'Store',
+    storeName: 'Store',
     barAddress: '',
     items: [],
     subtotal: 1,

@@ -28,7 +28,7 @@ function sampleReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     tabId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     customerName: 'Guest',
     cashierName: 'Staff',
-    barName: 'Bar',
+    storeName: 'Bar',
     barAddress: '1 St',
     items: [{ name: 'Item', quantity: 1, unitPrice: 5, lineTotal: 5 }],
     subtotal: 5,

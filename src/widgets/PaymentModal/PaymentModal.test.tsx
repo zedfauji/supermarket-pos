@@ -162,7 +162,7 @@ function makeReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     tabId: tabNoPool.id,
     customerName: 'Sarah J.',
     cashierName: 'Staff',
-    barName: 'Test Bar',
+    storeName: 'Test Bar',
     barAddress: '1 Main St',
     items: [
       { name: 'Beer', quantity: 2, unitPrice: 6.5, lineTotal: 13 },

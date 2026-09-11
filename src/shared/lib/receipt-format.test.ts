@@ -17,7 +17,7 @@ function baseReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
     tabId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     customerName: 'Ana',
     cashierName: 'Luis',
-    barName: 'Bola 8',
+    storeName: 'Bola 8',
     barAddress: 'Av. Revolución 123, CDMX',
     items: [{ name: 'Cerveza', quantity: 2, unitPrice: 45, lineTotal: 90 }],
     subtotal: 90,
@@ -32,9 +32,9 @@ function baseReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
 }
 
 describe('buildThermalReceiptText', () => {
-  it('centers bar name and uses Bar fallback when barName empty', () => {
+  it('centers bar name and uses Bar fallback when storeName empty', () => {
     const firstLine = buildThermalReceiptText(
-      baseReceipt({ barName: '' }),
+      baseReceipt({ storeName: '' }),
       'es-MX',
       defaultReceiptSettings()
     ).split('\n')[0];
@@ -585,7 +585,7 @@ describe('buildThermalReceiptText', () => {
 
 function basePreCheque(overrides: Partial<PreChequeData> = {}): PreChequeData {
   return {
-    barName: 'Bola 8',
+    storeName: 'Bola 8',
     tableLabel: 'Mesa 5',
     customerName: 'Juan',
     cashierName: 'Maria',
@@ -684,7 +684,7 @@ describe('buildPreChequeText', () => {
   it('all output lines are at most 32 characters', () => {
     const text = buildPreChequeText(
       basePreCheque({
-        barName: 'A very long bar name that might overflow the line',
+        storeName: 'A very long bar name that might overflow the line',
         cashierName: 'A very long cashier name',
         customerName: 'A very long customer name',
         items: [
@@ -725,8 +725,8 @@ describe('buildPreChequeText', () => {
     expect(text).not.toContain('HORA FELIZ');
   });
 
-  it('uses Bar fallback when barName is empty', () => {
-    const text = buildPreChequeText(basePreCheque({ barName: '' }), 'es-MX');
+  it('uses Bar fallback when storeName is empty', () => {
+    const text = buildPreChequeText(basePreCheque({ storeName: '' }), 'es-MX');
     expect(text).toContain('Bar');
   });
 

@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { EmployeeSelector } from '@widgets/EmployeeSelector/EmployeeSelector';
 import { LogoImage } from '@widgets/LogoImage';
 import { PINLoginForm } from '@widgets/PINLoginForm/PINLoginForm';
+import { useSettings } from '@entities/settings';
 import { useLoginUiStore } from '@entities/staff/model/loginUiStore';
 import { useStaffStore } from '@entities/staff/model/store';
 import { ErrorBoundary } from '@shared/ui';
@@ -15,6 +16,10 @@ export default function LoginPage() {
   const { t, i18n } = useTranslation('pages');
   const selectedStaff = useLoginUiStore(s => s.selectedStaff);
   const isAuthenticated = useStaffStore(s => s.isAuthenticated);
+  // useSettings() is pending pre-auth on first paint; storeName defaults to '' so the
+  // unconfigured branch renders instead of a skeleton (UI-SPEC §1 "Loading state").
+  const { data: settingsData } = useSettings();
+  const storeName = settingsData?.general.storeName.trim() ?? '';
 
   if (isAuthenticated) {
     return <Navigate to="/home" replace />;
@@ -39,21 +44,39 @@ export default function LoginPage() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklch,var(--color-ink)_60%,transparent))]"
         />
-        <div className="relative flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-ink-foreground/10 ring-1 ring-ink-foreground/15">
-            <LogoImage
-              alt={t('common.logoAlt')}
-              className="size-full object-cover"
-              fallback={<ShoppingBasket className="size-5" aria-hidden="true" />}
-            />
+        {storeName ? (
+          <div className="relative flex flex-col items-start gap-4">
+            <div className="flex size-32 items-center justify-center overflow-hidden rounded-3xl bg-ink-foreground/10 p-3 ring-1 ring-ink-foreground/15">
+              <ShoppingBasket className="size-8" aria-hidden="true" />
+            </div>
+            <div className="leading-tight">
+              <p data-testid="login-store-name" className="text-3xl font-semibold tracking-tight">
+                {storeName}
+              </p>
+              <p className="mt-1 text-xs text-ink-foreground/60">
+                {t('login.terminal', { id: TERMINAL_ID })}
+              </p>
+            </div>
           </div>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold tracking-tight">{t('login.brand')}</p>
-            <p className="text-xs text-ink-foreground/60">
-              {t('login.terminal', { id: TERMINAL_ID })}
-            </p>
+        ) : (
+          <div className="relative flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-ink-foreground/10 ring-1 ring-ink-foreground/15">
+              <LogoImage
+                alt={t('common.logoAlt')}
+                className="size-full object-cover"
+                fallback={<ShoppingBasket className="size-5" aria-hidden="true" />}
+              />
+            </div>
+            <div className="leading-tight">
+              <p data-testid="login-store-name" className="text-sm font-semibold tracking-tight">
+                {t('login.brand')}
+              </p>
+              <p className="text-xs text-ink-foreground/60">
+                {t('login.terminal', { id: TERMINAL_ID })}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="relative space-y-6">
           <div className="space-y-2">

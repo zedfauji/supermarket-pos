@@ -195,7 +195,7 @@ Deno.serve(async (req: Request) => {
 
   const paymentId = rpc.paymentId;
 
-  const barName = Deno.env.get('BAR_NAME') ?? 'Bar';
+  const storeName = Deno.env.get('BAR_NAME') ?? 'Bar';
   const barAddress = Deno.env.get('BAR_ADDRESS') ?? '';
 
   const { data: paymentRow, error: payErr } = await admin
@@ -377,7 +377,7 @@ Deno.serve(async (req: Request) => {
     processedAt: paymentRow.processed_at,
     squareReceiptUrl: null as string | null,
     cashierName: cashierRow?.name ?? 'Staff',
-    barName,
+    storeName,
     barAddress,
     tenderedAmount: tendered,
     changeAmount,

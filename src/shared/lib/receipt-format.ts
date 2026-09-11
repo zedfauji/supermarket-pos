@@ -100,7 +100,7 @@ function paymentMethodLabel(method: ReceiptData['paymentMethod'], locale: Locale
 // ============================================================================
 
 export type PreChequeData = {
-  barName: string;
+  storeName: string;
   tableLabel: string;
   customerName: string;
   cashierName: string;
@@ -130,7 +130,7 @@ export function buildPreChequeText(data: PreChequeData, locale: Locale): string 
   const tr = receiptT(locale);
   const lines: string[] = [];
 
-  lines.push(centerLine(sanitize(data.barName) || 'Bar'));
+  lines.push(centerLine(sanitize(data.storeName) || 'Bar'));
   lines.push(centerLine(tr('precheque.title')));
   lines.push(centerLine(tr('precheque.subtitle')));
   lines.push(divider());
@@ -187,7 +187,7 @@ export function buildThermalReceiptText(
       ? receipt.processedAt
       : new Date(receipt.processedAt as unknown as string);
 
-  lines.push(centerLine(sanitize(receipt.barName) || 'Bar', width));
+  lines.push(centerLine(sanitize(receipt.storeName) || 'Bar', width));
   if (settings.headerLine2) lines.push(centerLine(sanitize(settings.headerLine2), width));
   if (receipt.barAddress) {
     const addr = sanitize(receipt.barAddress);

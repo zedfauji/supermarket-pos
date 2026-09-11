@@ -24,7 +24,7 @@ function lineLeftRight(left: string, right: string, width: number): string {
 }
 
 export type StartTicketOpts = {
-  barName: string;
+  storeName: string;
   tableLabel: string;
   startedAt: Date;
   ratePerHour: number;
@@ -32,10 +32,10 @@ export type StartTicketOpts = {
 };
 
 export function buildStartTicketText(opts: StartTicketOpts): string {
-  const { barName, tableLabel, startedAt, ratePerHour, paperWidthChars: w } = opts;
+  const { storeName, tableLabel, startedAt, ratePerHour, paperWidthChars: w } = opts;
   const lines: string[] = [];
 
-  lines.push(centerLine(barName || 'Bar', w));
+  lines.push(centerLine(storeName || 'Bar', w));
   lines.push(centerLine('TICKET INICIO', w));
   lines.push(centerLine('START TICKET', w));
   lines.push(divider(w));

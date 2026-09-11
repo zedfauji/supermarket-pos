@@ -9,7 +9,7 @@ import { buildStartTicketText, type StartTicketOpts } from './buildStartTicketTe
 import i18n from './i18n/index';
 
 const baseOpts: StartTicketOpts = {
-  barName: 'Bola 8',
+  storeName: 'Bola 8',
   tableLabel: 'Main Table',
   startedAt: new Date('2026-04-21T10:00:00.000Z'),
   ratePerHour: 15,
@@ -50,9 +50,9 @@ describe('buildStartTicketText', () => {
         fc.string({ minLength: 1, maxLength: 20 }),
         fc.string({ minLength: 1, maxLength: 10 }),
         fc.float({ min: 1, max: 200, noNaN: true }),
-        (width, barName, tableLabel, rate) => {
+        (width, storeName, tableLabel, rate) => {
           const opts: StartTicketOpts = {
-            barName,
+            storeName,
             tableLabel,
             startedAt: new Date('2026-04-21T10:00:00.000Z'),
             ratePerHour: Math.floor(rate),

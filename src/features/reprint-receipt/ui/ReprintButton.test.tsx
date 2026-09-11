@@ -79,7 +79,7 @@ const receiptData = {
   tabId: payment.tabId,
   customerName: 'Guest',
   cashierName: 'Staff',
-  barName: 'Bar',
+  storeName: 'Bar',
   barAddress: '',
   items: [],
   subtotal: 20,

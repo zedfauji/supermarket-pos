@@ -52,7 +52,7 @@ export const ReceiptDataSchema = z.object({
   tabId: UuidSchema,
   customerName: z.string(),
   cashierName: z.string(),
-  barName: z.string(),
+  storeName: z.string(),
   barAddress: z.string(),
   items: z.array(
     z.object({
