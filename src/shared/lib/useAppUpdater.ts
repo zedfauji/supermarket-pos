@@ -12,6 +12,9 @@
 import { relaunch as tauriRelaunch } from '@tauri-apps/plugin-process';
 import { check } from '@tauri-apps/plugin-updater';
 import { useEffect, useRef, useState } from 'react';
+import { isLicenseEnforced } from '@shared/lib/license/config';
+import { getEffectiveNow, useLicenseStore } from '@shared/lib/license/store';
+import { updatesExpired } from '@shared/lib/license/token';
 import { logger } from '@shared/lib/logger-instance';
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000; // 14_400_000 ms
@@ -35,6 +38,12 @@ export function useAppUpdater(): UseAppUpdaterReturn {
   const updateRef = useRef<Awaited<ReturnType<typeof check>>>(null);
 
   const runCheck = async (): Promise<void> => {
+    // Lifetime licenses include 4 years of regular updates — after updates_until the
+    // installed version keeps working but no longer polls for new releases.
+    if (isLicenseEnforced() && updatesExpired(useLicenseStore.getState().payload, getEffectiveNow())) {
+      logger.info('updater.skipped_updates_expired');
+      return;
+    }
     try {
       const update = await check();
       if (update) {

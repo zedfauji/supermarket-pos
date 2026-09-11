@@ -91,6 +91,46 @@ This repo started as a bar/pool-parlour POS (`bar-pos`) and pivoted in-place (20
 
 All source code lives in `supermarket-pos/`. Run all commands from `supermarket-pos/`.
 
+### Licensing/subscription control lives in a SEPARATE repo — `pos-license-server`, not here
+
+The vendor-side licensing system (multi-tenant Supabase project + admin portal that gates which
+stores' terminals are allowed to run this POS) was originally prototyped in-repo under
+`license-server/` (2026-09-06, `.planning/decisions/2026-09-06-licensing-and-subscription-control.md`)
+and was extracted on 2026-09-11 into its own GitHub repo: **github.com/zedfauji/pos-license-server**
+(private), on disk at `D:\Projects\Code\pos-license-server` — a sibling of this repo, not a
+subfolder of it. This closed a real risk that repo carried while `license-server/` lived here:
+`release.yml`'s customer-sync job does `git push --mirror` (full-history, not build-artifact) to
+each customer's own GitHub repo, which would have copied vendor-only license-server *source* into
+every customer repo the next time a release was cut. Do not re-add a `license-server/` directory
+to this repo for that reason — always work in the standalone repo instead.
+
+**What stays in THIS repo** (the POS-side "hooks" — the client half of the licensing system):
+`src/app/LicenseGate.tsx` + `LicenseBanner.tsx` (app-shell gating/banner), `src/shared/lib/license/*`
+(token verify, `evaluateLicense` pure policy, zustand store, terminal-id, heartbeat hook),
+`src/features/activate-license/*` (activation UI), `src/widgets/SettingsTabsPanel/tabs/LicenseSettingsTab.tsx`
+(Settings → Licencia tab), the `LICENSE_LOCKED`/`LICENSE_ERROR` `AppErrorCode`s in
+`src/shared/lib/result.ts`, and small wiring in `src/app/{App,AppConfigProvider,providers}.tsx` +
+`src/shared/lib/supabase.ts` (refuses non-GET/non-auth fetches while locked) + `src-tauri/src/lib.rs`
+(reads the runtime `.env` next to the Tauri executable for `VITE_LICENSE_SERVER_URL`/`VITE_LICENSE_SERVER_ANON_KEY`
+overrides). These files have zero server-side secrets and only talk to the license server's public
+HTTP API (edge functions `activate`/`heartbeat`/`issue-offline-token`) — that's why they're safe to
+keep in a repo that gets mirrored to customers.
+
+**What moved to `pos-license-server`** (never bring this back here): the license server's own
+Supabase project (`tenants`/`payments`/`terminals` tables, RPCs, edge functions with the ECDSA
+signing key), the admin portal (`portal/`, Tenants/TenantDetail/Fleet pages), and
+`scripts/setup-admin.mjs`. Full ops docs, local dev setup (still the same local Supabase stack on
+ports 55321-55323, unchanged), and the "moving to a remote Supabase project" runbook are in that
+repo's own `README.md` — read it there, don't expect it here.
+
+**Production instance** (created 2026-09-11): remote Supabase project `zhvcivnojpvgwiknlpuj`
+(https://zhvcivnojpvgwiknlpuj.supabase.co). Migration applied, all 3 edge functions deployed, a
+fresh production-only ECDSA signing keypair generated (never shared with the local dev keypair),
+email signup disabled, one portal admin created. To point a production POS build at it, set
+`VITE_LICENSE_SERVER_URL`, `VITE_LICENSE_SERVER_ANON_KEY` (or the new `sb_publishable_...` key),
+and `VITE_LICENSE_PUBLIC_KEY` (the prod SPKI, not the dev one baked into `public-key.ts`) at build
+time — see `src/shared/lib/license/{config,public-key}.ts` for exactly how those overrides work.
+
 ## Commands
 
 ```bash

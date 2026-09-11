@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { initLicenseConfig } from '@shared/lib/license/config';
 import { initSupabaseClient } from '@shared/lib/supabase';
 import { LoadingSpinner } from '@shared/ui/LoadingSpinner';
 
@@ -22,12 +23,18 @@ export function AppConfigProvider({ children }: Props) {
 
     import('@tauri-apps/api/core')
       .then(({ invoke }) =>
-        invoke<{ supabaseUrl: string; supabaseAnonKey: string }>('get_runtime_config')
+        invoke<{
+          supabaseUrl: string;
+          supabaseAnonKey: string;
+          licenseServerUrl?: string;
+          licenseServerAnonKey?: string;
+        }>('get_runtime_config')
       )
       .then(cfg => {
         if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
           initSupabaseClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
         }
+        initLicenseConfig(cfg.licenseServerUrl, cfg.licenseServerAnonKey);
       })
       .catch(() => {
         /* fallback to VITE_ env vars via lazy getClient() */

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { CajaListener } from '@app/CajaListener';
 import { OfflineQueueProcessor } from '@app/OfflineQueueProcessor';
 import { useStaffStore } from '@entities/staff/model/store';
+import { useLicenseHeartbeat } from '@shared/lib/license/useLicenseHeartbeat';
 import { logger } from '@shared/lib/logger-instance';
 import { supabase } from '@shared/lib/supabase';
 import { useAppUpdater } from '@shared/lib/useAppUpdater';
@@ -42,6 +43,9 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
+  // Licensing: re-verify the stored token, then refresh the lease on boot / every 6 h / on reconnect.
+  useLicenseHeartbeat();
+
   useEffect(() => {
     // Sync Zustand staffStore with the real Supabase auth session.
     // If the session disappears or the user in the JWT no longer matches

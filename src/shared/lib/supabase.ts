@@ -1,5 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
+import { currentLicenseEvaluation } from './license/store';
 import type { Database } from './supabase.types';
+
+/**
+ * Licensing lever for "block operations to the remote DB": while the terminal is locked
+ * (unlicensed / expired / suspended) every non-read request except auth is refused
+ * client-side. Reads still work so the gate screen and login can render.
+ */
+function licenseGuardedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  if (method !== 'GET' && method !== 'HEAD' && !url.includes('/auth/v1/') && currentLicenseEvaluation().state === 'locked') {
+    return Promise.reject(new Error('LICENSE_LOCKED: this terminal is not licensed — database writes are disabled'));
+  }
+  return fetch(input, init);
+}
 
 type SupabaseClientType = ReturnType<typeof createClient<Database>>;
 
@@ -24,6 +39,7 @@ export function initSupabaseClient(url: string, anonKey: string): void {
   if (_client) return; // idempotent — only init once
   _client = createClient<Database>(url, anonKey, {
     auth: { persistSession: true, autoRefreshToken: true },
+    global: { fetch: licenseGuardedFetch },
   });
   _client.auth.onAuthStateChange((_event, session) => {
     _cachedAccessToken = session?.access_token ?? null;
