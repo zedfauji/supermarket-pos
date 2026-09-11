@@ -6,7 +6,8 @@
  * VITE_LICENSE_SERVER_URL / VITE_LICENSE_SERVER_ANON_KEY, or at runtime from the Tauri
  * `.env` next to the executable (AppConfigProvider → initLicenseConfig).
  */
-let _url: string | null = import.meta.env.VITE_LICENSE_SERVER_URL?.trim() || null;
+let _url: string | null =
+  import.meta.env.VITE_LICENSE_SERVER_URL?.trim().replace(/\/$/, '') || null;
 let _anonKey: string | null = import.meta.env.VITE_LICENSE_SERVER_ANON_KEY?.trim() || null;
 
 export function initLicenseConfig(url: string | undefined, anonKey: string | undefined): void {

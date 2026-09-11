@@ -1,5 +1,8 @@
 const TERMINAL_ID_KEY = 'pos.license.terminal_id';
 
+/** In-memory fallback so a locked-down localStorage still yields a stable ID within the session. */
+let _memoryFallbackId: string | null = null;
+
 /**
  * Stable per-installation UUID, minted once and kept in localStorage (WebView2 persists
  * it in the app's user-data dir). The license server keys terminals by this value.
@@ -13,7 +16,11 @@ export function getTerminalId(): string {
     localStorage.setItem(TERMINAL_ID_KEY, fresh);
     return fresh;
   } catch {
-    return crypto.randomUUID();
+    // localStorage unavailable (disabled/quota) — cache in memory so activate() and the
+    // follow-up applyToken() within the same session see the same ID, instead of each
+    // call minting a fresh UUID and failing the server's terminal_id match check.
+    _memoryFallbackId ??= crypto.randomUUID();
+    return _memoryFallbackId;
   }
 }
 

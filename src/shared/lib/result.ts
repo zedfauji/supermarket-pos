@@ -496,6 +496,13 @@ export const notFoundVersionedError = (raw?: unknown): AppError => ({
  * @returns Application error
  */
 export const parseSupabaseError = (error: PostgrestError): AppError => {
+  // licenseGuardedFetch (supabase.ts) rejects with a plain Error, not a PostgrestError — the
+  // supabase-js fetch layer re-wraps it into this shape but only preserves `.message`, so this
+  // is the one place that string reaches a typed AppErrorCode.
+  if (error.message.startsWith('LICENSE_LOCKED:')) {
+    return { code: 'LICENSE_LOCKED', message: error.message.slice('LICENSE_LOCKED:'.length).trim() };
+  }
+
   const code = error.code || 'UNKNOWN';
 
   // Unique constraint violation
