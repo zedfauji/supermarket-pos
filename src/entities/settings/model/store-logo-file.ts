@@ -36,7 +36,11 @@ import { supabase } from '@shared/lib/supabase';
 
 export const STORE_BRANDING_BUCKET = 'store-branding';
 export const ACCEPTED_LOGO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-export const MAX_LOGO_UPLOAD_BYTES = 10 * 1024 * 1024;
+// WR-02: must not exceed the store-branding bucket's server-side
+// file_size_limit (2097152 bytes, migration 20260911000002) — otherwise an
+// admin sees only a generic upload-failed error after a full decode+resize
+// round-trip instead of an upfront "too large" rejection.
+export const MAX_LOGO_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 /** Signed-URL lifetime handed to Storage — copied from resolveProductImage.ts (mirror, don't invent). */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
