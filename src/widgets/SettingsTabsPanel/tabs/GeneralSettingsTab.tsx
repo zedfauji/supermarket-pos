@@ -128,7 +128,9 @@ export function GeneralSettingsTab({ currentRole }: Props) {
       case 'NETWORK_OFFLINE':
         return t('generalSettingsTab.logoErrorOffline');
       default:
-        return error.message;
+        // WR-03: error.message is developer/log-facing text (English, not
+        // run through i18n) -- never surface it verbatim to the admin.
+        return t('generalSettingsTab.logoErrorGeneric');
     }
   }
 
