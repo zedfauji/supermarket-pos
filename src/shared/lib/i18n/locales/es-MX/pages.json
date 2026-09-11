@@ -94,6 +94,7 @@
   "login": {
     "brand": "Supermarket POS",
     "terminal": "Terminal {{id}}",
-    "tagline": "Ingresa tu PIN para abrir la caja. Cada venta, reembolso y movimiento de inventario queda registrado a tu nombre."
+    "tagline": "Ingresa tu PIN para abrir la caja. Cada venta, reembolso y movimiento de inventario queda registrado a tu nombre.",
+    "logoAlt": "Logotipo de {{name}}"
   }
 }
