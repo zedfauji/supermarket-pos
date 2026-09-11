@@ -493,9 +493,16 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 33-01-PLAN.md — Tracer: rename `barName`→`storeName` repo-wide, add the anon settings read, render the real store name on the login screen
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 33-02-PLAN.md — `store-branding` Storage bucket + RLS, and the validate/downscale/upload/link pipeline
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 33-03-PLAN.md — Settings logo upload control, login hero logo, and STORE-03 functional/RLS/visual coverage
 
 ### 🔜 v1.4 Barcode Scan Product Peek (Proposed)
