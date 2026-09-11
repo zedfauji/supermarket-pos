@@ -1,7 +1,7 @@
 ---
 phase: "33"
 slug: "login-screen-store-branding"
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "radix-nova · base radix · baseColor neutral · cssVariables · lucide (components.json)"
 created: "2026-09-11"
@@ -353,11 +353,11 @@ server/network failures (`logoErrorUpload`, `logoErrorLink`, `logoErrorRemove`).
 
 ## UI Considerations
 
-Coverage: **2 elements applicable · all state categories resolved** (login-hero-branding: empty/loading/error/
-populated/partial explicit, no list-collection/zero-one-many/overflow-relevant content since it's a static
-2-field header, not a list; settings-logo-upload: mirrors Phase 31's already-verified Photo-tab coverage,
-scaled to a compact inline control). Element kinds: **login-hero-branding** (media · static-content) ·
-**settings-logo-upload** (form · media · interactive-control).
+Ran via `ui-consideration-probe.cjs` post-verification (workflow step 9.5), against the checker-approved
+UI-SPEC. **2 elements · 16/16 applicable categories resolved (explicit), 0 backstop, 0 unresolved.** Element
+kinds: **login-hero-branding** (media · static-content) · **settings-logo-upload** (form · media ·
+interactive-control). Neither element is a list/collection — `zero-one-many` resolves to "not applicable, no
+collection exists" for both rather than a scaled row count.
 
 ### login-hero-branding
 
@@ -368,6 +368,9 @@ scaled to a compact inline control). Element kinds: **login-hero-branding** (med
 | error | explicit | Signed-URL fetch or `<img>` load failure with a known `storeLogoPath` → hero tile shows `ImageOff size-8` inside the same 128px frame; `storeName` text renders normally regardless (a string cannot "fail to load"). |
 | populated | explicit | Both set and resolved → 128px `object-contain` logo (padded, light backdrop) + 30px/600 store name + unchanged terminal-id caption, per Layout §1. |
 | partial | explicit | `storeName` set / `storeLogoPath` unset → hero-size fallback icon (128px `ShoppingBasket`, not the 44px one) + real name. `storeLogoPath` set / `storeName` unset (schema-atypical but must not crash) → hero logo + generic `login.brand` text. See Layout §1 for both. |
+| overflow | explicit | `storeName` is schema-capped at `max(120)` chars; the 30px text has no `truncate`/`line-clamp` — it wraps naturally inside the aside's 5fr column with no clipping at that length. |
+| zero-one-many | explicit | Not applicable — a single static name+logo pair, not a list; no plural/count copy exists to vary. |
+| long-text | explicit | Same 120-char cap as overflow — wraps to multiple lines rather than truncating; no ellipsis affordance is needed or present. |
 
 ### settings-logo-upload
 
@@ -378,16 +381,17 @@ scaled to a compact inline control). Element kinds: **login-hero-branding** (med
 | error | explicit | Validation/upload/link/remove/offline/load errors each render their own keyed inline `role="alert"` string (see Copywriting Contract) plus a matching `toast.error`; tile returns to its previous (not a new/broken) state in every case. |
 | populated | explicit | Solid-border 80px tile with the logo `object-contain`, `logoReplace` (outline) + `logoRemove` (destructive) buttons. |
 | partial | explicit | An orphaned/unlinked upload (Storage object written, settings-blob write failed — RESEARCH.md Pitfall 2) shows `logoErrorLink` inline and the row reverts to its pre-upload state (empty or previous logo) — the orphaned object is never surfacable in this UI. |
+| overflow | explicit | Tile is `overflow-hidden` with `object-contain`, so an oversized source image is always contained, never clipped mid-subject; the button row uses `flex-wrap` so Replace/Remove reflow rather than overflow the row on narrow widths. |
+| zero-one-many | explicit | Not applicable — a single logo slot, not a list; there is no "many logos" state to design for. |
+| long-text | explicit | Hint/error strings render in a `flex flex-col` column beside the fixed 80px tile, not a fixed-width cell — they wrap naturally; no truncation of error copy (truncating a validation message would hide the actionable detail). |
 
-Open (domain-probe) considerations resolved in prose: **offline** — the settings upload is hard-blocked with
-`logoErrorOffline` (the `storeName` text field keeps today's existing offline behavior, unaffected by this
-phase); **i18n** — every new string keyed in both locales, es-MX primary; **reduced motion** — inherited
-global rules, no new keyframes in either surface.
+Additional domain considerations resolved in prose (outside the probe's 8-category taxonomy): **offline** —
+the settings upload is hard-blocked with `logoErrorOffline` (the `storeName` text field keeps today's existing
+offline behavior, unaffected by this phase); **i18n** — every new string keyed in both locales, es-MX primary;
+**reduced motion** — inherited global rules, no new keyframes in either surface.
 
 No backstop/visual-regression items are required beyond what STORE-03 already mandates (see Verification
-Hooks) — both elements are simple, non-scrolling, fixed-size surfaces with no long-text/overflow risk (the
-store name is capped at 120 chars by the existing schema `max(120)`, and 30px text in a 5fr-wide aside wraps
-naturally with no clipping risk at that length).
+Hooks) — every category above resolved to an explicit, already-specified truth; nothing was deferred.
 
 ---
 
@@ -421,12 +425,12 @@ recommended but not required by STORE-03's literal wording (configured + unconfi
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-11
