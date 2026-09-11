@@ -7,7 +7,8 @@
     "backup": "Backup",
     "billing": "Billing",
     "nearExpiry": "Near Expiry",
-    "lockTimeout": "Auto-Lock Timeout"
+    "lockTimeout": "Auto-Lock Timeout",
+    "license": "License"
   },
   "noPermission": "You do not have permission to view settings.",
   "navLabel": "Settings sections",
@@ -26,7 +27,8 @@
     "email": "Sender address and test emails",
     "nearExpiry": "Alert window and automatic discount",
     "lockTimeout": "Idle time before the screen locks",
-    "backup": "Manual snapshots and restore"
+    "backup": "Manual snapshots and restore",
+    "license": "Plan, validity and terminal"
   },
   "language": {
     "heading": "Language",
@@ -40,5 +42,38 @@
     "saving": "Saving…",
     "saveSuccess": "Language updated.",
     "saveError": "Couldn't update language. Try again."
+  },
+  "license": {
+    "heading": "License",
+    "status": {
+      "active": "Active",
+      "warning": "Expiring soon",
+      "grace": "In grace period",
+      "locked": "Locked",
+      "disabled": "License enforcement off (development mode)"
+    },
+    "tenant": "Store",
+    "plan": "Plan",
+    "planName": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "lifetime": "Lifetime"
+    },
+    "periodEnd": "Valid through",
+    "lifetimeNoExpiry": "Never expires",
+    "updatesUntil": "Updates until",
+    "updatesExpired": "Regular updates have ended — contact your vendor to renew them.",
+    "leaseUntil": "Renew before",
+    "leaseHint": "The terminal renews its license automatically when online. Without a connection it locks on the “Renew before” date.",
+    "lastHeartbeat": "Last check",
+    "never": "Never",
+    "terminalId": "Terminal ID",
+    "maxTerminals": "Terminals allowed",
+    "refresh": "Check now",
+    "refreshing": "Checking…",
+    "refreshed": "License verified",
+    "refreshFailed": "Could not verify the license",
+    "changeKey": "Change key / import token",
+    "unlicensed": "This terminal is not licensed."
   }
 }

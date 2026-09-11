@@ -212,6 +212,8 @@ export type AppErrorCode =
   | 'PHOTO_UPLOAD_FAILED' // Phase 31: the Storage upload call itself failed
   | 'PHOTO_LINK_FAILED' // Phase 31: object uploaded but products.photo_path write failed (Pitfall 6)
   | 'PHOTO_REMOVE_FAILED' // Phase 31 Plan 04: the Storage delete or the products.photo_path clear failed
+  | 'LICENSE_LOCKED' // licensing: terminal is locked (unlicensed/expired/suspended) — writes to the DB are refused
+  | 'LICENSE_ERROR' // licensing: license server rejected activation/heartbeat (bad key, revoked, terminal limit)
   | 'UNKNOWN_ERROR';
 
 /**

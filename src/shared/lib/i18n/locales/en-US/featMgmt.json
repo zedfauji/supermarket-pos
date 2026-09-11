@@ -448,5 +448,18 @@
     "noReorderNeeded": "This supplier has no products currently at or below their reorder point.",
     "saveError": "Couldn't save this purchase order. Check the line items and try again.",
     "created": "Purchase order saved"
+  },
+  "activateLicense": {
+    "keyLabel": "License key",
+    "keyPlaceholder": "XXXX-XXXX-XXXX-XXXX",
+    "activate": "Activate",
+    "activating": "Activating…",
+    "activated": "License activated — {{tenant}} ({{plan}})",
+    "orOffline": "No internet? Paste an offline token",
+    "offlineHint": "Your vendor can generate an offline token from the portal using this terminal’s ID.",
+    "tokenLabel": "Offline token",
+    "tokenPlaceholder": "Paste the token generated in the portal",
+    "import": "Import token",
+    "imported": "Token imported — valid until {{date}}"
   }
 }

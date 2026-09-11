@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   DatabaseBackup,
+  KeyRound,
   Languages,
   Lock,
   Mail,
@@ -21,6 +22,7 @@ import { EmailReceiptsSettingsTab } from './tabs/EmailReceiptsSettingsTab';
 import { GeneralSettingsTab } from './tabs/GeneralSettingsTab';
 import { HardwareSettingsTab } from './tabs/HardwareSettingsTab';
 import { LanguageSettingsTab } from './tabs/LanguageSettingsTab';
+import { LicenseSettingsTab } from './tabs/LicenseSettingsTab';
 import { LockSettingsTab } from './tabs/LockSettingsTab';
 import { NearExpirySettingsTab } from './tabs/NearExpirySettingsTab';
 
@@ -106,6 +108,13 @@ export function SettingsTabsPanel() {
           description: t('descriptions.backup'),
           icon: DatabaseBackup,
           render: () => <BackupSettingsTab currentRole={currentRole} />,
+        },
+        {
+          key: 'license',
+          label: t('tabs.license'),
+          description: t('descriptions.license'),
+          icon: KeyRound,
+          render: () => <LicenseSettingsTab />,
         }
       );
     }

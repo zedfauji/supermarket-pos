@@ -156,5 +156,29 @@
     "installing": "Instalando...",
     "later": "Más tarde",
     "restartNow": "Reiniciar ahora"
+  },
+  "license": {
+    "plan": {
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "lifetime": "De por vida"
+    },
+    "banner": {
+      "subscriptionWarning": "Tu suscripción vence en {{days}} días — renueva para evitar interrupciones",
+      "grace": "Suscripción vencida — el sistema se bloqueará en {{days}} días",
+      "leaseWarning": "Sin verificar licencia — conéctate a internet en {{days}} días o el sistema se bloqueará"
+    },
+    "gate": {
+      "title": "Activación de licencia",
+      "reason": {
+        "unlicensed": "Este equipo aún no tiene licencia. Ingresa la clave de licencia de tu tienda.",
+        "invalid": "La licencia guardada no es válida. Ingresa la clave de nuevo.",
+        "suspended": "La licencia de esta tienda está suspendida. Contacta a tu proveedor.",
+        "lease_expired": "Este equipo lleva más de {{days}} días sin verificar su licencia. Conéctate a internet o pega un token fuera de línea.",
+        "subscription_expired": "La suscripción venció. Registra tu pago con el proveedor y vuelve a activar."
+      },
+      "terminalId": "ID de terminal",
+      "support": "Envía este ID a tu proveedor para obtener un token fuera de línea."
+    }
   }
 }

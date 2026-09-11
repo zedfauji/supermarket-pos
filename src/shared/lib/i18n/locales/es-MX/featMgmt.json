@@ -448,5 +448,18 @@
     "noReorderNeeded": "Este proveedor no tiene productos actualmente en o por debajo de su punto de reorden.",
     "saveError": "No se pudo guardar esta orden de compra. Verifica las partidas e intenta de nuevo.",
     "created": "Orden de compra guardada"
+  },
+  "activateLicense": {
+    "keyLabel": "Clave de licencia",
+    "keyPlaceholder": "XXXX-XXXX-XXXX-XXXX",
+    "activate": "Activar",
+    "activating": "Activando…",
+    "activated": "Licencia activada — {{tenant}} ({{plan}})",
+    "orOffline": "¿Sin internet? Pegar token fuera de línea",
+    "offlineHint": "Tu proveedor puede generar un token fuera de línea desde el portal usando el ID de esta terminal.",
+    "tokenLabel": "Token fuera de línea",
+    "tokenPlaceholder": "Pega aquí el token generado en el portal",
+    "import": "Importar token",
+    "imported": "Token importado — válido hasta {{date}}"
   }
 }

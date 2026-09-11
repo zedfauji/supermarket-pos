@@ -156,5 +156,29 @@
     "installing": "Installing...",
     "later": "Later",
     "restartNow": "Restart Now"
+  },
+  "license": {
+    "plan": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "lifetime": "Lifetime"
+    },
+    "banner": {
+      "subscriptionWarning": "Your subscription ends in {{days}} days — renew to avoid interruption",
+      "grace": "Subscription expired — the system locks in {{days}} days",
+      "leaseWarning": "License not verified — connect to the internet within {{days}} days or the system locks"
+    },
+    "gate": {
+      "title": "License activation",
+      "reason": {
+        "unlicensed": "This terminal is not licensed yet. Enter your store’s license key.",
+        "invalid": "The stored license is invalid. Enter the key again.",
+        "suspended": "This store’s license is suspended. Contact your vendor.",
+        "lease_expired": "This terminal has gone more than {{days}} days without verifying its license. Connect to the internet or paste an offline token.",
+        "subscription_expired": "The subscription has expired. Settle the payment with your vendor and activate again."
+      },
+      "terminalId": "Terminal ID",
+      "support": "Send this ID to your vendor to get an offline token."
+    }
   }
 }

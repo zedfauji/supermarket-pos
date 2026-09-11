@@ -10,6 +10,9 @@ use tauri::Manager;
 pub struct AppConfig {
     pub supabase_url: String,
     pub supabase_anon_key: String,
+    /// Licensing server (separate Supabase project). Empty = fall back to VITE_ build-time env.
+    pub license_server_url: String,
+    pub license_server_anon_key: String,
 }
 
 fn read_env_config() -> AppConfig {
@@ -31,6 +34,12 @@ fn read_env_config() -> AppConfig {
                     "VITE_SUPABASE_URL" => config.supabase_url = value.trim().to_string(),
                     "VITE_SUPABASE_ANON_KEY" => {
                         config.supabase_anon_key = value.trim().to_string()
+                    }
+                    "VITE_LICENSE_SERVER_URL" => {
+                        config.license_server_url = value.trim().to_string()
+                    }
+                    "VITE_LICENSE_SERVER_ANON_KEY" => {
+                        config.license_server_anon_key = value.trim().to_string()
                     }
                     _ => {}
                 }
