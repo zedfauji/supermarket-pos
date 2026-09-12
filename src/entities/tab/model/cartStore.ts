@@ -106,6 +106,7 @@ const HELD_CART_STORE_NAME = 'direct-sale-held-cart';
 const HELD_CART_STORE_VERSION = 1;
 
 const PersistedHeldCartSchema = z.array(CartItemSchema).nullable();
+const PersistedItemsSchema = z.array(CartItemSchema);
 
 /**
  * Validates a raw persisted `heldCart` value before it re-enters the store.
@@ -123,9 +124,28 @@ function normalizePersistedHeldCart(value: unknown): CartItem[] | null {
 }
 
 /**
- * Only `heldCart` is persisted (see `partialize` below) — the active `items`
- * cart, actions, and derived selectors are session-only and never survive a
- * restart.
+ * Validates a raw persisted `items` value before it re-enters the store.
+ * `undefined` (pre-upgrade localStorage with no `items` key yet) is treated
+ * as "nothing to restore" and resolves silently to `[]`; a present but
+ * malformed/tampered payload also falls back to `[]` rather than surfacing a
+ * partial cart, same trust rule as `heldCart` above (T-02-09-01).
+ */
+function normalizePersistedItems(value: unknown): CartItem[] {
+  if (value === undefined) {
+    return [];
+  }
+  const parsed = PersistedItemsSchema.safeParse(value);
+  if (!parsed.success) {
+    logger.warn('cart.items.persisted_payload_invalid', { issueCount: parsed.error.issues.length });
+    return [];
+  }
+  return parsed.data;
+}
+
+/**
+ * `heldCart` and the active `items` cart both persist (see `partialize`
+ * below) so a restart never drops an in-progress sale — actions and derived
+ * selectors remain session-only.
  */
 export const useCartStore = create<CartStore>()(
   persist(
@@ -365,29 +385,33 @@ export const useCartStore = create<CartStore>()(
     {
       name: HELD_CART_STORE_NAME,
       version: HELD_CART_STORE_VERSION,
-      // Never serialize items, payment-attempt state, or any action —
-      // only the one held-cart slot is restart-recoverable state.
-      partialize: state => ({ heldCart: state.heldCart }),
+      // Never serialize payment-attempt state or any action — only the
+      // active cart and the one held-cart slot are restart-recoverable.
+      partialize: state => ({ heldCart: state.heldCart, items: state.items }),
       // Called only when the persisted version differs from
       // HELD_CART_STORE_VERSION. An obsolete version has no defined
-      // migration path yet, so it resolves to no held cart rather than
-      // risking a shape mismatch downstream.
+      // migration path yet, so it resolves to no held cart/items rather
+      // than risking a shape mismatch downstream.
       migrate: (_persistedState, version) => {
         if (version !== HELD_CART_STORE_VERSION) {
           logger.warn('cart.held.persisted_version_obsolete', { version });
-          return { heldCart: null };
+          return { heldCart: null, items: [] };
         }
-        return _persistedState as { heldCart: unknown };
+        return _persistedState as { heldCart: unknown; items: unknown };
       },
       // Runs on every hydration (including right after `migrate`) — the
       // single point that validates the payload against CartItemSchema
       // before it re-enters live state (T-02-09-01).
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        heldCart: normalizePersistedHeldCart(
-          (persistedState as { heldCart?: unknown } | undefined)?.heldCart
-        ),
-      }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as
+          | { heldCart?: unknown; items?: unknown }
+          | undefined;
+        return {
+          ...currentState,
+          heldCart: normalizePersistedHeldCart(persisted?.heldCart),
+          items: normalizePersistedItems(persisted?.items),
+        };
+      },
     }
   )
 );

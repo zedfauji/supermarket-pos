@@ -321,22 +321,66 @@ describe('cartStore', () => {
   });
 
   describe('held cart restart persistence', () => {
-    function readPersistedEnvelope(): { state: { heldCart: unknown }; version: number } | null {
+    function readPersistedEnvelope(): {
+      state: { heldCart: unknown; items: unknown };
+      version: number;
+    } | null {
       const raw = window.localStorage.getItem(HELD_CART_STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as { state: { heldCart: unknown }; version: number }) : null;
+      return raw
+        ? (JSON.parse(raw) as { state: { heldCart: unknown; items: unknown }; version: number })
+        : null;
     }
 
     beforeEach(() => {
       window.localStorage.clear();
     });
 
-    it('persists only heldCart, never the active items array', () => {
+    it('persists both heldCart and the active items array', () => {
       useCartStore.getState().addItem(mockProduct, []);
 
       const envelope = readPersistedEnvelope();
       expect(envelope).not.toBeNull();
-      expect(envelope!.state).toEqual({ heldCart: null });
-      expect(envelope!.state).not.toHaveProperty('items');
+      expect(envelope!.state.heldCart).toBeNull();
+      expect(envelope!.state.items).toHaveLength(1);
+    });
+
+    it('rehydrates the active cart across a fresh store hydration (app restart)', async () => {
+      useCartStore.getState().addItem(mockProduct, []);
+      const activeSnapshot = useCartStore.getState().items;
+
+      const persistedEnvelope = window.localStorage.getItem(HELD_CART_STORAGE_KEY);
+      useCartStore.setState({ items: [], heldCart: null });
+      if (persistedEnvelope) {
+        window.localStorage.setItem(HELD_CART_STORAGE_KEY, persistedEnvelope);
+      }
+      await useCartStore.persist.rehydrate();
+
+      expect(useCartStore.getState().items).toEqual(activeSnapshot);
+    });
+
+    it('hydrates to an empty cart when the persisted items payload is missing (pre-upgrade data)', async () => {
+      window.localStorage.setItem(
+        HELD_CART_STORAGE_KEY,
+        JSON.stringify({ state: { heldCart: null }, version: 1 })
+      );
+
+      await useCartStore.persist.rehydrate();
+
+      expect(useCartStore.getState().items).toEqual([]);
+    });
+
+    it('hydrates to an empty cart when the persisted items payload is malformed', async () => {
+      window.localStorage.setItem(
+        HELD_CART_STORAGE_KEY,
+        JSON.stringify({
+          state: { heldCart: null, items: [{ not: 'a valid cart item' }] },
+          version: 1,
+        })
+      );
+
+      await useCartStore.persist.rehydrate();
+
+      expect(useCartStore.getState().items).toEqual([]);
     });
 
     it('rehydrates a held weighted-cart snapshot exactly across a fresh store hydration', async () => {
@@ -407,7 +451,7 @@ describe('cartStore', () => {
 
       resumeHeld();
 
-      expect(readPersistedEnvelope()!.state).toEqual({ heldCart: null });
+      expect(readPersistedEnvelope()!.state.heldCart).toBeNull();
     });
 
     it('writes no held slot after discardHeld()', () => {
@@ -417,7 +461,7 @@ describe('cartStore', () => {
 
       discardHeld();
 
-      expect(readPersistedEnvelope()!.state).toEqual({ heldCart: null });
+      expect(readPersistedEnvelope()!.state.heldCart).toBeNull();
     });
 
     it('holdCart() is a no-op while heldCart is already occupied (D-01 one-slot guard)', () => {
