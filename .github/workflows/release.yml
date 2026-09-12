@@ -107,13 +107,19 @@ jobs:
       - name: Materialize .env.production from Environment secrets
         shell: pwsh
         run: |
-          # Values are sourced from this customer's own GitHub Environment (this
-          # job's `environment:` binding above scopes secret resolution to exactly
-          # this customer's Environment). Never echo the values themselves.
+          # Per-customer app DB values come from this customer's own GitHub
+          # Environment (this job's `environment:` binding above scopes secret
+          # resolution to exactly this customer's Environment). The license
+          # server is a single shared project across all customers, so its
+          # values come from repo-level secrets instead (same name works in
+          # both scopes — repo secrets resolve here whenever the Environment
+          # doesn't define an override). Never echo the values themselves.
           $supabaseUrl = "https://${{ matrix.customer.supabase_project_ref }}.supabase.co"
           @"
           VITE_SUPABASE_URL=$supabaseUrl
           VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_LICENSE_SERVER_URL=${{ secrets.VITE_LICENSE_SERVER_URL }}
+          VITE_LICENSE_SERVER_ANON_KEY=${{ secrets.VITE_LICENSE_SERVER_ANON_KEY }}
           "@ | Set-Content -Path .env.production -Encoding utf8 -NoNewline
           Write-Host "OK: .env.production materialized for ${{ matrix.customer.name }}'s build window." -ForegroundColor Green
 
