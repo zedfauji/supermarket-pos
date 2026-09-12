@@ -266,14 +266,21 @@ export function PaymentForm({
     () => SPLIT_ELIGIBLE_METHODS.filter(m => enabledMethods[m]),
     [enabledMethods]
   );
+  // Primitive deps for the reset effects below: `availableMethods` /
+  // `availableSplitMethods` get a fresh array identity whenever the settings
+  // query object or `processors` re-materialise (an offline/online observer
+  // notification is enough), and keying a full form reset on that identity
+  // wiped the tendered amount mid-checkout. Only the default method matters.
+  const defaultMethod: PaymentMethod = availableMethods[0] ?? 'cash';
+  const defaultSplitMethod: SplitPayMethod = availableSplitMethods[0] ?? 'cash';
 
-  /* Reset state when the tab being viewed changes */
+  /* Reset state when the tab being viewed (or the default method) changes */
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     setStep('pay');
     setErrorMessage(null);
     setReceiptData(null);
-    setMethod(availableMethods[0] ?? 'cash');
+    setMethod(defaultMethod);
     setTenderedAmount(0);
     setCardReference('');
     setCardChargeOverride(null);
@@ -290,21 +297,19 @@ export function PaymentForm({
     setIsSplitMode(false);
     idempotencyKeyRef.current = null;
     /* eslint-enable react-hooks/set-state-in-effect */
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- availableMethods[0] is the only part of availableMethods this effect reads
-  }, [tab.id, availableMethods]);
+  }, [tab.id, defaultMethod]);
 
   /* Split-mode rows: seed 2 default rows on toggle-ON, clear on toggle-OFF */
   useEffect(() => {
     if (isSplitMode) {
-      const defaultMethod = availableSplitMethods[0] ?? 'cash';
       dispatchSplitRows({
         type: 'RESET_ROWS',
-        rows: [makeDefaultSplitRow(defaultMethod), makeDefaultSplitRow(defaultMethod)],
+        rows: [makeDefaultSplitRow(defaultSplitMethod), makeDefaultSplitRow(defaultSplitMethod)],
       });
     } else {
       dispatchSplitRows({ type: 'RESET_ROWS', rows: [] });
     }
-  }, [isSplitMode, availableSplitMethods]);
+  }, [isSplitMode, defaultSplitMethod]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */

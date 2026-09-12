@@ -17,9 +17,10 @@
 --   4. get_caja_report                — add uberEatsSales alongside rappiSales
 --
 -- Everything else in all four functions is copied verbatim from their
--- current live bodies (process_payment_atomic/process_split_payment_atomic/
--- process_direct_sale_atomic from 20260903093000_manager_override_null_
--- coalesce_guard.sql; get_caja_report from 20260831000004_caja_report_
+-- current live bodies (process_payment_atomic/process_split_payment_atomic
+-- from 20260903093000_manager_override_null_coalesce_guard.sql;
+-- process_direct_sale_atomic from 20260904000001_promotion_targets_recurrence.sql;
+-- get_caja_report from 20260831000004_caja_report_
 -- bank_transfer_breakout.sql) — this migration is scoped to the platform-
 -- tender allow-lists and the Rappi order-id coupling removal, nothing else.
 --
@@ -616,7 +617,8 @@ $function$;
 
 -- -----------------------------------------------------------------------------
 -- 3. process_direct_sale_atomic — method/legs allow-list only; body otherwise
---    verbatim from 20260903093000_manager_override_null_coalesce_guard.sql.
+--    verbatim from 20260904000001_promotion_targets_recurrence.sql (Phase 28),
+--    the latest live definition.
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.process_direct_sale_atomic(p_staff_id uuid, p_shift_id uuid, p_caja_session_id uuid, p_items jsonb, p_idempotency_key text, p_method text DEFAULT NULL::text, p_amount numeric DEFAULT NULL::numeric, p_tendered_amount numeric DEFAULT NULL::numeric, p_reference_number text DEFAULT NULL::text, p_legs jsonb DEFAULT NULL::jsonb, p_expected_total numeric DEFAULT NULL::numeric, p_discount_scope text DEFAULT NULL::text, p_discount_type text DEFAULT NULL::text, p_discount_value numeric DEFAULT NULL::numeric, p_discount_amount numeric DEFAULT NULL::numeric, p_customer_name text DEFAULT 'Walk-in'::text, p_customer_phone text DEFAULT NULL::text, p_manager_override boolean DEFAULT false, p_manager_pin text DEFAULT NULL::text)
  RETURNS jsonb
@@ -646,6 +648,8 @@ DECLARE
   v_adhoc_discount numeric;
   -- Phase 27 Plan 08 (G-27-13): resolved from p_manager_pin, independent of p_staff_id.
   v_manager_staff_id uuid;
+  -- Phase 28 (D-06): store-local timezone for the recurrence AND-filter below.
+  v_store_tz text;
 BEGIN
   -- Phase 27 gap-closure code review (CR-01/CR-02): coalesce a stray SQL NULL
   -- to false so a caller that omits the parameter (or passes NULL explicitly,
@@ -740,6 +744,13 @@ BEGIN
   v_near_expiry_threshold := COALESCE(v_near_expiry_threshold, 14);
   v_near_expiry_discount_pct := COALESCE(v_near_expiry_discount_pct, 15);
 
+  -- Phase 28 (D-06): store-local timezone for the recurrence AND-filter
+  -- below, fetched once per checkout, same double-COALESCE fallback pattern
+  -- as v_near_expiry_threshold above.
+  SELECT COALESCE((value->>'timezone')::text, 'America/Mexico_City') INTO v_store_tz
+  FROM settings WHERE key = 'general';
+  v_store_tz := COALESCE(v_store_tz, 'America/Mexico_City');
+
   FOR v_elem IN SELECT * FROM jsonb_array_elements(p_items) LOOP
     -- Reset every per-item variable at the top of each iteration — plpgsql's
     -- SELECT INTO does NOT null out target variables when zero rows match,
@@ -772,13 +783,15 @@ BEGIN
       RETURN jsonb_build_object('ok', false, 'code', 'PRICE_MISMATCH', 'message', 'Item price does not match catalog');
     END IF;
 
-    -- Best-price-wins candidate pool (PROMO-04/D-05): every active
-    -- product-scoped OR category-scoped promotion matching this line item is
-    -- an independent candidate, never merged/deduped (must_have truth). The
-    -- single largest discount amount wins; on an exact tie the most
-    -- recently created promotion wins (D-06). Fixed-type is capped at the
-    -- line's expected price via LEAST; percent-type is inherently capped
-    -- since discount_value <= 100 (schema CHECK).
+    -- Best-price-wins candidate pool (PROMO-04/D-05, extended Phase 28
+    -- D-01/D-02/D-04/D-05/D-06): every active promotion matching this line
+    -- item via the junction table (zero target rows = store-wide) AND
+    -- passing the recurrence AND-filter is an independent candidate, never
+    -- merged/deduped (must_have truth). The single largest discount amount
+    -- wins; on an exact tie the most recently created promotion wins (D-06).
+    -- Fixed-type is capped at the line's expected price via LEAST;
+    -- percent-type is inherently capped since discount_value <= 100 (schema
+    -- CHECK).
     SELECT p.id, p.discount_value, p.created_at,
       (CASE WHEN p.discount_type = 'percent'
             THEN ROUND(v_expected_price * p.discount_value / 100.0, 2)
@@ -788,7 +801,16 @@ BEGIN
     FROM promotions p
     WHERE p.active
       AND now() BETWEEN p.starts_at AND p.ends_at
-      AND (p.product_id = (v_elem->>'product_id')::uuid OR p.category_id = v_category_id)
+      AND (
+        NOT EXISTS (SELECT 1 FROM promotion_targets pt WHERE pt.promotion_id = p.id)
+        OR EXISTS (
+          SELECT 1 FROM promotion_targets pt
+          WHERE pt.promotion_id = p.id
+            AND (pt.product_id = (v_elem->>'product_id')::uuid OR pt.category_id = v_category_id)
+        )
+      )
+      AND (p.days_of_week IS NULL OR EXTRACT(DOW FROM now() AT TIME ZONE v_store_tz)::int = ANY(p.days_of_week))
+      AND (p.start_time IS NULL OR (now() AT TIME ZONE v_store_tz)::time BETWEEN p.start_time AND p.end_time)
     ORDER BY amount DESC, p.created_at DESC
     LIMIT 1;
 
