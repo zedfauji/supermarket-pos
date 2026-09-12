@@ -422,7 +422,17 @@
       "productsLabel": "Products supplied",
       "noProductsDefined": "No products defined.",
       "save": "Save Supplier",
-      "create": "Save Supplier"
+      "create": "Save Supplier",
+      "sectionDetails": "Supplier details",
+      "sectionDetailsHint": "Trading name and how to reach them for orders.",
+      "sectionProducts": "Products supplied",
+      "sectionProductsHint": "Used to suggest low-stock reorders on purchase orders.",
+      "searchProducts": "Search by name, barcode or SKU…",
+      "selectedCount": "{{count}} selected",
+      "noMatches": "No products match your search.",
+      "nameRequired": "Name is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "invalidField": "Check this field."
     }
   },
   "receiveShipment": {
@@ -438,7 +448,16 @@
     "error": "Couldn't confirm this shipment. Nothing was saved — check the line items below and try again.",
     "addProduct": "Add Product",
     "salePrice": "Sale price",
-    "duplicateBarcode": "This barcode is already in your catalog. Search for it instead of creating a new product."
+    "duplicateBarcode": "This barcode is already in your catalog. Search for it instead of creating a new product.",
+    "description": "Record the goods received. Confirming updates stock, cost and expiry for every product.",
+    "productPlaceholder": "Name, barcode or SKU",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "removeLine": "Remove line",
+    "noMatch": "No match. Type the exact name or scan the barcode.",
+    "quickAddTitle": "New product",
+    "quickAddHint": "Not in the catalog yet. Create it here and it's added to the line.",
+    "cancelQuickAdd": "Cancel"
   },
   "purchaseOrderForm": {
     "save": "Save Draft",
@@ -447,7 +466,9 @@
     "emptyBody": "Add a product manually, or suggest items from the low-stock list for this supplier.",
     "noReorderNeeded": "This supplier has no products currently at or below their reorder point.",
     "saveError": "Couldn't save this purchase order. Check the line items and try again.",
-    "created": "Purchase order saved"
+    "created": "Purchase order saved",
+    "chooseSupplierHint": "Choose a supplier to suggest a reorder.",
+    "suggestOnlyWhenEmpty": "Suggestions are only available while the line list is empty."
   },
   "activateLicense": {
     "keyLabel": "License key",

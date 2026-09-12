@@ -478,9 +478,9 @@
     "logoErrorUnsupportedType": "Unsupported format: {{type}}. Use JPEG, PNG or WebP.",
     "logoErrorTooLarge": "Image is {{size}} MB; the limit is 2 MB. Choose a smaller one.",
     "logoErrorDecode": "Couldn't read the image ({{type}}). Convert it to JPEG or PNG and try again.",
-    "logoErrorUpload": "Logo upload failed: {{message}}. Try again.",
+    "logoErrorUpload": "Logo upload failed. Try again.",
     "logoErrorLink": "The logo uploaded but couldn't be saved to settings. Try again.",
-    "logoErrorRemove": "Couldn't remove the logo: {{message}}. Try again.",
+    "logoErrorRemove": "Couldn't remove the logo. Try again.",
     "logoErrorOffline": "Offline — logos upload only when online. Reconnect and try again.",
     "logoErrorLoad": "Couldn't load the logo. Replace it or try again later.",
     "logoErrorGeneric": "Couldn't process the logo. Try again.",
@@ -549,7 +549,18 @@
     "edit": "Edit",
     "delete": "Delete",
     "deleteSupplierTitle": "Delete supplier",
-    "deleteSupplierBody": "This supplier will be removed. Products already linked to it keep their receiving history. Continue?"
+    "deleteSupplierBody": "This supplier will be removed. Products already linked to it keep their receiving history. Continue?",
+    "editSupplier": "Edit Supplier",
+    "newDescription": "Add contact details and the products they supply.",
+    "editDescription": "Update contact details or linked products.",
+    "search": "Search suppliers",
+    "columnName": "Supplier",
+    "columnContact": "Contact",
+    "columnEmail": "Email",
+    "createdToast": "Supplier “{{name}}” created",
+    "updatedToast": "Supplier updated",
+    "deletedToast": "Supplier deleted",
+    "deleteBlocked": "Can't delete: it has linked purchase orders or shipments."
   },
   "purchaseOrderListPanel": {
     "newPurchaseOrder": "New Purchase Order",
@@ -563,12 +574,24 @@
     "columnStatus": "Status",
     "columnItems": "Items",
     "columnTotal": "Total",
-    "columnCreated": "Created"
+    "columnCreated": "Created",
+    "newDescription": "Pick the supplier and add line items. It stays a draft until the shipment is received."
   },
   "purchaseOrderDetailPanel": {
     "edit": "Edit",
     "receive": "Receive Shipment",
-    "alreadyReceivedError": "This purchase order has already been received."
+    "alreadyReceivedError": "This purchase order has already been received.",
+    "title": "Purchase Order",
+    "createdOn": "Created {{date}}",
+    "receivedOn": "Received {{date}}",
+    "editDescription": "Change the supplier or line items of this draft.",
+    "columnProduct": "Product",
+    "columnQuantity": "Quantity",
+    "columnCost": "Unit cost",
+    "columnSubtotal": "Subtotal",
+    "total": "Total",
+    "itemCount_one": "1 line item",
+    "itemCount_other": "{{count}} line items"
   },
   "promotionsListPanel": {
     "columnName": "Name",

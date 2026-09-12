@@ -24,6 +24,8 @@ export type MoneyInputProps = {
   placeholder?: string;
   /** Input label */
   label?: string;
+  /** Accessible name when no visible label is rendered (e.g. table-style line editors) */
+  ariaLabel?: string;
   /** Disable input */
   disabled?: boolean;
   /** Additional CSS classes */
@@ -67,6 +69,7 @@ export function MoneyInput({
   onBlurCommit,
   placeholder = '0.00',
   label,
+  ariaLabel,
   disabled = false,
   className,
 }: MoneyInputProps) {
@@ -133,7 +136,7 @@ export function MoneyInput({
           placeholder={placeholder}
           disabled={disabled}
           className="pl-8 text-numeric font-medium"
-          {...(!label ? { 'aria-label': t('moneyInput.amountAria') } : {})}
+          {...(!label ? { 'aria-label': ariaLabel ?? t('moneyInput.amountAria') } : {})}
         />
       </div>
     </div>

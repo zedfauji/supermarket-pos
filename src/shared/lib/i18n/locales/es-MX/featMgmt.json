@@ -422,7 +422,17 @@
       "productsLabel": "Productos suministrados",
       "noProductsDefined": "No hay productos definidos.",
       "save": "Guardar proveedor",
-      "create": "Guardar proveedor"
+      "create": "Guardar proveedor",
+      "sectionDetails": "Datos del proveedor",
+      "sectionDetailsHint": "Nombre comercial y cómo contactarlo para pedidos.",
+      "sectionProducts": "Productos que suministra",
+      "sectionProductsHint": "Se usan para sugerir reórdenes por bajo stock en órdenes de compra.",
+      "searchProducts": "Buscar por nombre, código o SKU…",
+      "selectedCount": "{{count}} seleccionados",
+      "noMatches": "Ningún producto coincide con la búsqueda.",
+      "nameRequired": "El nombre es obligatorio.",
+      "emailInvalid": "Escribe un correo electrónico válido.",
+      "invalidField": "Revisa este campo."
     }
   },
   "receiveShipment": {
@@ -438,7 +448,16 @@
     "error": "No se pudo confirmar este envío. No se guardó nada; revisa las partidas e inténtalo de nuevo.",
     "addProduct": "Agregar producto",
     "salePrice": "Precio de venta",
-    "duplicateBarcode": "Este código de barras ya está en tu catálogo. Búscalo en lugar de crear un producto nuevo."
+    "duplicateBarcode": "Este código de barras ya está en tu catálogo. Búscalo en lugar de crear un producto nuevo.",
+    "description": "Registra la mercancía recibida. Al confirmar se actualizan stock, costo y caducidad de cada producto.",
+    "productPlaceholder": "Nombre, código de barras o SKU",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "removeLine": "Quitar partida",
+    "noMatch": "Sin coincidencia. Escribe el nombre exacto o escanea el código.",
+    "quickAddTitle": "Producto nuevo",
+    "quickAddHint": "No está en el catálogo. Créalo aquí y se agrega a la partida.",
+    "cancelQuickAdd": "Cancelar"
   },
   "purchaseOrderForm": {
     "save": "Guardar borrador",
@@ -447,7 +466,9 @@
     "emptyBody": "Agrega un producto manualmente o sugiere artículos de la lista de bajo stock para este proveedor.",
     "noReorderNeeded": "Este proveedor no tiene productos actualmente en o por debajo de su punto de reorden.",
     "saveError": "No se pudo guardar esta orden de compra. Verifica las partidas e intenta de nuevo.",
-    "created": "Orden de compra guardada"
+    "created": "Orden de compra guardada",
+    "chooseSupplierHint": "Elige un proveedor para poder sugerir reorden.",
+    "suggestOnlyWhenEmpty": "La sugerencia solo está disponible con la lista de partidas vacía."
   },
   "activateLicense": {
     "keyLabel": "Clave de licencia",

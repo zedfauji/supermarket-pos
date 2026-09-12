@@ -478,9 +478,9 @@
     "logoErrorUnsupportedType": "Formato no admitido: {{type}}. Usa JPEG, PNG o WebP.",
     "logoErrorTooLarge": "La imagen pesa {{size}} MB; el máximo es 2 MB. Elige una más pequeña.",
     "logoErrorDecode": "No se pudo leer la imagen ({{type}}). Conviértela a JPEG o PNG e inténtalo de nuevo.",
-    "logoErrorUpload": "No se pudo subir el logotipo: {{message}}. Inténtalo de nuevo.",
+    "logoErrorUpload": "No se pudo subir el logotipo. Inténtalo de nuevo.",
     "logoErrorLink": "El logotipo se subió pero no se pudo guardar en la configuración. Inténtalo de nuevo.",
-    "logoErrorRemove": "No se pudo quitar el logotipo: {{message}}. Inténtalo de nuevo.",
+    "logoErrorRemove": "No se pudo quitar el logotipo. Inténtalo de nuevo.",
     "logoErrorOffline": "Sin conexión — los logotipos solo se suben en línea. Reconecta e inténtalo de nuevo.",
     "logoErrorLoad": "No se pudo cargar el logotipo. Reemplázalo o inténtalo más tarde.",
     "logoErrorGeneric": "No se pudo procesar el logotipo. Inténtalo de nuevo.",
@@ -549,7 +549,18 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "deleteSupplierTitle": "Eliminar proveedor",
-    "deleteSupplierBody": "Este proveedor se eliminará. Los productos vinculados conservan su historial de recepción. ¿Continuar?"
+    "deleteSupplierBody": "Este proveedor se eliminará. Los productos vinculados conservan su historial de recepción. ¿Continuar?",
+    "editSupplier": "Editar proveedor",
+    "newDescription": "Agrega los datos de contacto y los productos que te surte.",
+    "editDescription": "Actualiza los datos de contacto o los productos vinculados.",
+    "search": "Buscar proveedores",
+    "columnName": "Proveedor",
+    "columnContact": "Contacto",
+    "columnEmail": "Correo",
+    "createdToast": "Proveedor «{{name}}» creado",
+    "updatedToast": "Proveedor actualizado",
+    "deletedToast": "Proveedor eliminado",
+    "deleteBlocked": "No se puede eliminar: tiene órdenes de compra o recepciones vinculadas."
   },
   "purchaseOrderListPanel": {
     "newPurchaseOrder": "Nueva orden de compra",
@@ -563,12 +574,24 @@
     "columnStatus": "Estado",
     "columnItems": "Artículos",
     "columnTotal": "Total",
-    "columnCreated": "Creado"
+    "columnCreated": "Creado",
+    "newDescription": "Elige el proveedor y agrega las partidas. Se guarda como borrador hasta recibir la mercancía."
   },
   "purchaseOrderDetailPanel": {
     "edit": "Editar",
     "receive": "Recibir mercancía",
-    "alreadyReceivedError": "Esta orden de compra ya fue recibida."
+    "alreadyReceivedError": "Esta orden de compra ya fue recibida.",
+    "title": "Orden de compra",
+    "createdOn": "Creada el {{date}}",
+    "receivedOn": "Recibida el {{date}}",
+    "editDescription": "Modifica el proveedor o las partidas de este borrador.",
+    "columnProduct": "Producto",
+    "columnQuantity": "Cantidad",
+    "columnCost": "Costo unit.",
+    "columnSubtotal": "Subtotal",
+    "total": "Total",
+    "itemCount_one": "1 partida",
+    "itemCount_other": "{{count}} partidas"
   },
   "promotionsListPanel": {
     "columnName": "Nombre",

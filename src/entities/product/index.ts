@@ -1,4 +1,16 @@
-export { useProducts, useProductsForManagement, useCategories, useModifiers, useMutationCreateProduct, useMutationUpdateProduct, useMutationDeactivateProduct, useMutationCreateModifier, useMutationUpdateModifier, useMutationDeleteModifier, invalidateCatalogQueries } from './model';
+export {
+  useProducts,
+  useProductsForManagement,
+  useCategories,
+  useModifiers,
+  useMutationCreateProduct,
+  useMutationUpdateProduct,
+  useMutationDeactivateProduct,
+  useMutationCreateModifier,
+  useMutationUpdateModifier,
+  useMutationDeleteModifier,
+  invalidateCatalogQueries,
+} from './model';
 
 export type { CreateProductInput, UpdateProductInput } from './model';
 
@@ -13,3 +25,6 @@ export {
   useProductImageUrl,
   useProductImageUrls,
 } from './model';
+export { ProductLookupInput } from './ui/ProductLookupInput';
+export { findProductByLookup } from './model/product-lookup';
+export type { ProductLookupInputProps } from './ui/ProductLookupInput';

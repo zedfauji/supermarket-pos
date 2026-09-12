@@ -1,26 +1,31 @@
-/* eslint-disable import/order, @typescript-eslint/no-confusing-void-expression */
 import type { ColumnDef } from '@tanstack/react-table';
-import { FileText, Trash2 } from 'lucide-react';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PurchaseOrderForm } from '@features/create-purchase-order';
 import {
   useMutationCreatePurchaseOrder,
   useMutationDeletePurchaseOrder,
   usePurchaseOrders,
   type PurchaseOrderListItem,
 } from '@entities/purchase-order';
-import { PurchaseOrderForm } from '@features/create-purchase-order';
 import { ConfirmDialog } from '@shared/ui/ConfirmDialog';
 import { DataTable } from '@shared/ui/DataTable';
 import { EmptyState } from '@shared/ui/EmptyState';
 import { MoneyDisplay } from '@shared/ui/MoneyDisplay';
 import { POSButton } from '@shared/ui/POSButton';
 import { StatusBadge } from '@shared/ui/StatusBadge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/ui/dialog';
 import { PurchaseOrderDetailPanel } from './PurchaseOrderDetailPanel';
 
 export function PurchaseOrderListPanel() {
-  const { t } = useTranslation('wAdmin');
+  const { t, i18n } = useTranslation('wAdmin');
   const { data: purchaseOrders, isLoading, resultError } = usePurchaseOrders();
   const create = useMutationCreatePurchaseOrder();
   const remove = useMutationDeletePurchaseOrder();
@@ -46,6 +51,7 @@ export function PurchaseOrderListPanel() {
       id: 'itemCount',
       accessorFn: po => po.itemCount,
       header: t('purchaseOrderListPanel.columnItems'),
+      cell: info => <span className="text-numeric">{info.getValue<number>()}</span>,
     },
     {
       id: 'totalCost',
@@ -54,26 +60,31 @@ export function PurchaseOrderListPanel() {
     },
     {
       id: 'createdAt',
-      accessorFn: po => new Date(po.createdAt).toLocaleDateString(),
+      accessorFn: po =>
+        new Date(po.createdAt).toLocaleDateString(i18n.language, { dateStyle: 'medium' }),
       header: t('purchaseOrderListPanel.columnCreated'),
+      cell: info => <span className="text-muted-foreground">{info.getValue<string>()}</span>,
     },
     {
       id: 'actions',
       header: '',
       cell: ({ row }) =>
         row.original.status === 'draft' ? (
-          <POSButton
-            type="button"
-            variant="destructive"
-            size="icon"
-            aria-label={t('purchaseOrderListPanel.delete')}
-            onClick={e => {
-              e.stopPropagation();
-              setDeleteId(row.original.id);
-            }}
-          >
-            <Trash2 className="size-4" />
-          </POSButton>
+          <div className="flex justify-end">
+            <POSButton
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-destructive hover:text-destructive"
+              aria-label={t('purchaseOrderListPanel.delete')}
+              onClick={e => {
+                e.stopPropagation();
+                setDeleteId(row.original.id);
+              }}
+            >
+              <Trash2 className="size-4" />
+            </POSButton>
+          </div>
         ) : null,
     },
   ];
@@ -85,16 +96,28 @@ export function PurchaseOrderListPanel() {
           {resultError.message}
         </p>
       ) : null}
-      <POSButton type="button" onClick={() => setCreateOpen(true)}>
-        {t('purchaseOrderListPanel.newPurchaseOrder')}
-      </POSButton>
       <DataTable
         columns={columns}
         data={purchaseOrders ?? []}
         isLoading={isLoading}
         searchable
         searchPlaceholder={t('purchaseOrderListPanel.search')}
-        onRowClick={po => setSelectedId(po.id)}
+        onRowClick={po => {
+          setSelectedId(po.id);
+        }}
+        toolbar={
+          <POSButton
+            type="button"
+            variant="brand"
+            className="ml-auto"
+            onClick={() => {
+              setCreateOpen(true);
+            }}
+          >
+            <Plus className="size-4" />
+            {t('purchaseOrderListPanel.newPurchaseOrder')}
+          </POSButton>
+        }
         emptyState={
           <EmptyState
             icon={FileText}
@@ -102,44 +125,61 @@ export function PurchaseOrderListPanel() {
             description={t('purchaseOrderListPanel.emptyBody')}
             action={{
               label: t('purchaseOrderListPanel.newPurchaseOrder'),
-              onClick: () => setCreateOpen(true),
+              onClick: () => {
+                setCreateOpen(true);
+              },
             }}
           />
         }
       />
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="font-medium">
-              {t('purchaseOrderListPanel.newPurchaseOrder')}
-            </DialogTitle>
+            <DialogTitle>{t('purchaseOrderListPanel.newPurchaseOrder')}</DialogTitle>
+            <DialogDescription>{t('purchaseOrderListPanel.newDescription')}</DialogDescription>
           </DialogHeader>
-          <PurchaseOrderForm
-            initialPurchaseOrder={null}
-            submitting={create.isPending}
-            onCancel={() => setCreateOpen(false)}
-            onSubmitCreate={value => create.mutateAsync(value)}
-            onSubmitUpdate={() => undefined}
-          />
+          {createOpen && (
+            <PurchaseOrderForm
+              initialPurchaseOrder={null}
+              submitting={create.isPending}
+              onCancel={() => {
+                setCreateOpen(false);
+              }}
+              onSubmitCreate={value => create.mutateAsync(value)}
+              onSubmitUpdate={() => undefined}
+            />
+          )}
         </DialogContent>
       </Dialog>
+
       {selectedId && (
-        <Dialog open onOpenChange={() => setSelectedId(null)}>
-          <DialogContent className="max-w-4xl">
+        <Dialog
+          open
+          onOpenChange={() => {
+            setSelectedId(null);
+          }}
+        >
+          <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
             <PurchaseOrderDetailPanel
               purchaseOrderId={selectedId}
-              onClose={() => setSelectedId(null)}
+              onClose={() => {
+                setSelectedId(null);
+              }}
             />
           </DialogContent>
         </Dialog>
       )}
+
       <ConfirmDialog
         open={!!deleteId}
         title={t('purchaseOrderListPanel.deletePurchaseOrderTitle')}
         description={t('purchaseOrderListPanel.deletePurchaseOrderBody')}
         confirmLabel={t('purchaseOrderListPanel.delete')}
         variant="destructive"
-        onCancel={() => setDeleteId(null)}
+        onCancel={() => {
+          setDeleteId(null);
+        }}
         onConfirm={() => {
           if (deleteId) void remove.mutateAsync(deleteId);
           setDeleteId(null);
