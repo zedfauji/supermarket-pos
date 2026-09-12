@@ -120,11 +120,13 @@ export function GeneralSettingsTab({ currentRole }: Props) {
       case 'PHOTO_DECODE_FAILED':
         return t('generalSettingsTab.logoErrorDecode', { type: error.detail ?? '' });
       case 'PHOTO_UPLOAD_FAILED':
-        return t('generalSettingsTab.logoErrorUpload', { message: error.message });
+        // WR-03: error.message is developer/log-facing text (English, not
+        // run through i18n) -- never surface it verbatim to the admin.
+        return t('generalSettingsTab.logoErrorUpload');
       case 'PHOTO_LINK_FAILED':
         return t('generalSettingsTab.logoErrorLink');
       case 'PHOTO_REMOVE_FAILED':
-        return t('generalSettingsTab.logoErrorRemove', { message: error.message });
+        return t('generalSettingsTab.logoErrorRemove');
       case 'NETWORK_OFFLINE':
         return t('generalSettingsTab.logoErrorOffline');
       default:
