@@ -6,6 +6,7 @@ import { runHeartbeat } from '@shared/lib/license/actions';
 import { getEffectiveNow, useLicenseEvaluation, useLicenseStore } from '@shared/lib/license/store';
 import { getTerminalId } from '@shared/lib/license/terminal-id';
 import { updatesExpired } from '@shared/lib/license/token';
+import { useUpdaterStore } from '@shared/lib/useAppUpdater';
 import { POSButton } from '@shared/ui';
 
 const fmt = (iso: string | null | undefined): string | null =>
@@ -18,6 +19,8 @@ export function LicenseSettingsTab() {
   const payload = useLicenseStore(s => s.payload);
   const lastHeartbeatAt = useLicenseStore(s => s.lastHeartbeatAt);
   const [refreshing, setRefreshing] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const checkForUpdates = useUpdaterStore(s => s.checkForUpdates);
   const [showForm, setShowForm] = useState(false);
 
   const refresh = async () => {
@@ -26,6 +29,16 @@ export function LicenseSettingsTab() {
     setRefreshing(false);
     if (outcome === 'refreshed') toast.success(t('license.refreshed'));
     else toast.error(t('license.refreshFailed'));
+  };
+
+  // 'available' needs no toast — the global UpdateAvailableDialog opens and asks to install.
+  const checkUpdates = async () => {
+    setCheckingUpdates(true);
+    const outcome = await checkForUpdates();
+    setCheckingUpdates(false);
+    if (outcome === 'none') toast.success(t('license.upToDate'));
+    else if (outcome === 'error') toast.error(t('license.updateCheckFailed'));
+    else if (outcome === 'skipped') toast.error(t('license.updatesExpired'));
   };
 
   const rows: Array<[string, string | null]> = payload
@@ -103,6 +116,16 @@ export function LicenseSettingsTab() {
           }}
         >
           {t('license.changeKey')}
+        </POSButton>
+        <POSButton
+          type="button"
+          variant="secondary"
+          touchSize="large"
+          data-testid="check-updates-button"
+          disabled={checkingUpdates}
+          onClick={() => void checkUpdates()}
+        >
+          {checkingUpdates ? t('license.checkingUpdates') : t('license.checkUpdates')}
         </POSButton>
       </div>
 

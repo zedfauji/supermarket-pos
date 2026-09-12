@@ -12,7 +12,7 @@
 import { check } from '@tauri-apps/plugin-updater';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAppUpdater } from '@shared/lib/useAppUpdater';
+import { useAppUpdater, useUpdaterStore } from '@shared/lib/useAppUpdater';
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
@@ -20,6 +20,8 @@ describe('useAppUpdater', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.mocked(check).mockResolvedValue(null);
+    // Store is module-global — reset between tests
+    useUpdaterStore.setState({ state: { phase: 'idle' }, update: null });
   });
 
   afterEach(() => {
@@ -133,5 +135,25 @@ describe('useAppUpdater', () => {
     if (result.current.state.phase === 'restart-ready') {
       expect(result.current.state.version).toBe('2.1.0');
     }
+  });
+
+  describe('checkForUpdates (manual, Settings → License)', () => {
+    it('returns none and stays idle when no update', async () => {
+      vi.mocked(check).mockResolvedValue(null);
+      await expect(useUpdaterStore.getState().checkForUpdates()).resolves.toBe('none');
+      expect(useUpdaterStore.getState().state.phase).toBe('idle');
+    });
+
+    it('returns error and stays idle when check() throws', async () => {
+      vi.mocked(check).mockRejectedValue(new Error('offline'));
+      await expect(useUpdaterStore.getState().checkForUpdates()).resolves.toBe('error');
+      expect(useUpdaterStore.getState().state.phase).toBe('idle');
+    });
+
+    it('returns available and opens the dialog state when an update exists', async () => {
+      vi.mocked(check).mockResolvedValue({ version: '3.0.0', body: 'x', downloadAndInstall: vi.fn() } as never);
+      await expect(useUpdaterStore.getState().checkForUpdates()).resolves.toBe('available');
+      expect(useUpdaterStore.getState().state).toEqual({ phase: 'available', version: '3.0.0', changelog: 'x' });
+    });
   });
 });

@@ -74,6 +74,10 @@
     "refreshed": "License verified",
     "refreshFailed": "Could not verify the license",
     "changeKey": "Change key / import token",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking for updates…",
+    "upToDate": "You are on the latest version",
+    "updateCheckFailed": "Could not check for updates. Try again later.",
     "unlicensed": "This terminal is not licensed."
   }
 }
