@@ -19,6 +19,7 @@ import {
   UserRoleSchema,
   LocaleSchema,
 } from './domain';
+import { logger } from './logger';
 import { ok, err, inventoryNegativeError, type Result } from './result';
 import { supabase, getCachedAccessToken } from './supabase';
 import type { AppError } from './supabase-contracts';
@@ -747,11 +748,27 @@ export async function callProcessDirectSale(
     const envelope = ProcessDirectSaleEnvelopeSchema.safeParse(data);
     if (!response.ok || !envelope.success || !envelope.data.success) {
       const edge = envelope.success ? envelope.data.error : undefined;
+      logger.error(
+        'process_direct_sale.failed',
+        {
+          httpStatus: response.status,
+          envelopeParsed: envelope.success,
+          edgeErrorCode: edge?.code ?? null,
+        },
+        envelope.success ? undefined : envelope.error
+      );
       return err(
         mapProcessPaymentEdgeError(edge?.code, edge?.message ?? 'Payment could not be completed.')
       );
     }
     const result = ProcessDirectSaleSuccessSchema.safeParse(envelope.data);
+    if (!result.success) {
+      logger.error(
+        'process_direct_sale.invalid_response',
+        { httpStatus: response.status },
+        result.error
+      );
+    }
     return result.success
       ? ok(result.data)
       : err({
@@ -760,6 +777,7 @@ export async function callProcessDirectSale(
           details: result.error.message,
         });
   } catch (error) {
+    logger.error('process_direct_sale.exception', {}, error);
     return err({
       code: error instanceof z.ZodError ? 'VALIDATION_ERROR' : 'UNKNOWN_ERROR',
       message: error instanceof Error ? error.message : 'Unknown error occurred',

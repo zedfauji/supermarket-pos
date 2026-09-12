@@ -7,8 +7,8 @@
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
-use chrono::{Local, Datelike};
-use tauri::AppHandle;
+use chrono::Local;
+use tauri::{AppHandle, Manager};
 
 /// Maximum number of log files to keep (30 days)
 const MAX_LOG_FILES: usize = 30;

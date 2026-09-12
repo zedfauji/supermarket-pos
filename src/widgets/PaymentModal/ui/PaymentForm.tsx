@@ -560,7 +560,11 @@ export function PaymentForm({
         return;
       }
       setErrorMessage(result.error.message);
-      logger.warn('payment.failed', { tabId: tab.id, code: 'client' });
+      logger.warn('payment.failed', {
+        tabId: tab.id,
+        code: result.error.code,
+        message: result.error.message,
+      });
       return;
     }
 
